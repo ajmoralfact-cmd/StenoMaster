@@ -1657,9 +1657,9 @@ def get_leaderboard(period: str = 'all', limit: int = 50) -> List[Dict[str, Any]
         JOIN profiles p ON u.id = p.user_id
         LEFT JOIN practice_attempts pa ON u.id = pa.user_id {time_filter}
         WHERE u.is_active = 1
-        GROUP BY u.id
+        GROUP BY u.id, p.show_on_leaderboard, p.display_name, p.avatar, p.target_exam, p.points
         HAVING COUNT(pa.id) > 0 OR p.points > 0
-        ORDER BY best_wpm DESC, avg_accuracy DESC, p.points DESC
+        ORDER BY COALESCE(MAX(pa.net_wpm), 0) DESC, COALESCE(AVG(pa.accuracy), 0) DESC, p.points DESC
         LIMIT ?
     """
     c.execute(query, (limit,))
