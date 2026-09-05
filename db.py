@@ -14,7 +14,81 @@ from typing import List, Dict, Any, Optional
 DB_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'stenomaster.db')
 
 
+try:
+    import psycopg2
+    from psycopg2.extras import RealDictCursor
+    HAS_PSYCOPG2 = True
+except ImportError:
+    HAS_PSYCOPG2 = False
+
+
+class PostgresCursorWrapper:
+    def __init__(self, cur):
+        self._cur = cur
+        self.lastrowid = None
+
+    def execute(self, sql, params=None):
+        pg_sql = sql.replace('?', '%s')
+        if params is not None:
+            self._cur.execute(pg_sql, params)
+        else:
+            self._cur.execute(pg_sql)
+        return self
+
+    def executemany(self, sql, seq_of_params):
+        pg_sql = sql.replace('?', '%s')
+        self._cur.executemany(pg_sql, seq_of_params)
+        return self
+
+    def fetchone(self):
+        return self._cur.fetchone()
+
+    def fetchall(self):
+        return self._cur.fetchall()
+
+    def fetchmany(self, size=None):
+        return self._cur.fetchmany(size) if size else self._cur.fetchmany()
+
+    @property
+    def rowcount(self):
+        return self._cur.rowcount
+
+    def close(self):
+        self._cur.close()
+
+
+class PostgresConnWrapper:
+    def __init__(self, conn):
+        self._conn = conn
+
+    def cursor(self):
+        return PostgresCursorWrapper(self._conn.cursor())
+
+    def execute(self, sql, params=None):
+        cur = self.cursor()
+        cur.execute(sql, params)
+        return cur
+
+    def commit(self):
+        self._conn.commit()
+
+    def rollback(self):
+        self._conn.rollback()
+
+    def close(self):
+        self._conn.close()
+
+
 def get_db():
+    database_url = os.environ.get('DATABASE_URL')
+    if database_url and HAS_PSYCOPG2:
+        try:
+            conn = psycopg2.connect(database_url, cursor_factory=RealDictCursor)
+            return PostgresConnWrapper(conn)
+        except Exception as e:
+            # Fall back to sqlite if network error
+            print(f"Postgres connection warning, falling back to SQLite: {e}")
+
     conn = sqlite3.connect(DB_FILE)
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA foreign_keys = ON")
