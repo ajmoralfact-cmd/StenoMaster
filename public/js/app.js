@@ -270,8 +270,25 @@ class StenoApp {
       await this.loadCategories();
       await this.loadPassages();
 
-      this.showToast(`स्वागतम्, ${this.user.display_name}! आपकी छात्र पहचान: ${this.user.student_code} 🎓`, 'success');
-      this.navigate('home');
+      // Store credentials for modal and clipboard
+      this._registeredCreds = {
+        student_code: res.credentials?.student_code || this.user.student_code || 'STM-2026-000000',
+        username: res.credentials?.username || this.user.username,
+        email: res.credentials?.email || this.user.email,
+        password: password
+      };
+
+      // Populate & open Credentials Modal
+      const codeEl = document.getElementById('credStudentCode');
+      const userEl = document.getElementById('credUsername');
+      const emailEl = document.getElementById('credEmail');
+      const passEl = document.getElementById('credPassword');
+      if (codeEl) codeEl.textContent = this._registeredCreds.student_code;
+      if (userEl) userEl.textContent = this._registeredCreds.username;
+      if (emailEl) emailEl.textContent = this._registeredCreds.email;
+      if (passEl) passEl.textContent = this._registeredCreds.password;
+
+      this.openModal('studentCredentialsModal');
     } catch (err) {
       if (errBox) {
         errBox.style.display = 'flex';
@@ -393,15 +410,66 @@ class StenoApp {
     }
   }
 
+  copyStudentCredentials() {
+    if (!this._registeredCreds) return;
+    const text = `🎓 StenoMaster - मेरी लॉगिन जानकारी:
+━━━━━━━━━━━━━━━━━━━━
+छात्र आईडी (Student ID): ${this._registeredCreds.student_code}
+यूज़रनेम (Login ID): ${this._registeredCreds.username}
+पंजीकृत ईमेल: ${this._registeredCreds.email}
+पासवर्ड: ${this._registeredCreds.password}
+वेबसाइट: ${window.location.origin}
+━━━━━━━━━━━━━━━━━━━━
+⚠️ कृपया इसे सुरक्षित रख लें। इसी जानकारी से लॉगिन होगा।`;
+
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(() => {
+        this.showToast('लॉगिन जानकारी क्लिपबोर्ड पर कॉपी हो गई! 📋', 'success');
+      }).catch(() => {
+        this.fallbackCopyText(text);
+      });
+    } else {
+      this.fallbackCopyText(text);
+    }
+  }
+
+  fallbackCopyText(text) {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    document.body.appendChild(ta);
+    ta.select();
+    try {
+      document.execCommand('copy');
+      this.showToast('लॉगिन जानकारी क्लिपबोर्ड पर कॉपी हो गई! 📋', 'success');
+    } catch (e) {
+      this.showToast('कृपया स्क्रीनशॉट लेकर सेव कर लें।', 'info');
+    }
+    document.body.removeChild(ta);
+  }
+
+  proceedToPracticeAfterSignup() {
+    this.closeModal('studentCredentialsModal');
+    this.showToast(`स्वागतम्, ${this.user.display_name}! 🎓`, 'success');
+    this.navigate('home');
+  }
+
   openForgotPassword() {
     this.openModal('forgotPasswordModal');
   }
 
-  handleForgotPassword(e) {
+  async handleForgotPassword(e) {
     if (e) e.preventDefault();
-    const email = document.getElementById('forgotEmailInput')?.value || '';
-    this.closeModal('forgotPasswordModal');
-    this.showToast(`पासवर्ड रीसेट लिंक ${email} पर भेज दी गई है। कृपया इनबॉक्स देखें।`, 'info');
+    const emailInput = document.getElementById('forgotEmailInput');
+    const email = emailInput?.value?.trim() || '';
+    if (!email) return;
+
+    try {
+      const res = await this.apiCall('/api/auth/forgot-password', 'POST', { email });
+      this.closeModal('forgotPasswordModal');
+      this.showToast(res.message || `पासवर्ड रीसेट निर्देश ${email} पर भेज दिए गए हैं।`, 'success');
+    } catch (err) {
+      this.showToast(err.message || 'ईमेल सत्यापन विफल रहा।', 'error');
+    }
   }
 
   handleLogoClick() {
