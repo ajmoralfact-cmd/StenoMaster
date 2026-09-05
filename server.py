@@ -35,8 +35,11 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 STATIC_DIR = os.path.join(BASE_DIR, 'public')
 UPLOADS_DIR = os.path.join(BASE_DIR, 'uploads')
 
-os.makedirs(STATIC_DIR, exist_ok=True)
-os.makedirs(UPLOADS_DIR, exist_ok=True)
+try:
+    os.makedirs(STATIC_DIR, exist_ok=True)
+    os.makedirs(UPLOADS_DIR, exist_ok=True)
+except Exception:
+    pass
 
 # Register font mime types so browsers properly load TTF/WOFF/WOFF2 fonts
 mimetypes.add_type('font/ttf', '.ttf')
