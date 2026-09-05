@@ -79,6 +79,30 @@ class PostgresConnWrapper:
         self._conn.close()
 
 
+def parse_db_datetime(val):
+    if not val:
+        return None
+    if isinstance(val, datetime):
+        return val
+    if isinstance(val, str):
+        try:
+            return datetime.fromisoformat(val)
+        except Exception:
+            return None
+    return None
+
+
+def is_expired_datetime(exp_val) -> bool:
+    if not exp_val:
+        return False
+    dt = parse_db_datetime(exp_val)
+    if not dt:
+        return False
+    now = datetime.now(dt.tzinfo) if dt.tzinfo else datetime.now()
+    return dt <= now
+
+
+
 def get_db():
     database_url = os.environ.get('DATABASE_URL')
     if database_url and HAS_PSYCOPG2:
@@ -951,14 +975,10 @@ def authenticate_user(email_or_username: str, password: str) -> Optional[Dict[st
 
     # Check subscription expiration
     if user_dict.get('subscription_status') == 'active' and user_dict.get('subscription_end'):
-        try:
-            exp_date = datetime.fromisoformat(user_dict['subscription_end'])
-            if datetime.now() > exp_date:
-                c.execute("UPDATE users SET subscription_status = 'expired' WHERE id = ?", (user_dict['id'],))
-                conn.commit()
-                user_dict['subscription_status'] = 'expired'
-        except Exception:
-            pass
+        if is_expired_datetime(user_dict['subscription_end']):
+            c.execute("UPDATE users SET subscription_status = 'expired' WHERE id = ?", (user_dict['id'],))
+            conn.commit()
+            user_dict['subscription_status'] = 'expired'
 
     conn.close()
     return user_dict
@@ -1029,7 +1049,7 @@ def verify_session(token: str) -> Optional[Dict[str, Any]]:
         }
 
     # Check expiration
-    if str(s_row['expires_at']) <= datetime.now().isoformat():
+    if is_expired_datetime(s_row['expires_at']):
         conn.close()
         return None
 
@@ -1061,14 +1081,10 @@ def verify_session(token: str) -> Optional[Dict[str, Any]]:
 
     # Check subscription expiry
     if res.get('subscription_status') == 'active' and res.get('subscription_end'):
-        try:
-            exp_date = datetime.fromisoformat(res['subscription_end'])
-            if datetime.now() > exp_date:
-                c.execute("UPDATE users SET subscription_status = 'expired' WHERE id = ?", (res['user_id'],))
-                conn.commit()
-                res['subscription_status'] = 'expired'
-        except Exception:
-            pass
+        if is_expired_datetime(res['subscription_end']):
+            c.execute("UPDATE users SET subscription_status = 'expired' WHERE id = ?", (res['user_id'],))
+            conn.commit()
+            res['subscription_status'] = 'expired'
 
     conn.close()
     return res
@@ -1097,7 +1113,7 @@ def get_session_status(token: str) -> Dict[str, Any]:
             "superseded_by_ip": row['superseded_by_ip'] or 'Another Device',
             "superseded_at": row['superseded_at'] or datetime.now().isoformat()
         }
-    if str(row['expires_at']) <= datetime.now().isoformat():
+    if is_expired_datetime(row['expires_at']):
         return {"status": "expired"}
     return {
         "status": "active",
@@ -1334,6 +1350,7 @@ def save_practice_attempt(
     weighted_errors = metrics["weighted_errors"]
     time_taken = metrics["time_taken_seconds"]
     report_json_str = json.dumps(eval_result, ensure_ascii=False, default=str)
+
     c.execute("""
         INSERT INTO practice_attempts (
             user_id, passage_id, gross_wpm, net_wpm, accuracy, spelling_accuracy,
@@ -1641,7 +1658,7 @@ def get_leaderboard(period: str = 'all', limit: int = 50) -> List[Dict[str, Any]
         LEFT JOIN practice_attempts pa ON u.id = pa.user_id {time_filter}
         WHERE u.is_active = 1
         GROUP BY u.id
-        HAVING attempts_count > 0 OR p.points > 0
+        HAVING COUNT(pa.id) > 0 OR p.points > 0
         ORDER BY best_wpm DESC, avg_accuracy DESC, p.points DESC
         LIMIT ?
     """
@@ -1737,8 +1754,8 @@ def get_admin_overview() -> Dict[str, Any]:
         SELECT p.title, COUNT(pa.id) as attempts, AVG(pa.net_wpm) as avg_wpm, AVG(pa.accuracy) as avg_accuracy
         FROM passages p
         LEFT JOIN practice_attempts pa ON p.id = pa.passage_id
-        GROUP BY p.id
-        ORDER BY attempts DESC
+        GROUP BY p.id, p.title
+        ORDER BY COUNT(pa.id) DESC
         LIMIT 5
     """)
     popular_passages = [dict(r) for r in c.fetchall()]
@@ -1747,9 +1764,9 @@ def get_admin_overview() -> Dict[str, Any]:
         SELECT p.title, AVG(pa.accuracy) as avg_accuracy, COUNT(pa.id) as attempts
         FROM passages p
         JOIN practice_attempts pa ON p.id = pa.passage_id
-        GROUP BY p.id
-        HAVING attempts >= 2
-        ORDER BY avg_accuracy ASC
+        GROUP BY p.id, p.title
+        HAVING COUNT(pa.id) >= 2
+        ORDER BY AVG(pa.accuracy) ASC
         LIMIT 5
     """)
     difficult_passages = [dict(r) for r in c.fetchall()]
@@ -2073,20 +2090,14 @@ def is_user_premium(user_id: int) -> bool:
         if not user["subscription_end"]:
             conn.close()
             return True
-        try:
-            exp_dt = datetime.fromisoformat(user["subscription_end"])
-            if exp_dt > datetime.now():
-                conn.close()
-                return True
-            else:
-                # Subscription expired! Auto-expire in database immediately
-                c.execute("UPDATE users SET subscription_status = 'expired' WHERE id = ?", (user_id,))
-                conn.commit()
-                conn.close()
-                return False
-        except Exception:
+        if is_expired_datetime(user["subscription_end"]):
+            c.execute("UPDATE users SET subscription_status = 'expired' WHERE id = ?", (user_id,))
+            conn.commit()
             conn.close()
             return False
+        else:
+            conn.close()
+            return True
     conn.close()
     return False
 
@@ -2115,11 +2126,12 @@ def get_user_subscription_info(user_id: int) -> Dict[str, Any]:
         }
 
     if is_active and user["subscription_end"]:
-        try:
-            exp = datetime.fromisoformat(user["subscription_end"])
-            delta = exp - datetime.now()
+        dt = parse_db_datetime(user["subscription_end"])
+        if dt:
+            now = datetime.now(dt.tzinfo) if dt.tzinfo else datetime.now()
+            delta = dt - now
             days_left = max(1, delta.days + (1 if delta.seconds > 0 else 0))
-        except Exception:
+        else:
             days_left = 30
 
     return {
