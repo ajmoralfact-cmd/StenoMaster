@@ -5,6 +5,7 @@ Exposes top-level `app` and `application` required by Vercel Python runtime.
 import io
 import sys
 import os
+import urllib.parse
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 parent_dir = os.path.abspath(os.path.join(current_dir, '..'))
@@ -16,12 +17,30 @@ from server import StenoMasterHandler, STATIC_DIR
 
 def app(environ, start_response):
     method = environ.get('REQUEST_METHOD', 'GET').upper()
-    path = environ.get('PATH_INFO', '/')
+    
     qs = environ.get('QUERY_STRING', '')
-    if qs:
-        path = f"{path}?{qs}"
+    path = environ.get('PATH_INFO', '/')
 
-    headers = [f"{method} {path} HTTP/1.1"]
+    # 1. Check if rewritten query parameter __path__ is present (Vercel rewrite helper)
+    if '__path__=' in qs:
+        parsed_qs = urllib.parse.parse_qs(qs)
+        if '__path__' in parsed_qs:
+            path = parsed_qs['__path__'][0]
+            clean_params = [p for p in qs.split('&') if not p.startswith('__path__=')]
+            qs = '&'.join(clean_params)
+    elif path in ('/api', '/api/', '') or not path.startswith('/api/'):
+        for k in ['RAW_URI', 'REQUEST_URI', 'HTTP_X_MATCHED_PATH', 'HTTP_X_FORWARDED_URI']:
+            v = environ.get(k, '')
+            if '/api/' in v:
+                path = v.split('?')[0]
+                break
+
+    if qs:
+        full_path = f"{path}?{qs}"
+    else:
+        full_path = path
+
+    headers = [f"{method} {full_path} HTTP/1.1"]
     for k, v in environ.items():
         if k.startswith('HTTP_'):
             header_name = k[5:].replace('_', '-').title()
