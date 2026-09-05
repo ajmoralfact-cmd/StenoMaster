@@ -1,0 +1,855 @@
+/**
+ * Admin Dashboard & Management Controller for StenoMaster
+ * Provides:
+ * - Admin Overview & Analytics
+ * - Passage CRUD (Create, Edit, Delete, Publish)
+ * - Audio File Upload & Integration
+ * - Bulk Import via JSON
+ * - Category Management
+ * - Exam Scoring System Configuration (SSC Steno, High Court, Standard)
+ * - Platform Branding Settings
+ */
+
+class StenoAdmin {
+  constructor() {
+    this.activeTab = 'overview';
+    this.passagesList = [];
+    this.categoriesList = [];
+    this.settings = {};
+  }
+
+  async loadOverview() {
+    try {
+      const res = await stenoApp.apiCall('/api/admin/overview');
+      this.renderOverviewMetrics(res);
+      await this.loadPayments();
+      await this.loadRewardsLedger();
+      await this.loadSubscriptionSettings();
+    } catch (err) {
+      console.error('Failed to load admin overview:', err);
+    }
+  }
+
+  renderOverviewMetrics(data) {
+    const el = document.getElementById('adminOverviewMetrics');
+    if (!el) return;
+
+    el.innerHTML = `
+      <div class="stats-summary-grid" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); margin-bottom: 24px;">
+        <div class="stat-card">
+          <div class="stat-icon-wrap stat-icon-blue">👥</div>
+          <div>
+            <div class="stat-info-title">Total Users (कुल छात्र)</div>
+            <div class="stat-info-num">${data.total_users || 0}</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon-wrap stat-icon-green">🟢</div>
+          <div>
+            <div class="stat-info-title">Active Users (सक्रिय छात्र)</div>
+            <div class="stat-info-num">${data.active_users || 0}</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon-wrap stat-icon-amber">📚</div>
+          <div>
+            <div class="stat-info-title">Total Passages (कुल आलेख)</div>
+            <div class="stat-info-num">${data.total_passages || 0}</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon-wrap stat-icon-purple">🌐</div>
+          <div>
+            <div class="stat-info-title">Published Passages (प्रकाशित)</div>
+            <div class="stat-info-num">${data.published_passages || 0}</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon-wrap stat-icon-blue">✍️</div>
+          <div>
+            <div class="stat-info-title">Total Practices (कुल अभ्यास)</div>
+            <div class="stat-info-num">${data.total_practices || 0}</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon-wrap stat-icon-green">📅</div>
+          <div>
+            <div class="stat-info-title">Practices Today (आज के अभ्यास)</div>
+            <div class="stat-info-num">${data.practices_today || 0}</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon-wrap stat-icon-amber">⚡</div>
+          <div>
+            <div class="stat-info-title">Average WPM (औसत गति)</div>
+            <div class="stat-info-num">${data.avg_wpm || 0} <span style="font-size:0.85rem; font-weight:500;">WPM</span></div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon-wrap stat-icon-purple">🎯</div>
+          <div>
+            <div class="stat-info-title">Average Accuracy (औसत सटीकता)</div>
+            <div class="stat-info-num">${data.avg_accuracy || 0}%</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="charts-grid">
+        <div class="chart-card">
+          <h4 class="chart-title">🔥 सर्वाधिक अभ्यास किए गए आलेख (Most Practiced)</h4>
+          <div style="overflow-x: auto;">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>आलेख (Title)</th>
+                  <th>प्रयास (Attempts)</th>
+                  <th>औसत गति (Avg WPM)</th>
+                  <th>सटीकता (Avg Acc)</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${(data.popular_passages || []).map(p => `
+                  <tr>
+                    <td><strong>${p.title}</strong></td>
+                    <td>${p.attempts}</td>
+                    <td>${Math.round(p.avg_wpm || 0)} WPM</td>
+                    <td>${Math.round(p.avg_accuracy || 0)}%</td>
+                  </tr>
+                `).join('') || '<tr><td colspan="4" style="text-align:center;">डेटा उपलब्ध नहीं है</td></tr>'}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="chart-card">
+          <h4 class="chart-title">⚠️ चुनौतीपूर्ण आलेख (Most Difficult)</h4>
+          <div style="overflow-x: auto;">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>आलेख (Title)</th>
+                  <th>सटीकता (Accuracy)</th>
+                  <th>प्रयास (Attempts)</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${(data.difficult_passages || []).map(p => `
+                  <tr>
+                    <td><strong>${p.title}</strong></td>
+                    <td style="color:var(--accent-red); font-weight:700;">${Math.round(p.avg_accuracy || 0)}%</td>
+                    <td>${p.attempts}</td>
+                  </tr>
+                `).join('') || '<tr><td colspan="3" style="text-align:center;">सभी आलेख सामान्य हैं</td></tr>'}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  async loadPassages() {
+    try {
+      const res = await stenoApp.apiCall('/api/admin/passages');
+      this.passagesList = res.passages || [];
+      this.renderPassagesTable();
+    } catch (err) {
+      console.error('Failed to load admin passages:', err);
+    }
+  }
+
+  renderPassagesTable() {
+    const tbody = document.querySelector('#adminPassagesTable tbody');
+    if (!tbody) return;
+
+    if (this.passagesList.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding:20px;">कोई आलेख नहीं मिला। नया जोड़ें!</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = this.passagesList.map(p => {
+      const hasMangal = !!(p.official_text && p.official_text.trim());
+      const hasKruti = !!(p.official_text_krutidev && p.official_text_krutidev.trim());
+      const fontBadges = `
+        <div style="display:flex; flex-direction:column; gap:3px;">
+          <span class="badge" style="background:${hasMangal ? '#e0f2fe' : '#fee2e2'}; color:${hasMangal ? '#0284c7' : '#ef4444'}; font-size:0.75rem;">
+            🅰️ Mangal ${hasMangal ? '✓' : '✗'}
+          </span>
+          <span class="badge" style="background:${hasKruti ? '#fef3c7' : '#fee2e2'}; color:${hasKruti ? '#d97706' : '#ef4444'}; font-size:0.75rem;">
+            ⌨️ Kruti Dev ${hasKruti ? '✓' : '✗'}
+          </span>
+        </div>
+      `;
+
+      return `
+      <tr>
+        <td><strong>#${p.id}</strong></td>
+        <td>
+          <div style="font-weight:600;">${p.title}</div>
+          <div style="font-size:0.78rem; color:var(--text-muted);">${p.category_name}</div>
+        </td>
+        <td><span class="badge badge-${p.language}">${p.language}</span></td>
+        <td><span class="badge badge-${p.difficulty}">${p.difficulty}</span></td>
+        <td>${p.target_wpm} WPM</td>
+        <td>${fontBadges}</td>
+        <td><span class="badge" style="background:${p.status === 'published' ? 'var(--accent-green-subtle)' : 'var(--bg-subtle)'}; color:${p.status === 'published' ? 'var(--accent-green)' : 'var(--text-muted)'}">${p.status}</span></td>
+        <td>
+          <div style="display:flex; gap:6px;">
+            <button class="btn-secondary" style="padding:4px 8px; font-size:0.8rem;" onclick="stenoAdmin.togglePassageStatus(${p.id})" title="स्थिति बदलें">
+              ${p.status === 'published' ? '👁️ ड्राफ्ट' : '🚀 पब्लिश'}
+            </button>
+            <button class="btn-secondary" style="padding:4px 8px; font-size:0.8rem;" onclick="stenoAdmin.openEditPassage(${p.id})">✏️ एडिट</button>
+            <button class="btn-secondary" style="padding:4px 8px; font-size:0.8rem; color:var(--accent-red);" onclick="stenoAdmin.deletePassage(${p.id})">🗑️ हटाएं</button>
+          </div>
+        </td>
+      </tr>
+      `;
+    }).join('');
+  }
+
+  async togglePassageStatus(id) {
+    try {
+      const res = await stenoApp.apiCall('/api/admin/passages/toggle-status', 'POST', { id });
+      stenoApp.showToast(`आलेख स्थिति बदली गई: ${res.status.toUpperCase()}`, 'info');
+      this.loadPassages();
+      stenoApp.loadPassages();
+    } catch (err) {
+      stenoApp.showToast('स्थिति बदलने में त्रुटि: ' + err.message, 'error');
+    }
+  }
+
+  setTypingSystem(sys) {
+    this.currentTypingSystem = sys;
+    const sysInput = document.getElementById('passageTypingSystem');
+    if (sysInput) sysInput.value = sys;
+
+    const btnMangal = document.getElementById('tabSysMangal');
+    const btnKruti = document.getElementById('tabSysKruti');
+    const btnDual = document.getElementById('tabSysDual');
+    const badge = document.getElementById('currentTypingSystemBadge');
+    const wrapMangal = document.getElementById('mangalBoxWrapper');
+    const wrapKruti = document.getElementById('krutiBoxWrapper');
+    const asteriskMangal = document.getElementById('mangalReqAsterisk');
+    const asteriskKruti = document.getElementById('krutiReqAsterisk');
+
+    [btnMangal, btnKruti, btnDual].forEach(b => {
+      if (b) {
+        b.style.background = 'transparent';
+        b.style.color = 'var(--text-primary)';
+        b.style.borderColor = 'var(--border)';
+      }
+    });
+
+    if (sys === 'mangal_unicode') {
+      if (btnMangal) { btnMangal.style.background = '#0284c7'; btnMangal.style.color = '#fff'; btnMangal.style.borderColor = '#0284c7'; }
+      if (badge) { badge.textContent = 'Mangal / Unicode Only'; badge.style.background = '#e0f2fe'; badge.style.color = '#0284c7'; }
+      if (wrapMangal) wrapMangal.style.display = 'block';
+      if (wrapKruti) wrapKruti.style.display = 'none';
+      if (asteriskMangal) asteriskMangal.style.display = 'inline';
+      if (asteriskKruti) asteriskKruti.style.display = 'none';
+    } else if (sys === 'kruti_dev_010') {
+      if (btnKruti) { btnKruti.style.background = '#d97706'; btnKruti.style.color = '#fff'; btnKruti.style.borderColor = '#d97706'; }
+      if (badge) { badge.textContent = 'Kruti Dev 010 Only'; badge.style.background = '#fef3c7'; badge.style.color = '#d97706'; }
+      if (wrapMangal) wrapMangal.style.display = 'none';
+      if (wrapKruti) wrapKruti.style.display = 'block';
+      if (asteriskMangal) asteriskMangal.style.display = 'none';
+      if (asteriskKruti) asteriskKruti.style.display = 'inline';
+    } else {
+      this.currentTypingSystem = 'dual';
+      if (sysInput) sysInput.value = 'dual';
+      if (btnDual) { btnDual.style.background = '#7c3aed'; btnDual.style.color = '#fff'; btnDual.style.borderColor = '#7c3aed'; }
+      if (badge) { badge.textContent = 'Dual Mode (Both)'; badge.style.background = '#f3e8ff'; badge.style.color = '#7c3aed'; }
+      if (wrapMangal) wrapMangal.style.display = 'block';
+      if (wrapKruti) wrapKruti.style.display = 'block';
+      if (asteriskMangal) asteriskMangal.style.display = 'inline';
+      if (asteriskKruti) asteriskKruti.style.display = 'inline';
+    }
+  }
+
+  switchUploadFontTab(mode) {
+    if (mode === 'mangal' || mode === 'mangal_unicode') this.setTypingSystem('mangal_unicode');
+    else if (mode === 'krutidev' || mode === 'kruti_dev_010') this.setTypingSystem('kruti_dev_010');
+    else this.setTypingSystem('dual');
+  }
+
+  onMangalInput(val) {
+    // Admin reference is authoritative - no silent automatic overwrite on input
+  }
+
+  onKrutiInput(val) {
+    // Admin reference is authoritative - no silent automatic overwrite on input
+  }
+
+  openNewPassageModal(mode = 'dual') {
+    const sys = (mode === 'krutidev' || mode === 'kruti_dev_010')
+      ? 'kruti_dev_010'
+      : ((mode === 'mangal' || mode === 'mangal_unicode') ? 'mangal_unicode' : 'dual');
+    document.getElementById('passageModalTitle').textContent = '📝 नया स्टेनो आलेख जोड़ें (Add Passage)';
+    document.getElementById('passageEditId').value = '';
+    document.getElementById('passageForm').reset();
+    const krutiInput = document.getElementById('passageOfficialKrutiInput');
+    if (krutiInput) krutiInput.value = '';
+    const mangalInput = document.getElementById('passageOfficialTextInput');
+    if (mangalInput) mangalInput.value = '';
+    this.setTypingSystem(sys);
+    stenoApp.openModal('passageEditModal');
+  }
+
+  openEditPassage(id) {
+    const p = this.passagesList.find(item => item.id === id);
+    if (!p) return;
+
+    document.getElementById('passageModalTitle').textContent = 'स्टेनो आलेख संशोधित करें (Edit Passage)';
+    document.getElementById('passageEditId').value = p.id;
+    document.getElementById('passageTitleInput').value = p.title;
+    document.getElementById('passageCategorySelect').value = p.category_id;
+    document.getElementById('passageLanguageSelect').value = p.language;
+    document.getElementById('passageDifficultySelect').value = p.difficulty;
+    document.getElementById('passageTargetWpmInput').value = p.target_wpm;
+    document.getElementById('passageDurationInput').value = p.duration_seconds;
+    document.getElementById('passageAudioUrlInput').value = p.audio_url || '';
+    document.getElementById('passageInstructionsInput').value = p.instructions || '';
+    document.getElementById('passageOfficialTextInput').value = p.official_text || p.official_mangal_text || '';
+    const krutiInput = document.getElementById('passageOfficialKrutiInput');
+    if (krutiInput) krutiInput.value = p.official_text_krutidev || p.official_kruti_dev_text || '';
+    document.getElementById('passageTagsInput').value = p.tags || '';
+
+    const pSys = p.typing_system || (p.official_text && p.official_text_krutidev ? 'dual' : (p.official_text_krutidev ? 'kruti_dev_010' : 'mangal_unicode'));
+    this.setTypingSystem(pSys);
+    stenoApp.openModal('passageEditModal');
+  }
+
+  async convertMangalToKrutiModal() {
+    const mangalText = document.getElementById('passageOfficialTextInput').value.trim();
+    if (!mangalText) {
+      stenoApp.showToast('कृपया पहले मंगल / यूनिकोड टेक्स्ट दर्ज करें।', 'warning');
+      return;
+    }
+    try {
+      const res = await stenoApp.apiCall('/api/admin/convert-font', 'POST', {
+        text: mangalText,
+        direction: 'to_kruti'
+      });
+      if (res && res.result) {
+        document.getElementById('passageOfficialKrutiInput').value = res.result;
+        stenoApp.showToast('कृति देव 010 संदर्भ पाठ स्वतः तैयार हो गया! ⚡', 'success');
+      }
+    } catch (err) {
+      stenoApp.showToast('फॉन्ट बदलने में त्रुटि: ' + err.message, 'error');
+    }
+  }
+
+  async convertKrutiToMangalModal() {
+    const krutiText = document.getElementById('passageOfficialKrutiInput').value.trim();
+    if (!krutiText) {
+      stenoApp.showToast('कृपया पहले कृति देव 010 टेक्स्ट दर्ज करें।', 'warning');
+      return;
+    }
+    try {
+      const res = await stenoApp.apiCall('/api/admin/convert-font', 'POST', {
+        text: krutiText,
+        direction: 'to_mangal'
+      });
+      if (res && res.result) {
+        document.getElementById('passageOfficialTextInput').value = res.result;
+        stenoApp.showToast('मंगल (यूनिकोड) संदर्भ पाठ स्वतः तैयार हो गया! ⚡', 'success');
+      }
+    } catch (err) {
+      stenoApp.showToast('फॉन्ट बदलने में त्रुटि: ' + err.message, 'error');
+    }
+  }
+
+  async savePassage(e) {
+    e.preventDefault();
+    const id = document.getElementById('passageEditId').value;
+    const title = document.getElementById('passageTitleInput').value.trim();
+    const category_id = parseInt(document.getElementById('passageCategorySelect').value);
+    const language = document.getElementById('passageLanguageSelect').value;
+    const difficulty = document.getElementById('passageDifficultySelect').value;
+    const target_wpm = parseInt(document.getElementById('passageTargetWpmInput').value) || 40;
+    const duration_seconds = parseInt(document.getElementById('passageDurationInput').value) || 180;
+    const audio_url = document.getElementById('passageAudioUrlInput').value.trim();
+    const instructions = document.getElementById('passageInstructionsInput').value.trim();
+    const official_text = document.getElementById('passageOfficialTextInput').value.trim();
+    const krutiInput = document.getElementById('passageOfficialKrutiInput');
+    const official_text_krutidev = krutiInput ? krutiInput.value.trim() : '';
+    const typing_system = document.getElementById('passageTypingSystem')?.value || this.currentTypingSystem || 'dual';
+    const official_mangal = official_text;
+    const official_kruti = official_text_krutidev;
+
+    if (!title) {
+      stenoApp.showToast('आलेख का शीर्षक आवश्यक है।', 'error');
+      return;
+    }
+
+    // Frontend Validation (Phase 4)
+    if (typing_system === 'mangal_unicode' && !official_mangal) {
+      stenoApp.showToast('मंगल / यूनिकोड संदर्भ पाठ आवश्यक है।', 'error');
+      return;
+    }
+    if (typing_system === 'kruti_dev_010' && !official_kruti) {
+      stenoApp.showToast('कृति देव 010 संदर्भ पाठ आवश्यक है।', 'error');
+      return;
+    }
+    if (typing_system === 'dual') {
+      if (!official_mangal) {
+        stenoApp.showToast('Dual आलेख के लिए मंगल संदर्भ पाठ आवश्यक है।', 'error');
+        return;
+      }
+      if (!official_kruti) {
+        stenoApp.showToast('Dual आलेख के लिए कृति देव 010 संदर्भ पाठ आवश्यक है।', 'error');
+        return;
+      }
+    }
+
+    const payload = {
+      title,
+      category_id,
+      language,
+      difficulty,
+      target_wpm,
+      duration_seconds,
+      audio_url,
+      instructions,
+      typing_system,
+      official_mangal_text: official_mangal,
+      official_kruti_dev_text: official_kruti,
+      official_text: official_mangal,
+      official_text_krutidev: official_kruti,
+      tags,
+      status: 'published'
+    };
+    if (id) payload.id = parseInt(id);
+
+    try {
+      await stenoApp.apiCall('/api/admin/passages/save', 'POST', payload);
+      stenoApp.showToast('आलेख सफलतापूर्ण सहेजा गया! 🎉', 'success');
+      stenoApp.closeModal('passageEditModal');
+      this.loadPassages();
+      stenoApp.loadPassages();
+    } catch (err) {
+      stenoApp.showToast('आलेख सहेजने में त्रुटि: ' + err.message, 'error');
+    }
+  }
+
+  async deletePassage(id) {
+    if (!confirm('क्या आप वाकई इस आलेख को हटाना चाहते हैं?')) return;
+    try {
+      await stenoApp.apiCall('/api/admin/passages/delete', 'POST', { id });
+      stenoApp.showToast('आलेख हटा दिया गया।', 'info');
+      this.loadPassages();
+      stenoApp.loadPassages();
+    } catch (err) {
+      stenoApp.showToast('आलेख हटाने में त्रुटि: ' + err.message, 'error');
+    }
+  }
+
+  async handleAudioFileUpload(fileInput) {
+    const file = fileInput.files[0];
+    if (!file) return;
+
+    stenoApp.showToast('ऑडियो अपलोड किया जा रहा है...', 'info');
+    const reader = new FileReader();
+    reader.onload = async () => {
+      try {
+        const base64Data = reader.result;
+        const res = await stenoApp.apiCall('/api/admin/audio-upload', 'POST', {
+          filename: file.name,
+          data: base64Data
+        });
+        document.getElementById('passageAudioUrlInput').value = res.audio_url;
+        stenoApp.showToast('ऑडियो सफलतापूर्ण अपलोड हुआ! 🎵', 'success');
+      } catch (err) {
+        stenoApp.showToast('ऑडियो अपलोड में विफलता: ' + err.message, 'error');
+      }
+    };
+    reader.readAsDataURL(file);
+  }
+
+  openBulkImportModal() {
+    stenoApp.openModal('bulkImportModal');
+  }
+
+  async processBulkImport() {
+    const text = document.getElementById('bulkJsonInput').value.trim();
+    if (!text) {
+      stenoApp.showToast('कृपया मान्य JSON डेटा दर्ज करें।', 'error');
+      return;
+    }
+
+    try {
+      const parsed = JSON.parse(text);
+      const passages = Array.isArray(parsed) ? parsed : (parsed.passages || []);
+      const res = await stenoApp.apiCall('/api/admin/bulk-import', 'POST', { passages });
+      stenoApp.showToast(`सफलतापूर्वक ${res.imported_count} आलेख आयात किए गए!`, 'success');
+      stenoApp.closeModal('bulkImportModal');
+      this.loadPassages();
+      stenoApp.loadPassages();
+    } catch (err) {
+      stenoApp.showToast('अमान्य JSON प्रारूप: ' + err.message, 'error');
+    }
+  }
+
+  async loadScoringConfig() {
+    try {
+      const res = await stenoApp.apiCall('/api/settings');
+      this.settings = res.settings || {};
+      const scoringMode = this.settings.scoring_mode || 'standard';
+      const modeSelect = document.getElementById('adminScoringModeSelect');
+      if (modeSelect) modeSelect.value = scoringMode;
+
+      const sscFactor = document.getElementById('adminSscFactorInput');
+      if (sscFactor) sscFactor.value = this.settings.ssc_error_factor || '1.0';
+
+      const courtFactor = document.getElementById('adminCourtFactorInput');
+      if (courtFactor) courtFactor.value = this.settings.court_error_factor || '1.2';
+    } catch (err) {
+      console.error('Failed to load scoring config:', err);
+    }
+  }
+
+  async saveScoringConfig(e) {
+    e.preventDefault();
+    const scoring_mode = document.getElementById('adminScoringModeSelect').value;
+    const ssc_error_factor = document.getElementById('adminSscFactorInput').value;
+    const court_error_factor = document.getElementById('adminCourtFactorInput').value;
+
+    try {
+      await stenoApp.apiCall('/api/admin/settings/update', 'POST', {
+        scoring_mode,
+        ssc_error_factor,
+        court_error_factor
+      });
+      stenoApp.showToast('मूल्यांकन नियम सहेज लिए गए! ✅', 'success');
+    } catch (err) {
+      stenoApp.showToast('नियम सहेजने में त्रुटि: ' + err.message, 'error');
+    }
+  }
+
+  async loadSystemSettings() {
+    try {
+      const res = await stenoApp.apiCall('/api/settings');
+      this.settings = res.settings || {};
+
+      const appNameEl = document.getElementById('adminAppNameInput');
+      if (appNameEl) appNameEl.value = this.settings.app_name || 'StenoMaster';
+
+      const taglineEl = document.getElementById('adminTaglineInput');
+      if (taglineEl) taglineEl.value = this.settings.tagline || 'Listen. Type. Improve. Master Steno.';
+
+      const dictEl = document.getElementById('adminDailyDictInput');
+      if (dictEl) dictEl.value = this.settings.daily_target_dictations || '3';
+
+      const minEl = document.getElementById('adminDailyMinInput');
+      if (minEl) minEl.value = this.settings.daily_target_minutes || '15';
+
+      const wpmEl = document.getElementById('adminDailyWpmInput');
+      if (wpmEl) wpmEl.value = this.settings.daily_target_wpm || '40';
+    } catch (err) {
+      console.error('Failed to load system settings:', err);
+    }
+  }
+
+  async saveSystemSettings(e) {
+    e.preventDefault();
+    const app_name = document.getElementById('adminAppNameInput').value.trim();
+    const tagline = document.getElementById('adminTaglineInput').value.trim();
+    const daily_target_dictations = document.getElementById('adminDailyDictInput').value;
+    const daily_target_minutes = document.getElementById('adminDailyMinInput').value;
+    const daily_target_wpm = document.getElementById('adminDailyWpmInput').value;
+
+    try {
+      await stenoApp.apiCall('/api/admin/settings/update', 'POST', {
+        app_name,
+        tagline,
+        daily_target_dictations,
+        daily_target_minutes,
+        daily_target_wpm
+      });
+      stenoApp.showToast('सिस्टम ब्रांडिंग व सेटिंग्स सहेजी गईं! 🎉', 'success');
+      // Update UI title immediately
+      document.querySelectorAll('.brand-name-text').forEach(el => el.textContent = app_name);
+      document.querySelectorAll('.brand-tagline-text').forEach(el => el.textContent = tagline);
+    } catch (err) {
+      stenoApp.showToast('सेटिंग्स सहेजने में त्रुटि: ' + err.message, 'error');
+    }
+  }
+
+  openCategoryModal() {
+    document.getElementById('catNameInput').value = '';
+    document.getElementById('catSlugInput').value = '';
+    document.getElementById('catDescInput').value = '';
+    stenoApp.openModal('categoryModal');
+  }
+
+  async saveCategory(e) {
+    e.preventDefault();
+    const name = document.getElementById('catNameInput').value.trim();
+    let slug = document.getElementById('catSlugInput').value.trim();
+    const description = document.getElementById('catDescInput').value.trim();
+    const language = document.getElementById('catLanguageSelect').value;
+
+    if (!name) {
+      stenoApp.showToast('श्रेणी नाम आवश्यक है।', 'error');
+      return;
+    }
+    if (!slug) {
+      slug = 'cat-' + Date.now();
+    }
+
+    try {
+      await stenoApp.apiCall('/api/admin/categories/save', 'POST', { name, slug, description, language });
+      stenoApp.showToast(`श्रेणी '${name}' सफलतापूर्ण जोड़ी गई! 📁`, 'success');
+      stenoApp.closeModal('categoryModal');
+      await stenoApp.loadCategories();
+    } catch (err) {
+      stenoApp.showToast('श्रेणी सहेजने में त्रुटि: ' + err.message, 'error');
+    }
+  }
+
+  async openUsersModal() {
+    stenoApp.openModal('adminUsersModal');
+    await this.loadUsers();
+  }
+
+  async loadUsers() {
+    const tbody = document.getElementById('adminUsersTableBody');
+    if (!tbody) return;
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:24px; color:var(--text-muted);">उपयोगकर्ता सूची लोड हो रही है...</td></tr>';
+    try {
+      const res = await stenoApp.apiCall('/api/admin/users');
+      const users = res.users || [];
+      if (users.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:24px; color:var(--text-muted);">कोई उपयोगकर्ता पंजीकृत नहीं है।</td></tr>';
+        return;
+      }
+      tbody.innerHTML = users.map(u => `
+        <tr>
+          <td style="font-weight:700;">#${u.id}</td>
+          <td>
+            <div style="font-weight:600; color:var(--text-main);">${this.escapeHtml(u.display_name || u.username)}</div>
+            <div style="font-size:0.75rem; color:var(--primary); font-weight:700;">${this.escapeHtml(u.student_code || '')}</div>
+          </td>
+          <td>
+            <div>${this.escapeHtml(u.email)}</div>
+            <div style="font-size:0.75rem; color:var(--text-muted);">${this.escapeHtml(u.phone || '—')}</div>
+          </td>
+          <td>
+            <span class="badge ${u.role === 'admin' ? 'badge-hard' : 'badge-easy'}" style="font-size:0.72rem;">
+              ${u.role === 'admin' ? '🛡️ Admin' : '👨‍🎓 Student'}
+            </span>
+            ${u.subscription_status === 'active' ? '<div style="margin-top:2px;"><span class="badge badge-success" style="font-size:0.65rem;">👑 PRO</span></div>' : ''}
+          </td>
+          <td>${this.escapeHtml(u.target_exam || 'SSC Stenographer')}</td>
+          <td>
+            <div style="font-weight:600;">🔥 ${u.streak_days || 0} दिन</div>
+            <div style="font-size:0.75rem; color:var(--text-muted);">⭐ ${u.points || 0} अंक</div>
+          </td>
+          <td>
+            <span class="badge" style="background:var(--bg-subtle); color:var(--text-main); font-weight:700;">
+              ${u.attempts_count || 0} अभ्यास
+            </span>
+          </td>
+        </tr>
+      `).join('');
+    } catch (err) {
+      tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:24px; color:var(--accent-red);">त्रुटि: ${this.escapeHtml(err.message)}</td></tr>`;
+    }
+  }
+
+  // -------------------------------------------------------------------------
+  // Phase 3: Payment Verification & Subscription Management
+  // -------------------------------------------------------------------------
+  async loadPayments() {
+    const tbody = document.getElementById('adminPaymentsTableBody');
+    if (!tbody) return;
+    tbody.innerHTML = '<tr><td colspan="9" style="text-align:center; padding:20px; color:var(--text-muted);">भुगतान अनुरोध लोड हो रहे हैं...</td></tr>';
+    try {
+      const res = await stenoApp.apiCall('/api/admin/payments');
+      const payments = res.payments || [];
+      if (payments.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="9" style="text-align:center; padding:24px; color:var(--text-muted);">कोई भुगतान अनुरोध लंबित नहीं है।</td></tr>';
+        return;
+      }
+      tbody.innerHTML = payments.map(p => {
+        const dt = new Date(p.created_at).toLocaleDateString('hi-IN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+        let statusBadge = '<span class="badge badge-warning">⏳ Pending</span>';
+        if (p.status === 'approved') statusBadge = '<span class="badge badge-success">✅ Approved</span>';
+        if (p.status === 'rejected') statusBadge = '<span class="badge badge-hard">❌ Rejected</span>';
+
+        const actionBtns = p.status === 'pending' ? `
+          <div style="display:flex; gap:6px;">
+            <button class="btn-primary" style="padding:4px 10px; font-size:0.75rem; background:var(--accent-green);" onclick="stenoAdmin.reviewPayment(${p.id}, 'approve')">स्वीकृत करें</button>
+            <button class="btn-secondary" style="padding:4px 10px; font-size:0.75rem; color:var(--accent-red);" onclick="stenoAdmin.reviewPayment(${p.id}, 'reject')">अस्वीकृत</button>
+          </div>
+        ` : `<span style="font-size:0.8rem; color:var(--text-muted);">सत्यापित</span>`;
+
+        return `
+          <tr>
+            <td style="font-weight:700;">#${p.id}</td>
+            <td>
+              <div style="font-weight:600;">${this.escapeHtml(p.display_name || p.username)}</div>
+              <div style="font-size:0.75rem; color:var(--primary); font-weight:700;">${this.escapeHtml(p.student_code || '')}</div>
+            </td>
+            <td>
+              <div style="font-size:0.8rem;">${this.escapeHtml(p.email)}</div>
+              <div style="font-size:0.75rem; color:var(--text-muted);">${this.escapeHtml(p.phone || '—')}</div>
+            </td>
+            <td><span class="badge badge-primary">${this.escapeHtml(p.plan_name)}</span></td>
+            <td><strong style="color:var(--primary);">₹${p.amount}</strong></td>
+            <td><code>${this.escapeHtml(p.transaction_id)}</code></td>
+            <td>${statusBadge}</td>
+            <td style="font-size:0.8rem; color:var(--text-muted);">${dt}</td>
+            <td>${actionBtns}</td>
+          </tr>
+        `;
+      }).join('');
+    } catch (err) {
+      tbody.innerHTML = `<tr><td colspan="9" style="text-align:center; padding:20px; color:var(--accent-red);">त्रुटि: ${this.escapeHtml(err.message)}</td></tr>`;
+    }
+  }
+
+  async reviewPayment(requestId, action) {
+    const notes = prompt(`टिप्पणी दर्ज करें (${action === 'approve' ? 'सदस्यता 30 दिनों के लिए सक्रिय होगी' : 'अनुरोध अस्वीकार होगा'}):`, action === 'approve' ? 'भुगतान सत्यापित एवं स्वीकृत' : 'अमान्य ट्रांजेक्शन आईडी');
+    if (notes === null) return;
+
+    try {
+      await stenoApp.apiCall('/api/admin/payments/review', 'POST', {
+        request_id: requestId,
+        action,
+        notes
+      });
+      stenoApp.showToast(`भुगतान #${requestId} को ${action === 'approve' ? 'स्वीकृत' : 'अस्वीकृत'} किया गया! 🎉`, 'success');
+      await this.loadPayments();
+      await this.loadUsers();
+    } catch (err) {
+      stenoApp.showToast('समीक्षा विफल: ' + err.message, 'error');
+    }
+  }
+
+  async loadRewardsLedger() {
+    const tbody = document.getElementById('adminRewardsTableBody');
+    if (!tbody) return;
+    try {
+      const res = await stenoApp.apiCall('/api/admin/rewards');
+      const txs = res.transactions || [];
+      if (txs.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:18px; color:var(--text-muted);">कोई रिवॉर्ड ट्रांजेक्शन नहीं है।</td></tr>';
+        return;
+      }
+      tbody.innerHTML = txs.map(t => {
+        const dt = new Date(t.created_at).toLocaleDateString('hi-IN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+        return `
+          <tr>
+            <td style="font-weight:700;">#${t.id}</td>
+            <td>
+              <div style="font-weight:600;">${this.escapeHtml(t.display_name || t.username)}</div>
+              <div style="font-size:0.72rem; color:var(--primary);">${this.escapeHtml(t.student_code || '')}</div>
+            </td>
+            <td><strong style="color:#b45309;">+${t.points} Pts</strong></td>
+            <td><span class="badge" style="font-size:0.7rem; background:var(--bg-subtle);">${this.escapeHtml(t.type)}</span></td>
+            <td><code>${this.escapeHtml(t.reference_id || '—')}</code></td>
+            <td style="font-size:0.75rem; color:var(--text-muted);">${dt}</td>
+          </tr>
+        `;
+      }).join('');
+    } catch (err) {
+      console.error('Failed to load rewards ledger:', err);
+    }
+  }
+
+  async loadSubscriptionSettings() {
+    try {
+      const res = await stenoApp.apiCall('/api/settings');
+      const settings = res.settings || {};
+      const planNameInput = document.getElementById('adminSubPlanNameInput');
+      const planPriceInput = document.getElementById('adminSubPlanPriceInput');
+      const qrPreview = document.getElementById('adminQrPreviewImg');
+      const cfAppIdInput = document.getElementById('adminCashfreeAppIdInput');
+      const cfSecretInput = document.getElementById('adminCashfreeSecretInput');
+      const cfEnvSelect = document.getElementById('adminCashfreeEnvSelect');
+
+      if (planNameInput && settings.subscription_plan_name) planNameInput.value = settings.subscription_plan_name;
+      if (planPriceInput && settings.subscription_plan_price) planPriceInput.value = settings.subscription_plan_price;
+      if (qrPreview && settings.subscription_qr_url) qrPreview.src = `${settings.subscription_qr_url}?t=${Date.now()}`;
+      if (cfAppIdInput && settings.cashfree_app_id) cfAppIdInput.value = settings.cashfree_app_id;
+      if (cfSecretInput && settings.cashfree_secret_key) cfSecretInput.value = settings.cashfree_secret_key;
+      if (cfEnvSelect && settings.cashfree_env) cfEnvSelect.value = settings.cashfree_env;
+    } catch (err) {
+      console.error('Failed to load subscription settings:', err);
+    }
+  }
+
+  async saveSubscriptionSettings(e) {
+    e.preventDefault();
+    const plan_name = document.getElementById('adminSubPlanNameInput')?.value.trim();
+    const plan_price = document.getElementById('adminSubPlanPriceInput')?.value.trim();
+    const cashfree_app_id = document.getElementById('adminCashfreeAppIdInput')?.value.trim();
+    const cashfree_secret_key = document.getElementById('adminCashfreeSecretInput')?.value.trim();
+    const cashfree_env = document.getElementById('adminCashfreeEnvSelect')?.value || 'SANDBOX';
+
+    try {
+      await stenoApp.apiCall('/api/admin/subscription/settings', 'POST', {
+        plan_name,
+        plan_price,
+        cashfree_app_id,
+        cashfree_secret_key,
+        cashfree_env
+      });
+      stenoApp.showToast('सदस्यता सेटिंग्स सफलतापूर्वक सहेजी गईं! ✅', 'success');
+    } catch (err) {
+      stenoApp.showToast('सेटिंग्स सहेजने में त्रुटि: ' + err.message, 'error');
+    }
+  }
+
+  handleQrUpload(inputEl) {
+    const file = inputEl.files[0];
+    if (!file) return;
+
+    const allowed = ['.png', '.jpg', '.jpeg', '.webp'];
+    const ext = '.' + file.name.split('.').pop().toLowerCase();
+    if (!allowed.includes(ext)) {
+      stenoApp.showToast('केवल .png, .jpg, .jpeg, .webp फ़ाइलें स्वीकृत हैं।', 'error');
+      inputEl.value = '';
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+      const base64Data = e.target.result;
+      try {
+        stenoApp.showToast('QR कोड अपलोड किया जा रहा है... 📤', 'info');
+        const res = await stenoApp.apiCall('/api/admin/subscription/upload-qr', 'POST', {
+          filename: file.name,
+          data: base64Data
+        });
+        stenoApp.showToast('QR कोड सफलतापूर्वक अपडेट किया गया! 🎉', 'success');
+        const qrPreview = document.getElementById('adminQrPreviewImg');
+        if (qrPreview) qrPreview.src = `${res.qr_url}?t=${Date.now()}`;
+      } catch (err) {
+        stenoApp.showToast('QR कोड अपलोड में त्रुटि: ' + err.message, 'error');
+      }
+    };
+    reader.readAsDataURL(file);
+  }
+
+  scrollToSection(sectionId) {
+    const el = document.getElementById(sectionId);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }
+
+  escapeHtml(str) {
+    if (!str) return '';
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  }
+}
+
+window.stenoAdmin = new StenoAdmin();
+

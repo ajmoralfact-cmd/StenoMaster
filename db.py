@@ -482,6 +482,19 @@ def init_db():
         c.execute("ALTER TABLE passages ADD COLUMN is_premium INTEGER DEFAULT 0")
     if 'official_text_krutidev' not in p_cols:
         c.execute("ALTER TABLE passages ADD COLUMN official_text_krutidev TEXT")
+    if 'typing_system' not in p_cols:
+        c.execute("ALTER TABLE passages ADD COLUMN typing_system TEXT DEFAULT 'dual'")
+
+    # Safe Canonical Typing System Backfill (Phase 6)
+    c.execute("""
+        UPDATE passages
+        SET typing_system = CASE
+            WHEN (official_text IS NOT NULL AND official_text != '') AND (official_text_krutidev IS NOT NULL AND official_text_krutidev != '') THEN 'dual'
+            WHEN (official_text_krutidev IS NOT NULL AND official_text_krutidev != '') THEN 'kruti_dev_010'
+            ELSE 'mangal_unicode'
+        END
+        WHERE typing_system IS NULL OR typing_system = ''
+    """)
 
     # Backfill Kruti Dev reference text for any Hindi passages lacking it
     try:
@@ -1214,6 +1227,7 @@ def get_passages(
     query = """
         SELECT p.id, p.title, p.category_id, p.language, p.difficulty, p.instructions,
                p.target_wpm, p.duration_seconds, p.audio_url, p.thumbnail, p.tags, p.status, p.is_premium,
+               p.typing_system,
                p.view_count, p.attempt_count, p.created_at,
                c.name as category_name, c.slug as category_slug
     """
@@ -1264,6 +1278,9 @@ def get_passages(
     result = []
     for r in rows:
         item = dict(r)
+        item['typing_system'] = item.get('typing_system') or 'dual'
+        item['official_mangal_text'] = item.get('official_text')
+        item['official_kruti_dev_text'] = item.get('official_text_krutidev')
         item['is_free_tier'] = item['id'] in free_ids
         item['is_locked'] = False if user_has_pro else (item['id'] not in free_ids)
         result.append(item)
@@ -1277,6 +1294,7 @@ def get_passage_detail(passage_id: int, user_id: Optional[int] = None, include_o
     query = """
         SELECT p.id, p.title, p.category_id, p.language, p.difficulty, p.instructions,
                p.target_wpm, p.duration_seconds, p.audio_url, p.thumbnail, p.tags, p.status, p.is_premium,
+               p.typing_system,
                p.view_count, p.attempt_count, p.created_at,
                c.name as category_name, c.slug as category_slug
     """
@@ -1309,6 +1327,9 @@ def get_passage_detail(passage_id: int, user_id: Optional[int] = None, include_o
         c.execute("UPDATE passages SET view_count = view_count + 1 WHERE id = ?", (passage_id,))
         conn.commit()
         res_dict = dict(row)
+        res_dict['typing_system'] = res_dict.get('typing_system') or 'dual'
+        res_dict['official_mangal_text'] = res_dict.get('official_text')
+        res_dict['official_kruti_dev_text'] = res_dict.get('official_text_krutidev')
         free_ids = set(get_free_passage_ids(2))
         user_has_pro = is_user_premium(user_id) if user_id else False
         res_dict['is_free_tier'] = res_dict['id'] in free_ids
@@ -1818,64 +1839,85 @@ def admin_save_passage(data: Dict[str, Any]) -> int:
     c = conn.cursor()
     now_iso = datetime.now().isoformat()
 
-    p_id = data.get("id")
-    official_text = (data.get("official_text") or "").strip()
-    official_text_kruti = (data.get("official_text_krutidev") or "").strip()
+    try:
+        p_id = data.get("id")
+        title = (data.get("title") or "").strip()
+        if not title:
+            raise ValueError("आलेख का शीर्षक आवश्यक है। (Passage title is required)")
 
-    import re, hindi_converter
+        # Canonical Typing System Resolution (Phase 2 & 5)
+        raw_sys = (data.get("typing_system") or "").strip().lower()
+        if raw_sys in ("mangal", "unicode", "mangal_unicode"):
+            typing_system = "mangal_unicode"
+        elif raw_sys in ("kruti", "krutidev", "kruti_dev_010"):
+            typing_system = "kruti_dev_010"
+        elif raw_sys in ("dual", "both"):
+            typing_system = "dual"
+        else:
+            # Backward-compatible inference if typing_system not explicitly provided
+            m_check = (data.get("official_mangal_text") or data.get("official_text") or "").strip()
+            k_check = (data.get("official_kruti_dev_text") or data.get("official_text_krutidev") or "").strip()
+            if m_check and k_check:
+                typing_system = "dual"
+            elif k_check:
+                typing_system = "kruti_dev_010"
+            else:
+                typing_system = "mangal_unicode"
 
-    # If Kruti Dev text contains Devanagari Unicode, convert to genuine Kruti Dev
-    if official_text_kruti and re.search(r'[\u0900-\u097F]', official_text_kruti):
-        try:
-            official_text_kruti = hindi_converter.unicode_to_kruti_dev(official_text_kruti)
-        except Exception:
-            pass
+        official_mangal = (data.get("official_mangal_text") or data.get("official_text") or "").strip()
+        official_kruti = (data.get("official_kruti_dev_text") or data.get("official_text_krutidev") or "").strip()
 
-    # If Kruti Dev text not explicitly given for Hindi, auto-generate from Unicode
-    if not official_text_kruti and data.get("language") == "hindi" and official_text:
-        try:
-            official_text_kruti = hindi_converter.unicode_to_kruti_dev(official_text)
-        except Exception:
-            official_text_kruti = ""
+        # Strict Validation (Phase 3 & 5)
+        # Do NOT silently auto-convert or overwrite - admin's input is authoritative
+        if typing_system == "mangal_unicode":
+            if not official_mangal:
+                raise ValueError("मंगल / यूनिकोड संदर्भ पाठ आवश्यक है। (Official Mangal text is required)")
+            official_kruti = official_kruti or ""
+        elif typing_system == "kruti_dev_010":
+            if not official_kruti:
+                raise ValueError("कृति देव 010 संदर्भ पाठ आवश्यक है। (Official Kruti Dev text is required)")
+            official_mangal = official_mangal or ""
+        elif typing_system == "dual":
+            if not official_mangal:
+                raise ValueError("Dual आलेख के लिए मंगल / यूनिकोड संदर्भ पाठ आवश्यक है।")
+            if not official_kruti:
+                raise ValueError("Dual आलेख के लिए कृति देव 010 संदर्भ पाठ आवश्यक है।")
 
-    # If official_text is Kruti Dev ASCII without Devanagari characters, convert to Unicode
-    if official_text and not re.search(r'[\u0900-\u097F]', official_text) and data.get("language") == "hindi":
-        try:
-            official_text = hindi_converter.kruti_dev_to_unicode(official_text)
-        except Exception:
-            pass
+        if p_id:
+            c.execute("""
+                UPDATE passages
+                SET title = ?, category_id = ?, language = ?, difficulty = ?,
+                    official_text = ?, official_text_krutidev = ?, typing_system = ?,
+                    instructions = ?, target_wpm = ?, duration_seconds = ?,
+                    audio_url = ?, tags = ?, status = ?, updated_at = ?
+                WHERE id = ?
+            """, (
+                title, data.get("category_id", 1), data.get("language", "hindi"), data.get("difficulty", "medium"),
+                official_mangal, official_kruti, typing_system,
+                data.get("instructions", ""), data.get("target_wpm", 40),
+                data.get("duration_seconds", 180), data.get("audio_url", ""), data.get("tags", ""),
+                data.get("status", "published"), now_iso, p_id
+            ))
+            passage_id = p_id
+        else:
+            c.execute("""
+                INSERT INTO passages (
+                    title, category_id, language, difficulty, official_text, official_text_krutidev,
+                    typing_system, instructions, target_wpm, duration_seconds, audio_url, tags, status, created_at, updated_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (
+                title, data.get("category_id", 1), data.get("language", "hindi"), data.get("difficulty", "medium"),
+                official_mangal, official_kruti, typing_system,
+                data.get("instructions", ""), data.get("target_wpm", 40),
+                data.get("duration_seconds", 180), data.get("audio_url", ""), data.get("tags", ""),
+                data.get("status", "published"), now_iso, now_iso
+            ))
+            passage_id = c.lastrowid
 
-    if p_id:
-        c.execute("""
-            UPDATE passages
-            SET title = ?, category_id = ?, language = ?, difficulty = ?,
-                official_text = ?, official_text_krutidev = ?, instructions = ?, target_wpm = ?, duration_seconds = ?,
-                audio_url = ?, tags = ?, status = ?, updated_at = ?
-            WHERE id = ?
-        """, (
-            data["title"], data["category_id"], data["language"], data["difficulty"],
-            official_text, official_text_kruti, data.get("instructions", ""), data.get("target_wpm", 40),
-            data.get("duration_seconds", 180), data.get("audio_url", ""), data.get("tags", ""),
-            data.get("status", "published"), now_iso, p_id
-        ))
-        passage_id = p_id
-    else:
-        c.execute("""
-            INSERT INTO passages (
-                title, category_id, language, difficulty, official_text, official_text_krutidev, instructions,
-                target_wpm, duration_seconds, audio_url, tags, status, created_at, updated_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """, (
-            data["title"], data["category_id"], data["language"], data["difficulty"],
-            official_text, official_text_kruti, data.get("instructions", ""), data.get("target_wpm", 40),
-            data.get("duration_seconds", 180), data.get("audio_url", ""), data.get("tags", ""),
-            data.get("status", "published"), now_iso, now_iso
-        ))
-        passage_id = c.lastrowid
-
-    conn.commit()
-    conn.close()
-    return passage_id
+        conn.commit()
+        return passage_id
+    finally:
+        conn.close()
 
 
 def admin_delete_passage(passage_id: int) -> bool:

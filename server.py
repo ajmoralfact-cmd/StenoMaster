@@ -742,6 +742,7 @@ class StenoMasterHandler(http.server.SimpleHTTPRequestHandler):
             passage_id = data.get('passage_id')
             raw_input = data.get('typed_text', '')
             typing_mode = data.get('typing_mode', 'mangal')
+            selected_typing_system = (data.get('selected_typing_system') or '').strip().lower()
             time_taken = int(data.get('time_taken_seconds', 60))
 
             if not passage_id or not raw_input.strip():
@@ -754,7 +755,7 @@ class StenoMasterHandler(http.server.SimpleHTTPRequestHandler):
                 self._send_json(200, recent)
                 return
 
-            # Retrieve official text securely from DB
+            # Retrieve official text securely from DB (Security: never trust client reference text)
             passage = db.get_passage_detail(passage_id, include_official=True, is_admin=True)
             if not passage:
                 self._send_json(404, {"error": "Passage not found"})
@@ -778,15 +779,36 @@ class StenoMasterHandler(http.server.SimpleHTTPRequestHandler):
             official_text = passage.get('official_text', '')
             official_text_krutidev = passage.get('official_text_krutidev', '')
             language = passage.get('language', 'hindi')
+            passage_system = passage.get('typing_system') or 'dual'
+
+            # Canonical Typing System & Reference Selection (Phase 8 & 10)
+            if passage_system == 'mangal_unicode':
+                effective_typing_system = 'mangal_unicode'
+                eval_official_text = official_text
+            elif passage_system == 'kruti_dev_010':
+                effective_typing_system = 'kruti_dev_010'
+                eval_official_text = official_text_krutidev
+            elif passage_system == 'dual':
+                if selected_typing_system in ('kruti_dev_010', 'krutidev', 'kruti'):
+                    effective_typing_system = 'kruti_dev_010'
+                    eval_official_text = official_text_krutidev
+                else:
+                    effective_typing_system = 'mangal_unicode'
+                    eval_official_text = official_text
+            else:
+                effective_typing_system = 'mangal_unicode'
+                eval_official_text = official_text
 
             eval_language = language
-            eval_official_text = official_text
             eval_student_text = raw_input
 
             # Hindi Evaluation: Match real Hindi words to real Hindi words
             if language == 'hindi':
                 eval_language = 'hindi'
-                eval_official_text = official_text or hindi_converter.kruti_dev_to_unicode(official_text_krutidev)
+                if effective_typing_system == 'kruti_dev_010':
+                    eval_official_text = hindi_converter.kruti_dev_to_unicode(eval_official_text)
+                else:
+                    eval_official_text = eval_official_text or hindi_converter.kruti_dev_to_unicode(official_text_krutidev)
                 if typing_mode in ('krutidev', 'devlys'):
                     if re.search(r'[\u0900-\u097F]', raw_input):
                         eval_student_text = hindi_converter.normalize_hindi_unicode(raw_input)
@@ -828,6 +850,8 @@ class StenoMasterHandler(http.server.SimpleHTTPRequestHandler):
             eval_result["passage_title"] = passage["title"]
             eval_result["language"] = eval_language
             eval_result["typing_mode"] = typing_mode
+            eval_result["typing_system"] = passage_system
+            eval_result["selected_typing_system"] = effective_typing_system
             eval_result["difficulty"] = passage["difficulty"]
 
             self._send_json(200, eval_result)
@@ -884,8 +908,13 @@ class StenoMasterHandler(http.server.SimpleHTTPRequestHandler):
 
             if path == '/api/admin/passages/save':
                 data = self._read_json_body()
-                passage_id = db.admin_save_passage(data)
-                self._send_json(200, {"success": True, "passage_id": passage_id})
+                try:
+                    passage_id = db.admin_save_passage(data)
+                    self._send_json(200, {"success": True, "passage_id": passage_id})
+                except ValueError as ve:
+                    self._send_json(400, {"error": str(ve)})
+                except Exception as e:
+                    self._send_json(500, {"error": f"Internal server error: {e}"})
                 return
 
             if path == '/api/admin/convert-font':

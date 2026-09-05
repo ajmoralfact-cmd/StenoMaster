@@ -1,0 +1,1994 @@
+<!DOCTYPE html>
+<html lang="hi" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>StenoMaster — Professional Stenographer Practice & Typing Platform</title>
+  <meta name="description" content="Listen. Type. Improve. Master Steno. Audio dictation and typing practice for SSC Steno, UPSSSC, and Court exams.">
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#2563eb">
+  <link rel="icon" type="image/png" href="/assets/logo.png">
+  <link rel="apple-touch-icon" href="/assets/logo.png">
+  <link rel="stylesheet" href="/css/style.css?v=4.0">
+</head>
+<body>
+
+  <!-- =====================================================================
+       Phase 2: Authentication Gateway Screen (Role Selection Login Experience)
+       ===================================================================== -->
+  <div class="auth-gateway-overlay" id="authGatewayView" style="display:none;">
+    <div class="auth-card-container">
+      <div class="auth-card">
+        
+        <!-- Logo & Branding -->
+        <div class="auth-header">
+          <img src="/assets/logo.png" alt="StenoMaster Logo" class="auth-logo-img">
+          <h1 class="auth-brand-title">StenoMaster</h1>
+          <p class="auth-brand-tagline">Listen. Type. Improve. Master Steno.</p>
+        </div>
+
+        <!-- Modern Sliding / Tab Segmented Control -->
+        <div class="auth-segmented-control" role="tablist" aria-label="Login Role Selection">
+          <div class="auth-slider-indicator" id="authSliderIndicator"></div>
+          <button type="button" class="auth-segment-btn active" id="tabStudentBtn" onclick="stenoApp.switchAuthTab('student')" role="tab" aria-selected="true">
+            <span>👨‍🎓 Student Login</span>
+          </button>
+          <button type="button" class="auth-segment-btn" id="tabAdminBtn" onclick="stenoApp.switchAuthTab('admin')" role="tab" aria-selected="false">
+            <span>🛡️ Admin Login</span>
+          </button>
+        </div>
+
+        <!-- Tab Panels -->
+        <div class="auth-panels-wrapper">
+          <!-- Student Login & Registration Panel -->
+          <div class="auth-panel" id="studentLoginPanel">
+            <!-- Student Sub-Segmented Control (Login vs Sign Up) -->
+            <div class="student-sub-segmented" style="display:flex; background:var(--bg-card); border:1px solid var(--border-subtle); border-radius:10px; padding:3px; margin-bottom:16px;">
+              <button type="button" class="sub-tab-btn active" id="subTabLoginBtn" onclick="stenoApp.switchStudentAuthMode('login')" style="flex:1; padding:7px 10px; border:none; border-radius:8px; font-weight:600; font-size:0.85rem; cursor:pointer; background:var(--primary); color:#fff;">
+                👨‍🎓 लॉगिन (Login)
+              </button>
+              <button type="button" class="sub-tab-btn" id="subTabSignupBtn" onclick="stenoApp.switchStudentAuthMode('signup')" style="flex:1; padding:7px 10px; border:none; border-radius:8px; font-weight:600; font-size:0.85rem; cursor:pointer; background:transparent; color:var(--text-secondary);">
+                ✨ नया खाता बनाएं (Sign Up)
+              </button>
+            </div>
+
+            <!-- 1. Student Login Sub-Form -->
+            <div id="studentSubLoginForm">
+              <form onsubmit="stenoApp.handleStudentLogin(event)">
+                <div class="form-group">
+                  <label class="form-label">छात्र आईडी, ईमेल, या यूज़रनेम (Student ID, Email or Username)</label>
+                  <div class="input-with-icon">
+                    <span class="input-icon">👤</span>
+                    <input type="text" id="stuAuthEmail" class="form-input" placeholder="उदा. STM-2026-000002 / ईमेल / यूज़रनेम" required autocomplete="username">
+                  </div>
+                </div>
+                <div class="form-group">
+                  <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <label class="form-label">Password</label>
+                    <a href="javascript:void(0)" class="auth-link" onclick="stenoApp.openForgotPassword()">Forgot Password?</a>
+                  </div>
+                  <div class="input-with-icon">
+                    <span class="input-icon">🔒</span>
+                    <input type="password" id="stuAuthPassword" class="form-input" placeholder="••••••••" required autocomplete="current-password">
+                  </div>
+                </div>
+                <div id="stuAuthError" class="auth-inline-error" style="display:none;"></div>
+                <button type="submit" id="stuLoginSubmitBtn" class="btn-primary auth-submit-btn">
+                  <span>लॉगिन करें (Login)</span> <span>→</span>
+                </button>
+              </form>
+              <div class="auth-footer-link" style="margin-top:14px;">
+                Don't have an account?
+                <a href="javascript:void(0)" onclick="stenoApp.switchStudentAuthMode('signup')">Create Free Account</a>
+              </div>
+            </div>
+
+            <!-- 2. Student Sign Up Sub-Form -->
+            <div id="studentSubSignupForm" style="display:none;">
+              <form onsubmit="stenoApp.handleStudentSignup(event)">
+                <div class="form-group">
+                  <label class="form-label">पूरा नाम (Full Name) *</label>
+                  <div class="input-with-icon">
+                    <span class="input-icon">👤</span>
+                    <input type="text" id="stuRegFullName" class="form-input" placeholder="उदा. राहुल शर्मा" required>
+                  </div>
+                </div>
+
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                  <div class="form-group">
+                    <label class="form-label">मोबाइल नंबर (Phone) *</label>
+                    <div class="input-with-icon">
+                      <span class="input-icon">📱</span>
+                      <input type="tel" id="stuRegPhone" class="form-input" placeholder="10-digit mobile" required pattern="[0-9]{10}" maxlength="10">
+                    </div>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">ईमेल (Email) *</label>
+                    <div class="input-with-icon">
+                      <span class="input-icon">✉️</span>
+                      <input type="email" id="stuRegEmail" class="form-input" placeholder="name@email.com" required>
+                    </div>
+                    <small style="display:block; font-size:11px; color:var(--primary); margin-top:4px; font-weight:500;">ℹ️ पासवर्ड भूलने पर इसी ईमेल पर रिकवरी लिंक भेजा जाएगा</small>
+                  </div>
+                </div>
+
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                  <div class="form-group">
+                    <label class="form-label">पासवर्ड *</label>
+                    <div class="input-with-icon">
+                      <span class="input-icon">🔒</span>
+                      <input type="password" id="stuRegPassword" class="form-input" placeholder="न्यूनतम 6 अक्षर" required minlength="6">
+                    </div>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">पासवर्ड की पुष्टि *</label>
+                    <div class="input-with-icon">
+                      <span class="input-icon">🔐</span>
+                      <input type="password" id="stuRegConfirmPassword" class="form-input" placeholder="पुष्टि करें" required minlength="6">
+                    </div>
+                  </div>
+                </div>
+
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                  <div class="form-group">
+                    <label class="form-label">लक्ष्य परीक्षा</label>
+                    <select id="stuRegTargetExam" class="form-select">
+                      <option value="SSC Stenographer">SSC Stenographer Grade C & D</option>
+                      <option value="UPSSSC Stenographer">UPSSSC आशुलिपिक</option>
+                      <option value="High Court Stenographer">High Court / District Court</option>
+                      <option value="State PSC Steno">State PSC / Police Steno</option>
+                      <option value="Parliamentary Reporter">Parliamentary Reporter</option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">प्राथमिक भाषा</label>
+                    <select id="stuRegPrefLanguage" class="form-select">
+                      <option value="hindi">हिंदी आशुलिपि (Hindi)</option>
+                      <option value="english">अंग्रेजी आशुलिपि (English)</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                  <div class="form-group">
+                    <label class="form-label">कीबोर्ड लेआउट</label>
+                    <select id="stuRegPrefMode" class="form-select">
+                      <option value="mangal">Mangal (Remington Gail / Inscript)</option>
+                      <option value="krutidev">Kruti Dev 010 (Legacy)</option>
+                      <option value="inscript">Inscript Standard</option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">रेफरल कोड (वैकल्पिक)</label>
+                    <input type="text" id="stuRegReferralCode" class="form-input" placeholder="उदा. STENO101">
+                  </div>
+                </div>
+
+                <div id="stuSignupError" class="auth-inline-error" style="display:none;"></div>
+
+                <button type="submit" id="stuSignupSubmitBtn" class="btn-primary auth-submit-btn">
+                  <span>खाता बनाएं और अभ्यास शुरू करें (Create Account)</span> <span>→</span>
+                </button>
+              </form>
+              <div class="auth-footer-link" style="margin-top:14px;">
+                Already have an account?
+                <a href="javascript:void(0)" onclick="stenoApp.switchStudentAuthMode('login')">Login Instead</a>
+              </div>
+            </div>
+          </div>
+
+          <!-- Admin Login Panel -->
+          <div class="auth-panel" id="adminLoginPanel" style="display:none;">
+            <div class="auth-panel-badge admin-badge">
+              <span>🛡️</span> <span>प्रशासनिक नियंत्रण (Admin Security Console)</span>
+            </div>
+            <form onsubmit="stenoApp.handleAdminLogin(event)">
+              <div class="form-group">
+                <label class="form-label">Admin Email or Username</label>
+                <div class="input-with-icon">
+                  <span class="input-icon">🛡️</span>
+                  <input type="text" id="adminAuthEmail" class="form-input" placeholder="admin@stenomaster.com" required autocomplete="username">
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Admin Password</label>
+                <div class="input-with-icon">
+                  <span class="input-icon">🔑</span>
+                  <input type="password" id="adminAuthPassword" class="form-input" placeholder="••••••••" required autocomplete="current-password">
+                </div>
+              </div>
+              <div id="adminAuthError" class="auth-inline-error" style="display:none;"></div>
+              <button type="submit" id="adminLoginSubmitBtn" class="btn-primary auth-submit-btn admin-btn">
+                <span>🛡️ Secure Admin Login</span>
+              </button>
+            </form>
+            <div class="auth-security-notice">
+              <span>🔒</span> Authorized administrative personnel only. Unauthorized access attempts are monitored and logged.
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <div class="app-container" id="appContainer">
+
+    <!-- Slide-Out Sidebar Backdrop Overlay -->
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="stenoApp.closeSidebar()"></div>
+
+    <!-- =====================================================================
+         Slide-Out Left Navigation Drawer
+         ===================================================================== -->
+    <aside class="sidebar slide-drawer" id="appSidebar" role="navigation" aria-label="Sidebar Navigation">
+      <div class="sidebar-header">
+        <a href="javascript:void(0)" class="brand-logo" onclick="stenoApp.handleLogoClick(); stenoApp.closeSidebar();" title="StenoMaster">
+          <img src="/assets/logo.png" alt="StenoMaster Logo" class="brand-logo-img">
+          <div>
+            <div class="brand-name-text">StenoMaster</div>
+            <div class="brand-tagline-text" style="font-size:0.65rem; color:var(--text-muted); font-weight:500;">Listen. Type. Improve.</div>
+          </div>
+        </a>
+        <button class="sidebar-close-btn" id="sidebarCloseBtn" onclick="stenoApp.closeSidebar()" aria-label="Close navigation menu" title="नेविगेशन बंद करें (Close)">✕</button>
+      </div>
+
+      <!-- Role-Based Navigation Menu (Rendered strictly based on authenticated role) -->
+      <nav class="sidebar-nav" id="sidebarNavItems">
+        <!-- Injected dynamically via stenoApp.renderSidebarNav() -->
+      </nav>
+
+      <!-- Sidebar Footer -->
+      <div class="sidebar-footer" id="sidebarFooter">
+        <!-- Injected dynamically -->
+      </div>
+    </aside>
+
+    <!-- =====================================================================
+         Main Content Area
+         ===================================================================== -->
+    <div class="main-wrapper">
+
+      <!-- Compact Top Header with 3-Dot Navigation Toggle -->
+      <header class="top-header">
+        <div class="header-left">
+          <!-- 3-Dot Slide Drawer Toggle Button -->
+          <button class="three-dot-btn" id="navToggleBtn" onclick="stenoApp.toggleSidebar()" aria-label="Open navigation menu" aria-expanded="false" title="नेविगेशन मेनू खोलें (Open Menu)">
+            <span class="three-dots-icon">⋮</span>
+          </button>
+          <!-- Keep mobileMenuBtn ID for backward compatibility -->
+          <button class="mobile-menu-btn" id="mobileMenuBtn" onclick="stenoApp.toggleSidebar()" aria-label="Open Navigation" style="display:none;">☰</button>
+
+          <!-- Brand Logo -->
+          <a href="javascript:void(0)" class="header-brand-link" onclick="stenoApp.handleLogoClick()" title="StenoMaster">
+            <img src="/assets/logo.png" alt="StenoMaster" class="header-brand-logo">
+            <span class="header-brand-name">StenoMaster</span>
+            <span class="header-view-badge" id="activeViewBadge" style="display:none;">Dashboard</span>
+          </a>
+        </div>
+
+        <div class="header-right">
+          <!-- Live Plan Validity Badge (Top Bar) -->
+          <div class="plan-validity-pill" id="headerPlanValidityBadge" onclick="stenoApp.navigate('subscription')" title="प्लान स्थिति एवं वैधता देखें (Click to view subscription)">
+            <span class="validity-icon" id="headerPlanValidityIcon">👑</span>
+            <span class="validity-text" id="headerPlanValidityText">2 फ्री कक्षाएं</span>
+          </div>
+
+          <!-- Streak Indicator -->
+          <div class="streak-badge" id="streakBadge" title="आपकी दैनिक अभ्यास स्ट्रीक">
+            <span>🔥</span>
+            <span id="userStreakCount">0 Day Streak</span>
+          </div>
+
+          <!-- Theme Toggle -->
+          <button class="theme-toggle-btn" id="themeToggleBtn" onclick="stenoApp.toggleTheme()" title="थीम बदलें (Light/Dark)">
+            🌙
+          </button>
+
+          <!-- Notification Bell -->
+          <button class="notif-btn" onclick="stenoApp.navigate('notifications')" title="अधिसूचनाएं">
+            🔔
+            <span class="notif-badge-dot"></span>
+          </button>
+
+          <!-- User Profile Chip with Name & Student Role shifted below name on the right -->
+          <button class="user-profile-btn" onclick="stenoApp.navigate('profile')" title="मेरी प्रोफ़ाइल">
+            <div class="user-avatar" id="headerUserAvatar">S</div>
+            <div class="header-user-meta hide-mobile">
+              <span class="header-user-name" id="headerUserName">Student</span>
+              <span class="header-user-role role-student" id="headerUserRole">Student</span>
+            </div>
+          </button>
+
+          <!-- Logout Button -->
+          <button class="btn-secondary header-logout-btn" onclick="stenoApp.logout()" title="लॉगआउट करें">
+            <span>🚪</span> <span class="hide-mobile">लॉगआउट</span>
+          </button>
+        </div>
+      </header>
+
+      <!-- ===================================================================
+           VIEW: HOME (DASHBOARD)
+           =================================================================== -->
+      <main class="page-view active" id="view-home">
+        <!-- Dashboard Section Title -->
+        <div class="section-header" style="margin-bottom: 20px;">
+          <div>
+            <h2 class="section-title">डैशबोर्ड (Dashboard)</h2>
+            <p class="section-subtitle">आपकी दैनिक स्टेनो अभ्यास प्रगति, गति एवं सटीकता का संपूर्ण विवरण</p>
+          </div>
+        </div>
+
+        <!-- Phase 3: Compact Horizontal Metrics Dashboard (2 rows of 4 landscape cards) -->
+        <div class="horizontal-stats-grid" id="horizontalStatsGrid">
+          <!-- Row 1 -->
+          <div class="h-stat-card">
+            <div class="h-stat-icon icon-flame">🔥</div>
+            <div class="h-stat-content">
+              <div class="h-stat-label">स्ट्रीक (Streak)</div>
+              <div class="h-stat-val" id="hStatStreak">0 दिन</div>
+              <div class="h-stat-sub" id="hStatStreakSub">दैनिक अभ्यास बनाए रखें</div>
+            </div>
+          </div>
+
+          <div class="h-stat-card">
+            <div class="h-stat-icon icon-target">🎯</div>
+            <div class="h-stat-content">
+              <div class="h-stat-label">दैनिक लक्ष्य (Daily Goal)</div>
+              <div class="h-stat-val" id="hStatGoal">0 / 3</div>
+              <div class="h-stat-sub" id="hStatGoalSub">0% पूर्ण</div>
+            </div>
+          </div>
+
+          <div class="h-stat-card">
+            <div class="h-stat-icon icon-zap">⚡</div>
+            <div class="h-stat-content">
+              <div class="h-stat-label">औसत गति (Avg WPM)</div>
+              <div class="h-stat-val" id="hStatAvgWpm">0.0 WPM</div>
+              <div class="h-stat-sub">नेट औसत गति</div>
+            </div>
+          </div>
+
+          <div class="h-stat-card">
+            <div class="h-stat-icon icon-check">🎯</div>
+            <div class="h-stat-content">
+              <div class="h-stat-label">सटीकता (Accuracy)</div>
+              <div class="h-stat-val" id="hStatAccuracy">0.0%</div>
+              <div class="h-stat-sub">औसत शुद्धता</div>
+            </div>
+          </div>
+
+          <!-- Row 2 -->
+          <div class="h-stat-card">
+            <div class="h-stat-icon icon-book">📝</div>
+            <div class="h-stat-content">
+              <div class="h-stat-label">कुल अभ्यास (Practices)</div>
+              <div class="h-stat-val" id="hStatPractices">0 सत्र</div>
+              <div class="h-stat-sub">पूर्ण डिक्टेशन</div>
+            </div>
+          </div>
+
+          <div class="h-stat-card">
+            <div class="h-stat-icon icon-star">🏆</div>
+            <div class="h-stat-content">
+              <div class="h-stat-label">रिवॉर्ड अंक (Rewards)</div>
+              <div class="h-stat-val" id="hStatPoints">0 Pts</div>
+              <div class="h-stat-sub">अर्जित अंक (सत्यापित)</div>
+            </div>
+          </div>
+
+          <div class="h-stat-card">
+            <div class="h-stat-icon icon-rocket">🚀</div>
+            <div class="h-stat-content">
+              <div class="h-stat-label">सर्वश्रेष्ठ गति (Best WPM)</div>
+              <div class="h-stat-val" id="hStatBestWpm">0.0 WPM</div>
+              <div class="h-stat-sub">उच्चतम रिकॉर्ड</div>
+            </div>
+          </div>
+
+          <div class="h-stat-card">
+            <div class="h-stat-icon icon-clock">⏱️</div>
+            <div class="h-stat-content">
+              <div class="h-stat-label">कुल समय (Total Time)</div>
+              <div class="h-stat-val" id="hStatTotalTime">0 mins</div>
+              <div class="h-stat-sub">अभ्यास में बिताया समय</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section: Practice Classes -->
+        <div class="section-header">
+          <div>
+            <h3 class="section-title">अभ्यास कक्षाएं (Practice Classes)</h3>
+            <p class="section-subtitle">रामधारी सिंह दिनकर, महात्मा गांधी, संविधान व परीक्षा आधारित महत्वपूर्ण डिक्टेशन</p>
+          </div>
+          <button class="btn-secondary" onclick="stenoApp.navigate('classes')">सभी देखें (View All) →</button>
+        </div>
+
+        <!-- Category Pills -->
+        <div class="category-filter-bar" id="homeCategoryPills"></div>
+
+        <!-- Class Cards Grid -->
+        <div class="classes-grid" id="homeClassCardsGrid"></div>
+      </main>
+
+      <!-- ===================================================================
+           VIEW: CLASSES / PRACTICE LIST
+           =================================================================== -->
+      <main class="page-view" id="view-classes">
+        <div class="section-header">
+          <div>
+            <h2 class="section-title">सभी अभ्यास डिक्टेशन (All Dictation Classes)</h2>
+            <p class="section-subtitle">अपनी पसंद की भाषा, कठिनाई और श्रेणी के अनुसार अभ्यास चुनें।</p>
+          </div>
+        </div>
+
+        <!-- Filter Bar -->
+        <div class="stat-card" style="margin-bottom: 24px; display: flex; flex-wrap: wrap; gap: 16px; align-items: center;">
+          <!-- Search -->
+          <div style="flex: 1; min-width: 220px;">
+            <input type="text" class="form-input" placeholder="🔍 आलेख या विषय खोजें (Search)..."
+                   oninput="stenoApp.searchQuery = this.value; stenoApp.loadPassages();">
+          </div>
+
+          <!-- Language filter -->
+          <div>
+            <select class="form-select" onchange="stenoApp.selectedLanguage = this.value; stenoApp.loadPassages();">
+              <option value="all">सभी भाषाएं (All Languages)</option>
+              <option value="hindi">हिंदी (Hindi)</option>
+              <option value="english">अंग्रेजी (English)</option>
+            </select>
+          </div>
+
+          <!-- Difficulty filter -->
+          <div>
+            <select class="form-select" onchange="stenoApp.selectedDifficulty = this.value; stenoApp.loadPassages();">
+              <option value="all">सभी स्तर (All Difficulties)</option>
+              <option value="easy">सरल (Easy)</option>
+              <option value="medium">मध्यम (Medium)</option>
+              <option value="hard">कठिन (Hard)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="classes-grid" id="classesListGrid"></div>
+      </main>
+
+      <!-- ===================================================================
+           VIEW: PRACTICE SCREEN (AUDIO PLAYER & TYPING ENGINE)
+           =================================================================== -->
+      <main class="page-view" id="view-practice">
+        <div class="practice-container">
+          <div class="practice-header-bar">
+            <button class="back-btn" onclick="stenoApp.navigate('classes')">
+              ← वापस कक्षाओं पर जाएं (Back)
+            </button>
+            <div style="display:flex; gap:8px;">
+              <span class="badge" id="practiceLanguageBadge">HINDI</span>
+              <span class="badge" id="practiceDifficultyBadge">MEDIUM</span>
+              <span class="badge" id="practiceTargetWpm" style="background:var(--primary-subtle); color:var(--primary);">40 WPM</span>
+            </div>
+          </div>
+
+          <!-- Professional Audio Player Card -->
+          <div class="audio-player-card">
+            <div class="audio-title-bar">
+              <div class="audio-passage-info">
+                <h3 id="practicePassageTitle" class="hindi-text">आलेख शीर्षक</h3>
+                <p id="practiceCategoryName">श्रेणी नाम</p>
+              </div>
+              <div style="font-size:0.8rem; color:var(--text-muted);">
+                आदेश: <span id="practiceInstructions">ऑडियो सुनें और टाइप करें</span>
+              </div>
+            </div>
+
+            <!-- Main Audio Control Buttons -->
+            <div class="audio-controls-row">
+              <button class="audio-btn audio-btn-seek" onclick="stenoAudioPlayer.seekRelative(-5)" title="5 सेकंड पीछे (Rewind 5s)">
+                -5s
+              </button>
+              <button class="audio-btn audio-btn-play" id="audioPlayBtn" onclick="stenoAudioPlayer.togglePlay();" title="चलाएं / रोकें (Play/Pause)">
+                ▶️
+              </button>
+              <button class="audio-btn audio-btn-seek" onclick="stenoAudioPlayer.seekRelative(5)" title="5 सेकंड आगे (Forward 5s)">
+                +5s
+              </button>
+            </div>
+
+            <!-- Timeline Scrubber -->
+            <div class="audio-progress-wrap">
+              <span class="audio-time-label" id="audioCurrentTime">00:00</span>
+              <div class="scrubber-track" id="scrubberTrack">
+                <div class="scrubber-fill" id="scrubberFill">
+                  <div class="scrubber-handle"></div>
+                </div>
+              </div>
+              <span class="audio-time-label" id="audioRemainingTime">00:00</span>
+            </div>
+
+            <!-- Speed & Volume Subcontrols -->
+            <div class="audio-subcontrols">
+              <div class="speed-selector-group">
+                <span class="speed-selector-label">गति (Speed):</span>
+                <button class="speed-chip" onclick="stenoAudioPlayer.setSpeed(0.5); stenoApp.updateSpeedChips(this);">0.5x</button>
+                <button class="speed-chip" onclick="stenoAudioPlayer.setSpeed(0.75); stenoApp.updateSpeedChips(this);">0.75x</button>
+                <button class="speed-chip active" onclick="stenoAudioPlayer.setSpeed(1.0); stenoApp.updateSpeedChips(this);">1.0x</button>
+                <button class="speed-chip" onclick="stenoAudioPlayer.setSpeed(1.25); stenoApp.updateSpeedChips(this);">1.25x</button>
+                <button class="speed-chip" onclick="stenoAudioPlayer.setSpeed(1.5); stenoApp.updateSpeedChips(this);">1.5x</button>
+                <button class="speed-chip" onclick="stenoAudioPlayer.setSpeed(1.75); stenoApp.updateSpeedChips(this);">1.75x</button>
+                <button class="speed-chip" onclick="stenoAudioPlayer.setSpeed(2.0); stenoApp.updateSpeedChips(this);">2.0x</button>
+              </div>
+
+              <div class="volume-control-wrap">
+                <span style="font-size:0.9rem; cursor:pointer;" onclick="const m = stenoAudioPlayer.toggleMute(); this.textContent = m ? '🔇' : '🔊';">🔊</span>
+                <input type="range" class="volume-slider" min="0" max="1" step="0.05" value="1"
+                       oninput="stenoAudioPlayer.setVolume(this.value)">
+              </div>
+            </div>
+          </div>
+
+          <!-- Typing Editor Card -->
+          <div class="typing-editor-card">
+            <div class="editor-toolbar">
+              <!-- Typing Mode Selector -->
+              <div class="typing-mode-group">
+                <label class="mode-label" for="typingModeSelect">Typing Mode:</label>
+                <select id="typingModeSelect" class="select-typing-mode">
+                  <option value="mangal">Mangal / Unicode Hindi (मंगल/यूनिकोड)</option>
+                  <option value="krutidev">Kruti Dev 010 (कृति देव 010)</option>
+                  <option value="inscript">Inscript Hindi (इन्स्क्रिप्ट)</option>
+                  <option value="remington">Remington-Style Hindi (रेमिंगटन)</option>
+                </select>
+              </div>
+
+              <!-- Extra Typing Controls (Font size, Backspace Lock, Alt Codes) -->
+              <div class="editor-controls-row">
+                <div class="font-size-btn-group" title="फ़ॉन्ट आकार (Font Size)">
+                  <button type="button" class="font-size-btn" data-size="sm" onclick="stenoTypingEngine.setFontSize('sm')">A-</button>
+                  <button type="button" class="font-size-btn active" data-size="md" onclick="stenoTypingEngine.setFontSize('md')">18</button>
+                  <button type="button" class="font-size-btn" data-size="lg" onclick="stenoTypingEngine.setFontSize('lg')">22</button>
+                  <button type="button" class="font-size-btn" data-size="xl" onclick="stenoTypingEngine.setFontSize('xl')">A+</button>
+                </div>
+                <button type="button" id="toggleBackspaceBtn" class="btn-secondary" onclick="stenoTypingEngine.toggleBackspaceLock()" style="padding:5px 10px; font-size:0.78rem;">
+                  🔓 Backspace: ON
+                </button>
+                <button type="button" class="btn-secondary" onclick="document.getElementById('altCodesModal').style.display='flex'" style="padding:5px 10px; font-size:0.78rem;" title="कृति देव स्पेशल कोड्स देखें">
+                  ⌨️ Alt Codes
+                </button>
+              </div>
+
+              <!-- Live Word & Character Counters -->
+              <div class="editor-live-stats">
+                <div class="stat-pill">शब्द (Words): <strong id="liveWordCount">0</strong></div>
+                <div class="stat-pill">वर्ण (Chars): <strong id="liveCharCount">0</strong></div>
+                <div class="stat-pill" style="color:var(--primary);">समय: <strong id="liveTimerText">00:00</strong></div>
+              </div>
+            </div>
+
+            <!-- Distraction-free Textarea -->
+            <textarea id="typingTextarea" class="typing-textarea font-mangal"
+                      placeholder="डिक्टेशन सुनकर यहाँ टाइप करना प्रारंभ करें... (Start typing the dictated passage here)"></textarea>
+
+            <!-- Real-Time Unicode Translation Box for Kruti Dev -->
+            <div id="krutiPreviewContainer" class="unicode-preview-box" style="display:none;">
+              <div class="unicode-preview-header">
+                <span>👁️ लाइव यूनिकोड अनुवाद (Live Hindi Devanagari Translation):</span>
+                <span style="font-size:0.72rem; color:var(--text-muted); font-weight:normal;">कृति देव से लाइव स्वतः रूपांतरण</span>
+              </div>
+              <div id="krutiUnicodePreviewText" class="unicode-preview-content">
+                (यहाँ आपके टाइप किए गए कृति देव शब्दों का देवनागरी रूप स्वतः दिखेगा...)
+              </div>
+            </div>
+
+            <div class="editor-footer-actions">
+              <div class="draft-indicator" id="draftStatusText">
+                सहेजा गया
+              </div>
+              <div style="display:flex; gap:12px;">
+                <button class="btn-secondary" onclick="if(confirm('क्या आप टेक्स्ट खाली करना चाहते हैं?')) stenoTypingEngine.clearDraft();">
+                  🗑️ टेक्स्ट साफ़ करें (Clear)
+                </button>
+                <button class="btn-primary" id="submitPracticeBtn" onclick="stenoApp.submitPractice()" style="padding:10px 28px; font-size:1rem;">
+                  🚀 उत्तर सबमिट करें (Submit Practice)
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+
+      <!-- ===================================================================
+           VIEW: RESULT REPORT CARD
+           =================================================================== -->
+      <main class="page-view" id="view-result">
+        <div class="practice-container" id="resultReportContainer">
+          <!-- Populated dynamically by stenoComparisonView.renderResult() -->
+        </div>
+      </main>
+
+      <!-- ===================================================================
+           VIEW: MY PRACTICE (HISTORY)
+           =================================================================== -->
+      <main class="page-view" id="view-my-practice">
+        <div class="section-header">
+          <div>
+            <h2 class="section-title">मेरा अभ्यास इतिहास (My Practice History)</h2>
+            <p class="section-subtitle">आपके द्वारा पूर्ण किए गए सभी डिक्टेशन अभ्यासों का संपूर्ण विवरण</p>
+          </div>
+        </div>
+
+        <div class="stat-card" style="margin-bottom:20px; overflow-x: auto;">
+          <table class="data-table" id="historyTable">
+            <thead>
+              <tr>
+                <th>दिनांक (Date)</th>
+                <th>आलेख शीर्षक (Passage)</th>
+                <th>नेट गति (Net WPM)</th>
+                <th>सटीकता (Accuracy)</th>
+                <th>त्रुटियां (Errors)</th>
+                <th>समय (Time)</th>
+                <th>मोड (Mode)</th>
+                <th>कार्रवाई (Action)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- Populated dynamically -->
+            </tbody>
+          </table>
+        </div>
+      </main>
+
+      <!-- ===================================================================
+           VIEW: PROGRESS & ANALYTICS
+           =================================================================== -->
+      <main class="page-view" id="view-progress">
+        <div class="section-header">
+          <div>
+            <h2 class="section-title">प्रगति और दक्षता विश्लेषण (Performance Analytics)</h2>
+            <p class="section-subtitle">आपकी स्टेनो गति, सटीकता, कमजोर क्षेत्रों और स्ट्रीक की संपूर्ण समीक्षा</p>
+          </div>
+        </div>
+
+        <!-- Target WPM Goal Gap Card -->
+        <div class="daily-target-card" style="margin-bottom: 24px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+            <div>
+              <h3>लक्ष्य गति ट्रैकर (Target WPM Goal)</h3>
+              <p style="opacity:0.9; font-size:0.85rem;" id="goalWpmGapText">लक्ष्य से 10 WPM दूर</p>
+            </div>
+            <div style="text-align:right;">
+              <span style="font-size:0.8rem; opacity:0.85;">वर्तमान: </span><strong id="goalCurrentWpmText">0 WPM</strong>
+              <span style="margin: 0 6px;">|</span>
+              <span style="font-size:0.8rem; opacity:0.85;">लक्ष्य: </span><strong id="goalTargetWpmText">50 WPM</strong>
+            </div>
+          </div>
+          <div class="target-progress-bar-wrap">
+            <div class="target-progress-fill" id="goalWpmProgressBar" style="width: 0%;"></div>
+          </div>
+        </div>
+
+        <!-- Overall Metrics -->
+        <div class="stats-summary-grid">
+          <div class="stat-card">
+            <div class="stat-icon-wrap stat-icon-blue">📊</div>
+            <div>
+              <div class="stat-info-title">कुल अभ्यास</div>
+              <div class="stat-info-num" id="progressTotalPractices">0</div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon-wrap stat-icon-green">⏳</div>
+            <div>
+              <div class="stat-info-title">कुल अभ्यास समय</div>
+              <div class="stat-info-num" id="progressTotalTime">0 mins</div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon-wrap stat-icon-amber">⚡</div>
+            <div>
+              <div class="stat-info-title">औसत गति (Avg WPM)</div>
+              <div class="stat-info-num" id="progressAvgWpm">0 WPM</div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon-wrap stat-icon-purple">🚀</div>
+            <div>
+              <div class="stat-info-title">सर्वश्रेष्ठ गति (Best WPM)</div>
+              <div class="stat-info-num" id="progressBestWpm">0 WPM</div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon-wrap stat-icon-green">🎯</div>
+            <div>
+              <div class="stat-info-title">औसत सटीकता (Avg Acc)</div>
+              <div class="stat-info-num" id="progressAvgAcc">0%</div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon-wrap stat-icon-blue">⌨️</div>
+            <div>
+              <div class="stat-info-title">कुल टाइप शब्द</div>
+              <div class="stat-info-num" id="progressTotalWords">0</div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon-wrap stat-icon-amber">🔥</div>
+            <div>
+              <div class="stat-info-title">वर्तमान स्ट्रीक</div>
+              <div class="stat-info-num" id="progressStreak">0 Days</div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon-wrap stat-icon-purple">⭐</div>
+            <div>
+              <div class="stat-info-title">अभ्यास पॉइंट्स</div>
+              <div class="stat-info-num" id="progressPoints">0</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Interactive Charts Grid -->
+        <div class="charts-grid">
+          <div class="chart-card">
+            <h4 class="chart-title">📈 गति प्रगति वक्र (Speed Over Time — WPM)</h4>
+            <div class="chart-canvas-wrap">
+              <canvas id="speedTrendChart"></canvas>
+            </div>
+          </div>
+
+          <div class="chart-card">
+            <h4 class="chart-title">🎯 सटीकता रुझान (Accuracy Over Time — %)</h4>
+            <div class="chart-canvas-wrap">
+              <canvas id="accTrendChart"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <div class="chart-card" style="margin-bottom: 28px;">
+          <h4 class="chart-title">⚠️ त्रुटि वितरण विश्लेषण (Error Distribution By Type)</h4>
+          <div class="chart-canvas-wrap">
+            <canvas id="errorFreqChart"></canvas>
+          </div>
+        </div>
+
+        <!-- Achievement Badges -->
+        <div class="weak-areas-card">
+          <h3 style="font-size:1.15rem; font-weight:700">उपलब्धियां एवं सम्मान बैज (Earned Badges)</h3>
+          <p class="section-subtitle">माइलस्टोन पार करने पर प्राप्त किए गए विशेष बैज:</p>
+          <div class="achievements-grid" id="progressAchievementsGrid"></div>
+        </div>
+      </main>
+
+      <!-- ===================================================================
+           VIEW: LEADERBOARD
+           =================================================================== -->
+      <main class="page-view" id="view-leaderboard">
+        <div class="section-header">
+          <div>
+            <h2 class="section-title">स्टेनो रैंकिंग लीडरबोर्ड (Steno Leaderboard)</h2>
+            <p class="section-subtitle">शीर्ष अभ्यर्थियों के साथ अपनी गति और सटीकता की तुलना करें</p>
+          </div>
+        </div>
+
+        <!-- Period Tabs -->
+        <div class="leaderboard-tabs">
+          <button class="cat-pill active" onclick="stenoApp.loadLeaderboard('all'); this.parentElement.querySelectorAll('button').forEach(b => b.classList.remove('active')); this.classList.add('active');">
+            सर्वकालिक (All Time)
+          </button>
+          <button class="cat-pill" onclick="stenoApp.loadLeaderboard('today'); this.parentElement.querySelectorAll('button').forEach(b => b.classList.remove('active')); this.classList.add('active');">
+            आज (Today)
+          </button>
+          <button class="cat-pill" onclick="stenoApp.loadLeaderboard('week'); this.parentElement.querySelectorAll('button').forEach(b => b.classList.remove('active')); this.classList.add('active');">
+            इस सप्ताह (This Week)
+          </button>
+          <button class="cat-pill" onclick="stenoApp.loadLeaderboard('month'); this.parentElement.querySelectorAll('button').forEach(b => b.classList.remove('active')); this.classList.add('active');">
+            इस माह (This Month)
+          </button>
+        </div>
+
+        <div class="stat-card" style="overflow-x: auto;">
+          <table class="data-table" id="leaderboardTable">
+            <thead>
+              <tr>
+                <th style="width: 80px;">रैंक</th>
+                <th>विद्यार्थी (Aspirant)</th>
+                <th>उच्चतम गति (Best WPM)</th>
+                <th>औसत सटीकता (Accuracy)</th>
+                <th>कुल प्रयास</th>
+                <th>अंक (Points)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- Populated dynamically -->
+            </tbody>
+          </table>
+        </div>
+      </main>
+
+      <!-- ===================================================================
+           VIEW: BOOKMARKS
+           =================================================================== -->
+      <main class="page-view" id="view-bookmarks">
+        <div class="section-header">
+          <div>
+            <h2 class="section-title">मेरे बुकमार्क किए गए आलेख (My Bookmarks)</h2>
+            <p class="section-subtitle">दोहराव और विशेष अभ्यास हेतु सहेजे गए कठिन आलेख</p>
+          </div>
+        </div>
+        <div class="classes-grid" id="bookmarksListGrid"></div>
+      </main>
+
+      <!-- ===================================================================
+           VIEW: PROFILE
+           =================================================================== -->
+      <main class="page-view" id="view-profile">
+        <div class="section-header">
+          <div>
+            <h2 class="section-title">मेरी प्रोफ़ाइल (User Profile)</h2>
+            <p class="section-subtitle">अपनी परीक्षा का लक्ष्य और टंकण प्राथमिकताएं सेट करें</p>
+          </div>
+          <button class="btn-secondary" onclick="stenoApp.logout()">🚪 लॉगआउट (Logout)</button>
+        </div>
+
+        <!-- Student Meta Banner (Student Code, Phone, Subscription Status) -->
+        <div class="stat-card" style="max-width: 680px; padding: 20px; margin-bottom: 20px; background: var(--bg-card); display:flex; flex-wrap:wrap; gap:16px; justify-content:space-between; align-items:center; border: 1px solid var(--border-subtle);">
+          <div>
+            <div style="font-size:0.75rem; color:var(--text-muted); font-weight:600; text-transform:uppercase;">आधिकारिक छात्र पहचान (Student ID)</div>
+            <div style="font-size:1.25rem; font-weight:800; color:var(--primary); letter-spacing:0.05em;" id="profileStudentCodeDisplay">STM-2026-000001</div>
+            <div style="font-size:0.85rem; color:var(--text-secondary); margin-top:2px;">
+              <span id="profileEmailDisplay">student@stenomaster.com</span> • <span id="profilePhoneDisplay">+91 9876543210</span>
+            </div>
+          </div>
+          <div style="text-align:right;">
+            <div id="profileSubscriptionBadge" class="badge badge-success" style="font-size:0.8rem; padding:6px 12px; margin-bottom:6px; display:inline-block;">Free Plan</div>
+            <div>
+              <button type="button" class="btn-primary" onclick="stenoApp.navigate('subscription')" style="padding:6px 14px; font-size:0.8rem;">
+                💳 सदस्यता विवरण (Subscription)
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="stat-card" style="max-width: 680px; padding: 28px;">
+          <form onsubmit="stenoApp.saveProfile(event)">
+            <div class="form-group">
+              <label class="form-label">प्रदर्शित नाम (Display Name):</label>
+              <input type="text" id="profileDisplayNameInput" class="form-input" required>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">लक्ष्य परीक्षा (Target Exam):</label>
+              <select id="profileTargetExamSelect" class="form-select">
+                <option value="SSC Stenographer">SSC Stenographer Grade C & D</option>
+                <option value="UPSSSC Stenographer">UPSSSC आशुलिपिक परीक्षा</option>
+                <option value="High Court Stenographer">उच्च न्यायालय / जिला न्यायालय स्टेनो</option>
+                <option value="State PSC Steno">राज्य लोक सेवा आयोग स्टेनो</option>
+                <option value="Parliamentary Reporter">संसदीय रिपोर्टर / विधानसभा</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">प्राथमिक भाषा (Preferred Language):</label>
+              <select id="profileLanguageSelect" class="form-select">
+                <option value="hindi">हिंदी आशुलिपि (Hindi Steno)</option>
+                <option value="english">अंग्रेजी आशुलिपि (English Steno)</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">डिफ़ॉल्ट टंकण मोड (Default Typing Mode):</label>
+              <select id="profileTypingModeSelect" class="form-select">
+                <option value="mangal">Mangal / Unicode Hindi</option>
+                <option value="krutidev">Kruti Dev 010</option>
+                <option value="inscript">Inscript</option>
+                <option value="remington">Remington-Style</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">लक्ष्य गति (Target Speed WPM):</label>
+              <input type="number" id="profileTargetWpmInput" class="form-input" min="20" max="120" value="50">
+            </div>
+
+            <div class="form-group" style="display:flex; align-items:center; gap:10px; margin-top:14px;">
+              <input type="checkbox" id="profileLeaderboardVisibility" style="width:18px; height:18px;">
+              <label for="profileLeaderboardVisibility" style="font-size:0.9rem; font-weight:500;">
+                लीडरबोर्ड पर मेरा नाम सार्वजनिक रूप से दिखाएं (Public on Leaderboard)
+              </label>
+            </div>
+
+            <div style="margin-top: 24px;">
+              <button type="submit" class="btn-primary">प्रोफ़ाइल सहेजें (Save Profile)</button>
+            </div>
+          </form>
+        </div>
+      </main>
+
+      <!-- ===================================================================
+           VIEW: SUBSCRIPTION (PRO MEMBERSHIP & PAYMENTS)
+           =================================================================== -->
+      <main class="page-view" id="view-subscription">
+        <div class="section-header">
+          <div>
+            <h2 class="section-title">सदस्यता एवं प्रो प्लान (Subscription & Pro Access)</h2>
+            <p class="section-subtitle">प्रीमियम विधिक डिक्टेशन, असीमित अभ्यास और विशेष मॉक टेस्ट अनलॉक करें</p>
+          </div>
+          <div id="subCurrentStatusBadgeWrap">
+            <!-- Populated dynamically -->
+          </div>
+        </div>
+
+        <div class="subscription-grid-layout" style="display:grid; grid-template-columns: 1fr 1fr; gap:24px; margin-bottom:28px;">
+          <!-- Plan Details & Features Card -->
+          <div class="stat-card plan-showcase-card" style="padding:26px; border:2px solid var(--primary); position:relative; overflow:hidden;">
+            <div style="position:absolute; top:0; right:0; background:linear-gradient(135deg, #10b981, #059669); color:#fff; font-size:0.72rem; font-weight:800; padding:6px 16px; border-bottom-left-radius:12px; letter-spacing:0.04em;">
+              ⚡ तुरंत सक्रियण (INSTANT UNLOCK)
+            </div>
+
+            <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-top:6px;">
+              <div>
+                <span class="badge badge-primary" style="font-size:0.75rem; text-transform:uppercase; letter-spacing:0.05em;">सर्वश्रेष्ठ स्टेनो प्लान (Best Choice)</span>
+                <h3 style="font-size:1.45rem; font-weight:800; margin-top:8px;" id="subPlanTitleDisplay">StenoMaster Pro — 1 Month</h3>
+              </div>
+              <div style="text-align:right;">
+                <div style="font-size:2.2rem; font-weight:900; color:var(--primary);" id="subPlanPriceDisplay">₹100</div>
+                <span style="font-size:0.78rem; color:var(--text-muted); font-weight:600;">/ 30 दिन (30 Days)</span>
+              </div>
+            </div>
+
+            <hr style="border:none; border-top:1px solid var(--border-subtle); margin:18px 0;">
+
+            <ul style="list-style:none; padding:0; margin:0 0 20px 0; display:flex; flex-direction:column; gap:11px; font-size:0.92rem;">
+              <li style="display:flex; align-items:center; gap:10px;">✅ <span><strong>सभी लॉक कक्षाएं एवं आलेख अनलॉक</strong> (2 फ्री + सभी प्रीमियम)</span></li>
+              <li style="display:flex; align-items:center; gap:10px;">✅ <span><strong>उच्च न्यायालय, SSC व UPSSSC</strong> विशेष विधिक डिक्टेशन</span></li>
+              <li style="display:flex; align-items:center; gap:10px;">✅ <span><strong>मंगल एवं कृति देव 010</strong> दोनों फ़ॉन्ट्स में सटीक मूल्यांकन</span></li>
+              <li style="display:flex; align-items:center; gap:10px;">✅ <span><strong>असीमित ऑडियो प्लेबैक</strong> (0.5x से 2.0x गति नियंत्रण)</span></li>
+              <li style="display:flex; align-items:center; gap:10px;">✅ <span><strong>विस्तृत परीक्षा रिपोर्ट कार्ड</strong> एवं त्रुटि विश्लेषण</span></li>
+            </ul>
+
+            <!-- Free Trial Info Pill -->
+            <div style="background:rgba(16, 185, 129, 0.08); border-left:4px solid #10b981; padding:12px 14px; border-radius:8px; font-size:0.84rem; color:var(--text-secondary); line-height:1.5; margin-bottom:18px;">
+              🎁 <strong>निःशुल्क ट्रायल:</strong> प्रत्येक छात्र को <strong>पहली 2 कक्षाएं पूर्णतः फ्री</strong> दी गई हैं। बाकी सभी डिक्टेशन अभ्यास करने के लिए यह ₹100 का मासिक प्लान लें।
+            </div>
+
+            <!-- Online Cashfree Checkout Trigger Button -->
+            <button type="button" class="btn-primary" id="btnCashfreeCheckout" onclick="stenoApp.initiateCashfreePayment()"
+                    style="width:100%; padding:14px; font-size:1.08rem; font-weight:800; border-radius:12px; display:flex; align-items:center; justify-content:center; gap:10px; box-shadow:0 8px 24px rgba(37, 99, 235, 0.35);">
+              <span>⚡ ₹100 का भुगतान करें (Pay ₹100 via Cashfree)</span>
+              <span>→</span>
+            </button>
+            <div style="display:flex; justify-content:center; align-items:center; gap:14px; margin-top:10px; font-size:0.75rem; color:var(--text-muted);">
+              <span>🔒 100% सुरक्षित भुगतान</span>
+              <span>•</span>
+              <span>UPI / GPay / PhonePe / Paytm / Cards</span>
+            </div>
+          </div>
+
+          <!-- Cashfree Gateways & Instant Online Options Card -->
+          <div class="stat-card" style="padding:26px; display:flex; flex-direction:column; justify-content:space-between;">
+            <div>
+              <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:14px;">
+                <h3 style="font-size:1.2rem; font-weight:800; color:var(--text-primary); margin:0;">💳 सुरक्षित ऑनलाइन भुगतान (Cashfree PG)</h3>
+                <span class="badge badge-success" style="font-size:0.75rem;">सक्रिय (LIVE)</span>
+              </div>
+              <p style="font-size:0.86rem; color:var(--text-secondary); line-height:1.5; margin-bottom:20px;">
+                Cashfree के माध्यम से किसी भी UPI ऐप (GPay, PhonePe, Paytm), डेबिट/क्रेडिट कार्ड या नेट बैंकिंग से भुगतान करें। भुगतान पूरा होते ही आपकी प्रो सदस्यता <strong>तुरंत 30 दिनों के लिए अनलॉक</strong> हो जाएगी।
+              </p>
+
+              <!-- Supported Badges Grid -->
+              <div style="display:grid; grid-template-columns: repeat(2, 1fr); gap:12px; margin-bottom:24px;">
+                <div style="background:var(--bg-card-hover); padding:12px; border-radius:10px; border:1px solid var(--border-subtle); display:flex; align-items:center; gap:10px;">
+                  <span style="font-size:1.4rem;">📱</span>
+                  <div>
+                    <div style="font-weight:700; font-size:0.86rem;">UPI Apps</div>
+                    <div style="font-size:0.72rem; color:var(--text-muted);">GPay, PhonePe, Paytm, BHIM</div>
+                  </div>
+                </div>
+                <div style="background:var(--bg-card-hover); padding:12px; border-radius:10px; border:1px solid var(--border-subtle); display:flex; align-items:center; gap:10px;">
+                  <span style="font-size:1.4rem;">💳</span>
+                  <div>
+                    <div style="font-weight:700; font-size:0.86rem;">Cards</div>
+                    <div style="font-size:0.72rem; color:var(--text-muted);">Visa, Mastercard, RuPay</div>
+                  </div>
+                </div>
+                <div style="background:var(--bg-card-hover); padding:12px; border-radius:10px; border:1px solid var(--border-subtle); display:flex; align-items:center; gap:10px;">
+                  <span style="font-size:1.4rem;">🏦</span>
+                  <div>
+                    <div style="font-weight:700; font-size:0.86rem;">NetBanking</div>
+                    <div style="font-size:0.72rem; color:var(--text-muted);">SBI, HDFC, ICICI & 50+ Banks</div>
+                  </div>
+                </div>
+                <div style="background:var(--bg-card-hover); padding:12px; border-radius:10px; border:1px solid var(--border-subtle); display:flex; align-items:center; gap:10px;">
+                  <span style="font-size:1.4rem;">⚡</span>
+                  <div>
+                    <div style="font-weight:700; font-size:0.86rem;">Instant Activation</div>
+                    <div style="font-size:0.72rem; color:var(--text-muted);">स्वतः 30 दिन चालू</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Manual QR Alternate Accordion (Optional Fallback) -->
+            <details style="background:var(--bg-subtle); border:1px dashed var(--border-subtle); border-radius:10px; padding:12px 16px;">
+              <summary style="font-size:0.84rem; font-weight:700; cursor:pointer; color:var(--text-secondary);">
+                📲 अथवा QR कोड स्कैन कर UTR से भुगतान करें (Manual Option)
+              </summary>
+              <div style="margin-top:14px;">
+                <div style="display:flex; gap:14px; align-items:center; margin-bottom:14px;">
+                  <img src="/assets/qr_payment.png" id="subActiveQrImg" alt="UPI QR" style="width:90px; height:90px; object-fit:contain; background:#fff; padding:4px; border-radius:8px; border:1px solid var(--border-subtle);">
+                  <div style="font-size:0.8rem; color:var(--text-secondary); line-height:1.4;">
+                    QR कोड स्कैन कर ₹100 भेजें और 12-अंकीय UTR आईडी दर्ज करें:
+                  </div>
+                </div>
+                <form onsubmit="stenoApp.handlePaymentSubmit(event)">
+                  <div class="form-group" style="margin-bottom:8px;">
+                    <input type="text" id="payTransactionIdInput" class="form-input" placeholder="12-अंक UPI UTR / Txn ID दर्ज करें" style="font-size:0.85rem;">
+                  </div>
+                  <input type="hidden" id="payAmountInput" value="₹100">
+                  <div id="paymentSubmitMsg" style="display:none; font-size:0.8rem; margin-bottom:8px;"></div>
+                  <button type="submit" id="submitPaymentBtn" class="btn-secondary" style="width:100%; padding:8px; font-size:0.84rem;">
+                    मैन्युअल UTR सबमिट करें
+                  </button>
+                </form>
+              </div>
+            </details>
+          </div>
+        </div>
+
+        <!-- Student's Payment History Table -->
+        <div class="chart-card">
+          <h3 style="font-size:1.1rem; font-weight:700; margin-bottom:14px;">📜 मेरे भुगतान अनुरोध (My Payment Submissions)</h3>
+          <div class="table-responsive">
+            <table class="data-table" id="studentPaymentsTable">
+              <thead>
+                <tr>
+                  <th>अनुरोध ID</th>
+                  <th>प्लान</th>
+                  <th>राशि</th>
+                  <th>Transaction ID (UTR)</th>
+                  <th>स्थिति (Status)</th>
+                  <th>दिनांक</th>
+                  <th>टिप्पणी (Admin Remarks)</th>
+                </tr>
+              </thead>
+              <tbody id="studentPaymentsTableBody">
+                <!-- Rendered dynamically -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </main>
+
+      <!-- ===================================================================
+           VIEW: REFER & EARN
+           =================================================================== -->
+      <main class="page-view" id="view-refer">
+        <div class="section-header">
+          <div>
+            <h2 class="section-title">रेफर करें और पॉइंट्स अर्जित करें (Refer & Earn)</h2>
+            <p class="section-subtitle">अपने साथी स्टेनो अभ्यर्थियों को आमंत्रित करें और प्रत्येक सफल रेफरल पर 100 रिवार्ड पॉइंट्स प्राप्त करें!</p>
+          </div>
+        </div>
+
+        <div class="daily-target-card" style="margin-bottom: 24px;">
+          <h3>आपका अनूठा रेफरल कोड (Your Referral Code)</h3>
+          <div style="display:flex; align-items:center; gap:14px; margin: 16px 0;">
+            <div style="font-size:1.8rem; font-weight:800; letter-spacing:0.1em; background:rgba(255,255,255,0.2); padding:6px 18px; border-radius:var(--radius-md);" id="referralCodeDisplay">
+              STENO101
+            </div>
+            <button class="btn-secondary" onclick="stenoApp.copyReferralCode()" style="background:#fff; color:var(--primary); font-weight:700;">
+              📋 कोड कॉपी करें (Copy Code)
+            </button>
+          </div>
+          <div style="font-size:0.85rem; opacity:0.9;">
+            रेफरल लिंक: <code id="referralShareLink" style="background:rgba(0,0,0,0.25); padding:2px 8px; border-radius:4px;"></code>
+            <button onclick="stenoApp.copyReferralLink()" style="margin-left:8px; background:none; border:none; color:#fff; cursor:pointer; text-decoration:underline;">
+              लिंक कॉपी करें
+            </button>
+          </div>
+        </div>
+
+        <div class="stats-summary-grid">
+          <div class="stat-card">
+            <div class="stat-icon-wrap stat-icon-blue">👥</div>
+            <div>
+              <div class="stat-info-title">कुल रेफरल</div>
+              <div class="stat-info-num" id="referralTotalCount">0</div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon-wrap stat-icon-green">⭐</div>
+            <div>
+              <div class="stat-info-title">रेफरल से अर्जित पॉइंट्स</div>
+              <div class="stat-info-num" id="referralPointsEarned">0 Pts</div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon-wrap stat-icon-purple">💰</div>
+            <div>
+              <div class="stat-info-title">कुल रिवार्ड बैलेंस</div>
+              <div class="stat-info-num" id="referralTotalBalance">0 Pts</div>
+            </div>
+          </div>
+        </div>
+      </main>
+
+      <!-- ===================================================================
+           VIEW: NOTIFICATIONS
+           =================================================================== -->
+      <main class="page-view" id="view-notifications">
+        <div class="section-header">
+          <div>
+            <h2 class="section-title">सूचनाएं व अलर्ट (Notifications)</h2>
+            <p class="section-subtitle">दैनिक रिमाइंडर, नई कक्षाएं और उपलब्धियों के अलर्ट</p>
+          </div>
+        </div>
+        <div id="notificationsList" style="max-width: 720px;"></div>
+      </main>
+
+      <!-- ===================================================================
+           VIEW: SETTINGS
+           =================================================================== -->
+      <main class="page-view" id="view-settings">
+        <div class="section-header">
+          <div>
+            <h2 class="section-title">प्लेटफ़ॉर्म सेटिंग्स (Platform Settings)</h2>
+            <p class="section-subtitle">अपनी स्क्रीन थीम, टंकण वरीयता और ऑडियो सेटिंग्स प्रबंधित करें</p>
+          </div>
+        </div>
+
+        <div class="stat-card" style="max-width: 600px; padding: 24px;">
+          <form onsubmit="stenoApp.saveSettings(event)">
+            <div class="form-group">
+              <label class="form-label">थीम (Appearance Theme):</label>
+              <select id="settingsThemeSelect" class="form-select">
+                <option value="light">लाइट थीम (Light Mode)</option>
+                <option value="dark">डार्क थीम (Dark Mode)</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">डिफ़ॉल्ट टंकण प्रणाली (Default Typing System):</label>
+              <select id="settingsTypingModeSelect" class="form-select">
+                <option value="mangal">Mangal / Unicode Hindi</option>
+                <option value="krutidev">Kruti Dev 010</option>
+                <option value="inscript">Inscript</option>
+                <option value="remington">Remington-Style</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">डिफ़ॉल्ट ऑडियो गति (Default Playback Speed):</label>
+              <select id="settingsAudioSpeedSelect" class="form-select">
+                <option value="0.75">0.75x</option>
+                <option value="1.0">1.0x (सामान्य)</option>
+                <option value="1.25">1.25x</option>
+                <option value="1.5">1.5x</option>
+              </select>
+            </div>
+
+            <div style="margin-top: 20px;">
+              <button type="submit" class="btn-primary">सेटिंग्स सहेजें (Save Settings)</button>
+            </div>
+          </form>
+        </div>
+      </main>
+
+      <!-- ===================================================================
+           VIEW: HELP & EXAM GUIDE
+           =================================================================== -->
+      <main class="page-view" id="view-help">
+        <div class="section-header">
+          <div>
+            <h2 class="section-title">स्टेनोग्राफर परीक्षा मार्गदर्शन एवं टाइपिंग सहायता</h2>
+            <p class="section-subtitle">विभिन्न परीक्षाओं के मूल्यांकन नियम, कीबोर्ड लेआउट एवं सुझाव</p>
+          </div>
+        </div>
+
+        <div class="charts-grid">
+          <div class="chart-card">
+            <h3 style="font-size:1.1rem; font-weight:700; margin-bottom:10px;">📋 SSC Stenographer मूल्यांकन नियम</h3>
+            <p style="font-size:0.88rem; color:var(--text-secondary); line-height:1.6;">
+              एसएससी स्टेनोग्राफर ग्रेड 'सी' और 'डी' परीक्षा में:
+              <br>• <strong>पूर्ण गलती (Full Mistake):</strong> प्रत्येक छूटा हुआ शब्द, गलत शब्द, या जोड़ा गया अतिरिक्त शब्द।
+              <br>• <strong>अर्ध गलती (Half Mistake):</strong> वर्तनी अशुद्धि, मात्रा अशुद्धि, विराम चिह्न का लोप या अनावश्यक विराम चिह्न।
+              <br>• स्टैनोमास्टर का मूल्यांकन इंजन इन नियमों के अनुसार सटीक नेट गति और सटीकता की गणना करता है।
+            </p>
+          </div>
+
+          <div class="chart-card">
+            <h3 style="font-size:1.1rem; font-weight:700; margin-bottom:10px;">⌨️ हिंदी टाइपिंग मोड (Mangal vs Kruti Dev)</h3>
+            <p style="font-size:0.88rem; color:var(--text-secondary); line-height:1.6;">
+              • <strong>Mangal / Unicode:</strong> आधुनिक मानक देवनागरी यूनिकोड जो केंद्र सरकार व सभी आधुनिक प्रणालियों में अनिवार्य है।
+              <br>• <strong>Kruti Dev 010:</strong> पुरानी रेमिंगटन आधारित लिगेसी फॉन्ट एन्कोडिंग। स्टैनोमास्टर कृति देव के टंकण को आंतरिक रूप से शुद्ध यूनिकोड में बदलकर त्रुटिरहित मूल्यांकन करता है।
+              <br>• <strong>Inscript:</strong> भारत सरकार द्वारा मानक प्रमाणित ध्वन्यात्मक कीबोर्ड लेआउट।
+            </p>
+          </div>
+        </div>
+      </main>
+
+      <!-- ===================================================================
+           VIEW: ADMIN DASHBOARD
+           =================================================================== -->
+      <main class="page-view" id="view-admin">
+        <div class="section-header">
+          <div>
+            <h2 class="section-title">एडमिन कंट्रोल पैनल (Admin Dashboard)</h2>
+            <p class="section-subtitle">आलेख निर्माण, ऑडियो अपलोड, मूल्यांकन नियम व सिस्टम ब्रांडिंग का प्रबंधन</p>
+          </div>
+          <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            <button class="btn-secondary" onclick="stenoAdmin.openCategoryModal()">📁 नई श्रेणी</button>
+            <button class="btn-secondary" onclick="stenoAdmin.openBulkImportModal()">📥 बल्क इम्पोर्ट</button>
+            <button class="btn-primary" onclick="stenoAdmin.openNewPassageModal('mangal')" style="background:#0284c7; border-color:#0284c7;">
+              🅰️ नया मंगल आलेख (Upload Mangal)
+            </button>
+            <button class="btn-primary" onclick="stenoAdmin.openNewPassageModal('krutidev')" style="background:#d97706; border-color:#d97706;">
+              ⌨️ नया कृति देव आलेख (Upload Kruti Dev)
+            </button>
+          </div>
+        </div>
+
+        <!-- Admin Overview Metrics Container -->
+        <div id="adminOverviewMetrics"></div>
+
+        <!-- Admin Passages Management Table -->
+        <div class="chart-card" id="adminPassagesSection" style="margin-bottom: 28px;">
+          <div class="section-header" style="margin-bottom: 16px;">
+            <h3 style="font-size:1.1rem; font-weight:700;">आलेख प्रबंधन (Passages Management)</h3>
+          </div>
+          <div class="table-responsive">
+            <table class="data-table" id="adminPassagesTable">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>शीर्षक / श्रेणी</th>
+                  <th>भाषा</th>
+                  <th>कठिनाई</th>
+                  <th>लक्ष्य गति</th>
+                  <th>उपलब्ध फ़ॉन्ट (Fonts)</th>
+                  <th>स्थिति</th>
+                  <th>कार्रवाई</th>
+                </tr>
+              </thead>
+              <tbody>
+                <!-- Populated dynamically -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Phase 3: Admin Payment Verifications & Subscriptions Section -->
+        <div class="chart-card" id="adminPaymentsSection" style="margin-bottom: 28px;">
+          <div class="section-header" style="margin-bottom: 16px;">
+            <div>
+              <h3 style="font-size:1.1rem; font-weight:700;">💳 छात्र सदस्यता भुगतान सत्यापन (Subscription Payments)</h3>
+              <p class="section-subtitle">छात्रों द्वारा जमा किए गए UPI भुगतान सत्यापन एवं सदस्यता सक्रियण</p>
+            </div>
+            <button class="btn-secondary" onclick="stenoAdmin.loadPayments()">🔄 रीफ़्रेश (Refresh)</button>
+          </div>
+          <div class="table-responsive">
+            <table class="data-table" id="adminPaymentsTable">
+              <thead>
+                <tr>
+                  <th>Req ID</th>
+                  <th>छात्र ID व नाम</th>
+                  <th>मोबाइल / ईमेल</th>
+                  <th>प्लान</th>
+                  <th>राशि</th>
+                  <th>Transaction ID (UTR)</th>
+                  <th>स्थिति</th>
+                  <th>दिनांक</th>
+                  <th>कार्रवाई</th>
+                </tr>
+              </thead>
+              <tbody id="adminPaymentsTableBody">
+                <!-- Populated dynamically -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Phase 3: Subscription Settings & Payment QR Code Upload -->
+        <div class="charts-grid" style="margin-bottom:28px;">
+          <div class="chart-card" id="adminSubscriptionConfigSection">
+            <h3 style="font-size:1.1rem; font-weight:700; margin-bottom:12px;">📱 UPI QR कोड एवं सदस्यता मूल्य सेटिंग्स</h3>
+            <form onsubmit="stenoAdmin.saveSubscriptionSettings(event)">
+              <div class="form-group">
+                <label class="form-label">सक्रिय भुगतान QR कोड:</label>
+                <div style="display:flex; align-items:center; gap:16px; margin-top:8px;">
+                  <img src="/assets/qr_payment.png" id="adminQrPreviewImg" alt="Admin QR Preview" style="width:100px; height:100px; object-fit:contain; border:2px solid var(--border-subtle); border-radius:10px; background:#fff; padding:4px;">
+                  <div style="flex:1;">
+                    <label class="form-label" style="font-size:0.8rem;">नया QR कोड अपलोड करें (.png, .jpg, .jpeg, .webp):</label>
+                    <input type="file" id="adminQrFileInput" class="form-input" accept=".png,.jpg,.jpeg,.webp" onchange="stenoAdmin.handleQrUpload(this)">
+                    <span style="font-size:0.75rem; color:var(--text-muted); display:block; margin-top:4px;">अपलोड होते ही छात्रों के सदस्यता पृष्ठ पर नया QR कोड प्रदर्शित होगा।</span>
+                  </div>
+                </div>
+              </div>
+
+              <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-top:14px;">
+                <div class="form-group">
+                  <label class="form-label">प्लान नाम (Plan Title):</label>
+                  <input type="text" id="adminSubPlanNameInput" class="form-input" value="StenoMaster Pro — 1 Month (₹100/माह)" required>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">प्लान मूल्य ₹ (Monthly Price):</label>
+                  <input type="number" id="adminSubPlanPriceInput" class="form-input" value="100" required min="1">
+                </div>
+              </div>
+
+              <!-- Cashfree PG Gateway Settings -->
+              <div style="background:var(--bg-card-hover); padding:14px; border-radius:10px; border:1px solid var(--border-subtle); margin-top:12px;">
+                <h4 style="font-size:0.95rem; font-weight:700; margin-bottom:10px; color:var(--primary);">⚡ Cashfree PG API Credentials</h4>
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
+                  <div class="form-group">
+                    <label class="form-label" style="font-size:0.8rem;">Cashfree App ID (Client ID):</label>
+                    <input type="text" id="adminCashfreeAppIdInput" class="form-input" placeholder="TEST123456... or Live App ID">
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label" style="font-size:0.8rem;">Cashfree Secret Key:</label>
+                    <input type="password" id="adminCashfreeSecretInput" class="form-input" placeholder="cfsk_ma_test_... or Live Secret">
+                  </div>
+                </div>
+                <div class="form-group" style="margin-top:8px;">
+                  <label class="form-label" style="font-size:0.8rem;">Environment (मोड):</label>
+                  <select id="adminCashfreeEnvSelect" class="form-select">
+                    <option value="SANDBOX">Sandbox (Testing / Test Mode)</option>
+                    <option value="PRODUCTION">Production (Live / Real Money)</option>
+                  </select>
+                </div>
+              </div>
+
+              <button type="submit" class="btn-primary" style="margin-top:14px;">सदस्यता एवं Cashfree सेटिंग्स सहेजें (Save Settings)</button>
+            </form>
+          </div>
+
+          <!-- Phase 3: Immutable Reward Ledger Audit for Admin -->
+          <div class="chart-card" id="adminRewardsLedgerSection">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+              <h3 style="font-size:1.1rem; font-weight:700;">🏆 रिवॉर्ड ट्रांजेक्शन ऑडिट लेजर (Ledger)</h3>
+              <button class="btn-secondary" onclick="stenoAdmin.loadRewardsLedger()" style="padding:4px 10px; font-size:0.75rem;">🔄 रीफ़्रेश</button>
+            </div>
+            <div class="table-responsive" style="max-height: 320px; overflow-y:auto;">
+              <table class="data-table" id="adminRewardsTable">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>छात्र ID</th>
+                    <th>अंक</th>
+                    <th>प्रकार</th>
+                    <th>संदर्भ (Ref ID)</th>
+                    <th>दिनांक</th>
+                  </tr>
+                </thead>
+                <tbody id="adminRewardsTableBody">
+                  <!-- Populated dynamically -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Scoring Rules Configurator -->
+        <div class="charts-grid">
+          <div class="chart-card" id="adminScoringSection">
+            <h3 style="font-size:1.1rem; font-weight:700; margin-bottom:12px;">⚙️ परीक्षा मूल्यांकन नियम (Scoring Preset)</h3>
+            <form onsubmit="stenoAdmin.saveScoringConfig(event)">
+              <div class="form-group">
+                <label class="form-label">परीक्षा मोड (Exam Preset):</label>
+                <select id="adminScoringModeSelect" class="form-select">
+                  <option value="standard">Standard Exam Rule (Half Penalty on Matra/Spelling)</option>
+                  <option value="ssc">SSC Stenographer Grade C & D Mode</option>
+                  <option value="court">High Court Strict Mode (1.0 Penalty)</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">SSC त्रुटि दंड कारक (Error Factor):</label>
+                <input type="number" id="adminSscFactorInput" class="form-input" step="0.1" value="1.0">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Court त्रुटि दंड कारक:</label>
+                <input type="number" id="adminCourtFactorInput" class="form-input" step="0.1" value="1.2">
+              </div>
+              <button type="submit" class="btn-primary">नियम सहेजें (Save Scoring)</button>
+            </form>
+          </div>
+
+          <!-- Platform Branding & Targets -->
+          <div class="chart-card" id="adminBrandingSection">
+            <h3 style="font-size:1.1rem; font-weight:700; margin-bottom:12px;">🏷️ ब्रांडिंग एवं दैनिक लक्ष्य सेटिंग्स</h3>
+            <form onsubmit="stenoAdmin.saveSystemSettings(event)">
+              <div class="form-group">
+                <label class="form-label">ब्रांड लोगो (Current Brand Logo):</label>
+                <div style="display:flex; align-items:center; gap:14px; margin-top:6px;">
+                  <img src="/assets/logo.png" alt="StenoMaster Logo" id="adminLogoPreview" style="width:52px; height:52px; border-radius:12px; border:2px solid var(--border-subtle); object-fit:cover;">
+                  <div style="flex:1;">
+                    <input type="text" id="adminLogoUrlInput" class="form-input" value="/assets/logo.png" placeholder="/assets/logo.png" readonly>
+                    <span style="font-size:0.75rem; color:var(--text-muted);">आधिकारिक StenoMaster लोगो डिफ़ॉल्ट रूप से सक्रिय है।</span>
+                  </div>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">प्लेटफ़ॉर्म नाम (Product Name):</label>
+                <input type="text" id="adminAppNameInput" class="form-input" value="StenoMaster">
+              </div>
+              <div class="form-group">
+                <label class="form-label">टैगलाइन (Tagline):</label>
+                <input type="text" id="adminTaglineInput" class="form-input" value="Listen. Type. Improve. Master Steno.">
+              </div>
+              <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                <div class="form-group">
+                  <label class="form-label">दैनिक डिक्टेशन लक्ष्य:</label>
+                  <input type="number" id="adminDailyDictInput" class="form-input" value="3">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">दैनिक मिनट:</label>
+                  <input type="number" id="adminDailyMinInput" class="form-input" value="15">
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">दैनिक लक्ष्य गति (WPM):</label>
+                <input type="number" id="adminDailyWpmInput" class="form-input" value="40">
+              </div>
+              <button type="submit" class="btn-primary">ब्रांडिंग सहेजें (Save Branding)</button>
+            </form>
+          </div>
+        </div>
+      </main>
+
+    </div><!-- .main-wrapper -->
+
+    <!-- =====================================================================
+         Mobile Bottom Navigation Bar
+         ===================================================================== -->
+    <nav class="mobile-bottom-nav">
+      <button class="mobile-nav-btn active" data-nav="home">
+        <span>🏠</span> <span>होम</span>
+      </button>
+      <button class="mobile-nav-btn" data-nav="classes">
+        <span>📚</span> <span>क्लासेस</span>
+      </button>
+      <button class="mobile-nav-btn" data-nav="my-practice">
+        <span>✍️</span> <span>अभ्यास</span>
+      </button>
+      <button class="mobile-nav-btn" data-nav="progress">
+        <span>📈</span> <span>प्रगति</span>
+      </button>
+      <button class="mobile-nav-btn" data-nav="profile">
+        <span>👤</span> <span>प्रोफ़ाइल</span>
+      </button>
+    </nav>
+
+  </div><!-- .app-container -->
+
+  <!-- =====================================================================
+       Modals Container
+       ===================================================================== -->
+
+  <!-- Login Modal -->
+  <div class="modal-overlay" id="loginModal">
+    <div class="modal-card">
+      <button class="modal-close-btn" onclick="stenoApp.closeModal('loginModal')">✕</button>
+      <h3 class="modal-title">विद्यार्थी लॉगिन (Student Login)</h3>
+      <p class="modal-subtitle">अपने खाते में प्रवेश करें और अपनी स्टेनो प्रगति सुरक्षित रखें।</p>
+      <form onsubmit="event.preventDefault(); stenoApp.login(document.getElementById('loginUserEmail').value, document.getElementById('loginPassword').value);">
+        <div class="form-group">
+          <label class="form-label">ईमेल अथवा यूज़रनेम:</label>
+          <input type="text" id="loginUserEmail" class="form-input" placeholder="student@stenomaster.com" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">पासवर्ड:</label>
+          <input type="password" id="loginPassword" class="form-input" placeholder="••••••••" required>
+        </div>
+        <button type="submit" class="btn-primary" style="width:100%; margin-top:10px;">लॉगिन करें (Login)</button>
+      </form>
+      <div style="margin-top:16px; text-align:center; font-size:0.85rem;">
+        नया खाता बनाना चाहते हैं?
+        <a href="#" onclick="stenoApp.closeModal('loginModal'); stenoApp.openModal('registerModal');" style="color:var(--primary); font-weight:600;">पंजीकरण करें (Register)</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Register Modal -->
+  <div class="modal-overlay" id="registerModal">
+    <div class="modal-card">
+      <button class="modal-close-btn" onclick="stenoApp.closeModal('registerModal')">✕</button>
+      <h3 class="modal-title">नया पंजीकरण (Register Free)</h3>
+      <p class="modal-subtitle">StenoMaster पर निःशुल्क अभ्यास प्रारंभ करें।</p>
+      <form onsubmit="event.preventDefault(); stenoApp.register(
+        document.getElementById('regUsername').value,
+        document.getElementById('regEmail').value,
+        document.getElementById('regPassword').value,
+        document.getElementById('regDisplayName').value,
+        document.getElementById('regExamTarget').value,
+        document.getElementById('regReferralCode').value
+      );">
+        <div class="form-group">
+          <label class="form-label">यूज़रनेम (Username):</label>
+          <input type="text" id="regUsername" class="form-input" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">पूरा नाम (Full Name):</label>
+          <input type="text" id="regDisplayName" class="form-input" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">ईमेल (Email):</label>
+          <input type="email" id="regEmail" class="form-input" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">पासवर्ड (Password):</label>
+          <input type="password" id="regPassword" class="form-input" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">लक्ष्य परीक्षा:</label>
+          <select id="regExamTarget" class="form-select">
+            <option value="SSC Stenographer">SSC Stenographer</option>
+            <option value="UPSSSC Stenographer">UPSSSC Steno</option>
+            <option value="Court Stenographer">High Court Steno</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">रेफरल कोड (वैकल्पिक):</label>
+          <input type="text" id="regReferralCode" class="form-input" placeholder="उदा. STENO101">
+        </div>
+        <button type="submit" class="btn-primary" style="width:100%; margin-top:10px;">पंजीकरण करें (Create Account)</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Admin Passage Create/Edit Modal -->
+  <div class="modal-overlay" id="passageEditModal">
+    <div class="modal-card" style="max-width: 680px;">
+      <button class="modal-close-btn" onclick="stenoApp.closeModal('passageEditModal')">✕</button>
+      <h3 class="modal-title" id="passageModalTitle">स्टेनो आलेख जोड़ें</h3>
+      <form id="passageForm" onsubmit="stenoAdmin.savePassage(event)">
+        <input type="hidden" id="passageEditId">
+
+        <div class="form-group">
+          <label class="form-label">आलेख का शीर्षक (Title):</label>
+          <input type="text" id="passageTitleInput" class="form-input" required>
+        </div>
+
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
+          <div class="form-group">
+            <label class="form-label">श्रेणी (Category):</label>
+            <select id="passageCategorySelect" class="form-select">
+              <option value="1">रामधारी सिंह दिनकर</option>
+              <option value="2">महात्मा गांधी</option>
+              <option value="3">भारतीय संविधान</option>
+              <option value="4">भारत का इतिहास</option>
+              <option value="5">विज्ञान एवं प्रौद्योगिकी</option>
+              <option value="6">सामान्य ज्ञान</option>
+              <option value="7">करंट अफेयर्स</option>
+              <option value="8">समाचार सम्पादकीय</option>
+              <option value="9">SSC Stenographer</option>
+              <option value="10">UPSSSC Steno</option>
+              <option value="11">High Court Steno</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">भाषा (Language):</label>
+            <select id="passageLanguageSelect" class="form-select">
+              <option value="hindi">हिंदी (Hindi)</option>
+              <option value="english">अंग्रेजी (English)</option>
+            </select>
+          </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:12px;">
+          <div class="form-group">
+            <label class="form-label">कठिनाई स्तर:</label>
+            <select id="passageDifficultySelect" class="form-select">
+              <option value="easy">सरल (Easy)</option>
+              <option value="medium">मध्यम (Medium)</option>
+              <option value="hard">कठिन (Hard)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">लक्ष्य गति (Target WPM):</label>
+            <input type="number" id="passageTargetWpmInput" class="form-input" value="40">
+          </div>
+          <div class="form-group">
+            <label class="form-label">अवधि (Seconds):</label>
+            <input type="number" id="passageDurationInput" class="form-input" value="180">
+          </div>
+        </div>
+
+        <!-- Audio Upload Option -->
+        <div class="form-group">
+          <label class="form-label">ऑडियो फ़ाइल अपलोड करें (MP3/WAV/M4A):</label>
+          <input type="file" id="passageAudioFileInput" class="form-input" accept="audio/*" onchange="stenoAdmin.handleAudioFileUpload(this)">
+          <input type="text" id="passageAudioUrlInput" class="form-input" placeholder="अथवा ऑडियो URL यहाँ दर्ज करें" style="margin-top:6px;">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">आदेश / निर्देश (Instructions):</label>
+          <input type="text" id="passageInstructionsInput" class="form-input" placeholder="उदा. ध्यानपूर्वक सुनकर शुद्धता से टाइप करें।">
+        </div>
+
+        <!-- Canonical Passage Typing System Selector (Phase 4) -->
+        <div style="margin-bottom: 14px;">
+          <label class="form-label" style="font-weight:700; display:flex; justify-content:space-between; align-items:center;">
+            <span>PASSAGE TYPING SYSTEM (आलेख टाइपिंग प्रणाली):</span>
+            <span id="currentTypingSystemBadge" style="font-size:0.75rem; font-weight:600; padding:2px 8px; border-radius:4px; background:#f3e8ff; color:#7c3aed;">Dual Mode</span>
+          </label>
+          <div style="display:flex; gap:8px; background:var(--bg-subtle, #f1f5f9); padding:4px; border-radius:8px;">
+            <button type="button" id="tabSysMangal" class="admin-font-tab-btn" onclick="stenoAdmin.setTypingSystem('mangal_unicode')"
+                    style="flex:1; padding:9px 12px; border-radius:6px; border:1px solid var(--border); background:transparent; color:var(--text-primary); cursor:pointer; font-weight:700; font-size:0.86rem; transition:all 0.2s;">
+              🅰️ Mangal / Unicode
+            </button>
+            <button type="button" id="tabSysKruti" class="admin-font-tab-btn" onclick="stenoAdmin.setTypingSystem('kruti_dev_010')"
+                    style="flex:1; padding:9px 12px; border-radius:6px; border:1px solid var(--border); background:transparent; color:var(--text-primary); cursor:pointer; font-weight:700; font-size:0.86rem; transition:all 0.2s;">
+              ⌨️ Kruti Dev 010
+            </button>
+            <button type="button" id="tabSysDual" class="admin-font-tab-btn" onclick="stenoAdmin.setTypingSystem('dual')"
+                    style="flex:1; padding:9px 12px; border-radius:6px; border:1px solid #7c3aed; background:#7c3aed; color:#fff; cursor:pointer; font-weight:700; font-size:0.86rem; transition:all 0.2s;">
+              🔄 Dual (दोनों उपलब्ध)
+            </button>
+          </div>
+          <input type="hidden" id="passageTypingSystem" value="dual">
+        </div>
+
+        <!-- Dual Reference Passages (Mangal + Kruti Dev) -->
+        <div style="background:var(--bg-card-alt, #f8fafc); border:1px solid var(--border); border-radius:8px; padding:14px; margin-bottom:15px;">
+          <!-- Mangal Box Wrapper -->
+          <div id="mangalBoxWrapper" style="margin-bottom: 12px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+              <label class="form-label" style="font-weight:700; margin:0; color:#0284c7;">
+                🅰️ Official Mangal / Unicode Text (मंगल संदर्भ पाठ) <span id="mangalReqAsterisk" style="color:#ef4444;">*</span>:
+              </label>
+              <div style="display:flex; gap:6px;">
+                <button type="button" class="btn-sm btn-secondary" onclick="stenoAdmin.convertKrutiToMangalModal()" title="कृति देव पाठ से मंगल बनाएं" style="font-size:0.75rem; padding:3px 8px;">
+                  ⚡ कृति देव ➔ मंगल बदलें
+                </button>
+              </div>
+            </div>
+            <textarea id="passageOfficialTextInput" class="form-textarea" rows="5"
+                      placeholder="मंगल (यूनिकोड) में मूल आलेख यहाँ टाइप / पेस्ट करें..."></textarea>
+            <div id="mangalAutoBadge" style="font-size:0.75rem; color:var(--text-muted); margin-top:3px;">
+              Mangal / Inscript / English परीक्षार्थियों के लिए अनिवार्य मानक पाठ।
+            </div>
+          </div>
+
+          <!-- Kruti Dev Box Wrapper -->
+          <div id="krutiBoxWrapper" style="margin-top: 12px; border-top: 1px dashed var(--border); padding-top: 12px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+              <label class="form-label" style="font-weight:700; margin:0; color:#d97706;">
+                ⌨️ Official Kruti Dev 010 Text (कृति देव 010 संदर्भ पाठ) <span id="krutiReqAsterisk" style="color:#ef4444;">*</span>:
+              </label>
+              <div style="display:flex; gap:6px;">
+                <button type="button" class="btn-sm btn-secondary" onclick="stenoAdmin.convertMangalToKrutiModal()" title="मंगल पाठ से कृति देव बनाएं" style="font-size:0.75rem; padding:3px 8px;">
+                  ⚡ मंगल ➔ कृति देव बदलें
+                </button>
+              </div>
+            </div>
+            <textarea id="passageOfficialKrutiInput" class="form-textarea font-krutidev" rows="5"
+                      placeholder="कृति देव 010 में संदर्भ पाठ यहाँ टाइप / पेस्ट करें..."></textarea>
+            <div id="krutiAutoBadge" style="font-size:0.75rem; color:#d97706; margin-top:3px;">
+              💡 <em>Kruti Dev छात्रों का टेस्ट सीधे इस पाठ से 100% सटीक (Zero Error) मैच होगा।</em>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">टैग्स (अल्पविराम से अलग):</label>
+          <input type="text" id="passageTagsInput" class="form-input" placeholder="दिनकर,साहित्य,एसएससी">
+        </div>
+
+        <div style="margin-top: 20px; display:flex; justify-content:flex-end; gap:10px;">
+          <button type="button" class="btn-secondary" onclick="stenoApp.closeModal('passageEditModal')">रद्द करें</button>
+          <button type="submit" class="btn-primary">आलेख सहेजें (Save)</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Bulk Import Modal -->
+  <div class="modal-overlay" id="bulkImportModal">
+    <div class="modal-card" style="max-width: 650px;">
+      <button class="modal-close-btn" onclick="stenoApp.closeModal('bulkImportModal')">✕</button>
+      <h3 class="modal-title">बल्क आलेख आयात (Bulk Import Passages)</h3>
+      <p class="modal-subtitle">नीचे दिए गए प्रारूप में कई आलेख JSON प्रारूप में पेस्ट करें:</p>
+      <textarea id="bulkJsonInput" class="form-textarea" rows="10" placeholder='[
+  {
+    "title": "आलेख शीर्षक",
+    "category_id": 1,
+    "language": "hindi",
+    "difficulty": "medium",
+    "target_wpm": 40,
+    "duration_seconds": 180,
+    "official_text": "मूल संदर्भ पाठ यहाँ रहेगा...",
+    "instructions": "निर्देश यहाँ"
+  }
+]'></textarea>
+      <div style="margin-top: 16px; display:flex; justify-content:flex-end; gap:10px;">
+        <button type="button" class="btn-secondary" onclick="stenoApp.closeModal('bulkImportModal')">रद्द करें</button>
+        <button type="button" class="btn-primary" onclick="stenoAdmin.processBulkImport()">इम्पोर्ट करें (Import Now)</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Category Creation Modal -->
+  <div class="modal-overlay" id="categoryModal">
+    <div class="modal-card" style="max-width: 500px;">
+      <button class="modal-close-btn" onclick="stenoApp.closeModal('categoryModal')">✕</button>
+      <h3 class="modal-title">नई श्रेणी जोड़ें (Create Category)</h3>
+      <p class="modal-subtitle">आलेखों को वर्गीकृत करने के लिए नई श्रेणी बनाएं</p>
+      <form onsubmit="stenoAdmin.saveCategory(event)">
+        <div class="form-group">
+          <label class="form-label">श्रेणी का नाम (Category Name):</label>
+          <input type="text" id="catNameInput" class="form-input" placeholder="उदा. निबंध एवं सम्पादकीय" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">स्लग (Slug / URL Identifier):</label>
+          <input type="text" id="catSlugInput" class="form-input" placeholder="उदा. essay-editorial">
+        </div>
+        <div class="form-group">
+          <label class="form-label">विवरण (Description):</label>
+          <input type="text" id="catDescInput" class="form-input" placeholder="संक्षिप्त विवरण">
+        </div>
+        <div class="form-group">
+          <label class="form-label">भाषा (Language):</label>
+          <select id="catLanguageSelect" class="form-select">
+            <option value="hindi">हिंदी (Hindi)</option>
+            <option value="english">अंग्रेजी (English)</option>
+            <option value="both">दोनों (Both)</option>
+          </select>
+        </div>
+        <div style="margin-top: 20px; display:flex; justify-content:flex-end; gap:10px;">
+          <button type="button" class="btn-secondary" onclick="stenoApp.closeModal('categoryModal')">रद्द करें</button>
+          <button type="submit" class="btn-primary">श्रेणी बनाएं (Save Category)</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Admin Users Audit Modal -->
+  <div class="modal-overlay" id="adminUsersModal">
+    <div class="modal-card" style="max-width: 850px;">
+      <button class="modal-close-btn" onclick="stenoApp.closeModal('adminUsersModal')">✕</button>
+      <h3 class="modal-title">👥 उपयोगकर्ता एवं रोल प्रबंधन (User Management)</h3>
+      <p class="modal-subtitle">पंजीकृत छात्र, प्रशासनिक खाते, स्ट्रीक एवं कुल अभ्यास का विवरण</p>
+      <div class="table-responsive" style="max-height: 60vh; margin-top: 14px;">
+        <table class="data-table" id="adminUsersTable">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>नाम (Name / Username)</th>
+              <th>ईमेल (Email)</th>
+              <th>रोल (Role)</th>
+              <th>लक्ष्य परीक्षा</th>
+              <th>स्ट्रीक / अंक</th>
+              <th>कुल अभ्यास</th>
+            </tr>
+          </thead>
+          <tbody id="adminUsersTableBody">
+            <!-- Rendered dynamically -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Dual Passage Typing Mode Selection Modal (Phase 8) -->
+  <div class="modal-overlay" id="dualModeSelectModal" style="display:none; z-index:10000;">
+    <div class="modal-card" style="max-width: 460px; text-align:center; padding:28px 22px;">
+      <div style="font-size:44px; margin-bottom:8px;">⌨️</div>
+      <h3 class="modal-title" style="font-size:1.3rem; margin-bottom:6px;">टाइपिंग फ़ॉन्ट चुनें (Select Typing Font)</h3>
+      <p style="color:var(--text-secondary); font-size:0.88rem; margin-bottom:18px;">
+        इस आलेख में <strong>मंगल (Unicode)</strong> और <strong>कृति देव 010</strong> दोनों उपलब्ध हैं। आप किस फ़ॉन्ट में टेस्ट देना चाहते हैं?
+      </p>
+
+      <div style="display:flex; flex-direction:column; gap:12px; margin-bottom:18px;">
+        <button type="button" class="btn-primary" onclick="stenoApp.confirmDualModeSelection('mangal_unicode')" style="padding:14px 16px; font-size:1rem; font-weight:700; background:#0284c7; border-color:#0284c7; display:flex; justify-content:space-between; align-items:center;">
+          <span>🅰️ मंगल / यूनिकोड (Mangal / Unicode)</span>
+          <span style="font-size:0.85rem; font-weight:normal; opacity:0.9;">Inscript / Gail →</span>
+        </button>
+        <button type="button" class="btn-primary" onclick="stenoApp.confirmDualModeSelection('kruti_dev_010')" style="padding:14px 16px; font-size:1rem; font-weight:700; background:#d97706; border-color:#d97706; display:flex; justify-content:space-between; align-items:center;">
+          <span>⌨️ कृति देव 010 (Kruti Dev 010)</span>
+          <span style="font-size:0.85rem; font-weight:normal; opacity:0.9;">Remington →</span>
+        </button>
+      </div>
+
+      <button type="button" class="btn-secondary" onclick="stenoApp.closeModal('dualModeSelectModal')" style="width:100%;">
+        रद्द करें (Cancel)
+      </button>
+    </div>
+  </div>
+
+  <!-- Student Registration Success / Credentials Card Modal -->
+  <div class="modal-overlay" id="studentCredentialsModal" style="display:none; z-index:10000;">
+    <div class="modal-card" style="max-width: 480px; text-align:center; padding:28px 24px;">
+      <div style="font-size:48px; margin-bottom:8px;">🎉</div>
+      <h3 class="modal-title" style="font-size:1.35rem; color:var(--primary); margin-bottom:6px;">खाता सफलतापूर्वक बन गया!</h3>
+      <p style="color:var(--text-secondary); font-size:0.88rem; margin-bottom:18px;">
+        कृपया अपनी <strong>लॉगिन आईडी व पासवर्ड</strong> सुरक्षित लिख लें या कॉपी कर लें। भविष्य में इसी से लॉगिन होगा:
+      </p>
+
+      <div style="background:var(--bg-card); border:2px dashed var(--primary); border-radius:14px; padding:16px; text-align:left; margin-bottom:16px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; border-bottom:1px solid var(--border-subtle); padding-bottom:8px;">
+          <span style="color:var(--text-secondary); font-size:0.85rem;">🎓 छात्र रोल कोड (Student ID):</span>
+          <strong id="credStudentCode" style="color:var(--primary); font-size:1.05rem; letter-spacing:0.5px;">-</strong>
+        </div>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; border-bottom:1px solid var(--border-subtle); padding-bottom:8px;">
+          <span style="color:var(--text-secondary); font-size:0.85rem;">👤 यूज़रनेम (Login ID):</span>
+          <strong id="credUsername" style="font-size:0.95rem;">-</strong>
+        </div>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; border-bottom:1px solid var(--border-subtle); padding-bottom:8px;">
+          <span style="color:var(--text-secondary); font-size:0.85rem;">✉️ पंजीकृत ईमेल (Email):</span>
+          <strong id="credEmail" style="font-size:0.9rem;">-</strong>
+        </div>
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <span style="color:var(--text-secondary); font-size:0.85rem;">🔒 पासवर्ड (Password):</span>
+          <strong id="credPassword" style="color:#d9534f; font-size:1.05rem; letter-spacing:1px;">-</strong>
+        </div>
+      </div>
+
+      <div style="background:rgba(255, 193, 7, 0.15); border:1px solid #ffc107; color:var(--text-primary); border-radius:10px; padding:12px; font-size:0.85rem; text-align:left; line-height:1.5; margin-bottom:20px;">
+        ⚠️ <strong>आवश्यक सूचना:</strong> आप अपने <strong>Student ID</strong>, <strong>Username</strong> या <strong>Email</strong> में से किसी से भी लॉगिन कर सकते हैं। पासवर्ड भूल जाने पर <strong>पंजीकृत ईमेल</strong> पर रीसेट लिंक भेजा जाएगा।
+      </div>
+
+      <div style="display:grid; grid-template-columns: 1fr 1.2fr; gap:12px;">
+        <button type="button" class="btn-secondary" onclick="stenoApp.copyStudentCredentials()" style="padding:10px 14px; font-weight:600; font-size:0.9rem;">
+          📋 कॉपी करें (Copy)
+        </button>
+        <button type="button" class="btn-primary" onclick="stenoApp.proceedToPracticeAfterSignup()" style="padding:10px 14px; font-weight:600; font-size:0.95rem;">
+          अभ्यास शुरू करें →
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Forgot Password Modal -->
+  <div class="modal-overlay" id="forgotPasswordModal">
+    <div class="modal-card" style="max-width: 440px;">
+      <button class="modal-close-btn" onclick="stenoApp.closeModal('forgotPasswordModal')">✕</button>
+      <h3 class="modal-title">पासवर्ड रीसेट (Reset Password)</h3>
+      <p class="modal-subtitle">अपना पंजीकृत ईमेल दर्ज करें। हम पासवर्ड रीसेट निर्देश भेजेंगे।</p>
+      <form onsubmit="stenoApp.handleForgotPassword(event)">
+        <div class="form-group">
+          <label class="form-label">पंजीकृत ईमेल (Registered Email):</label>
+          <input type="email" id="forgotEmailInput" class="form-input" placeholder="student@stenomaster.com" required>
+        </div>
+        <button type="submit" class="btn-primary" style="width:100%; margin-top:10px;">पासवर्ड रीसेट लिंक भेजें (Send Reset Link)</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Kruti Dev / Remington Alt Codes Helper Modal -->
+  <div class="modal-overlay" id="altCodesModal" style="display:none;">
+    <div class="modal-card" style="max-width: 680px; max-height:85vh; overflow-y:auto;">
+      <button class="modal-close-btn" onclick="document.getElementById('altCodesModal').style.display='none'">✕</button>
+      <h3 class="modal-title">⌨️ कृति देव 010 / रेमिंगटन विशेष कोड्स (Alt Codes)</h3>
+      <p class="modal-subtitle">टाइप करते समय Numpad पर `Alt` दबाकर अंक कोड टाइप करें:</p>
+
+      <div style="display:grid; grid-template-columns: 1fr 1fr; gap:16px; margin-top:14px; font-size:0.88rem;">
+        <div style="background:var(--bg-card-hover); padding:12px; border-radius:8px;">
+          <h4 style="font-size:0.85rem; color:var(--primary); margin-bottom:8px; font-weight:700;">संयुक्त अक्षर (Conjuncts)</h4>
+          <table style="width:100%; border-collapse:collapse; font-size:0.85rem;">
+            <tr style="border-bottom:1px solid var(--border-subtle);"><td style="padding:4px 0;"><strong>क्र</strong> (क्रम)</td><td style="text-align:right;"><code style="background:var(--bg-surface); padding:2px 6px; border-radius:4px;">Alt + 0216</code></td></tr>
+            <tr style="border-bottom:1px solid var(--border-subtle);"><td style="padding:4px 0;"><strong>त्र</strong> (छात्र)</td><td style="text-align:right;"><code style="background:var(--bg-surface); padding:2px 6px; border-radius:4px;">= / «</code></td></tr>
+            <tr style="border-bottom:1px solid var(--border-subtle);"><td style="padding:4px 0;"><strong>ज्ञ</strong> (ज्ञान)</td><td style="text-align:right;"><code style="background:var(--bg-surface); padding:2px 6px; border-radius:4px;">Shift + K</code></td></tr>
+            <tr style="border-bottom:1px solid var(--border-subtle);"><td style="padding:4px 0;"><strong>श्र</strong> (श्रम)</td><td style="text-align:right;"><code style="background:var(--bg-surface); padding:2px 6px; border-radius:4px;">Shift + J</code></td></tr>
+            <tr style="border-bottom:1px solid var(--border-subtle);"><td style="padding:4px 0;"><strong>ट्र</strong> (ट्रेन)</td><td style="text-align:right;"><code style="background:var(--bg-surface); padding:2px 6px; border-radius:4px;">Alt + 0227</code></td></tr>
+            <tr style="border-bottom:1px solid var(--border-subtle);"><td style="padding:4px 0;"><strong>ड्र</strong> (ड्राफ्ट)</td><td style="text-align:right;"><code style="background:var(--bg-surface); padding:2px 6px; border-radius:4px;">Alt + 0228</code></td></tr>
+            <tr style="border-bottom:1px solid var(--border-subtle);"><td style="padding:4px 0;"><strong>क्त</strong> (संयुक्त)</td><td style="text-align:right;"><code style="background:var(--bg-surface); padding:2px 6px; border-radius:4px;">Alt + 0163</code></td></tr>
+            <tr style="border-bottom:1px solid var(--border-subtle);"><td style="padding:4px 0;"><strong>त्त</strong> (उत्तर)</td><td style="text-align:right;"><code style="background:var(--bg-surface); padding:2px 6px; border-radius:4px;">Alt + 0204</code></td></tr>
+            <tr><td style="padding:4px 0;"><strong>ष्ट</strong> (राष्ट्रीय)</td><td style="text-align:right;"><code style="background:var(--bg-surface); padding:2px 6px; border-radius:4px;">Alt + 0205</code></td></tr>
+          </table>
+        </div>
+
+        <div style="background:var(--bg-card-hover); padding:12px; border-radius:8px;">
+          <h4 style="font-size:0.85rem; color:var(--primary); margin-bottom:8px; font-weight:700;">'द' एवं 'ह' वर्ग संयुक्त अक्षर</h4>
+          <table style="width:100%; border-collapse:collapse; font-size:0.85rem;">
+            <tr style="border-bottom:1px solid var(--border-subtle);"><td style="padding:4px 0;"><strong>द्य</strong> (विद्या)</td><td style="text-align:right;"><code style="background:var(--bg-surface); padding:2px 6px; border-radius:4px;">Alt + 0161</code></td></tr>
+            <tr style="border-bottom:1px solid var(--border-subtle);"><td style="padding:4px 0;"><strong>द्द</strong> (उद्देश्य)</td><td style="text-align:right;"><code style="background:var(--bg-surface); padding:2px 6px; border-radius:4px;">Alt + 0170</code></td></tr>
+            <tr style="border-bottom:1px solid var(--border-subtle);"><td style="padding:4px 0;"><strong>द्ध</strong> (प्रसिद्ध)</td><td style="text-align:right;"><code style="background:var(--bg-surface); padding:2px 6px; border-radius:4px;">Alt + 0188</code></td></tr>
+            <tr style="border-bottom:1px solid var(--border-subtle);"><td style="padding:4px 0;"><strong>द्व</strong> (विद्वान)</td><td style="text-align:right;"><code style="background:var(--bg-surface); padding:2px 6px; border-radius:4px;">Alt + 0197</code></td></tr>
+            <tr style="border-bottom:1px solid var(--border-subtle);"><td style="padding:4px 0;"><strong>द्भ</strong> (उद्भव)</td><td style="text-align:right;"><code style="background:var(--bg-surface); padding:2px 6px; border-radius:4px;">Alt + 0182</code></td></tr>
+            <tr style="border-bottom:1px solid var(--border-subtle);"><td style="padding:4px 0;"><strong>ट्ट</strong> (मिट्टी)</td><td style="text-align:right;"><code style="background:var(--bg-surface); padding:2px 6px; border-radius:4px;">Alt + 0179</code></td></tr>
+            <tr style="border-bottom:1px solid var(--border-subtle);"><td style="padding:4px 0;"><strong>ट्ठ</strong> (चिट्ठी)</td><td style="text-align:right;"><code style="background:var(--bg-surface); padding:2px 6px; border-radius:4px;">Alt + 0180</code></td></tr>
+            <tr style="border-bottom:1px solid var(--border-subtle);"><td style="padding:4px 0;"><strong>ह्न</strong> (चिह्न)</td><td style="text-align:right;"><code style="background:var(--bg-surface); padding:2px 6px; border-radius:4px;">Alt + 0165</code></td></tr>
+            <tr><td style="padding:4px 0;"><strong>ह्य</strong> (असह्य)</td><td style="text-align:right;"><code style="background:var(--bg-surface); padding:2px 6px; border-radius:4px;">Alt + 0224</code></td></tr>
+          </table>
+        </div>
+      </div>
+
+      <div style="margin-top:16px; text-align:center;">
+        <button type="button" class="btn-primary" onclick="document.getElementById('altCodesModal').style.display='none'" style="padding:6px 20px;">
+          समझ गए (Close)
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Attractive Vibrant Steno Dictation Countdown Overlay (5 to 1) -->
+  <div id="stenoCountdownOverlay" class="countdown-overlay" style="display:none;">
+    <div class="countdown-backdrop" onclick="stenoAudioPlayer.cancelCountdown()"></div>
+    <div class="countdown-card" id="countdownCard">
+      <div class="countdown-glow-ambient" id="countdownGlowAmbient"></div>
+
+      <div class="countdown-badge-wrapper">
+        <div class="countdown-ripple-ring ring-1" id="countdownRing1"></div>
+        <div class="countdown-ripple-ring ring-2" id="countdownRing2"></div>
+        <div class="countdown-ripple-ring ring-3" id="countdownRing3"></div>
+        <div id="countdownNumberBadge" class="countdown-number-badge count-5">5</div>
+      </div>
+
+      <div id="countdownTitle" class="countdown-title">डिक्टेशन प्रारंभ होने वाली है...</div>
+      <div id="countdownSubtitle" class="countdown-subtitle">अपनी नोटबुक और पेंसिल तैयार रखें ✍️</div>
+
+      <div class="countdown-actions">
+        <button type="button" class="countdown-btn-skip" onclick="stenoAudioPlayer.skipCountdown()">
+          ⏩ सीधे शुरू करें (Skip)
+        </button>
+        <button type="button" class="countdown-btn-cancel" onclick="stenoAudioPlayer.cancelCountdown()">
+          ✕ रद्द करें (Cancel)
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================================================================
+       SECURITY ALERT: CONCURRENT / MULTI-DEVICE LOGIN DETECTED MODAL
+       =================================================================== -->
+  <div id="concurrentLoginModal" class="concurrent-modal-overlay" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="concurrentModalTitle">
+    <div class="concurrent-backdrop"></div>
+    <div class="concurrent-card">
+      <div class="concurrent-header">
+        <div class="concurrent-icon-badge">
+          <span class="shield-pulse"></span>
+          🛡️
+        </div>
+        <span class="security-tag">SINGLE DEVICE SECURITY</span>
+      </div>
+
+      <h2 class="concurrent-title" id="concurrentModalTitle">सुरक्षा चेतावनी: अन्य डिवाइस पर नया लॉगिन डिटेक्ट हुआ</h2>
+      <p class="concurrent-subtitle">
+        यह खाता अभी किसी अन्य कंप्यूटर, मोबाइल अथवा ब्राउज़र पर लॉगिन किया गया है।
+      </p>
+
+      <div class="concurrent-details-box">
+        <div class="detail-row">
+          <span class="detail-label">📍 नया लॉगिन IP पता:</span>
+          <span class="detail-value ip-code" id="concurrentLoginIp">--.--.--.--</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">🕒 लॉगिन समय:</span>
+          <span class="detail-value" id="concurrentLoginTime">--:--</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">💻 नया डिवाइस:</span>
+          <span class="detail-value" id="concurrentLoginDevice">Computer / Browser</span>
+        </div>
+      </div>
+
+      <div class="concurrent-policy-note">
+        <span class="policy-icon">⚠️</span>
+        <div>
+          <strong>पेड सब्सक्रिप्शन नियम (Single-Device Access):</strong> आपके खाते की सुरक्षा एवं परीक्षा गोपनीयता बनाए रखने के लिए, एक समय में केवल एक ही डिवाइस पर सक्रिय रहने की अनुमति है। इस डिवाइस का सत्र (Session) समाप्त कर दिया गया है।
+        </div>
+      </div>
+
+      <div class="concurrent-actions">
+        <button type="button" class="btn-primary concurrent-relogin-btn" onclick="stenoApp.openLoginFromConcurrent()">
+          🔑 इस डिवाइस पर पुनः लॉगिन करें (Login Again Here)
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- Cashfree Payment Gateway SDK (v3) -->
+  <script src="https://sdk.cashfree.com/js/v3/cashfree.js"></script>
+
+  <!-- Scripts -->
+  <script src="/js/charts.js?v=4.1"></script>
+  <script src="/js/audio_player.js?v=4.1"></script>
+  <script src="/js/typing_engine.js?v=4.1"></script>
+  <script src="/js/comparison_view.js?v=4.1"></script>
+  <script src="/js/admin.js?v=4.1"></script>
+  <script src="/js/app.js?v=4.1"></script>
+</body>
+</html>
