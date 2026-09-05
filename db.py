@@ -1333,8 +1333,7 @@ def save_practice_attempt(
     total_errors = metrics["total_errors"]
     weighted_errors = metrics["weighted_errors"]
     time_taken = metrics["time_taken_seconds"]
-    report_json_str = json.dumps(eval_result, ensure_ascii=False)
-
+    report_json_str = json.dumps(eval_result, ensure_ascii=False, default=str)
     c.execute("""
         INSERT INTO practice_attempts (
             user_id, passage_id, gross_wpm, net_wpm, accuracy, spelling_accuracy,
