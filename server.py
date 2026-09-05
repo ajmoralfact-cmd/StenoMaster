@@ -75,7 +75,7 @@ class StenoMasterHandler(http.server.SimpleHTTPRequestHandler):
     # Response Helpers
     # -------------------------------------------------------------------------
     def _send_json(self, status_code: int, data: dict):
-        body = json.dumps(data, ensure_ascii=False).encode('utf-8')
+        body = json.dumps(data, ensure_ascii=False, default=str).encode('utf-8')
         self.send_response(status_code)
         self.send_header('Content-Type', 'application/json; charset=utf-8')
         self.send_header('Content-Length', str(len(body)))
