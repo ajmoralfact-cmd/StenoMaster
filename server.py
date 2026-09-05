@@ -537,8 +537,37 @@ class StenoMasterHandler(http.server.SimpleHTTPRequestHandler):
             self._send_json(201, {
                 "token": token,
                 "user": user_obj,
+                "credentials": {
+                    "username": res.get("username"),
+                    "student_code": res.get("student_code"),
+                    "email": res.get("email"),
+                    "password": password
+                },
                 "login_ip": client_ip,
                 "login_device": device_name
+            })
+            return
+
+        if path == '/api/auth/forgot-password':
+            data = self._read_json_body()
+            email = data.get('email', '').strip().lower()
+            if not email:
+                self._send_json(400, {"error": "कृपया मान्य ईमेल दर्ज करें। (Please enter a valid email)"})
+                return
+            conn = db.get_db()
+            c = conn.cursor()
+            c.execute("SELECT id, username, email, student_code FROM users WHERE LOWER(email) = ?", (email,))
+            u_row = c.fetchone()
+            conn.close()
+            if not u_row:
+                self._send_json(404, {"error": "इस ईमेल से कोई खाता पंजीकृत नहीं है। कृपया सही ईमेल दर्ज करें।"})
+                return
+            self._send_json(200, {
+                "success": True,
+                "email": email,
+                "username": u_row["username"],
+                "student_code": u_row["student_code"],
+                "message": f"पासवर्ड रीसेट लिंक आपके पंजीकृत ईमेल ({email}) पर भेज दिया गया है। कृपया अपना इनबॉक्स या स्पैम फ़ोल्डर चेक करें।"
             })
             return
 

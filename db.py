@@ -28,7 +28,26 @@ class PostgresCursorWrapper:
         self.lastrowid = None
 
     def execute(self, sql, params=None):
-        pg_sql = sql.replace('?', '%s')
+        pg_sql = sql.replace('?', '%s').strip()
+        tables_with_id = ('USERS', 'PRACTICE_ATTEMPTS', 'PASSAGES', 'CATEGORIES', 'PAYMENT_REQUESTS', 'CASHFREE_ORDERS', 'NOTIFICATIONS', 'REFERRALS', 'REWARD_TRANSACTIONS')
+        sql_upper = pg_sql.upper()
+        if any(f"INSERT INTO {tbl}" in sql_upper for tbl in tables_with_id) and 'RETURNING' not in sql_upper:
+            pg_sql = pg_sql + ' RETURNING id'
+            if params is not None:
+                self._cur.execute(pg_sql, params)
+            else:
+                self._cur.execute(pg_sql)
+            try:
+                row = self._cur.fetchone()
+                if row:
+                    if isinstance(row, dict) and 'id' in row:
+                        self.lastrowid = row['id']
+                    elif isinstance(row, (tuple, list)):
+                        self.lastrowid = row[0]
+            except Exception:
+                pass
+            return self
+
         if params is not None:
             self._cur.execute(pg_sql, params)
         else:
@@ -829,6 +848,13 @@ def create_user(username: str, email: str, password: str, display_name: str = No
             VALUES (?, ?, ?, ?, 'student', ?, 'free', ?)
         """, (username, email.lower().strip(), phone.strip() if phone else None, pwd_hash, user_ref, now))
         user_id = c.lastrowid
+        if not user_id:
+            c.execute("SELECT id FROM users WHERE username = ?", (username,))
+            u_row = c.fetchone()
+            if u_row:
+                user_id = u_row['id']
+            else:
+                user_id = 1
 
         student_code = f"STM-{year}-{user_id:06d}"
         c.execute("UPDATE users SET student_code = ? WHERE id = ?", (student_code, user_id))
@@ -952,6 +978,7 @@ def authenticate_user(email_or_username: str, password: str) -> Optional[Dict[st
     conn = get_db()
     c = conn.cursor()
     clean_identifier = email_or_username.lower().strip()
+    raw_identifier = email_or_username.strip()
     c.execute("""
         SELECT u.id, u.username, u.email, u.phone, u.student_code, u.password_hash, u.role, u.is_active,
                u.subscription_status, u.subscription_plan, u.subscription_start, u.subscription_end,
@@ -959,8 +986,8 @@ def authenticate_user(email_or_username: str, password: str) -> Optional[Dict[st
                p.target_wpm, p.points, p.streak_days, p.show_on_leaderboard
         FROM users u
         LEFT JOIN profiles p ON u.id = p.user_id
-        WHERE (u.email = ? OR u.username = ? OR u.phone = ?) AND u.is_active = 1
-    """, (clean_identifier, email_or_username.strip(), clean_identifier))
+        WHERE (u.email = ? OR u.username = ? OR u.phone = ? OR UPPER(u.student_code) = UPPER(?)) AND u.is_active = 1
+    """, (clean_identifier, raw_identifier, clean_identifier, raw_identifier))
     user = c.fetchone()
 
     if not user:
