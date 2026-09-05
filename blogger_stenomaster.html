@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>StenoMaster Pro — हिंदी एवं अंग्रेजी आशुलिपि टंकण पोर्टल</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=Rozha+One&family=Tiro+Devanagari+Hindi&display=swap" rel="stylesheet">
+  
+  <style>
+    /* ==========================================================================
+       StenoMaster Pro — Blogger Standalone Theme & Portal
+       ========================================================================== */
+    :root {
+      --primary: #2563eb;
+      --primary-dark: #1d4ed8;
+      --accent: #10b981;
+      --accent-gold: #f59e0b;
+      --bg: #0b1329;
+      --bg-card: #131f3d;
+      --border: #233560;
+      --text-main: #f8fafc;
+      --text-sub: #94a3b8;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text-main);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    .hindi-font {
+      font-family: 'Tiro Devanagari Hindi', serif;
+    }
+
+    /* Top Navigation Bar */
+    .steno-header {
+      background: rgba(19, 31, 61, 0.92);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      padding: 14px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .brand-group {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-logo {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      box-shadow: 0 4px 14px rgba(59, 130, 246, 0.4);
+    }
+
+    .brand-title {
+      font-size: 1.25rem;
+      font-weight: 800;
+      color: #fff;
+      letter-spacing: -0.5px;
+    }
+
+    .brand-subtitle {
+      font-size: 0.72rem;
+      color: #38bdf8;
+      font-weight: 700;
+    }
+
+    .header-pills {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .validity-pill {
+      background: rgba(16, 185, 129, 0.15);
+      border: 1px solid rgba(16, 185, 129, 0.4);
+      color: #34d399;
+      padding: 6px 14px;
+      border-radius: 30px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* Rotating Rainbow Ring Avatar */
+    .avatar-ring-wrap {
+      position: relative;
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      padding: 3px;
+      background: conic-gradient(from 0deg, #f43f5e, #fbbf24, #10b981, #06b6d4, #8b5cf6, #f43f5e);
+      animation: rainbowRotate 4s linear infinite;
+    }
+
+    @keyframes rainbowRotate {
+      100% { transform: rotate(360deg); }
+    }
+
+    .avatar-inner {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      background: #0f172a;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      color: #fff;
+    }
+
+    /* Container */
+    .portal-container {
+      max-width: 1160px;
+      margin: 0 auto;
+      padding: 30px 18px 80px;
+    }
+
+    /* Hero Banner */
+    .hero-banner {
+      background: linear-gradient(135deg, rgba(37, 99, 235, 0.2) 0%, rgba(139, 92, 246, 0.15) 100%);
+      border: 1px solid rgba(59, 130, 246, 0.3);
+      border-radius: 20px;
+      padding: 36px 28px;
+      text-align: center;
+      margin-bottom: 36px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero-badge {
+      display: inline-block;
+      background: rgba(245, 158, 11, 0.2);
+      border: 1px solid #f59e0b;
+      color: #fbbf24;
+      padding: 6px 16px;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-weight: 800;
+      margin-bottom: 16px;
+    }
+
+    .hero-title {
+      font-size: 2.2rem;
+      font-weight: 800;
+      color: #fff;
+      margin-bottom: 12px;
+      line-height: 1.25;
+    }
+
+    .hero-desc {
+      color: var(--text-sub);
+      font-size: 1.05rem;
+      max-width: 680px;
+      margin: 0 auto 24px;
+      line-height: 1.6;
+    }
+
+    .btn-hero {
+      background: linear-gradient(135deg, #2563eb, #1d4ed8);
+      color: #fff;
+      text-decoration: none;
+      font-weight: 700;
+      padding: 14px 32px;
+      border-radius: 12px;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 8px 20px rgba(37, 99, 235, 0.4);
+      transition: 0.2s ease;
+      cursor: pointer;
+      border: none;
+      font-size: 1rem;
+    }
+
+    .btn-hero:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 28px rgba(37, 99, 235, 0.5);
+    }
+
+    /* Section Titles */
+    .section-head {
+      margin-bottom: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+    }
+
+    .section-title {
+      font-size: 1.4rem;
+      font-weight: 800;
+      color: #fff;
+    }
+
+    /* Class Cards Grid */
+    .classes-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 22px;
+      margin-bottom: 48px;
+    }
+
+    .class-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 22px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: all 0.25s ease;
+      position: relative;
+    }
+
+    .class-card:hover {
+      border-color: #3b82f6;
+      transform: translateY(-3px);
+    }
+
+    .class-card.locked {
+      opacity: 0.88;
+      border-color: rgba(245, 158, 11, 0.3);
+    }
+
+    .badge-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+    }
+
+    .badge {
+      font-size: 0.72rem;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 6px;
+    }
+
+    .badge-free {
+      background: rgba(16, 185, 129, 0.18);
+      color: #34d399;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+
+    .badge-locked {
+      background: rgba(245, 158, 11, 0.18);
+      color: #fbbf24;
+      border: 1px solid rgba(245, 158, 11, 0.3);
+    }
+
+    .badge-lang {
+      background: #1e293b;
+      color: #94a3b8;
+    }
+
+    .card-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 10px;
+      line-height: 1.4;
+    }
+
+    .card-stats {
+      background: rgba(11, 19, 41, 0.6);
+      border-radius: 10px;
+      padding: 10px 14px;
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.82rem;
+      color: var(--text-sub);
+      margin-bottom: 18px;
+    }
+
+    .card-action-btn {
+      width: 100%;
+      padding: 12px;
+      border-radius: 10px;
+      font-weight: 700;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: 0.2s ease;
+      text-decoration: none;
+    }
+
+    .btn-start {
+      background: var(--primary);
+      color: #fff;
+    }
+
+    .btn-start:hover {
+      background: var(--primary-dark);
+    }
+
+    .btn-lock {
+      background: rgba(245, 158, 11, 0.15);
+      border: 1px solid rgba(245, 158, 11, 0.4);
+      color: #fbbf24;
+    }
+
+    .btn-lock:hover {
+      background: rgba(245, 158, 11, 0.25);
+    }
+
+    /* Subscription Pricing Card */
+    .pricing-wrap {
+      background: linear-gradient(135deg, #131f3d 0%, #1e293b 100%);
+      border: 2px solid #2563eb;
+      border-radius: 20px;
+      padding: 36px 30px;
+      display: grid;
+      grid-template-columns: 1.2fr 0.8fr;
+      gap: 32px;
+      align-items: center;
+      margin-bottom: 48px;
+    }
+
+    @media (max-width: 800px) {
+      .pricing-wrap {
+        grid-template-columns: 1fr;
+      }
+      .hero-title {
+        font-size: 1.6rem;
+      }
+    }
+
+    .price-tag {
+      font-size: 2.8rem;
+      font-weight: 800;
+      color: #fff;
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+      margin: 12px 0 20px;
+    }
+
+    .features-list {
+      list-style: none;
+    }
+
+    .features-list li {
+      margin-bottom: 10px;
+      font-size: 0.95rem;
+      color: #cbd5e1;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    /* Live Web App Embed Container */
+    .embed-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      overflow: hidden;
+      margin-bottom: 40px;
+    }
+
+    .embed-bar {
+      background: #0f172a;
+      padding: 12px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .embed-frame {
+      width: 100%;
+      height: 780px;
+      border: none;
+      display: block;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Sticky Header -->
+  <header class="steno-header">
+    <div class="brand-group">
+      <div class="brand-logo">⚡</div>
+      <div>
+        <div class="brand-title">StenoMaster Pro</div>
+        <div class="brand-subtitle">आशुलिपि एवं टंकण परीक्षा पोर्टल</div>
+      </div>
+    </div>
+
+    <div class="header-pills">
+      <div class="validity-pill">
+        <span>🎁 2 फ्री कक्षाएं</span>
+        <span>•</span>
+        <span>₹100 में Pro लें</span>
+      </div>
+      <div class="avatar-ring-wrap" title="Pro Member">
+        <div class="avatar-inner">S</div>
+      </div>
+    </div>
+  </header>
+
+  <main class="portal-container">
+
+    <!-- Hero Banner -->
+    <section class="hero-banner">
+      <div class="hero-badge">🏆 SSC • High Court • UPSSSC स्पेशल</div>
+      <h1 class="hero-title hindi-font">स्टेनो व टाइपिंग परीक्षा में शत-प्रतिशत सफलता पाएं</h1>
+      <p class="hero-desc">
+        ऑडियो डिक्टेशन, 5 से 1 काउंटडाउन टाइमर, मंगल (Inscript/Remington) एवं कृति देव 010 दोनों फ़ॉन्ट्स में सटीक मूल्यांकन और विस्तृत रिपोर्ट कार्ड।
+      </p>
+      <button class="btn-hero" onclick="document.getElementById('practiceSection').scrollIntoView({behavior:'smooth'})">
+        <span>फ्री अभ्यास शुरू करें (Start Free)</span>
+        <span>↓</span>
+      </button>
+    </section>
+
+    <!-- Classes / Dictation Passages Grid -->
+    <section id="practiceSection">
+      <div class="section-head">
+        <h2 class="section-title hindi-font">दैनिक डिक्टेशन कक्षाएं (Practice Classes)</h2>
+        <span style="font-size:0.85rem; color:var(--text-sub);">2 फ्री कक्षाएं उपलब्ध</span>
+      </div>
+
+      <div class="classes-grid">
+        
+        <!-- Class 1 (FREE) -->
+        <div class="class-card">
+          <div>
+            <div class="badge-row">
+              <span class="badge badge-free">🎁 फ्री क्लास (Free)</span>
+              <span class="badge badge-lang">हिंदी • 80 WPM</span>
+            </div>
+            <h3 class="card-title hindi-font">संसदीय कार्यवाही एवं विधायी सुधार</h3>
+            <p style="font-size:0.85rem; color:var(--text-sub); margin-bottom:14px;">
+              लोकसभा एवं राज्यसभा में प्रस्तुत विधेयकों तथा विधायी प्रक्रियाओं पर आधारित मानक आलेख।
+            </p>
+            <div class="card-stats">
+              <span>⏱ 03:00 मिनट</span>
+              <span>🎯 80 WPM</span>
+              <span>📂 संसदीय</span>
+            </div>
+          </div>
+          <button class="card-action-btn btn-start" onclick="launchLiveApp('classes')">
+            <span>🎁 फ्री अभ्यास शुरू करें →</span>
+          </button>
+        </div>
+
+        <!-- Class 2 (FREE) -->
+        <div class="class-card">
+          <div>
+            <div class="badge-row">
+              <span class="badge badge-free">🎁 फ्री क्लास (Free)</span>
+              <span class="badge badge-lang">हिंदी • 80 WPM</span>
+            </div>
+            <h3 class="card-title hindi-font">उच्च न्यायालय विधिक निर्णय डिक्टेशन</h3>
+            <p style="font-size:0.85rem; color:var(--text-sub); margin-bottom:14px;">
+              इलाहाबाद एवं दिल्ली उच्च न्यायालय की रिट याचिकाओं पर आधारित विधिक शब्दावली।
+            </p>
+            <div class="card-stats">
+              <span>⏱ 03:00 मिनट</span>
+              <span>🎯 80 WPM</span>
+              <span>📂 विधिक (Legal)</span>
+            </div>
+          </div>
+          <button class="card-action-btn btn-start" onclick="launchLiveApp('classes')">
+            <span>🎁 फ्री अभ्यास शुरू करें →</span>
+          </button>
+        </div>
+
+        <!-- Class 3 (LOCKED - PRO) -->
+        <div class="class-card locked">
+          <div>
+            <div class="badge-row">
+              <span class="badge badge-locked">🔒 Pro Locked (₹100/माह)</span>
+              <span class="badge badge-lang">हिंदी • 100 WPM</span>
+            </div>
+            <h3 class="card-title hindi-font">संपादकीय: भारत का आर्थिक विकास व नवाचार</h3>
+            <p style="font-size:0.85rem; color:var(--text-sub); margin-bottom:14px;">
+              राष्ट्रीय समाचार पत्रों के संपादकीय विश्लेषण तथा उन्नत तकनीकी शब्दावली पर केंद्रित।
+            </p>
+            <div class="card-stats">
+              <span>⏱ 03:00 मिनट</span>
+              <span>🎯 100 WPM</span>
+              <span>📂 संपादकीय</span>
+            </div>
+          </div>
+          <button class="card-action-btn btn-lock" onclick="launchLiveApp('subscription')">
+            <span>🔒 अनलॉक करें (₹100/माह) →</span>
+          </button>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- Cashfree ₹100 Pro Subscription Card -->
+    <section class="pricing-wrap" id="subscriptionSection">
+      <div>
+        <span class="badge" style="background:rgba(37,99,235,0.3); color:#60a5fa; border:1px solid #3b82f6;">⭐ STENOMASTER PRO PASS</span>
+        <div class="price-tag">
+          <span>₹100</span>
+          <span style="font-size:1rem; color:var(--text-sub); font-weight:600;">/ महीना (30 दिन)</span>
+        </div>
+        <ul class="features-list">
+          <li>✅ सभी लॉक कक्षाएं और आलेख तुरंत अनलॉक</li>
+          <li>✅ हाई कोर्ट, SSC व UPSSSC विशेष विधिक डिक्टेशन</li>
+          <li>✅ मंगल व कृति देव 010 दोनों फ़ॉन्ट्स में सटीक मूल्यांकन</li>
+          <li>✅ लाइव ऑडियो प्लेबैक (गति 0.5x से 2.0x नियंत्रण)</li>
+          <li>✅ 5 to 1 स्वीट वॉयस काउंटडाउन व कलरफुल रिंग अवतार</li>
+        </ul>
+      </div>
+
+      <div style="text-align:center; background:rgba(11,19,41,0.5); padding:24px; border-radius:16px; border:1px solid var(--border);">
+        <h4 style="font-size:1.1rem; color:#fff; margin-bottom:8px;">💳 सुरक्षित ऑनलाइन भुगतान (Cashfree)</h4>
+        <p style="font-size:0.82rem; color:var(--text-sub); margin-bottom:20px;">
+          UPI (Google Pay, PhonePe, Paytm), डेबिट कार्ड या नेट बैंकिंग से भुगतान करें और तुरंत अनलॉक करें।
+        </p>
+        <button class="btn-hero" style="width:100%; justify-content:center; padding:15px;" onclick="launchLiveApp('subscription')">
+          <span>⚡ ₹100 का भुगतान करें →</span>
+        </button>
+        <div style="font-size:0.75rem; color:#64748b; margin-top:12px;">
+          🔒 100% सुरक्षित भुगतान • तुरंत 30 दिन प्रो एक्टिव
+        </div>
+      </div>
+    </section>
+
+    <!-- Live Steno Interactive Portal Iframe -->
+    <section class="embed-card">
+      <div class="embed-bar">
+        <span style="font-weight:700; font-size:0.9rem; color:#e2e8f0;">⚡ लाइव टाइपिंग टेस्ट एवं ऑडियो पोर्टल</span>
+        <button onclick="document.getElementById('stenoLiveIframe').src = document.getElementById('stenoLiveIframe').src" style="background:transparent; border:1px solid var(--border); color:var(--text-sub); padding:4px 10px; border-radius:6px; font-size:0.75rem; cursor:pointer;">
+          🔄 रीफ्रेश करें
+        </button>
+      </div>
+      <iframe id="stenoLiveIframe" class="embed-frame" src="https://ram-blonde-aircraft-decimal.trycloudflare.com" allow="autoplay; microphone; clipboard-write"></iframe>
+    </section>
+
+  </main>
+
+  <script>
+    function launchLiveApp(targetView) {
+      const iframe = document.getElementById('stenoLiveIframe');
+      if (iframe) {
+        iframe.scrollIntoView({ behavior: 'smooth' });
+      }
+    }
+  </script>
+</body>
+</html>
