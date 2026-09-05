@@ -1097,7 +1097,7 @@ def get_session_status(token: str) -> Dict[str, Any]:
             "superseded_by_ip": row['superseded_by_ip'] or 'Another Device',
             "superseded_at": row['superseded_at'] or datetime.now().isoformat()
         }
-   if str(row['expires_at']) <= datetime.now().isoformat():
+    if str(row['expires_at']) <= datetime.now().isoformat():
         return {"status": "expired"}
     return {
         "status": "active",
