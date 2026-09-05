@@ -56,10 +56,10 @@
             <div id="studentSubLoginForm">
               <form onsubmit="stenoApp.handleStudentLogin(event)">
                 <div class="form-group">
-                  <label class="form-label">Email, Username, or Phone</label>
+                  <label class="form-label">छात्र आईडी, ईमेल, या यूज़रनेम (Student ID, Email or Username)</label>
                   <div class="input-with-icon">
                     <span class="input-icon">👤</span>
-                    <input type="text" id="stuAuthEmail" class="form-input" placeholder="student@stenomaster.com / 9876543210" required autocomplete="username">
+                    <input type="text" id="stuAuthEmail" class="form-input" placeholder="उदा. STM-2026-000002 / ईमेल / यूज़रनेम" required autocomplete="username">
                   </div>
                 </div>
                 <div class="form-group">
@@ -108,6 +108,7 @@
                       <span class="input-icon">✉️</span>
                       <input type="email" id="stuRegEmail" class="form-input" placeholder="name@email.com" required>
                     </div>
+                    <small style="display:block; font-size:11px; color:var(--primary); margin-top:4px; font-weight:500;">ℹ️ पासवर्ड भूलने पर इसी ईमेल पर रिकवरी लिंक भेजा जाएगा</small>
                   </div>
                 </div>
 
@@ -1762,6 +1763,49 @@
             <!-- Rendered dynamically -->
           </tbody>
         </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Student Registration Success / Credentials Card Modal -->
+  <div class="modal-overlay" id="studentCredentialsModal" style="display:none; z-index:10000;">
+    <div class="modal-card" style="max-width: 480px; text-align:center; padding:28px 24px;">
+      <div style="font-size:48px; margin-bottom:8px;">🎉</div>
+      <h3 class="modal-title" style="font-size:1.35rem; color:var(--primary); margin-bottom:6px;">खाता सफलतापूर्वक बन गया!</h3>
+      <p style="color:var(--text-secondary); font-size:0.88rem; margin-bottom:18px;">
+        कृपया अपनी <strong>लॉगिन आईडी व पासवर्ड</strong> सुरक्षित लिख लें या कॉपी कर लें। भविष्य में इसी से लॉगिन होगा:
+      </p>
+
+      <div style="background:var(--bg-card); border:2px dashed var(--primary); border-radius:14px; padding:16px; text-align:left; margin-bottom:16px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; border-bottom:1px solid var(--border-subtle); padding-bottom:8px;">
+          <span style="color:var(--text-secondary); font-size:0.85rem;">🎓 छात्र रोल कोड (Student ID):</span>
+          <strong id="credStudentCode" style="color:var(--primary); font-size:1.05rem; letter-spacing:0.5px;">-</strong>
+        </div>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; border-bottom:1px solid var(--border-subtle); padding-bottom:8px;">
+          <span style="color:var(--text-secondary); font-size:0.85rem;">👤 यूज़रनेम (Login ID):</span>
+          <strong id="credUsername" style="font-size:0.95rem;">-</strong>
+        </div>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; border-bottom:1px solid var(--border-subtle); padding-bottom:8px;">
+          <span style="color:var(--text-secondary); font-size:0.85rem;">✉️ पंजीकृत ईमेल (Email):</span>
+          <strong id="credEmail" style="font-size:0.9rem;">-</strong>
+        </div>
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <span style="color:var(--text-secondary); font-size:0.85rem;">🔒 पासवर्ड (Password):</span>
+          <strong id="credPassword" style="color:#d9534f; font-size:1.05rem; letter-spacing:1px;">-</strong>
+        </div>
+      </div>
+
+      <div style="background:rgba(255, 193, 7, 0.15); border:1px solid #ffc107; color:var(--text-primary); border-radius:10px; padding:12px; font-size:0.85rem; text-align:left; line-height:1.5; margin-bottom:20px;">
+        ⚠️ <strong>आवश्यक सूचना:</strong> आप अपने <strong>Student ID</strong>, <strong>Username</strong> या <strong>Email</strong> में से किसी से भी लॉगिन कर सकते हैं। पासवर्ड भूल जाने पर <strong>पंजीकृत ईमेल</strong> पर रीसेट लिंक भेजा जाएगा।
+      </div>
+
+      <div style="display:grid; grid-template-columns: 1fr 1.2fr; gap:12px;">
+        <button type="button" class="btn-secondary" onclick="stenoApp.copyStudentCredentials()" style="padding:10px 14px; font-weight:600; font-size:0.9rem;">
+          📋 कॉपी करें (Copy)
+        </button>
+        <button type="button" class="btn-primary" onclick="stenoApp.proceedToPracticeAfterSignup()" style="padding:10px 14px; font-weight:600; font-size:0.95rem;">
+          अभ्यास शुरू करें →
+        </button>
       </div>
     </div>
   </div>
