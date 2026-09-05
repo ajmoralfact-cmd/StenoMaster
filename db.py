@@ -1029,7 +1029,7 @@ def verify_session(token: str) -> Optional[Dict[str, Any]]:
         }
 
     # Check expiration
-    if s_row['expires_at'] <= datetime.now().isoformat():
+    if str(s_row['expires_at']) <= datetime.now().isoformat():
         conn.close()
         return None
 
