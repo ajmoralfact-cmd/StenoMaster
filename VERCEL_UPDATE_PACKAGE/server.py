@@ -245,12 +245,12 @@ class StenoMasterHandler(http.server.SimpleHTTPRequestHandler):
             else:
                 sub_info = db.get_user_subscription_info(user['user_id'])
                 user_dict = dict(user)
-                user_dict['subscription_status'] = sub_info['status']
-                user_dict['subscription_plan'] = sub_info['plan']
-                user_dict['subscription_start'] = sub_info['start_date']
-                user_dict['subscription_end'] = sub_info['end_date']
-                user_dict['subscription_days_left'] = sub_info['days_left']
-                user_dict['is_premium'] = sub_info['is_premium']
+                user_dict['subscription_status'] = sub_info.get('status', 'free')
+                user_dict['subscription_plan'] = sub_info.get('plan', 'Free Tier')
+                user_dict['subscription_start'] = sub_info.get('start_date')
+                user_dict['subscription_end'] = sub_info.get('end_date')
+                user_dict['subscription_days_left'] = sub_info.get('days_left', 0)
+                user_dict['is_premium'] = sub_info.get('is_premium', False)
                 self._send_json(200, {"user": user_dict, "subscription": sub_info})
             return
 
