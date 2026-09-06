@@ -9,7 +9,16 @@
   <meta name="theme-color" content="#2563eb">
   <link rel="icon" type="image/png" href="/assets/logo.png">
   <link rel="apple-touch-icon" href="/assets/logo.png">
-  <link rel="stylesheet" href="/css/style.css?v=4.2">
+  <link rel="stylesheet" href="/css/style.css?v=4.3">
+  <script>
+    if (!localStorage.getItem('stenomaster_token')) {
+      document.documentElement.classList.add('no-auth-session');
+    }
+  </script>
+  <style>
+    html.no-auth-session #appContainer { display: none !important; }
+    html.no-auth-session #authGatewayView { display: flex !important; }
+  </style>
 </head>
 <body>
 
@@ -2839,15 +2848,15 @@
   <!-- Toast Container -->
   <div class="toast-container" id="toastContainer"></div>
 
-  <!-- Cashfree Payment Gateway SDK (v3) -->
-  <script src="https://sdk.cashfree.com/js/v3/cashfree.js"></script>
+  <!-- Cashfree Payment Gateway SDK (v3) - Defer to prevent blocking page render -->
+  <script defer src="https://sdk.cashfree.com/js/v3/cashfree.js"></script>
 
   <!-- Scripts -->
-  <script src="/js/charts.js?v=4.2"></script>
-  <script src="/js/audio_player.js?v=4.2"></script>
-  <script src="/js/typing_engine.js?v=4.2"></script>
-  <script src="/js/comparison_view.js?v=4.2"></script>
-  <script src="/js/admin.js?v=4.2"></script>
-  <script src="/js/app.js?v=4.2"></script>
+  <script src="/js/charts.js?v=4.3"></script>
+  <script src="/js/audio_player.js?v=4.3"></script>
+  <script src="/js/typing_engine.js?v=4.3"></script>
+  <script src="/js/comparison_view.js?v=4.3"></script>
+  <script src="/js/admin.js?v=4.3"></script>
+  <script src="/js/app.js?v=4.3"></script>
 </body>
 </html>
