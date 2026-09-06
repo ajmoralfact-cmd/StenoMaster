@@ -478,12 +478,23 @@
           <!-- Search -->
           <div style="flex: 1; min-width: 220px;">
             <input type="text" class="form-input" placeholder="🔍 आलेख या विषय खोजें (Search)..."
-                   oninput="stenoApp.searchQuery = this.value; stenoApp.loadPassages();">
+                   oninput="stenoApp.onSearchInput(this.value)">
+          </div>
+
+          <!-- Preferred Typing Font Quick Switcher -->
+          <div style="display:flex; align-items:center; gap:6px; background:var(--bg-subtle); padding:6px 12px; border-radius:8px; border:1px solid var(--border-subtle);">
+            <span style="font-size:0.82rem; font-weight:700; color:var(--text-secondary);">⌨️ फ़ॉन्ट:</span>
+            <button type="button" id="classesFontMangalBtn" onclick="stenoApp.setPreferredFont('mangal_unicode')" class="btn-sm" style="padding:4px 10px; font-size:0.78rem; font-weight:700; border-radius:6px; background:#0284c7; color:#fff; border:none; cursor:pointer;">
+              🅰️ मंगल (Mangal)
+            </button>
+            <button type="button" id="classesFontKrutiBtn" onclick="stenoApp.setPreferredFont('kruti_dev_010')" class="btn-sm" style="padding:4px 10px; font-size:0.78rem; font-weight:700; border-radius:6px; background:transparent; color:var(--text-secondary); border:1px solid var(--border); cursor:pointer;">
+              ⌨️ कृति देव (Kruti Dev)
+            </button>
           </div>
 
           <!-- Language filter -->
           <div>
-            <select class="form-select" onchange="stenoApp.selectedLanguage = this.value; stenoApp.loadPassages();">
+            <select class="form-select" onchange="stenoApp.onLanguageFilterChange(this.value)">
               <option value="all">सभी भाषाएं (All Languages)</option>
               <option value="hindi">हिंदी (Hindi)</option>
               <option value="english">अंग्रेजी (English)</option>
@@ -492,7 +503,7 @@
 
           <!-- Difficulty filter -->
           <div>
-            <select class="form-select" onchange="stenoApp.selectedDifficulty = this.value; stenoApp.loadPassages();">
+            <select class="form-select" onchange="stenoApp.onDifficultyFilterChange(this.value)">
               <option value="all">सभी स्तर (All Difficulties)</option>
               <option value="easy">सरल (Easy)</option>
               <option value="medium">मध्यम (Medium)</option>
@@ -2346,6 +2357,9 @@
       <button type="button" class="btn-secondary" onclick="stenoApp.closeModal('dualModeSelectModal')" style="width:100%;">
         रद्द करें (Cancel)
       </button>
+      <div style="font-size:0.8rem; color:var(--text-muted); margin-top:10px;">
+        💡 <em>आपकी पसंद अपने आप सुरक्षित हो जाएगी ताकि अगली बार सीधे अभ्यास शुरू हो सके।</em>
+      </div>
     </div>
   </div>
 
