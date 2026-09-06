@@ -202,14 +202,27 @@ class StenoMasterHandler(http.server.SimpleHTTPRequestHandler):
         user = self._get_auth_user()
         user_id = user['user_id'] if user else None
 
-        # Serve uploaded audio files with Range support
+        # Serve uploaded audio files with Range support and persistent database fallback
         if path.startswith('/uploads/'):
-            filename = os.path.basename(path)
+            filename = urllib.parse.unquote(os.path.basename(path))
             file_path = os.path.join(UPLOADS_DIR, filename)
             if not os.path.exists(file_path):
                 fallback_path = os.path.join(BASE_DIR, 'uploads', filename)
                 if os.path.exists(fallback_path):
                     file_path = fallback_path
+
+            # Fallback: retrieve from persistent database (Supabase / SQLite) if not on local disk
+            if not os.path.exists(file_path):
+                file_rec = db.get_uploaded_file(filename)
+                if file_rec:
+                    try:
+                        os.makedirs(os.path.dirname(file_path), exist_ok=True)
+                        with open(file_path, 'wb') as f:
+                            f.write(file_rec[1])
+                    except Exception:
+                        self._serve_in_memory_file(filename, file_rec[0], file_rec[1])
+                        return
+
             if os.path.exists(file_path):
                 self._serve_audio_file(file_path)
                 return
@@ -1165,8 +1178,13 @@ class StenoMasterHandler(http.server.SimpleHTTPRequestHandler):
                 b64_data = b64_data.split(',')[1]
             raw_bytes = base64.b64decode(b64_data)
             save_path = os.path.join(UPLOADS_DIR, filename)
-            with open(save_path, 'wb') as f:
-                f.write(raw_bytes)
+            try:
+                with open(save_path, 'wb') as f:
+                    f.write(raw_bytes)
+            except Exception:
+                pass
+            # Save to persistent database so Vercel / all devices can access it!
+            db.save_uploaded_file(filename, 'audio/mpeg', raw_bytes)
             audio_url = f"/uploads/{filename}"
             self._send_json(200, {"audio_url": audio_url, "filename": filename})
         else:
@@ -1194,9 +1212,15 @@ class StenoMasterHandler(http.server.SimpleHTTPRequestHandler):
             timestamp_prefix = int(datetime.now().timestamp())
             final_filename = f"steno_{timestamp_prefix}_{clean_name}"
             save_path = os.path.join(UPLOADS_DIR, final_filename)
-            with open(save_path, 'wb') as f:
-                f.write(raw_bytes)
+            try:
+                with open(save_path, 'wb') as f:
+                    f.write(raw_bytes)
+            except Exception:
+                pass
             file_type = 'pdf' if ext == '.pdf' else 'image'
+            mime_type = 'application/pdf' if ext == '.pdf' else f"image/{ext[1:]}"
+            # Save to persistent database
+            db.save_uploaded_file(final_filename, mime_type, raw_bytes)
             file_url = f"/uploads/{final_filename}"
             self._send_json(200, {
                 "success": True,
@@ -1287,6 +1311,62 @@ class StenoMasterHandler(http.server.SimpleHTTPRequestHandler):
                 self.wfile.write(f.read(length))
         except Exception as e:
             self.send_error(500, f"Error streaming audio: {str(e)}")
+
+    def _serve_in_memory_file(self, filename: str, mime_type: str, data: bytes):
+        file_size = len(data)
+        range_header = self.headers.get('Range', None)
+        if not mime_type:
+            mime_type, _ = mimetypes.guess_type(filename)
+        if not mime_type:
+            mime_type = 'audio/mpeg' if filename.endswith('.mp3') else 'application/octet-stream'
+
+        if not range_header:
+            self.send_response(200)
+            self.send_header('Content-Type', mime_type)
+            self.send_header('Content-Length', str(file_size))
+            self.send_header('Accept-Ranges', 'bytes')
+            self.send_header('Access-Control-Allow-Origin', '*')
+            self.end_headers()
+            self.wfile.write(data)
+            return
+
+        try:
+            import re
+            range_match = re.match(r'bytes=(\d+)-(\d*)', range_header)
+            if not range_match:
+                self.send_response(200)
+                self.send_header('Content-Type', mime_type)
+                self.send_header('Content-Length', str(file_size))
+                self.send_header('Accept-Ranges', 'bytes')
+                self.send_header('Access-Control-Allow-Origin', '*')
+                self.end_headers()
+                self.wfile.write(data)
+                return
+
+            start = int(range_match.group(1))
+            end = int(range_match.group(2)) if range_match.group(2) else file_size - 1
+            if start >= file_size or end >= file_size or start > end:
+                self.send_response(416)
+                self.send_header('Content-Range', f"bytes */{file_size}")
+                self.end_headers()
+                return
+
+            length = end - start + 1
+            self.send_response(206)
+            self.send_header('Content-Type', mime_type)
+            self.send_header('Content-Range', f"bytes {start}-{end}/{file_size}")
+            self.send_header('Content-Length', str(length))
+            self.send_header('Accept-Ranges', 'bytes')
+            self.send_header('Access-Control-Allow-Origin', '*')
+            self.end_headers()
+            self.wfile.write(data[start:end+1])
+        except Exception:
+            self.send_response(200)
+            self.send_header('Content-Type', mime_type)
+            self.send_header('Content-Length', str(file_size))
+            self.send_header('Access-Control-Allow-Origin', '*')
+            self.end_headers()
+            self.wfile.write(data)
 
 
 class ThreadedHTTPServer(socketserver.ThreadingMixIn, http.server.HTTPServer):

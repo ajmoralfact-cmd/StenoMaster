@@ -2993,5 +2993,75 @@ def get_all_cashfree_orders() -> List[Dict[str, Any]]:
     return [dict(r) for r in rows]
 
 
+def save_uploaded_file(filename: str, mime_type: str, data: bytes) -> bool:
+    """Saves an uploaded file (audio, steno outline image/pdf) into the persistent database table."""
+    conn = get_db()
+    c = conn.cursor()
+    try:
+        c.execute("""
+            CREATE TABLE IF NOT EXISTS uploaded_files (
+                filename TEXT PRIMARY KEY,
+                mime_type TEXT NOT NULL,
+                data BLOB,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+        conn.commit()
+    except Exception:
+        try: conn.rollback()
+        except: pass
+
+    try:
+        is_pg = HAS_PSYCOPG2 and hasattr(conn, '_conn')
+        if is_pg:
+            from psycopg2 import Binary
+            c.execute("""
+                INSERT INTO uploaded_files (filename, mime_type, data)
+                VALUES (?, ?, ?)
+                ON CONFLICT (filename) DO UPDATE SET data = EXCLUDED.data, mime_type = EXCLUDED.mime_type
+            """, (filename, mime_type, Binary(data)))
+        else:
+            c.execute("""
+                INSERT INTO uploaded_files (filename, mime_type, data)
+                VALUES (?, ?, ?)
+                ON CONFLICT(filename) DO UPDATE SET data = excluded.data, mime_type = excluded.mime_type
+            """, (filename, mime_type, data))
+        conn.commit()
+        return True
+    except Exception as e:
+        print(f"Error saving uploaded file {filename}: {e}")
+        try: conn.rollback()
+        except: pass
+        return False
+    finally:
+        conn.close()
+
+
+def get_uploaded_file(filename: str):
+    """Retrieves an uploaded file's mime_type and raw bytes from persistent database."""
+    conn = get_db()
+    c = conn.cursor()
+    try:
+        c.execute("SELECT mime_type, data FROM uploaded_files WHERE filename = ?", (filename,))
+        row = c.fetchone()
+        if not row:
+            return None
+        if isinstance(row, dict):
+            mime_type = row.get('mime_type')
+            raw_data = row.get('data')
+        else:
+            mime_type = row[0]
+            raw_data = row[1]
+        if isinstance(raw_data, memoryview):
+            raw_data = raw_data.tobytes()
+        return (mime_type, bytes(raw_data) if raw_data else b'')
+    except Exception as e:
+        print(f"Error reading uploaded file {filename}: {e}")
+        return None
+    finally:
+        conn.close()
+
+
+
 
 
