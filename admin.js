@@ -772,12 +772,13 @@ class StenoAdmin {
     let filtered = this.subscribersList.filter(u => {
       // 1. Status filter
       if (this.currentSubFilter === 'active') {
-        if (u.effective_status !== 'active') return false;
+        if (u.effective_status !== 'active' && !u.is_free_access) return false;
+      } else if (this.currentSubFilter === 'free_access') {
+        if (!u.is_free_access) return false;
       } else if (this.currentSubFilter === 'expired') {
         if (u.effective_status !== 'expired') return false;
       } else if (this.currentSubFilter === 'free') {
-        if (u.effective_status !== 'free' && u.effective_status !== 'expired') return false;
-        if (u.role === 'admin' || u.effective_status === 'active') return false;
+        if (u.is_free_access || u.role === 'admin' || u.effective_status === 'active') return false;
       }
 
       // 2. Search filter
@@ -799,7 +800,8 @@ class StenoAdmin {
     }
 
     tbody.innerHTML = filtered.map(u => {
-      const isPro = u.effective_status === 'active';
+      const isFreeAccess = !!u.is_free_access;
+      const isPro = u.effective_status === 'active' || isFreeAccess;
       const isExpired = u.effective_status === 'expired';
       const isAdmin = u.role === 'admin';
 
@@ -809,6 +811,9 @@ class StenoAdmin {
       if (isAdmin) {
         statusBadge = `<span class="badge badge-hard" style="font-size:0.72rem;">🛡️ Admin</span>`;
         daysBadge = `<span style="font-weight:700; color:var(--accent-green);">असीमित (Lifetime)</span>`;
+      } else if (isFreeAccess) {
+        statusBadge = `<span class="sub-status-badge active-pro" style="background:#ecfdf5; color:#059669; border-color:#a7f3d0;">🎁 ऑल फ्री (All Free)</span>`;
+        daysBadge = `<span style="font-weight:700; color:#059669;">असीमित (फ्री)</span>`;
       } else if (isPro) {
         const days = u.subscription_days_left;
         statusBadge = `<span class="sub-status-badge active-pro">👑 Active Pro</span>`;
@@ -818,9 +823,22 @@ class StenoAdmin {
         daysBadge = `<span style="color:#dc2626; font-size:0.8rem; font-weight:600;">समाप्त</span>`;
       }
 
+      const freeToggleCol = isAdmin ? `<span style="color:var(--text-muted); font-size:0.75rem;">—</span>` : `
+        <div style="display:flex; align-items:center; justify-content:center;">
+          <label style="display:inline-flex; align-items:center; gap:6px; cursor:pointer; background:${isFreeAccess ? 'rgba(16,185,129,0.14)' : 'var(--bg-subtle)'}; border:1.5px solid ${isFreeAccess ? '#10b981' : 'var(--border)'}; padding:4px 10px; border-radius:20px; transition:all 0.2s;" title="इस छात्र के लिए सभी 24+ एक्सरसाइज फ्री अनलॉक करें">
+            <input type="checkbox" ${isFreeAccess ? 'checked' : ''} 
+                   onchange="stenoAdmin.toggleUserFreeAccess(${u.id}, this.checked, '${this.escapeHtml(u.display_name || u.username).replace(/'/g, "\\'")}')" 
+                   style="width:16px; height:16px; cursor:pointer; accent-color:#059669;">
+            <span style="font-size:0.78rem; font-weight:700; color:${isFreeAccess ? '#059669' : 'var(--text-secondary)'};">
+              ${isFreeAccess ? '✓ ऑल फ्री' : 'फ्री टिक करें'}
+            </span>
+          </label>
+        </div>
+      `;
+
       let endDateStr = '—';
-      if (isAdmin) {
-        endDateStr = 'लाइफटाइम';
+      if (isAdmin || isFreeAccess) {
+        endDateStr = 'लाइफटाइम (असीमित)';
       } else if (u.subscription_end) {
         const d = new Date(u.subscription_end);
         if (!isNaN(d.getTime())) {
@@ -828,7 +846,7 @@ class StenoAdmin {
         }
       }
 
-      const planName = isAdmin ? 'System Administrator' : (u.subscription_plan || (isPro ? 'StenoMaster Pro' : 'Free Tier'));
+      const planName = isAdmin ? 'System Administrator' : (isFreeAccess ? 'All Exercises Free (लाइफटाइम छूट)' : (u.subscription_plan || (isPro ? 'StenoMaster Pro' : 'Free Tier')));
 
       return `
         <tr>
@@ -841,9 +859,9 @@ class StenoAdmin {
             <div style="font-size:0.75rem; color:var(--text-muted);">${this.escapeHtml(u.phone || '—')}</div>
           </td>
           <td>${statusBadge}</td>
+          <td style="text-align:center;">${freeToggleCol}</td>
           <td><span style="font-size:0.8rem; font-weight:600;">${this.escapeHtml(planName)}</span></td>
           <td>${daysBadge}</td>
-          <td style="font-size:0.8rem; color:var(--text-muted);">${endDateStr}</td>
           <td>
             <span class="badge" style="background:var(--bg-subtle); color:var(--text-main); font-weight:700; font-size:0.75rem;">
               ${u.attempts_count || 0} अभ्यास
@@ -854,9 +872,9 @@ class StenoAdmin {
               <div style="display:inline-flex; gap:6px;">
                 <button class="btn-primary" style="padding:4px 10px; font-size:0.75rem; background:linear-gradient(135deg, #10b981, #059669); border-color:#059669;"
                         onclick="stenoAdmin.openGrantProModal(${u.id}, '${this.escapeHtml(u.display_name || u.username).replace(/'/g, "\\'")}', '${this.escapeHtml(u.student_code || '')}', '${u.effective_status}', ${u.subscription_days_left || 0})">
-                  👑 Pro दें/बढ़ाएं
+                  👑 Pro दें
                 </button>
-                ${isPro ? `
+                ${isPro && !isFreeAccess ? `
                   <button class="btn-secondary" style="padding:4px 10px; font-size:0.75rem; color:var(--accent-red);"
                           onclick="stenoAdmin.revokePro(${u.id}, '${this.escapeHtml(u.display_name || u.username).replace(/'/g, "\\'")}')">
                     ✕ रद्द
@@ -868,6 +886,27 @@ class StenoAdmin {
         </tr>
       `;
     }).join('');
+  }
+
+  async toggleUserFreeAccess(userId, isChecked, userName = 'छात्र') {
+    try {
+      const res = await stenoApp.apiCall('/api/admin/users/toggle-free-access', 'POST', {
+        user_id: userId,
+        is_free_access: isChecked
+      });
+      if (res.success) {
+        stenoApp.showToast(isChecked 
+          ? `🎉 ${userName} के लिए सभी एक्सरसाइज फ्री अनलॉक कर दी गईं!` 
+          : `ℹ️ ${userName} की फ्री एक्सेस स्थिति हटा दी गई।`, 'success');
+        await this.loadSubscribers(this.currentSubFilter);
+      } else {
+        stenoApp.showToast(res.error || 'अपडेट विफल रहा', 'error');
+        await this.loadSubscribers(this.currentSubFilter);
+      }
+    } catch (err) {
+      stenoApp.showToast('त्रुटि: ' + (err.message || 'फ्री एक्सेस टॉगल विफल'), 'error');
+      await this.loadSubscribers(this.currentSubFilter);
+    }
   }
 
   openGrantProModal(userId, userName, studentCode, currentStatus, daysLeft) {
