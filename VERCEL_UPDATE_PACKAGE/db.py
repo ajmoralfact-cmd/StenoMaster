@@ -1172,8 +1172,8 @@ def authenticate_user(email_or_username: str, password: str) -> Optional[Dict[st
                p.target_wpm, p.points, p.streak_days, p.show_on_leaderboard
         FROM users u
         LEFT JOIN profiles p ON u.id = p.user_id
-        WHERE (u.email = ? OR u.username = ? OR u.phone = ? OR UPPER(u.student_code) = UPPER(?)) AND u.is_active = 1
-    """, (clean_identifier, raw_identifier, clean_identifier, raw_identifier))
+        WHERE (LOWER(u.email) = LOWER(?) OR LOWER(u.username) = LOWER(?) OR u.phone = ? OR UPPER(u.student_code) = UPPER(?)) AND u.is_active = 1
+    """, (clean_identifier, clean_identifier, clean_identifier, raw_identifier))
     user = c.fetchone()
 
     if not user:

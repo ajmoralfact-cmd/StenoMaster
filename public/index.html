@@ -1784,12 +1784,21 @@
             <!-- TAB 3: STUDENTS & SUBSCRIBERS PANEL -->
             <div class="admin-sub-panel" id="adminSubscribersPanel">
               <div class="chart-card" id="adminSubscribersSection" style="margin-bottom: 28px;">
-                <div class="section-header" style="margin-bottom: 16px;">
+                <div class="section-header" style="margin-bottom: 16px; flex-wrap: wrap; gap: 12px;">
                   <div>
-                    <h3 style="font-size:1.15rem; font-weight:700;">👥 छात्र सब्सक्राइबर प्रबंधन (Subscribers & Pro Access)</h3>
-                    <p class="section-subtitle">छात्रों की Pro सदस्यता स्थिति, वैधता (Days), सीधे Pro सक्रियण एवं 1-क्लिक ऑल फ्री एक्सेस</p>
+                    <h3 style="font-size:1.15rem; font-weight:700; display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                      <span>👥 छात्र सब्सक्राइबर प्रबंधन (Students & Subscribers)</span>
+                      <span id="adminStudentCountBadge" class="badge badge-primary" style="font-size:0.82rem; background:rgba(37,99,235,0.1); color:#2563eb; border:1px solid rgba(37,99,235,0.25);">छात्र लोड हो रहे हैं...</span>
+                      <span id="adminLiveSyncBadge" style="display:inline-flex; align-items:center; gap:5px; font-size:0.75rem; background:rgba(16,185,129,0.12); color:#059669; padding:2px 8px; border-radius:12px; font-weight:600; border:1px solid rgba(16,185,129,0.25);">
+                        <span style="width:7px; height:7px; background:#10b981; border-radius:50%; display:inline-block; box-shadow:0 0 6px #10b981;"></span>
+                        🟢 सर्वर लाइव (Live Sync)
+                      </span>
+                    </h3>
+                    <p class="section-subtitle">छात्रों की Pro सदस्यता स्थिति, वैधता (Days), सीधे Pro सक्रियण एवं 1-क्लिक ऑल फ्री एक्सेस (नया छात्र आते ही लाइव ऑटो-अपडेट)</p>
                   </div>
-                  <button class="btn-secondary" onclick="stenoAdmin.loadSubscribers()">🔄 रीफ़्रेश (Refresh)</button>
+                  <div style="display:flex; align-items:center; gap:8px;">
+                    <button class="btn-secondary" onclick="stenoAdmin.loadSubscribers()" title="तुरंत नया डेटा फेच करें">🔄 रीफ़्रेश (Refresh)</button>
+                  </div>
                 </div>
 
                 <!-- Subscribers Filter Toolbar -->

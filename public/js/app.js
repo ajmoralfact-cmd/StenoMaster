@@ -637,6 +637,8 @@ class StenoApp {
       this.token = res.token;
       this.user = res.user;
       localStorage.setItem('stenomaster_token', this.token);
+      localStorage.setItem('stenomaster_student_registry_updated', Date.now().toString());
+      localStorage.setItem('stenomaster_users_version', Date.now().toString());
 
       this.hideAuthGateway();
       this.updateUserUI();
@@ -923,6 +925,8 @@ class StenoApp {
       this.user = res.user;
       localStorage.setItem('stenomaster_token', this.token);
       localStorage.setItem('stenomaster_user', JSON.stringify(this.user));
+      localStorage.setItem('stenomaster_student_registry_updated', Date.now().toString());
+      localStorage.setItem('stenomaster_users_version', Date.now().toString());
       this.hideAuthGateway();
       this.updateUserUI();
       this.closeModal('registerModal');
@@ -936,6 +940,9 @@ class StenoApp {
   logout(showToast = true) {
     if (this.token) {
       this.apiCall('/api/auth/logout', 'POST').catch(() => {});
+    }
+    if (window.stenoAdmin && typeof window.stenoAdmin.stopSubscribersLiveSync === 'function') {
+      window.stenoAdmin.stopSubscribersLiveSync();
     }
     this.token = null;
     this.user = null;
@@ -1335,6 +1342,10 @@ class StenoApp {
     this.startTopLoading();
     this.activeView = viewId;
     this.closeSidebar();
+
+    if (viewId !== 'admin' && window.stenoAdmin && typeof window.stenoAdmin.stopSubscribersLiveSync === 'function') {
+      window.stenoAdmin.stopSubscribersLiveSync();
+    }
 
     // Determine target route string
     let routeStr = viewId;

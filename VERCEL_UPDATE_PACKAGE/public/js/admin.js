@@ -18,6 +18,38 @@ class StenoAdmin {
     this.subscribersList = [];
     this.currentSubFilter = 'all';
     this.settings = {};
+    this.subscribersPollInterval = null;
+    this.prevStudentCount = null;
+
+    // Cross-tab broadcast listener for instant live update when a student registers
+    window.addEventListener('storage', (e) => {
+      if (e.key === 'stenomaster_student_registry_updated' || e.key === 'stenomaster_users_version') {
+        if (this.activeTab === 'subscribers') {
+          this.loadSubscribers(this.currentSubFilter, true);
+        }
+        if (this.activeTab === 'overview') {
+          this.loadOverviewMetricsOnly();
+        }
+      }
+    });
+  }
+
+  startSubscribersLiveSync() {
+    this.stopSubscribersLiveSync();
+    this.subscribersPollInterval = setInterval(async () => {
+      if (window.stenoApp && window.stenoApp.activeView === 'admin' && this.activeTab === 'subscribers') {
+        await this.loadSubscribers(this.currentSubFilter, true);
+      } else {
+        this.stopSubscribersLiveSync();
+      }
+    }, 4000);
+  }
+
+  stopSubscribersLiveSync() {
+    if (this.subscribersPollInterval) {
+      clearInterval(this.subscribersPollInterval);
+      this.subscribersPollInterval = null;
+    }
   }
 
   switchTab(tabId, updateHash = true) {
@@ -92,21 +124,25 @@ class StenoAdmin {
       targetEl.classList.add('active');
     }
 
-    // 4. Lazy refresh corresponding data
-    if (tabId === 'passages') {
-      this.loadPassages();
-    } else if (tabId === 'subscribers') {
+    // 4. Lazy refresh corresponding data and manage live sync
+    if (tabId === 'subscribers') {
       this.loadSubscribers();
-    } else if (tabId === 'payments') {
-      this.loadPayments();
-    } else if (tabId === 'pricing') {
-      this.loadSubscriptionSettings();
-    } else if (tabId === 'scoring') {
-      this.loadScoringConfig();
-    } else if (tabId === 'branding') {
-      this.loadSystemSettings();
-    } else if (tabId === 'overview') {
-      this.loadOverview();
+      this.startSubscribersLiveSync();
+    } else {
+      this.stopSubscribersLiveSync();
+      if (tabId === 'passages') {
+        this.loadPassages();
+      } else if (tabId === 'payments') {
+        this.loadPayments();
+      } else if (tabId === 'pricing') {
+        this.loadSubscriptionSettings();
+      } else if (tabId === 'scoring') {
+        this.loadScoringConfig();
+      } else if (tabId === 'branding') {
+        this.loadSystemSettings();
+      } else if (tabId === 'overview') {
+        this.loadOverview();
+      }
     }
 
     // Scroll to top smoothly
@@ -117,13 +153,17 @@ class StenoAdmin {
     }
   }
 
-  async loadOverview() {
+  async loadOverviewMetricsOnly() {
     try {
-      const res = await stenoApp.apiCall('/api/admin/overview');
+      const res = await stenoApp.apiCall(`/api/admin/overview?_t=${Date.now()}`);
       this.renderOverviewMetrics(res);
     } catch (err) {
-      console.error('Failed to load admin overview metrics:', err);
+      console.warn('Silent overview metrics refresh notice:', err);
     }
+  }
+
+  async loadOverview() {
+    await this.loadOverviewMetricsOnly();
 
     // Load panel data in parallel without blocking each other
     await Promise.allSettled([
@@ -911,12 +951,13 @@ class StenoAdmin {
   async loadUsers() {
     const tbody = document.getElementById('adminUsersTableBody');
     if (!tbody) return;
-    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:24px; color:var(--text-muted);">उपयोगकर्ता सूची लोड हो रही है...</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:24px; color:var(--text-muted);">छात्र सूची लोड हो रही है...</td></tr>';
     try {
-      const res = await stenoApp.apiCall('/api/admin/users');
-      const users = res.users || [];
+      const res = await stenoApp.apiCall(`/api/admin/users?_t=${Date.now()}`);
+      const rawUsers = res.users || [];
+      const users = rawUsers.filter(u => u.role !== 'admin');
       if (users.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:24px; color:var(--text-muted);">कोई उपयोगकर्ता पंजीकृत नहीं है।</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:24px; color:var(--text-muted);">कोई छात्र पंजीकृत नहीं है।</td></tr>';
         return;
       }
       tbody.innerHTML = users.map(u => `
@@ -931,10 +972,10 @@ class StenoAdmin {
             <div style="font-size:0.75rem; color:var(--text-muted);">${this.escapeHtml(u.phone || '—')}</div>
           </td>
           <td>
-            <span class="badge ${u.role === 'admin' ? 'badge-hard' : 'badge-easy'}" style="font-size:0.72rem;">
-              ${u.role === 'admin' ? '🛡️ Admin' : '👨‍🎓 Student'}
+            <span class="badge badge-easy" style="font-size:0.72rem;">
+              👨‍🎓 Student
             </span>
-            ${u.subscription_status === 'active' ? '<div style="margin-top:2px;"><span class="badge badge-success" style="font-size:0.65rem;">👑 PRO</span></div>' : ''}
+            ${u.effective_status === 'active' || u.is_free_access ? '<div style="margin-top:2px;"><span class="badge badge-success" style="font-size:0.65rem;">👑 PRO</span></div>' : ''}
           </td>
           <td>${this.escapeHtml(u.target_exam || 'SSC Stenographer')}</td>
           <td>
@@ -956,17 +997,38 @@ class StenoAdmin {
   // -------------------------------------------------------------------------
   // Subscribers Management & Manual Pro Grant / Revocation
   // -------------------------------------------------------------------------
-  async loadSubscribers(filter = 'all') {
-    this.currentSubFilter = filter;
+  async loadSubscribers(filter = 'all', silent = false) {
+    if (filter) this.currentSubFilter = filter;
     const tbody = document.getElementById('adminSubscribersTableBody');
     if (!tbody) return;
-    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding:24px; color:var(--text-muted);">सब्सक्राइबर सूची लोड हो रही है...</td></tr>';
+    if (!silent) {
+      tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding:24px; color:var(--text-muted);"><div class="spinner-small" style="display:inline-block; margin-right:8px;"></div>सब्सक्राइबर सूची लोड हो रही है...</td></tr>';
+    }
     try {
-      const res = await stenoApp.apiCall('/api/admin/users');
-      this.subscribersList = res.users || [];
+      const res = await stenoApp.apiCall(`/api/admin/users?_t=${Date.now()}`);
+      const rawUsers = res.users || [];
+      // Strictly exclude Admin account from student list
+      const studentsOnly = rawUsers.filter(u => u.role !== 'admin');
+
+      // Detect real-time student additions
+      if (this.prevStudentCount !== null && studentsOnly.length > this.prevStudentCount) {
+        const diff = studentsOnly.length - this.prevStudentCount;
+        stenoApp.showToast(`🎉 ${diff} नया छात्र सर्वर पर पंजीकृत हुआ! कुल छात्र: ${studentsOnly.length}`, 'success');
+        this.loadOverviewMetricsOnly();
+      }
+      this.prevStudentCount = studentsOnly.length;
+      this.subscribersList = studentsOnly;
+
+      const countBadge = document.getElementById('adminStudentCountBadge');
+      if (countBadge) {
+        countBadge.textContent = `${this.subscribersList.length} छात्र (लाइव)`;
+      }
+
       this.renderSubscribersTable();
     } catch (err) {
-      tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; padding:24px; color:var(--accent-red);">त्रुटि: ${this.escapeHtml(err.message)}</td></tr>`;
+      if (!silent) {
+        tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; padding:24px; color:var(--accent-red);">त्रुटि: ${this.escapeHtml(err.message)}</td></tr>`;
+      }
     }
   }
 
@@ -989,7 +1051,10 @@ class StenoAdmin {
 
     const q = (searchQuery || document.getElementById('subscriberSearchInput')?.value || '').trim().toLowerCase();
 
-    let filtered = this.subscribersList.filter(u => {
+    // Ensure Admin is never in student subscribers list
+    let filtered = (this.subscribersList || []).filter(u => {
+      if (u.role === 'admin') return false;
+
       // 1. Status filter
       if (this.currentSubFilter === 'active') {
         if (u.effective_status !== 'active' && !u.is_free_access) return false;
@@ -998,7 +1063,7 @@ class StenoAdmin {
       } else if (this.currentSubFilter === 'expired') {
         if (u.effective_status !== 'expired') return false;
       } else if (this.currentSubFilter === 'free') {
-        if (u.is_free_access || u.role === 'admin' || u.effective_status === 'active') return false;
+        if (u.is_free_access || u.effective_status === 'active') return false;
       }
 
       // 2. Search filter
@@ -1023,15 +1088,11 @@ class StenoAdmin {
       const isFreeAccess = !!u.is_free_access;
       const isPro = u.effective_status === 'active' || isFreeAccess;
       const isExpired = u.effective_status === 'expired';
-      const isAdmin = u.role === 'admin';
 
       let statusBadge = `<span class="sub-status-badge free">🆓 Free Tier</span>`;
       let daysBadge = `<span style="color:var(--text-muted);">—</span>`;
 
-      if (isAdmin) {
-        statusBadge = `<span class="badge badge-hard" style="font-size:0.72rem;">🛡️ Admin</span>`;
-        daysBadge = `<span style="font-weight:700; color:var(--accent-green);">असीमित (Lifetime)</span>`;
-      } else if (isFreeAccess) {
+      if (isFreeAccess) {
         statusBadge = `<span class="sub-status-badge active-pro" style="background:#ecfdf5; color:#059669; border-color:#a7f3d0;">🎁 ऑल फ्री (All Free)</span>`;
         daysBadge = `<span style="font-weight:700; color:#059669;">असीमित (फ्री)</span>`;
       } else if (isPro) {
@@ -1043,7 +1104,7 @@ class StenoAdmin {
         daysBadge = `<span style="color:#dc2626; font-size:0.8rem; font-weight:600;">समाप्त</span>`;
       }
 
-      const freeToggleCol = isAdmin ? `<span style="color:var(--text-muted); font-size:0.75rem;">—</span>` : `
+      const freeToggleCol = `
         <div style="display:flex; align-items:center; justify-content:center;">
           <label style="display:inline-flex; align-items:center; gap:6px; cursor:pointer; background:${isFreeAccess ? 'rgba(16,185,129,0.14)' : 'var(--bg-subtle)'}; border:1.5px solid ${isFreeAccess ? '#10b981' : 'var(--border)'}; padding:4px 10px; border-radius:20px; transition:all 0.2s;" title="इस छात्र के लिए सभी 24+ एक्सरसाइज फ्री अनलॉक करें">
             <input type="checkbox" ${isFreeAccess ? 'checked' : ''} 
@@ -1057,7 +1118,7 @@ class StenoAdmin {
       `;
 
       let endDateStr = '—';
-      if (isAdmin || isFreeAccess) {
+      if (isFreeAccess) {
         endDateStr = 'लाइफटाइम (असीमित)';
       } else if (u.subscription_end) {
         const d = new Date(u.subscription_end);
@@ -1066,7 +1127,7 @@ class StenoAdmin {
         }
       }
 
-      const planName = isAdmin ? 'System Administrator' : (isFreeAccess ? 'All Exercises Free (लाइफटाइम छूट)' : (u.subscription_plan || (isPro ? 'StenoMaster Pro' : 'Free Tier')));
+      const planName = isFreeAccess ? 'All Exercises Free (लाइफटाइम छूट)' : (u.subscription_plan || (isPro ? 'StenoMaster Pro' : 'Free Tier'));
 
       return `
         <tr>
@@ -1088,20 +1149,18 @@ class StenoAdmin {
             </span>
           </td>
           <td style="text-align:right;">
-            ${!isAdmin ? `
-              <div style="display:inline-flex; gap:6px;">
-                <button class="btn-primary" style="padding:4px 10px; font-size:0.75rem; background:linear-gradient(135deg, #10b981, #059669); border-color:#059669;"
-                        onclick="stenoAdmin.openGrantProModal(${u.id}, '${this.escapeHtml(u.display_name || u.username).replace(/'/g, "\\'")}', '${this.escapeHtml(u.student_code || '')}', '${u.effective_status}', ${u.subscription_days_left || 0})">
-                  👑 Pro दें
+            <div style="display:inline-flex; gap:6px;">
+              <button class="btn-primary" style="padding:4px 10px; font-size:0.75rem; background:linear-gradient(135deg, #10b981, #059669); border-color:#059669;"
+                      onclick="stenoAdmin.openGrantProModal(${u.id}, '${this.escapeHtml(u.display_name || u.username).replace(/'/g, "\\'")}', '${this.escapeHtml(u.student_code || '')}', '${u.effective_status}', ${u.subscription_days_left || 0})">
+                👑 Pro दें
+              </button>
+              ${isPro && !isFreeAccess ? `
+                <button class="btn-secondary" style="padding:4px 10px; font-size:0.75rem; color:var(--accent-red);"
+                        onclick="stenoAdmin.revokePro(${u.id}, '${this.escapeHtml(u.display_name || u.username).replace(/'/g, "\\'")}')">
+                  ✕ रद्द
                 </button>
-                ${isPro && !isFreeAccess ? `
-                  <button class="btn-secondary" style="padding:4px 10px; font-size:0.75rem; color:var(--accent-red);"
-                          onclick="stenoAdmin.revokePro(${u.id}, '${this.escapeHtml(u.display_name || u.username).replace(/'/g, "\\'")}')">
-                    ✕ रद्द
-                  </button>
-                ` : ''}
-              </div>
-            ` : `<span style="font-size:0.75rem; color:var(--text-muted);">Admin</span>`}
+              ` : ''}
+            </div>
           </td>
         </tr>
       `;
