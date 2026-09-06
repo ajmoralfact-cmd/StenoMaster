@@ -86,6 +86,13 @@ class StenoTypingEngine {
       this.modeSelectorEl.value = this.typingMode;
       this.modeSelectorEl.addEventListener('change', (e) => {
         this.setTypingMode(e.target.value);
+        if (window.stenoApp) {
+          const sys = e.target.value === 'krutidev' ? 'kruti_dev_010' : 'mangal_unicode';
+          localStorage.setItem('stenomaster_preferred_font', sys);
+          if (typeof stenoApp.updateFontSwitcherUI === 'function') {
+            stenoApp.updateFontSwitcherUI();
+          }
+        }
       });
     }
 
