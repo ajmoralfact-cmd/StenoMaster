@@ -1347,6 +1347,10 @@ class StenoApp {
       window.stenoAdmin.stopSubscribersLiveSync();
     }
 
+    if (viewId !== 'practice' && window.stenoAudioPlayer && typeof window.stenoAudioPlayer.stop === 'function') {
+      window.stenoAudioPlayer.stop();
+    }
+
     // Determine target route string
     let routeStr = viewId;
     if (viewId === 'admin') {
@@ -1925,6 +1929,19 @@ class StenoApp {
       this.currentPassage.language
     );
 
+    // Pre-unlock audio element synchronously during user click to ensure zero browser autoplay block!
+    if (stenoAudioPlayer.audioElement && !stenoAudioPlayer.isSpeechSynthesis) {
+      try {
+        const unlockP = stenoAudioPlayer.audioElement.play();
+        if (unlockP !== undefined) {
+          unlockP.then(() => {
+            stenoAudioPlayer.audioElement.pause();
+            stenoAudioPlayer.audioElement.currentTime = 0;
+          }).catch(() => {});
+        }
+      } catch (e) {}
+    }
+
     // Start typing engine
     stenoTypingEngine.startPractice(this.currentPassage);
 
@@ -1934,6 +1951,13 @@ class StenoApp {
     this.setExamRule(this.currentExamRule || defaultRule, false);
 
     this.navigate('practice');
+
+    // Auto-start dictation with countdown upon entering practice room
+    setTimeout(() => {
+      if (window.stenoAudioPlayer && !window.stenoAudioPlayer.isPlaying) {
+        window.stenoAudioPlayer.play();
+      }
+    }, 350);
   }
 
   openCurrentPassageStenoNotes() {

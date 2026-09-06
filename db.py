@@ -3085,6 +3085,17 @@ def get_uploaded_file(filename: str):
         c.execute("SELECT mime_type, data FROM uploaded_files WHERE filename = ?", (filename,))
         row = c.fetchone()
         if not row:
+            alt_name = filename.replace('_', ' ')
+            c.execute("SELECT mime_type, data FROM uploaded_files WHERE filename = ?", (alt_name,))
+            row = c.fetchone()
+        if not row:
+            alt_name2 = filename.replace(' ', '_')
+            c.execute("SELECT mime_type, data FROM uploaded_files WHERE filename = ?", (alt_name2,))
+            row = c.fetchone()
+        if not row and len(filename) >= 10:
+            c.execute("SELECT mime_type, data FROM uploaded_files WHERE filename LIKE ? LIMIT 1", (f"{filename[:15]}%",))
+            row = c.fetchone()
+        if not row:
             return None
         if isinstance(row, dict):
             mime_type = row.get('mime_type')

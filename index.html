@@ -9,7 +9,7 @@
   <meta name="theme-color" content="#2563eb">
   <link rel="icon" type="image/png" href="/assets/logo.png">
   <link rel="apple-touch-icon" href="/assets/logo.png">
-  <link rel="stylesheet" href="/css/style.css?v=5.0">
+  <link rel="stylesheet" href="/css/style.css?v=6.0">
   <script>
     if (!localStorage.getItem('stenomaster_token')) {
       document.documentElement.classList.add('no-auth-session');
@@ -2289,7 +2289,14 @@
         <div class="form-group">
           <label class="form-label">ऑडियो फ़ाइल अपलोड करें (MP3/WAV/M4A):</label>
           <input type="file" id="passageAudioFileInput" class="form-input" accept="audio/*" onchange="stenoAdmin.handleAudioFileUpload(this)">
-          <input type="text" id="passageAudioUrlInput" class="form-input" placeholder="अथवा ऑडियो URL यहाँ दर्ज करें" style="margin-top:6px;">
+          <input type="text" id="passageAudioUrlInput" class="form-input" placeholder="अथवा ऑडियो URL यहाँ दर्ज करें" style="margin-top:6px;" oninput="stenoAdmin.renderAudioPreview(this.value)">
+          <div id="passageAudioPreviewWrap" style="display:none; margin-top:8px; padding:10px; background:#f8fafc; border:1px solid var(--border); border-radius:8px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+              <span style="font-size:0.85rem; font-weight:600; color:var(--text-main);" id="passageAudioPreviewStatus">🎵 ऑडियो प्लेयर पूर्वावलोकन:</span>
+              <span style="font-size:0.75rem; color:var(--text-muted); font-weight:600;" id="passageAudioDurationBadge">00:00</span>
+            </div>
+            <audio id="passageAudioPreview" controls style="width:100%; height:38px; outline:none;"></audio>
+          </div>
         </div>
 
         <!-- Steno Shorthand Notes / Outline Upload Option (Image / PDF) -->
@@ -3016,11 +3023,11 @@
   <script defer src="https://sdk.cashfree.com/js/v3/cashfree.js"></script>
 
   <!-- Scripts -->
-  <script src="/js/charts.js?v=5.0"></script>
-  <script src="/js/audio_player.js?v=5.0"></script>
-  <script src="/js/typing_engine.js?v=5.0"></script>
-  <script src="/js/comparison_view.js?v=5.0"></script>
-  <script src="/js/admin.js?v=5.0"></script>
-  <script src="/js/app.js?v=5.0"></script>
+  <script src="/js/charts.js?v=6.0"></script>
+  <script src="/js/audio_player.js?v=6.0"></script>
+  <script src="/js/typing_engine.js?v=6.0"></script>
+  <script src="/js/comparison_view.js?v=6.0"></script>
+  <script src="/js/admin.js?v=6.0"></script>
+  <script src="/js/app.js?v=6.0"></script>
 </body>
 </html>

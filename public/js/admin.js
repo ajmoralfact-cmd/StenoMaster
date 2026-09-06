@@ -457,6 +457,7 @@ class StenoAdmin {
     const mangalInput = document.getElementById('passageOfficialTextInput');
     if (mangalInput) mangalInput.value = '';
     this.clearStenoNotesFile();
+    this.renderAudioPreview('');
     this.setTypingSystem(sys);
     stenoApp.openModal('passageEditModal');
   }
@@ -476,6 +477,7 @@ class StenoAdmin {
     document.getElementById('passageTargetWpmInput').value = p.target_wpm || 40;
     document.getElementById('passageDurationInput').value = p.duration_seconds || 180;
     document.getElementById('passageAudioUrlInput').value = p.audio_url || '';
+    this.renderAudioPreview(p.audio_url || '');
     document.getElementById('passageInstructionsInput').value = p.instructions || '';
     document.getElementById('passageOfficialTextInput').value = p.official_text || p.official_mangal_text || '';
     const krutiInput = document.getElementById('passageOfficialKrutiInput');
@@ -717,7 +719,9 @@ class StenoAdmin {
       }
 
       if (finalAudioUrl) {
-        document.getElementById('passageAudioUrlInput').value = finalAudioUrl;
+        const urlInput = document.getElementById('passageAudioUrlInput');
+        if (urlInput) urlInput.value = finalAudioUrl;
+        this.renderAudioPreview(finalAudioUrl);
         stenoApp.showToast('ऑडियो 100% सफलतापूर्वक अपलोड हुआ! 🎵🎉', 'success');
       } else {
         stenoApp.showToast('ऑडियो अपलोड पूर्ण हुआ, URL सत्यापित करें।', 'info');
@@ -726,6 +730,40 @@ class StenoAdmin {
       console.error('Audio upload error:', err);
       stenoApp.showToast('ऑडियो अपलोड में विफलता: ' + (err.message || 'त्रुटि'), 'error');
     }
+  }
+
+  renderAudioPreview(audioUrl) {
+    const wrap = document.getElementById('passageAudioPreviewWrap');
+    const player = document.getElementById('passageAudioPreview');
+    const badge = document.getElementById('passageAudioDurationBadge');
+    if (!wrap || !player) return;
+
+    if (!audioUrl || !audioUrl.trim()) {
+      wrap.style.display = 'none';
+      player.removeAttribute('src');
+      player.load();
+      if (badge) badge.textContent = '00:00';
+      return;
+    }
+
+    wrap.style.display = 'block';
+    player.src = audioUrl;
+    player.load();
+
+    player.onloadedmetadata = () => {
+      if (player.duration && !isNaN(player.duration)) {
+        const dur = Math.round(player.duration);
+        const mins = Math.floor(dur / 60);
+        const secs = dur % 60;
+        if (badge) {
+          badge.textContent = `${mins}m ${secs < 10 ? '0' : ''}${secs}s (${dur}s)`;
+        }
+        const durInput = document.getElementById('passageDurationInput');
+        if (durInput && (!durInput.value || durInput.value === '180')) {
+          durInput.value = dur;
+        }
+      }
+    };
   }
 
   async handleStenoNotesFileUpload(fileInput) {

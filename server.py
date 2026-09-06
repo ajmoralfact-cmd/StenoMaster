@@ -1176,7 +1176,14 @@ class StenoMasterHandler(http.server.SimpleHTTPRequestHandler):
         if 'application/json' in content_type:
             data = self._read_json_body()
             import base64
-            filename = data.get('filename', f"audio_{int(datetime.now().timestamp())}.mp3")
+            orig_filename = data.get('filename', f"audio_{int(datetime.now().timestamp())}.mp3")
+            clean_basename, ext = os.path.splitext(os.path.basename(orig_filename))
+            ext = ext.lower() if ext else '.mp3'
+            clean_basename = re.sub(r'[^a-zA-Z0-9_-]', '_', clean_basename)
+            clean_basename = re.sub(r'_+', '_', clean_basename).strip('_')
+            if not clean_basename:
+                clean_basename = "audio"
+            filename = f"audio_{int(datetime.now().timestamp())}_{clean_basename}{ext}"
             b64_data = data.get('data', '')
             if ',' in b64_data:
                 b64_data = b64_data.split(',')[1]
@@ -1222,9 +1229,14 @@ class StenoMasterHandler(http.server.SimpleHTTPRequestHandler):
 
             # If this is the final chunk, assemble all chunks
             if chunk_index == total_chunks - 1:
-                clean_name = os.path.basename(orig_filename).replace(' ', '_')
+                clean_basename, ext = os.path.splitext(os.path.basename(orig_filename))
+                ext = ext.lower() if ext else '.mp3'
+                clean_basename = re.sub(r'[^a-zA-Z0-9_-]', '_', clean_basename)
+                clean_basename = re.sub(r'_+', '_', clean_basename).strip('_')
+                if not clean_basename:
+                    clean_basename = "audio"
                 timestamp_prefix = int(datetime.now().timestamp())
-                final_filename = f"audio_{timestamp_prefix}_{clean_name}"
+                final_filename = f"audio_{timestamp_prefix}_{clean_basename}{ext}"
                 res_name = db.assemble_upload_chunks(upload_id, total_chunks, final_filename, mime_type='audio/mpeg')
                 if res_name:
                     # Also write to local disk cache if possible
@@ -1349,6 +1361,7 @@ class StenoMasterHandler(http.server.SimpleHTTPRequestHandler):
             self.send_header('Content-Type', mime_type)
             self.send_header('Content-Length', str(file_size))
             self.send_header('Accept-Ranges', 'bytes')
+            self.send_header('Access-Control-Allow-Origin', '*')
             self.end_headers()
             with open(file_path, 'rb') as f:
                 self.wfile.write(f.read())
@@ -1371,6 +1384,7 @@ class StenoMasterHandler(http.server.SimpleHTTPRequestHandler):
             self.send_header('Content-Range', f"bytes {start}-{end}/{file_size}")
             self.send_header('Content-Length', str(length))
             self.send_header('Accept-Ranges', 'bytes')
+            self.send_header('Access-Control-Allow-Origin', '*')
             self.end_headers()
 
             with open(file_path, 'rb') as f:

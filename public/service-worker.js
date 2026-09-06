@@ -1,19 +1,19 @@
 /**
- * StenoMaster Service Worker — v5.0
+ * StenoMaster Service Worker — v6.0
  * Zero-Refresh High-Performance Architecture with Active Cache Purge & Fast Navigation
  */
 
-const CACHE_NAME = 'stenomaster-v5.0';
+const CACHE_NAME = 'stenomaster-v6.0';
 const ASSETS_TO_PRECACHE = [
   '/',
   '/index.html',
-  '/css/style.css?v=5.0',
-  '/js/charts.js?v=5.0',
-  '/js/audio_player.js?v=5.0',
-  '/js/typing_engine.js?v=5.0',
-  '/js/comparison_view.js?v=5.0',
-  '/js/admin.js?v=5.0',
-  '/js/app.js?v=5.0',
+  '/css/style.css?v=6.0',
+  '/js/charts.js?v=6.0',
+  '/js/audio_player.js?v=6.0',
+  '/js/typing_engine.js?v=6.0',
+  '/js/comparison_view.js?v=6.0',
+  '/js/admin.js?v=6.0',
+  '/js/app.js?v=6.0',
   '/manifest.json',
   '/assets/logo.png'
 ];
