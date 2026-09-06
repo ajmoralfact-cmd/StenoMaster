@@ -90,13 +90,18 @@ class StenoAdmin {
     try {
       const res = await stenoApp.apiCall('/api/admin/overview');
       this.renderOverviewMetrics(res);
-      await this.loadSubscribers();
-      await this.loadPayments();
-      await this.loadRewardsLedger();
-      await this.loadSubscriptionSettings();
     } catch (err) {
-      console.error('Failed to load admin overview:', err);
+      console.error('Failed to load admin overview metrics:', err);
     }
+
+    // Load panel data in parallel without blocking each other
+    await Promise.allSettled([
+      this.loadPassages().catch(e => console.warn('Passages load notice:', e)),
+      this.loadSubscribers().catch(e => console.warn('Subscribers load notice:', e)),
+      this.loadPayments().catch(e => console.warn('Payments load notice:', e)),
+      this.loadRewardsLedger().catch(e => console.warn('Rewards load notice:', e)),
+      this.loadSubscriptionSettings().catch(e => console.warn('Settings load notice:', e))
+    ]);
   }
 
   renderOverviewMetrics(data) {

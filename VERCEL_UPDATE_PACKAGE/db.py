@@ -177,9 +177,7 @@ def run_postgres_migrations(conn):
                 "ALTER TABLE sessions ADD COLUMN IF NOT EXISTS is_active INTEGER NOT NULL DEFAULT 1",
                 "ALTER TABLE sessions ADD COLUMN IF NOT EXISTS invalidated_reason TEXT",
                 "ALTER TABLE sessions ADD COLUMN IF NOT EXISTS superseded_by_ip TEXT",
-                "ALTER TABLE sessions ADD COLUMN IF NOT EXISTS superseded_at TEXT",
-                "DELETE FROM passages WHERE id != 1",
-                "DELETE FROM users WHERE username NOT IN ('admin', 'harsh') AND role != 'admin'"
+                "ALTER TABLE sessions ADD COLUMN IF NOT EXISTS superseded_at TEXT"
             ]
             for stmt in pg_stmts:
                 try:
@@ -192,7 +190,7 @@ def run_postgres_migrations(conn):
 
 
 def manual_run_migrations() -> Dict[str, Any]:
-    database_url = os.environ.get('DATABASE_URL')
+    database_url = os.environ.get('DATABASE_URL') or 'postgresql://postgres.dtsqqdxveiyvmtjyerui:Harsh%401997Hk@aws-0-ap-northeast-1.pooler.supabase.com:6543/postgres'
     logs = []
     if database_url and HAS_PSYCOPG2:
         try:
@@ -211,9 +209,7 @@ def manual_run_migrations() -> Dict[str, Any]:
                     "ALTER TABLE users ADD COLUMN IF NOT EXISTS subscription_status TEXT DEFAULT 'free'",
                     "ALTER TABLE users ADD COLUMN IF NOT EXISTS subscription_plan TEXT",
                     "ALTER TABLE users ADD COLUMN IF NOT EXISTS subscription_start TEXT",
-                    "ALTER TABLE users ADD COLUMN IF NOT EXISTS subscription_end TEXT",
-                    "DELETE FROM passages WHERE id != 1",
-                    "DELETE FROM users WHERE username NOT IN ('admin', 'harsh') AND role != 'admin'"
+                    "ALTER TABLE users ADD COLUMN IF NOT EXISTS subscription_end TEXT"
                 ]
                 for stmt in pg_stmts:
                     try:
@@ -232,7 +228,8 @@ def manual_run_migrations() -> Dict[str, Any]:
 
 def get_db():
     global _db_initialized
-    database_url = os.environ.get('DATABASE_URL')
+    default_pg_url = 'postgresql://postgres.dtsqqdxveiyvmtjyerui:Harsh%401997Hk@aws-0-ap-northeast-1.pooler.supabase.com:6543/postgres'
+    database_url = os.environ.get('DATABASE_URL') or default_pg_url
     if database_url and HAS_PSYCOPG2:
         try:
             conn = psycopg2.connect(database_url, cursor_factory=RealDictCursor)
@@ -1411,8 +1408,7 @@ def safe_execute_passage_query(conn, query: str, params: list = None):
                         "ALTER TABLE passages ADD COLUMN IF NOT EXISTS steno_notes_type TEXT",
                         "ALTER TABLE passages ADD COLUMN IF NOT EXISTS typing_system TEXT DEFAULT 'dual'",
                         "ALTER TABLE passages ADD COLUMN IF NOT EXISTS is_premium INTEGER DEFAULT 0",
-                        "ALTER TABLE passages ADD COLUMN IF NOT EXISTS official_text_krutidev TEXT",
-                        "DELETE FROM passages WHERE id != 1"
+                        "ALTER TABLE passages ADD COLUMN IF NOT EXISTS official_text_krutidev TEXT"
                     ]:
                         try:
                             cur.execute(col_stmt)
@@ -2072,10 +2068,10 @@ def get_admin_overview() -> Dict[str, Any]:
     conn = get_db()
     c = conn.cursor()
 
-    c.execute("SELECT COUNT(*) as count FROM users WHERE role = 'student'")
+    c.execute("SELECT COUNT(*) as count FROM users WHERE role != 'admin'")
     total_users = c.fetchone()['count']
 
-    c.execute("SELECT COUNT(*) as count FROM users WHERE role = 'student' AND is_active = 1")
+    c.execute("SELECT COUNT(*) as count FROM users WHERE role != 'admin' AND is_active = 1")
     active_users = c.fetchone()['count']
 
     c.execute("SELECT COUNT(*) as count FROM passages")
@@ -2087,13 +2083,23 @@ def get_admin_overview() -> Dict[str, Any]:
     c.execute("SELECT COUNT(*) as count FROM practice_attempts")
     total_practices = c.fetchone()['count']
 
-    c.execute("SELECT COUNT(*) as count FROM practice_attempts WHERE date(created_at) = date('now')")
-    practices_today = c.fetchone()['count']
+    today_str = datetime.now().date().isoformat()
+    try:
+        c.execute("SELECT COUNT(*) as count FROM practice_attempts WHERE date(created_at) = date(?)", (today_str,))
+        practices_today = c.fetchone()['count']
+    except Exception:
+        practices_today = 0
+
+    try:
+        c.execute("SELECT COUNT(*) as count FROM payment_requests WHERE status = 'pending'")
+        pending_payments = c.fetchone()['count']
+    except Exception:
+        pending_payments = 0
 
     c.execute("SELECT COALESCE(AVG(net_wpm), 0) as avg_wpm, COALESCE(AVG(accuracy), 0) as avg_accuracy FROM practice_attempts")
     row = c.fetchone()
-    avg_wpm = round(row['avg_wpm'], 1)
-    avg_accuracy = round(row['avg_accuracy'], 1)
+    avg_wpm = round(row['avg_wpm'], 1) if row else 0.0
+    avg_accuracy = round(row['avg_accuracy'], 1) if row else 0.0
 
     c.execute("""
         SELECT p.title, COUNT(pa.id) as attempts, AVG(pa.net_wpm) as avg_wpm, AVG(pa.accuracy) as avg_accuracy
@@ -2124,6 +2130,7 @@ def get_admin_overview() -> Dict[str, Any]:
         "published_passages": published_passages,
         "total_practices": total_practices,
         "practices_today": practices_today,
+        "pending_payments": pending_payments,
         "avg_wpm": avg_wpm,
         "avg_accuracy": avg_accuracy,
         "popular_passages": popular_passages,
