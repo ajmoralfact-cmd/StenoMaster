@@ -484,8 +484,10 @@ class StenoMasterHandler(http.server.SimpleHTTPRequestHandler):
                 return
 
             if path == '/api/admin/users':
-                users = db.get_admin_users()
-                self._send_json(200, {"users": users})
+                all_users = db.get_admin_users()
+                # Strictly exclude admin/instructor accounts from the student management list
+                students = [u for u in all_users if u.get('role') != 'admin']
+                self._send_json(200, {"users": students})
                 return
 
             if path == '/api/admin/payments':
