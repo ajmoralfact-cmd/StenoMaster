@@ -17,8 +17,47 @@ class StenoApp {
     this.selectedLanguage = 'all';
     this.selectedDifficulty = 'all';
     this.searchQuery = '';
+    this.currentExamRule = 'ssc_steno';
+    this.subscriptionPlans = [];
+    this.selectedPlan = null;
 
     this.init();
+  }
+
+  setExamRule(rule, showNotification = true) {
+    this.currentExamRule = rule === 'upsssc' ? 'upsssc' : 'ssc_steno';
+    const sscBtn = document.getElementById('examRuleSscBtn');
+    const upssscBtn = document.getElementById('examRuleUpssscBtn');
+
+    if (this.currentExamRule === 'upsssc') {
+      if (upssscBtn) {
+        upssscBtn.style.background = '#7c3aed';
+        upssscBtn.style.color = '#fff';
+        upssscBtn.style.borderColor = '#7c3aed';
+      }
+      if (sscBtn) {
+        sscBtn.style.background = 'transparent';
+        sscBtn.style.color = 'var(--text-secondary)';
+        sscBtn.style.borderColor = 'var(--border)';
+      }
+      if (showNotification) {
+        this.showToast('🏛️ UPSSSC स्किल टेस्ट नियम सक्रिय (25 WPM + 5% त्रुटि सीमा)', 'info');
+      }
+    } else {
+      if (sscBtn) {
+        sscBtn.style.background = '#0284c7';
+        sscBtn.style.color = '#fff';
+        sscBtn.style.borderColor = '#0284c7';
+      }
+      if (upssscBtn) {
+        upssscBtn.style.background = 'transparent';
+        upssscBtn.style.color = 'var(--text-secondary)';
+        upssscBtn.style.borderColor = 'var(--border)';
+      }
+      if (showNotification) {
+        this.showToast('🎯 SSC स्टेनोग्राफर नियम सक्रिय (Grade C & D: 5%/7% कटऑफ)', 'info');
+      }
+    }
   }
 
   async init() {
@@ -724,6 +763,9 @@ class StenoApp {
       const adminItems = [
         { id: 'admin', icon: '📊', label: 'Overview & Metrics', sub: 'कंसोल अवलोकन', view: 'admin' },
         { id: 'admin-users', icon: '👥', label: 'Users & Roles', sub: 'उपयोगकर्ता प्रबंधन', action: 'users' },
+        { id: 'admin-subscribers', icon: '👑', label: 'Subscribers & Pro', sub: 'सब्सक्राइबर प्रबंधन', view: 'admin', section: 'adminSubscribersSection' },
+        { id: 'admin-payments', icon: '💳', label: 'Payments & UTR', sub: 'भुगतान सत्यापन', view: 'admin', section: 'adminPaymentsSection' },
+        { id: 'admin-pricing', icon: '💎', label: 'Plan Pricing & QR', sub: 'प्लान मूल्य एवं QR', view: 'admin', section: 'adminSubscriptionConfigSection' },
         { id: 'admin-categories', icon: '📚', label: 'Categories', sub: 'श्रेणी प्रबंधन', action: 'category' },
         { id: 'admin-passages', icon: '📝', label: 'Passage Management', sub: 'आलेख सूची एवं संपादन', view: 'admin', section: 'adminPassagesSection' },
         { id: 'admin-audio', icon: '🎧', label: 'Audio Dictations', sub: 'ऑडियो प्रबंधन', view: 'admin', section: 'adminPassagesSection' },
@@ -1166,7 +1208,7 @@ class StenoApp {
     const isFree = !!p.is_free_tier;
 
     return `
-      <div class="class-card ${isLocked ? 'locked-card' : ''}" ${isLocked ? `onclick="stenoApp.handleLockedPassageClick(${p.id})"` : ''}>
+      <div class="class-card ${isLocked ? 'locked-card' : ''}" onclick="${isLocked ? `stenoApp.handleLockedPassageClick(${p.id})` : `stenoApp.openPractice(${p.id})`}" style="cursor:pointer;">
         <div>
           <div class="class-card-header">
             <div class="class-badge-group">
@@ -1219,7 +1261,7 @@ class StenoApp {
               <span>🔒 अनलॉक करें (₹100/माह) →</span>
             </button>
           ` : `
-            <button class="start-practice-btn" onclick="stenoApp.openPractice(${p.id})">
+            <button class="start-practice-btn" onclick="event.stopPropagation(); stenoApp.openPractice(${p.id})">
               <span>${isFree ? '🎁 फ्री अभ्यास शुरू करें →' : (p.is_premium ? '👑 Pro Practice →' : 'Start Practice →')}</span>
             </button>
           `}
@@ -1229,8 +1271,11 @@ class StenoApp {
   }
 
   handleLockedPassageClick(passageId) {
-    this.showToast('यह आलेख प्रो सदस्यता के लिए है। अभ्यास करने के लिए कृपया ₹100 का मासिक प्लान सक्रिय करें।', 'info');
-    this.navigate('subscription');
+    if (!this.user) {
+      this.showAuthGateway('student', 'प्रीमियम डिक्टेशन अनलॉक करने के लिए कृपया पहले लॉगिन करें।');
+      return;
+    }
+    this.openModal('lockedClassProModal');
   }
 
   async toggleBookmark(passageId, btnEl) {
@@ -1268,8 +1313,8 @@ class StenoApp {
       }
       this.currentPassage = res.passage;
 
-      // Access control check for premium passage
-      if (this.currentPassage.is_premium && (!this.user || (this.user.role !== 'admin' && this.user.subscription_status !== 'active'))) {
+      // Access control check for premium passage (free tier passages are 100% free)
+      if (!this.currentPassage.is_free_tier && this.currentPassage.is_premium && (!this.user || (this.user.role !== 'admin' && this.user.subscription_status !== 'active'))) {
         this.handleLockedPassageClick(passageId);
         return;
       }
@@ -1310,14 +1355,20 @@ class StenoApp {
       stenoTypingEngine.setTypingMode('mangal');
     }
 
-    // Populate Practice Header Info
-    document.getElementById('practicePassageTitle').textContent = this.currentPassage.title;
-    document.getElementById('practiceCategoryName').textContent = this.currentPassage.category_name;
+    // Populate Practice Header Info safely
+    const titleEl = document.getElementById('practicePassageTitle');
+    if (titleEl) titleEl.textContent = this.currentPassage.title || 'आलेख अभ्यास';
+    const catEl = document.getElementById('practiceCategoryName');
+    if (catEl) catEl.textContent = this.currentPassage.category_name || '';
     const modeBadgeText = selectedSystem === 'kruti_dev_010' ? 'KRUTI DEV 010' : 'MANGAL / UNICODE';
-    document.getElementById('practiceLanguageBadge').textContent = `${this.currentPassage.language.toUpperCase()} (${modeBadgeText})`;
-    document.getElementById('practiceDifficultyBadge').textContent = this.currentPassage.difficulty.toUpperCase();
-    document.getElementById('practiceTargetWpm').textContent = `${this.currentPassage.target_wpm} WPM`;
-    document.getElementById('practiceInstructions').textContent = this.currentPassage.instructions || 'ऑडियो ध्यानपूर्वक सुनें और शुद्धता के साथ टाइप करें।';
+    const langBadge = document.getElementById('practiceLanguageBadge');
+    if (langBadge) langBadge.textContent = `${(this.currentPassage.language || 'hindi').toUpperCase()} (${modeBadgeText})`;
+    const diffBadge = document.getElementById('practiceDifficultyBadge');
+    if (diffBadge) diffBadge.textContent = (this.currentPassage.difficulty || 'medium').toUpperCase();
+    const wpmBadge = document.getElementById('practiceTargetWpm');
+    if (wpmBadge) wpmBadge.textContent = `${this.currentPassage.target_wpm || 80} WPM`;
+    const instrEl = document.getElementById('practiceInstructions');
+    if (instrEl) instrEl.textContent = this.currentPassage.instructions || 'ऑडियो ध्यानपूर्वक सुनें और शुद्धता के साथ टाइप करें।';
 
     // Reference text for audio player if synthesizing speech (never mix: use chosen reference text)
     const audioRefText = selectedSystem === 'kruti_dev_010'
@@ -1334,6 +1385,11 @@ class StenoApp {
 
     // Start typing engine
     stenoTypingEngine.startPractice(this.currentPassage);
+
+    // Initialize exam evaluation rule (SSC vs UPSSSC)
+    const userTarget = (this.user && this.user.target_exam || '').toLowerCase();
+    const defaultRule = userTarget.includes('upsssc') ? 'upsssc' : 'ssc_steno';
+    this.setExamRule(this.currentExamRule || defaultRule, false);
 
     this.navigate('practice');
   }
@@ -1368,6 +1424,7 @@ class StenoApp {
         typed_text: text,
         typing_mode: typingMode,
         selected_typing_system: this.selectedTypingSystem || (typingMode === 'krutidev' ? 'kruti_dev_010' : 'mangal_unicode'),
+        exam_rule: this.currentExamRule || 'ssc_steno',
         time_taken_seconds: timeTaken
       });
 
@@ -1376,8 +1433,13 @@ class StenoApp {
 
       // Render Result Report Card
       const reportContainer = document.getElementById('resultReportContainer');
-      stenoComparisonView.renderResult(evalReport, reportContainer);
+      if (window.stenoComparisonView && reportContainer) {
+        stenoComparisonView.renderResult(evalReport, reportContainer);
+      }
       this.navigate('result');
+      if (!this.user) {
+        this.showToast('स्कोर सुरक्षित रखने व इतिहास देखने हेतु लॉगिन करें।', 'info');
+      }
     } catch (err) {
       this.showToast('सबमिशन में त्रुटि: ' + err.message, 'error');
     } finally {
@@ -1633,23 +1695,24 @@ class StenoApp {
   async loadSubscription() {
     try {
       const details = await this.apiCall('/api/subscription/details');
-      const planTitleEl = document.getElementById('subPlanTitleDisplay');
-      const planPriceEl = document.getElementById('subPlanPriceDisplay');
-      const qrImgEl = document.getElementById('subActiveQrImg');
+      this.subscriptionPlans = details.plans || [];
+      const upiId = details.upi_id || 'stenomaster@upi';
       const statusBadgeWrap = document.getElementById('subCurrentStatusBadgeWrap');
-      const payAmountInput = document.getElementById('payAmountInput');
+      const expiringBanner = document.getElementById('subExpiringSoonBanner');
+      const qrImgEl = document.getElementById('subActiveQrImg');
+      const upiDisplayEl = document.getElementById('subUpiIdDisplay');
 
-      if (planTitleEl) planTitleEl.textContent = details.plan_name || 'StenoMaster Pro — 1 Month';
-      if (planPriceEl) planPriceEl.textContent = `₹${details.plan_price || 299}`;
-      if (payAmountInput) payAmountInput.value = `₹${details.plan_price || 299}`;
+      if (upiDisplayEl) upiDisplayEl.textContent = upiId;
       if (qrImgEl && details.qr_url) {
         qrImgEl.src = `${details.qr_url}?t=${Date.now()}`;
       }
 
+      const isPro = Boolean(details.is_premium || details.subscription_status === 'active');
+      const daysLeft = details.subscription_days_left !== undefined ? details.subscription_days_left : 0;
+
       if (statusBadgeWrap) {
-        if (details.is_premium || details.subscription_status === 'active') {
+        if (isPro) {
           const expDate = details.subscription_end ? new Date(details.subscription_end).toLocaleDateString('hi-IN') : 'सक्रिय';
-          const daysLeft = details.subscription_days_left !== undefined ? details.subscription_days_left : 30;
           statusBadgeWrap.innerHTML = `
             <span class="badge badge-success" style="font-size:0.9rem; padding:8px 16px;">
               👑 Pro Active (वैधता: ${expDate} • ${daysLeft} दिन शेष)
@@ -1664,10 +1727,145 @@ class StenoApp {
         }
       }
 
+      // Expiring soon alert banner (shown if Pro and <= 3 days remain)
+      if (expiringBanner) {
+        if (isPro && daysLeft <= 3) {
+          expiringBanner.style.display = 'flex';
+          const titleEl = document.getElementById('subExpiryAlertTitle');
+          const subEl = document.getElementById('subExpiryAlertSubtitle');
+          if (titleEl) {
+            titleEl.textContent = daysLeft <= 0 ? 'आपकी प्रो सदस्यता आज समाप्त हो रही है!' : `आपकी प्रो सदस्यता समाप्त होने में केवल ${daysLeft} दिन शेष हैं!`;
+          }
+          if (subEl) {
+            subEl.textContent = 'बिना रुकावट डिक्टेशन अभ्यास जारी रखने के लिए नीचे अपना पसंदीदा प्लान चुनें और रिन्यू करें।';
+          }
+        } else {
+          expiringBanner.style.display = 'none';
+        }
+      }
+
+      // Render the multi-tier plans selector cards
+      this.renderSubscriptionPlans();
+
+      // Default selection: retain current selection if valid, or pick popular/first plan
+      if (!this.selectedPlan || !this.subscriptionPlans.some(p => p.id === this.selectedPlan.id)) {
+        const defaultPlan = this.subscriptionPlans.find(p => p.popular) || this.subscriptionPlans[0];
+        if (defaultPlan) {
+          this.selectSubscriptionPlan(defaultPlan.id);
+        }
+      } else {
+        this.selectSubscriptionPlan(this.selectedPlan.id);
+      }
+
       // Load Student's previous payment requests
       await this.loadStudentPaymentRequests();
     } catch (err) {
       console.error('Failed to load subscription details:', err);
+    }
+  }
+
+  renderSubscriptionPlans() {
+    const container = document.getElementById('subPlansGrid');
+    if (!container) return;
+
+    if (!this.subscriptionPlans || this.subscriptionPlans.length === 0) {
+      container.innerHTML = '<div style="color:var(--text-muted); padding:16px;">प्लान लोड हो रहे हैं...</div>';
+      return;
+    }
+
+    const currentSelectedId = this.selectedPlan ? this.selectedPlan.id : (this.subscriptionPlans.find(p => p.id === '3m')?.id || this.subscriptionPlans[0].id);
+
+    container.innerHTML = this.subscriptionPlans.map(plan => {
+      const isSelected = plan.id === currentSelectedId;
+      const isPopular = plan.id === '3m' || (plan.badge && plan.badge.includes('POPULAR'));
+      const isBest = plan.id === '1y' || (plan.badge && plan.badge.includes('BEST'));
+
+      let tagHtml = '';
+      if (isPopular) {
+        tagHtml = '<div class="sub-plan-card-tag tag-popular">⭐ सर्वाधिक लोकप्रिय (POPULAR)</div>';
+      } else if (isBest) {
+        tagHtml = '<div class="sub-plan-card-tag tag-best">👑 सर्वश्रेष्ठ मूल्य (BEST VALUE)</div>';
+      } else if (plan.savings) {
+        tagHtml = `<div class="sub-plan-card-tag">💰 ${this.escapeHtml(plan.savings)}</div>`;
+      }
+
+      const durationTitle = plan.title_hi || `${plan.days} दिन`;
+      const subtitle = plan.subtitle_hi || plan.name;
+      const savingsPill = plan.savings ? `<div class="sub-plan-savings-pill">🎉 ${this.escapeHtml(plan.savings)}</div>` : '<div class="sub-plan-savings-pill" style="visibility:hidden;">—</div>';
+
+      return `
+        <div class="sub-plan-card ${isSelected ? 'selected' : ''}" data-plan-id="${plan.id}" onclick="stenoApp.selectSubscriptionPlan('${plan.id}')">
+          ${tagHtml}
+          <div>
+            <div class="sub-plan-title">${this.escapeHtml(durationTitle)}</div>
+            <div class="sub-plan-subtitle">${this.escapeHtml(subtitle)}</div>
+            <div class="sub-plan-price-row">
+              <span class="sub-plan-amount">₹${plan.price}</span>
+              <span class="sub-plan-period">/ ${plan.days} दिन</span>
+            </div>
+            ${savingsPill}
+          </div>
+          <button type="button" class="sub-select-btn">
+            ${isSelected ? '✓ चयनित प्लान (Selected)' : 'यह प्लान चुनें →'}
+          </button>
+        </div>
+      `;
+    }).join('');
+  }
+
+  selectSubscriptionPlan(planId) {
+    const plan = (this.subscriptionPlans || []).find(p => p.id === planId) || this.subscriptionPlans[0];
+    if (!plan) return;
+    this.selectedPlan = plan;
+
+    // Update selection styling in plans grid
+    document.querySelectorAll('#subPlansGrid .sub-plan-card').forEach(card => {
+      const id = card.getAttribute('data-plan-id');
+      const isSelected = id === plan.id;
+      card.classList.toggle('selected', isSelected);
+      const btn = card.querySelector('.sub-select-btn');
+      if (btn) {
+        btn.textContent = isSelected ? '✓ चयनित प्लान (Selected)' : 'यह प्लान चुनें →';
+      }
+    });
+
+    // Update Showcase card details
+    const planTitleEl = document.getElementById('subPlanTitleDisplay');
+    const planPriceEl = document.getElementById('subPlanPriceDisplay');
+    const planDaysEl = document.getElementById('subPlanDaysDisplay');
+    const cashfreeBtnText = document.getElementById('btnCashfreeText');
+
+    const durationTitle = plan.title_hi || `${plan.days} दिन`;
+    if (planTitleEl) planTitleEl.textContent = `StenoMaster Pro — ${durationTitle}`;
+    if (planPriceEl) planPriceEl.textContent = `₹${plan.price}`;
+    if (planDaysEl) planDaysEl.textContent = `/ ${plan.days} दिन (${durationTitle})`;
+    if (cashfreeBtnText) cashfreeBtnText.textContent = `⚡ ₹${plan.price} का सुरक्षित भुगतान करें (Pay ₹${plan.price} via Cashfree)`;
+
+    // Update Manual QR accordion inputs & badges if present
+    const qrPriceBadge = document.getElementById('qrPriceBadge');
+    const qrPayAmountLabel = document.getElementById('qrPayAmountLabel');
+    const payAmountInput = document.getElementById('payAmountInput');
+    const payPlanNameInput = document.getElementById('payPlanNameInput');
+    const payPlanDaysInput = document.getElementById('payPlanDaysInput');
+
+    if (qrPriceBadge) qrPriceBadge.textContent = `₹${plan.price}`;
+    if (qrPayAmountLabel) qrPayAmountLabel.textContent = `₹${plan.price}`;
+    if (payAmountInput) payAmountInput.value = plan.price;
+    if (payPlanNameInput) payPlanNameInput.value = plan.name;
+    if (payPlanDaysInput) payPlanDaysInput.value = plan.days;
+  }
+
+  copyUpiId() {
+    const upiEl = document.getElementById('subUpiIdDisplay');
+    const upiId = upiEl ? upiEl.textContent.trim() : 'stenomaster@upi';
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(upiId).then(() => {
+        this.showToast(`UPI ID '${upiId}' क्लिपबोर्ड पर कॉपी हो गई! 📋`, 'success');
+      }).catch(() => {
+        this.fallbackCopyText(upiId);
+      });
+    } else {
+      this.fallbackCopyText(upiId);
     }
   }
 
@@ -1727,12 +1925,21 @@ class StenoApp {
       return;
     }
 
+    const currentPlan = this.selectedPlan || {
+      name: document.getElementById('payPlanNameInput')?.value || 'StenoMaster Pro — 1 Month (₹100/माह)',
+      price: parseFloat(document.getElementById('payAmountInput')?.value) || 100,
+      days: parseInt(document.getElementById('payPlanDaysInput')?.value) || 30
+    };
+
     if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'सत्यापन अनुरोध भेजा जा रहा है...'; }
 
     try {
       const res = await this.apiCall('/api/subscription/request-payment', 'POST', {
         transaction_id: txnId,
-        screenshot_url: screenshot
+        screenshot_url: screenshot,
+        plan_name: currentPlan.name,
+        amount: currentPlan.price,
+        plan_days: currentPlan.days
       });
 
       if (msgBox) {
@@ -1743,7 +1950,7 @@ class StenoApp {
       txnInput.value = '';
       if (screenshotInput) screenshotInput.value = '';
 
-      this.showToast('भुगतान अनुरोध सफलतापूर्वक सबमिट हुआ! एडमिन सत्यापन उपरांत प्रो सक्रिय होगा। 🎉', 'success');
+      this.showToast(`₹${currentPlan.price} का भुगतान अनुरोध सफलतापूर्वक सबमिट हुआ! एडमिन सत्यापन उपरांत प्रो सक्रिय होगा। 🎉`, 'success');
       await this.loadStudentPaymentRequests();
     } catch (err) {
       if (msgBox) {
@@ -1754,7 +1961,7 @@ class StenoApp {
         this.showToast(err.message || 'सबमिशन विफल रहा।', 'error');
       }
     } finally {
-      if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'भुगतान विवरण जमा करें (Submit Payment Proof)'; }
+      if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'मैन्युअल UTR सबमिट करें (Submit Payment Proof)'; }
     }
   }
 
@@ -1767,17 +1974,21 @@ class StenoApp {
       return;
     }
 
+    const currentPlan = this.selectedPlan || { id: '1m', name: 'StenoMaster Pro — 1 Month', price: 100, days: 30 };
     const btn = document.getElementById('btnCashfreeCheckout');
     const originalContent = btn ? btn.innerHTML : '';
     if (btn) {
       btn.disabled = true;
-      btn.innerHTML = '<span>⏳ Cashfree पेमेंट सत्र बनाया जा रहा है...</span>';
+      btn.innerHTML = `<span>⏳ ₹${currentPlan.price} हेतु Cashfree पेमेंट सत्र बनाया जा रहा है...</span>`;
     }
 
     try {
-      this.showToast('Cashfree सुरक्षित भुगतान सत्र तैयार किया जा रहा है... 🔐', 'info');
+      this.showToast(`Cashfree सुरक्षित भुगतान सत्र (₹${currentPlan.price}) तैयार किया जा रहा है... 🔐`, 'info');
       const orderData = await this.apiCall('/api/payment/cashfree/create-order', 'POST', {
-        plan_days: 30
+        plan_id: currentPlan.id,
+        amount: currentPlan.price,
+        plan_days: currentPlan.days,
+        plan_name: currentPlan.name
       });
 
       if (!orderData.success && !orderData.order_id) {
@@ -1802,16 +2013,16 @@ class StenoApp {
             if (result.error) {
               this.showToast(`भुगतान: ${result.error.message || 'भुगतान रद्द किया गया'}`, 'warning');
             }
-            await this.verifyCashfreeOrder(orderId);
+            await this.verifyCashfreeOrder(orderId, currentPlan);
           });
         } catch (sdkErr) {
           console.warn('Cashfree SDK modal launch failed, falling back to direct verification:', sdkErr);
-          await this.verifyCashfreeOrder(orderId);
+          await this.verifyCashfreeOrder(orderId, currentPlan);
         }
       } else {
         // Direct sandbox/simulation verification
         this.showToast('सैंडबॉक्स भुगतान सत्यापित किया जा रहा है... 💳', 'info');
-        await this.verifyCashfreeOrder(orderId);
+        await this.verifyCashfreeOrder(orderId, currentPlan);
       }
     } catch (err) {
       this.showToast('भुगतान आरंभ करने में त्रुटि: ' + (err.message || 'अज्ञात त्रुटि'), 'error');
@@ -1823,15 +2034,18 @@ class StenoApp {
     }
   }
 
-  async verifyCashfreeOrder(orderId) {
+  async verifyCashfreeOrder(orderId, plan = null) {
     try {
       this.showToast('भुगतान स्थिति जांची जा रही है... ⏳', 'info');
       const verifyRes = await this.apiCall('/api/payment/cashfree/verify', 'POST', {
         order_id: orderId
       });
 
-      if (verifyRes.success && verifyRes.order_status === 'PAID') {
-        this.showToast('🎉 ₹100 का भुगतान सफल! आपकी 30 दिन की प्रो सदस्यता सक्रिय हो गई है!', 'success');
+      const planName = plan ? plan.name : 'प्रो सदस्यता';
+      const planDays = plan ? `${plan.days} दिन` : '30 दिन';
+
+      if (verifyRes.success && (verifyRes.order_status === 'PAID' || verifyRes.status === 'PAID')) {
+        this.showToast(`🎉 भुगतान सफल! आपकी ${planName} (${planDays}) सक्रिय हो गई है!`, 'success');
         await this.fetchCurrentUser();
         this.updateUserUI();
         await this.loadPassages();
@@ -1961,12 +2175,38 @@ class StenoApp {
   // -------------------------------------------------------------------------
   openModal(modalId) {
     const modal = document.getElementById(modalId);
-    if (modal) modal.classList.add('active');
+    if (modal) {
+      modal.style.display = 'flex';
+      modal.classList.add('active');
+      document.body.style.overflow = 'hidden';
+    } else {
+      console.warn('Modal not found:', modalId);
+    }
   }
 
   closeModal(modalId) {
     const modal = document.getElementById(modalId);
-    if (modal) modal.classList.remove('active');
+    if (modal) {
+      modal.classList.remove('active');
+      modal.style.display = 'none';
+      document.body.style.overflow = '';
+    }
+  }
+
+  togglePolicyAccordion(policyId) {
+    const content = document.getElementById(policyId);
+    if (!content) return;
+    const isVisible = content.style.display === 'block';
+    content.style.display = isVisible ? 'none' : 'block';
+    const icon = document.getElementById(`${policyId}-icon`);
+    if (icon) {
+      icon.textContent = isVisible ? '▼' : '▲';
+    }
+    if (!isVisible) {
+      setTimeout(() => {
+        content.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }, 50);
+    }
   }
 
   showToast(message, type = 'info') {
