@@ -107,6 +107,156 @@ class StenoApp {
     }
   }
 
+  // -------------------------------------------------------------------------
+  // Browser Native-Style Top Loading Progress Bar
+  // -------------------------------------------------------------------------
+  startTopLoading() {
+    this._activeLoadingOps = (this._activeLoadingOps || 0) + 1;
+    const bar = document.getElementById('topLoadingProgressBar');
+    if (!bar) return;
+
+    bar.classList.remove('is-done');
+    bar.classList.add('is-loading');
+
+    if (this._activeLoadingOps === 1 || !this._topLoadingTimer) {
+      bar.style.width = '28%';
+      if (this._topLoadingTimer) clearInterval(this._topLoadingTimer);
+      let progress = 28;
+      this._topLoadingTimer = setInterval(() => {
+        if (progress < 85) {
+          progress += Math.max(1, (85 - progress) * 0.18);
+          bar.style.width = `${progress}%`;
+        }
+      }, 120);
+    }
+  }
+
+  finishTopLoading() {
+    this._activeLoadingOps = Math.max(0, (this._activeLoadingOps || 1) - 1);
+    const bar = document.getElementById('topLoadingProgressBar');
+    if (!bar) return;
+
+    if (this._activeLoadingOps === 0) {
+      if (this._topLoadingTimer) {
+        clearInterval(this._topLoadingTimer);
+        this._topLoadingTimer = null;
+      }
+      bar.style.width = '100%';
+      bar.classList.remove('is-loading');
+      bar.classList.add('is-done');
+      setTimeout(() => {
+        if (this._activeLoadingOps === 0) {
+          bar.classList.remove('is-done');
+          bar.style.width = '0%';
+        }
+      }, 350);
+    }
+  }
+
+  // -------------------------------------------------------------------------
+  // Deep URL Hash Routing & Refresh Route Preservation
+  // -------------------------------------------------------------------------
+  restoreRouteOnLoad(customRoute = null) {
+    let route = customRoute;
+    if (!route) {
+      route = window.location.hash ? window.location.hash.replace(/^#\/?/, '') : '';
+    }
+    if (!route) {
+      route = localStorage.getItem('stenomaster_last_route') || '';
+    }
+
+    const isAdmin = Boolean(this.user && this.user.role === 'admin');
+
+    if (!route) {
+      this.navigate(isAdmin ? 'admin' : 'home', {}, true);
+      return;
+    }
+
+    const [pathPart, queryStr] = route.split('?');
+    const path = pathPart.replace(/^\/+|\/+$/g, '');
+    const params = {};
+    if (queryStr) {
+      queryStr.split('&').forEach(pair => {
+        const [k, v] = pair.split('=');
+        if (k) params[decodeURIComponent(k)] = decodeURIComponent(v || '');
+      });
+    }
+
+    // 1. Admin route
+    if (path.startsWith('admin')) {
+      if (!isAdmin) {
+        this.showToast('एडमिन एक्सेस के लिए एडमिन आईडी से लॉगिन करें।', 'warning');
+        this.navigate('home', {}, true);
+        return;
+      }
+      const parts = path.split('/');
+      const adminTab = parts[1] || localStorage.getItem('stenomaster_last_admin_tab') || 'overview';
+      this.navigate('admin', { adminTab }, false);
+      return;
+    }
+
+    // 2. Typing Practice test session
+    if (path === 'practice') {
+      const passageId = params.id ? parseInt(params.id, 10) : null;
+      if (passageId) {
+        this.openPractice(passageId, params.system);
+      } else {
+        this.navigate('classes', {}, true);
+      }
+      return;
+    }
+
+    // 3. Known valid student views
+    const validViews = [
+      'home', 'classes', 'subscription', 'result', 'my-practice',
+      'progress', 'leaderboard', 'bookmarks', 'profile', 'refer',
+      'notifications', 'settings', 'rules'
+    ];
+
+    if (validViews.includes(path)) {
+      this.navigate(path, params, false);
+    } else {
+      this.navigate(isAdmin ? 'admin' : 'home', {}, true);
+    }
+  }
+
+  handleHashChange() {
+    if (!this.user || !this.token) return;
+    const rawHash = window.location.hash ? window.location.hash.replace(/^#\/?/, '') : '';
+    if (!rawHash) return;
+
+    const [pathPart, queryStr] = rawHash.split('?');
+    const path = pathPart.replace(/^\/+|\/+$/g, '');
+    const params = {};
+    if (queryStr) {
+      queryStr.split('&').forEach(pair => {
+        const [k, v] = pair.split('=');
+        if (k) params[decodeURIComponent(k)] = decodeURIComponent(v || '');
+      });
+    }
+
+    if (path.startsWith('admin')) {
+      const parts = path.split('/');
+      const targetTab = parts[1] || 'overview';
+      if (this.activeView !== 'admin' || (window.stenoAdmin && window.stenoAdmin.activeTab !== targetTab)) {
+        this.navigate('admin', { adminTab: targetTab }, false);
+      }
+      return;
+    }
+
+    if (path === 'practice' && params.id) {
+      const pId = parseInt(params.id, 10);
+      if (!this.currentPassage || this.currentPassage.id !== pId) {
+        this.openPractice(pId, params.system);
+      }
+      return;
+    }
+
+    if (path !== this.activeView) {
+      this.navigate(path, params, false);
+    }
+  }
+
   async init() {
     this.initTheme();
     this.initPWA();
@@ -120,15 +270,14 @@ class StenoApp {
       }
     });
 
-    // 0ms Instant Hydration: If token & cached user exist, display dashboard immediately without waiting
+    // Hashchange listener for smooth browser Back/Forward navigation
+    window.addEventListener('hashchange', () => this.handleHashChange());
+
+    // 0ms Instant Hydration: If token & cached user exist, restore view immediately without waiting
     if (this.token && this.user) {
       this.hideAuthGateway();
       this.updateUserUI();
-      if (this.user.role === 'admin') {
-        this.navigate('admin');
-      } else {
-        this.navigate('home');
-      }
+      this.restoreRouteOnLoad();
       // Re-validate and sync fresh data in background seamlessly
       Promise.all([
         this.fetchCurrentUser().catch(() => {}),
@@ -140,27 +289,30 @@ class StenoApp {
 
     // Check existing auth session if user profile wasn't cached
     if (this.token) {
+      this.startTopLoading();
       try {
         await this.fetchCurrentUser();
         if (this.user) {
           this.hideAuthGateway();
           await this.loadCategories();
           await this.loadPassages();
-          if (this.user.role === 'admin') {
-            this.navigate('admin');
-          } else {
-            this.navigate('home');
-          }
+          this.restoreRouteOnLoad();
+          this.finishTopLoading();
           return;
         }
       } catch (err) {
         console.warn('Session verification failed, showing auth gateway:', err);
+      } finally {
+        this.finishTopLoading();
       }
     }
 
     // If no active or valid session, show the Auth Gateway directly
-    this.showAuthGateway('student');
+    const hash = window.location.hash || '';
+    const isTryingAdmin = hash.toLowerCase().includes('admin');
+    this.showAuthGateway(isTryingAdmin ? 'admin' : 'student');
   }
+
 
   // -------------------------------------------------------------------------
   // Single-Device Session Heartbeat & Security Monitoring
@@ -221,6 +373,11 @@ class StenoApp {
   // API Helper
   // -------------------------------------------------------------------------
   async apiCall(endpoint, method = 'GET', body = null, timeoutMs = 12000) {
+    const isBackground = endpoint.includes('/session-status');
+    if (!isBackground) {
+      this.startTopLoading();
+    }
+
     const headers = { 'Content-Type': 'application/json' };
     if (this.token) {
       headers['Authorization'] = `Bearer ${this.token}`;
@@ -262,6 +419,10 @@ class StenoApp {
         throw timeoutErr;
       }
       throw err;
+    } finally {
+      if (!isBackground) {
+        this.finishTopLoading();
+      }
     }
   }
 
@@ -569,10 +730,13 @@ class StenoApp {
 
       this.showToast(`स्वागतम्, ${this.user.display_name || this.user.username}! 👋`, 'success');
 
+      const redirectRoute = sessionStorage.getItem('stenomaster_redirect_after_login') || localStorage.getItem('stenomaster_last_route');
+      sessionStorage.removeItem('stenomaster_redirect_after_login');
+
       if (this.user.role === 'admin') {
-        this.navigate('admin');
+        this.restoreRouteOnLoad(redirectRoute && redirectRoute.startsWith('admin') ? redirectRoute : 'admin');
       } else {
-        this.navigate('home');
+        this.restoreRouteOnLoad(redirectRoute && !redirectRoute.startsWith('admin') ? redirectRoute : 'home');
       }
     } catch (err) {
       const msg = err.status === 401 ? 'Invalid username or password.' : (err.message || 'Login failed.');
@@ -641,7 +805,15 @@ class StenoApp {
       await this.loadPassages();
 
       this.showToast('प्रशासनिक कंसोल में आपका स्वागत है! 🛡️', 'success');
-      this.navigate('admin');
+
+      const redirectRoute = sessionStorage.getItem('stenomaster_redirect_after_login') || localStorage.getItem('stenomaster_last_route');
+      sessionStorage.removeItem('stenomaster_redirect_after_login');
+
+      if (redirectRoute && redirectRoute.startsWith('admin')) {
+        this.restoreRouteOnLoad(redirectRoute);
+      } else {
+        this.navigate('admin', {}, true);
+      }
     } catch (err) {
       const msg = err.status === 401 ? 'Invalid username or password.' : (err.message || 'Admin authentication failed.');
       if (errBox) {
@@ -1150,18 +1322,62 @@ class StenoApp {
     this.renderSidebarNav();
   }
 
-  navigate(viewId, params = {}) {
+  navigate(viewId, params = {}, updateHash = true) {
     // Role-based access control (RBAC) enforcement
     if (viewId === 'admin') {
       if (!this.user || this.user.role !== 'admin') {
         this.showToast('This account does not have administrator access.', 'error');
-        this.navigate('home');
+        this.navigate('home', {}, true);
         return;
       }
     }
 
+    this.startTopLoading();
     this.activeView = viewId;
     this.closeSidebar();
+
+    // Determine target route string
+    let routeStr = viewId;
+    if (viewId === 'admin') {
+      const adminTab = (params && params.adminTab) || (window.stenoAdmin && window.stenoAdmin.activeTab) || localStorage.getItem('stenomaster_last_admin_tab') || 'overview';
+      routeStr = `admin/${adminTab}`;
+    } else if (viewId === 'practice') {
+      const pId = (params && params.passageId) || (this.currentPassage && this.currentPassage.id);
+      if (pId) {
+        routeStr = `practice?id=${pId}`;
+        if (params && params.system) routeStr += `&system=${params.system}`;
+      }
+    }
+
+    if (updateHash) {
+      const targetHash = `#/${routeStr}`;
+      if (window.location.hash !== targetHash) {
+        window.location.hash = targetHash;
+      }
+    }
+    localStorage.setItem('stenomaster_last_route', routeStr);
+
+    // Update document title dynamically
+    const pageTitles = {
+      'home': 'डैशबोर्ड (Dashboard) — StenoMaster',
+      'classes': 'अभ्यास कक्षाएं (Classes) — StenoMaster',
+      'subscription': 'सदस्यता प्लान (Subscription) — StenoMaster',
+      'practice': 'स्टेनो टंकण अभ्यास (Typing Test) — StenoMaster',
+      'result': 'मूल्यांकन परिणाम (Result Report) — StenoMaster',
+      'my-practice': 'अभ्यास इतिहास (Practice History) — StenoMaster',
+      'progress': 'प्रगति विश्लेषण (Progress Analytics) — StenoMaster',
+      'leaderboard': 'लीडरबोर्ड (Leaderboard) — StenoMaster',
+      'bookmarks': 'सहेजे गए आलेख (Bookmarks) — StenoMaster',
+      'profile': 'मेरी प्रोफ़ाइल (My Profile) — StenoMaster',
+      'refer': 'रेफरल एवं पुरस्कार (Refer & Earn) — StenoMaster',
+      'notifications': 'सूचनाएं (Notifications) — StenoMaster',
+      'settings': 'प्राथमिकताएं (Settings) — StenoMaster',
+      'rules': '📜 परीक्षा नियम — StenoMaster',
+      'admin': 'एडमिन कंसोल (Admin Console) — StenoMaster'
+    };
+    if (pageTitles[viewId]) {
+      document.title = pageTitles[viewId];
+    }
 
     // Update active badge in top header
     const viewTitles = {
@@ -1245,14 +1461,15 @@ class StenoApp {
         // Rules view is static HTML — just scroll to top, no async load needed
         break;
       case 'admin':
+        const targetAdminTab = (params && params.adminTab) || (window.stenoAdmin && window.stenoAdmin.activeTab) || localStorage.getItem('stenomaster_last_admin_tab') || 'overview';
         stenoAdmin.loadOverview();
-        if (params && params.adminTab) {
-          stenoAdmin.switchTab(params.adminTab);
-        } else {
-          stenoAdmin.switchTab('overview');
-        }
+        stenoAdmin.switchTab(targetAdminTab, false);
         break;
     }
+
+    setTimeout(() => {
+      this.finishTopLoading();
+    }, 180);
   }
 
   // -------------------------------------------------------------------------
@@ -1577,7 +1794,7 @@ class StenoApp {
   // -------------------------------------------------------------------------
   // Practice Dictation Flow (Phase 8)
   // -------------------------------------------------------------------------
-  async openPractice(passageId) {
+  async openPractice(passageId, forcedSystem = null) {
     try {
       const pId = parseInt(passageId, 10);
       const cardEl = document.querySelector(`.class-card[onclick*="openPractice(${passageId})"]`);
@@ -1612,7 +1829,7 @@ class StenoApp {
       }
 
       // Automatically use preferred font (never annoy student with repeated popup modal)
-      const savedPref = localStorage.getItem('stenomaster_preferred_font') || localStorage.getItem('stenomaster_typing_mode') || 'mangal_unicode';
+      const savedPref = forcedSystem || localStorage.getItem('stenomaster_preferred_font') || localStorage.getItem('stenomaster_typing_mode') || 'mangal_unicode';
       const preferredSystem = (savedPref === 'kruti_dev_010' || savedPref === 'krutidev') ? 'kruti_dev_010' : 'mangal_unicode';
 
       const sys = this.currentPassage.typing_system || 'dual';

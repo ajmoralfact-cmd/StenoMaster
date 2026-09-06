@@ -20,8 +20,35 @@ class StenoAdmin {
     this.settings = {};
   }
 
-  switchTab(tabId) {
+  switchTab(tabId, updateHash = true) {
     this.activeTab = tabId;
+    localStorage.setItem('stenomaster_last_admin_tab', tabId);
+
+    if (window.stenoApp && typeof window.stenoApp.startTopLoading === 'function') {
+      window.stenoApp.startTopLoading();
+    }
+
+    if (updateHash) {
+      const targetHash = `#/admin/${tabId}`;
+      if (window.location.hash !== targetHash) {
+        window.location.hash = targetHash;
+      }
+    }
+    localStorage.setItem('stenomaster_last_route', `admin/${tabId}`);
+
+    // Dynamic document title for Admin sub-tabs
+    const tabTitles = {
+      'overview': 'एडमिन ओवरव्यू (Overview) — StenoMaster',
+      'passages': 'आलेख प्रबंधन (Passages) — StenoMaster',
+      'subscribers': 'छात्र व फ्री एक्सेस (Students) — StenoMaster',
+      'payments': 'भुगतान सत्यापन (Payments) — StenoMaster',
+      'pricing': 'सब्सक्रिप्शन सेटिंग्स (Pricing) — StenoMaster',
+      'scoring': 'परीक्षा मूल्यांकन नियम (Scoring) — StenoMaster',
+      'branding': 'सिस्टम सेटिंग्स (Branding) — StenoMaster'
+    };
+    if (tabTitles[tabId]) {
+      document.title = tabTitles[tabId];
+    }
 
     // 1. Update active state on left tab buttons
     document.querySelectorAll('.admin-nav-tab').forEach(btn => {
@@ -84,6 +111,10 @@ class StenoAdmin {
 
     // Scroll to top smoothly
     window.scrollTo({ top: 0, behavior: 'smooth' });
+
+    if (window.stenoApp && typeof window.stenoApp.finishTopLoading === 'function') {
+      setTimeout(() => window.stenoApp.finishTopLoading(), 200);
+    }
   }
 
   async loadOverview() {
