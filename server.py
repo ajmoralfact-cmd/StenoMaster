@@ -345,7 +345,11 @@ class StenoMasterHandler(http.server.SimpleHTTPRequestHandler):
             return
 
         if path == '/api/settings':
-            admin_settings = db.get_admin_settings()
+            admin_settings = dict(db.get_admin_settings())
+            # Redact payment gateway credentials for students / public visitors
+            if not user or user.get('role') != 'admin':
+                admin_settings.pop('cashfree_secret_key', None)
+                admin_settings.pop('cashfree_app_id', None)
             self._send_json(200, {"settings": admin_settings})
             return
 
@@ -400,7 +404,11 @@ class StenoMasterHandler(http.server.SimpleHTTPRequestHandler):
             self._send_json(200, {"history": history, "transactions": history})
             return
 
-        # Phase 3: Subscription Details & Status
+        # Phase 3: Subscription Details & Plans
+        if path == '/api/subscription/plans':
+            self._send_json(200, {"plans": db.get_subscription_plans()})
+            return
+
         if path == '/api/subscription/details':
             admin_settings = db.get_admin_settings()
             sub_info = db.get_user_subscription_info(user['user_id']) if user else {
@@ -413,11 +421,14 @@ class StenoMasterHandler(http.server.SimpleHTTPRequestHandler):
                 "plan_name": admin_settings.get('subscription_plan_name', 'StenoMaster Pro — 1 Month (₹100/माह)'),
                 "plan_price": admin_settings.get('subscription_plan_price', '100'),
                 "qr_url": admin_settings.get('subscription_qr_url', '/assets/qr_payment.png'),
+                "upi_id": admin_settings.get('subscription_upi_id', 'stenomaster@upi'),
+                "plans": db.get_subscription_plans(),
                 "subscription_status": sub_info.get("status", "free"),
                 "subscription_plan": sub_info.get("plan"),
                 "subscription_start": sub_info.get("start_date"),
                 "subscription_end": sub_info.get("end_date"),
                 "days_left": sub_info.get("days_left", 0),
+                "subscription_days_left": sub_info.get("days_left", 0),
                 "is_premium": sub_info.get("is_premium", False),
                 "free_passages_count": 2,
                 "cashfree_configured": CashfreeService.is_configured(),
@@ -665,8 +676,8 @@ class StenoMasterHandler(http.server.SimpleHTTPRequestHandler):
                 return
             data = self._read_json_body()
             txn_id = data.get('transaction_id', '').strip()
-            plan_name = data.get('plan_name', 'StenoMaster Pro — 1 Month')
-            amount = float(data.get('amount', 299))
+            plan_name = data.get('plan_name', 'StenoMaster Pro — 1 Month (₹100/माह)')
+            amount = float(data.get('amount', 100))
             screenshot_url = data.get('screenshot_url', '')
 
             if not txn_id:
@@ -686,10 +697,21 @@ class StenoMasterHandler(http.server.SimpleHTTPRequestHandler):
             if not user:
                 self._send_auth_required()
                 return
-            admin_settings = db.get_admin_settings()
-            amount = float(admin_settings.get('subscription_plan_price', '100') or 100.0)
             data = self._read_json_body()
-            plan_days = int(data.get('plan_days', 30))
+            plans = db.get_subscription_plans()
+            plan_id = str(data.get('plan_id') or '').strip()
+            plan_days_req = int(data.get('plan_days') or 30)
+
+            # Match plan strictly against server-defined tiers to prevent client-side price tampering
+            matched_plan = next((p for p in plans if p.get('id') == plan_id or p.get('days') == plan_days_req), None)
+            if matched_plan:
+                amount = float(matched_plan['price'])
+                plan_days = int(matched_plan['days'])
+            else:
+                first_plan = plans[0] if plans else {'price': 100.0, 'days': 30}
+                amount = float(first_plan['price'])
+                plan_days = int(first_plan['days'])
+
             return_url = data.get('return_url')
 
             res = CashfreeService.create_order(user, amount=amount, plan_days=plan_days, return_url=return_url)
@@ -708,7 +730,19 @@ class StenoMasterHandler(http.server.SimpleHTTPRequestHandler):
             if not order_id:
                 self._send_json(400, {"error": "Missing order_id"})
                 return
+
+            order = db.get_cashfree_order(order_id)
+            if not order:
+                self._send_json(404, {"error": "Order not found"})
+                return
+            # Strict ownership verification: student cannot verify or tamper with another student's order
+            if order.get("user_id") != user["user_id"] and user.get("role") != "admin":
+                self._send_json(403, {"error": "Unauthorized: This order belongs to another student account."})
+                return
+
             res = CashfreeService.verify_order(order_id)
+            if "status" in res and "order_status" not in res:
+                res["order_status"] = res["status"]
             if res.get("success"):
                 self._send_json(200, res)
             else:
@@ -734,10 +768,6 @@ class StenoMasterHandler(http.server.SimpleHTTPRequestHandler):
 
         # 3. Practice Submission & Evaluation Engine (CRITICAL)
         if path == '/api/practice/submit':
-            if not user:
-                self._send_auth_required()
-                return
-
             data = self._read_json_body()
             passage_id = data.get('passage_id')
             raw_input = data.get('typed_text', '')
@@ -749,11 +779,26 @@ class StenoMasterHandler(http.server.SimpleHTTPRequestHandler):
                 self._send_json(400, {"error": "Passage and typed text are required"})
                 return
 
-            # Deduplication: Prevent duplicate attempts within 5s
-            recent = db.get_recent_duplicate_attempt(user['user_id'], passage_id, raw_input, max_age_seconds=5)
-            if recent:
-                self._send_json(200, recent)
+            # Strict Access Check (First 2 free passages accessible without login, others require Pro)
+            user_id = user['user_id'] if user else None
+            is_admin = bool(user and user.get('role') == 'admin')
+            if not is_admin and not db.is_passage_accessible(user_id, passage_id):
+                if not user:
+                    self._send_auth_required()
+                else:
+                    self._send_json(403, {
+                        "error": "PRO_SUBSCRIPTION_REQUIRED",
+                        "is_locked": True,
+                        "message": "यह डिक्टेशन अभ्यास केवल प्रो सदस्यों के लिए उपलब्ध है। कृपया ₹100 का मासिक प्लान सक्रिय करें।"
+                    })
                 return
+
+            # Deduplication: Prevent duplicate attempts within 5s (logged in users)
+            if user:
+                recent = db.get_recent_duplicate_attempt(user['user_id'], passage_id, raw_input, max_age_seconds=5)
+                if recent:
+                    self._send_json(200, recent)
+                    return
 
             # Retrieve official text securely from DB (Security: never trust client reference text)
             passage = db.get_passage_detail(passage_id, include_official=True, is_admin=True)
@@ -762,18 +807,8 @@ class StenoMasterHandler(http.server.SimpleHTTPRequestHandler):
                 return
 
             # Students cannot practice on draft passages
-            if passage.get('status') != 'published' and user.get('role') != 'admin':
+            if passage.get('status') != 'published' and not is_admin:
                 self._send_json(403, {"error": "This passage is in draft mode and not yet published."})
-                return
-
-            # Strict 2 Free Classes vs Locked Passage Access Check
-            is_admin = bool(user and user.get('role') == 'admin')
-            if not is_admin and not db.is_passage_accessible(user['user_id'], passage_id):
-                self._send_json(403, {
-                    "error": "PRO_SUBSCRIPTION_REQUIRED",
-                    "is_locked": True,
-                    "message": "यह डिक्टेशन अभ्यास केवल प्रो सदस्यों के लिए उपलब्ध है। कृपया ₹100 का मासिक प्लान सक्रिय करें।"
-                })
                 return
 
             official_text = passage.get('official_text', '')
@@ -822,9 +857,15 @@ class StenoMasterHandler(http.server.SimpleHTTPRequestHandler):
                 normalized_student_text = raw_input
                 eval_official_text = official_text
 
-            # Retrieve configured scoring rule
+            # Retrieve configured scoring rule & target exam mode
             admin_settings = db.get_admin_settings()
-            scoring_mode = admin_settings.get('scoring_mode', 'standard')
+            requested_exam_rule = data.get('exam_rule')
+            if not requested_exam_rule:
+                user_target = (user.get('target_exam') if user else '').lower()
+                if 'upsssc' in user_target:
+                    requested_exam_rule = 'upsssc'
+                else:
+                    requested_exam_rule = admin_settings.get('scoring_mode', 'ssc_steno')
 
             # Run dynamic token evaluation
             eval_result = evaluation.evaluate_practice_attempt(
@@ -832,19 +873,23 @@ class StenoMasterHandler(http.server.SimpleHTTPRequestHandler):
                 student_text=eval_student_text,
                 time_taken_seconds=max(5, time_taken),
                 language=eval_language,
-                scoring_mode=scoring_mode,
-                scoring_config=admin_settings
+                scoring_mode=requested_exam_rule,
+                scoring_config=admin_settings,
+                exam_rule=requested_exam_rule
             )
 
-            # Save historical attempt in DB
-            attempt_id = db.save_practice_attempt(
-                user_id=user['user_id'],
-                passage_id=passage_id,
-                eval_result=eval_result,
-                typing_mode=typing_mode,
-                raw_input=raw_input,
-                normalized_input=normalized_student_text
-            )
+            # Save historical attempt in DB (for logged-in students)
+            if user:
+                attempt_id = db.save_practice_attempt(
+                    user_id=user['user_id'],
+                    passage_id=passage_id,
+                    eval_result=eval_result,
+                    typing_mode=typing_mode,
+                    raw_input=raw_input,
+                    normalized_input=normalized_student_text
+                )
+            else:
+                attempt_id = None
 
             eval_result["attempt_id"] = attempt_id
             eval_result["passage_title"] = passage["title"]
@@ -852,6 +897,7 @@ class StenoMasterHandler(http.server.SimpleHTTPRequestHandler):
             eval_result["typing_mode"] = typing_mode
             eval_result["typing_system"] = passage_system
             eval_result["selected_typing_system"] = effective_typing_system
+            eval_result["exam_rule"] = eval_result.get("exam_rule", requested_exam_rule)
             eval_result["difficulty"] = passage["difficulty"]
 
             self._send_json(200, eval_result)
@@ -1003,11 +1049,42 @@ class StenoMasterHandler(http.server.SimpleHTTPRequestHandler):
                 self._send_json(200, res)
                 return
 
+            # Admin Manual Subscriber Management: Grant / Extend Pro
+            if path == '/api/admin/users/grant-subscription':
+                data = self._read_json_body()
+                target_user_id = data.get('user_id')
+                plan_name = data.get('plan_name', 'StenoMaster Pro')
+                days = int(data.get('days', 30))
+                notes = data.get('notes', '')
+                if not target_user_id:
+                    self._send_json(400, {"error": "user_id आवश्यक है"})
+                    return
+                res = db.admin_grant_subscription(int(target_user_id), plan_name, days, user['user_id'], notes)
+                self._send_json(200 if res.get('success') else 400, res)
+                return
+
+            # Admin Revoke / Expire Pro
+            if path == '/api/admin/users/revoke-subscription':
+                data = self._read_json_body()
+                target_user_id = data.get('user_id')
+                reason = data.get('reason', '')
+                if not target_user_id:
+                    self._send_json(400, {"error": "user_id आवश्यक है"})
+                    return
+                res = db.admin_revoke_subscription(int(target_user_id), user['user_id'], reason)
+                self._send_json(200 if res.get('success') else 400, res)
+                return
+
             # Phase 3: Admin Subscription & Cashfree Settings Update
             if path == '/api/admin/subscription/settings':
                 data = self._read_json_body()
                 plan_name = data.get('plan_name') or data.get('subscription_plan_name')
                 plan_price = data.get('plan_price') or data.get('subscription_plan_price')
+                p1m = data.get('subscription_price_1m')
+                p3m = data.get('subscription_price_3m')
+                p6m = data.get('subscription_price_6m')
+                p1y = data.get('subscription_price_1y')
+                upi_id = data.get('subscription_upi_id')
                 qr_url = data.get('qr_url') or data.get('subscription_qr_url')
                 cf_app_id = data.get('cashfree_app_id')
                 cf_secret = data.get('cashfree_secret_key')
@@ -1016,6 +1093,11 @@ class StenoMasterHandler(http.server.SimpleHTTPRequestHandler):
                 updates = {}
                 if plan_name: updates['subscription_plan_name'] = str(plan_name).strip()
                 if plan_price: updates['subscription_plan_price'] = str(plan_price).strip()
+                if p1m is not None: updates['subscription_price_1m'] = str(p1m).strip()
+                if p3m is not None: updates['subscription_price_3m'] = str(p3m).strip()
+                if p6m is not None: updates['subscription_price_6m'] = str(p6m).strip()
+                if p1y is not None: updates['subscription_price_1y'] = str(p1y).strip()
+                if upi_id is not None: updates['subscription_upi_id'] = str(upi_id).strip()
                 if qr_url: updates['subscription_qr_url'] = str(qr_url).strip()
                 if cf_app_id is not None: updates['cashfree_app_id'] = str(cf_app_id).strip()
                 if cf_secret is not None: updates['cashfree_secret_key'] = str(cf_secret).strip()
