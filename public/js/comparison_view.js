@@ -226,6 +226,12 @@ class StenoComparisonView {
         </div>
       </div>
 
+      <!-- 1. Official Steno Shorthand Notes & Outlines Card -->
+      ${this.renderStenoNotesSection(report)}
+
+      <!-- 2. Master Reference Passage Box (Official Uploaded Passage Text) -->
+      ${this.renderMasterPassageSection(report)}
+
       <!-- Aligned Stream Comparison Section -->
       <div class="comparison-section">
         <div class="section-header" style="margin-bottom: 12px;">
@@ -467,6 +473,269 @@ class StenoComparisonView {
     if (tbody && this.currentReport) {
       tbody.innerHTML = this.renderErrorTableRows(this.currentReport.error_table || [], category);
     }
+  }
+
+  escapeHtml(str) {
+    if (!str) return '';
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  }
+
+  renderStenoNotesSection(report) {
+    const url = report.steno_notes_url;
+    if (!url) return '';
+
+    const type = report.steno_notes_type || (url.toLowerCase().endsWith('.pdf') ? 'pdf' : 'image');
+    const filename = url.split('/').pop() || 'steno_notes';
+    const title = report.passage_title || 'स्टेनो डिक्टेशन';
+
+    if (type === 'pdf') {
+      return `
+        <div class="result-steno-notes-card">
+          <div class="result-steno-header">
+            <div style="display:flex; align-items:center; gap:12px;">
+              <div class="steno-icon-badge" style="background:#fee2e2; color:#ef4444;">📄</div>
+              <div>
+                <h3 style="font-size:1.1rem; font-weight:700; margin:0; color:var(--text-main);">
+                  स्टेनो आउटलाइन व पीडीएफ़ नोट्स (Shorthand Outlines PDF)
+                </h3>
+                <p style="font-size:0.8rem; color:var(--text-muted); margin:3px 0 0 0;">
+                  इस डिक्टेशन की आधिकारिक हस्तलिखित स्टेनो आउटलाइन्स पीडीएफ़ रूप में संलग्न हैं।
+                </p>
+              </div>
+            </div>
+            <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+              <button type="button" class="btn-sm btn-primary" onclick="stenoComparisonView.openStenoLightbox('${url}', 'pdf', '${this.escapeHtml(title)}')" style="font-size:0.82rem; padding:6px 12px; background:#ef4444; border-color:#ef4444;">
+                👁️ PDF यहीं देखें
+              </button>
+              <a href="${url}" target="_blank" class="btn-sm btn-secondary" style="font-size:0.82rem; padding:6px 12px; text-decoration:none; display:inline-flex; align-items:center;">
+                ↗️ नए टैब में खोलें
+              </a>
+              <a href="${url}" download="${filename}" class="btn-sm btn-secondary" style="font-size:0.82rem; padding:6px 12px; text-decoration:none; display:inline-flex; align-items:center;">
+                ⬇️ डाउनलोड PDF
+              </a>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    // Image mode
+    return `
+      <div class="result-steno-notes-card">
+        <div class="result-steno-header">
+          <div style="display:flex; align-items:center; gap:12px;">
+            <div class="steno-icon-badge" style="background:#e0e7ff; color:#4338ca;">✍️</div>
+            <div>
+              <h3 style="font-size:1.1rem; font-weight:700; margin:0; color:var(--text-main);">
+                स्टेनो हस्तलिखित आउटलाइन्स (Official Shorthand Outlines)
+              </h3>
+              <p style="font-size:0.8rem; color:var(--text-muted); margin:3px 0 0 0;">
+                प्रशिक्षक द्वारा तैयार की गई स्टेनो आउटलाइन—चित्र पर क्लिक करके या बड़ा बटन दबाकर HD में देखें:
+              </p>
+            </div>
+          </div>
+          <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+            <button type="button" class="btn-sm btn-primary" onclick="stenoComparisonView.openStenoLightbox('${url}', 'image', '${this.escapeHtml(title)}')" style="font-size:0.82rem; padding:6px 12px; background:#4338ca; border-color:#4338ca;">
+              🔍 पूरी स्टेनो आउटलाइन बड़ी करके देखें (Zoom)
+            </button>
+            <a href="${url}" download="${filename}" class="btn-sm btn-secondary" style="font-size:0.82rem; padding:6px 12px; text-decoration:none; display:inline-flex; align-items:center;">
+              ⬇️ इमेज डाउनलोड
+            </a>
+          </div>
+        </div>
+
+        <div class="steno-preview-banner" onclick="stenoComparisonView.openStenoLightbox('${url}', 'image', '${this.escapeHtml(title)}')" title="बड़ा करके देखने के लिए क्लिक करें">
+          <img src="${url}" alt="Steno Outlines" style="max-height:220px; max-width:100%; object-fit:contain; border-radius:6px; box-shadow:0 2px 8px rgba(0,0,0,0.08);">
+          <div class="steno-preview-hover-hint">
+            <span>🔍 क्लिक करके पूरी स्क्रीन में HD ज़ूम करें</span>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  renderMasterPassageSection(report) {
+    const mangalText = (report.official_text || '').trim();
+    const krutiText = (report.official_text_krutidev || '').trim();
+    const studentText = (report.student_text || '').trim();
+    const activeText = mangalText || krutiText;
+
+    if (!activeText) return '';
+
+    const wordCount = activeText ? activeText.split(/\s+/).filter(Boolean).length : 0;
+    const charCount = activeText.length;
+    const hasDual = !!(mangalText && krutiText);
+
+    return `
+      <div class="result-master-passage-card">
+        <div class="result-master-header">
+          <div>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <span style="font-size:1.3rem;">📖</span>
+              <h3 style="font-size:1.12rem; font-weight:700; margin:0; color:var(--text-main);">
+                मास्टर संदर्भ आलेख (Official Uploaded Passage)
+              </h3>
+            </div>
+            <p style="font-size:0.8rem; color:var(--text-muted); margin:4px 0 0 0;">
+              परीक्षा आयोजक / एडमिन द्वारा अपलोड किया गया वास्तविक मानक पाठ
+            </p>
+          </div>
+
+          <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+            <span class="badge" style="background:#e0f2fe; color:#0284c7; font-weight:600; font-size:0.78rem;">
+              📝 ${wordCount} शब्द • ${charCount} वर्ण
+            </span>
+
+            ${hasDual ? `
+              <div class="result-font-toggle-group">
+                <button type="button" id="resFontMangalBtn" class="btn-sm active" onclick="stenoComparisonView.toggleResultPassageFont('mangal')" title="मंगल यूनिकोड में देखें">
+                  🅰️ मंगल
+                </button>
+                <button type="button" id="resFontKrutiBtn" class="btn-sm" onclick="stenoComparisonView.toggleResultPassageFont('kruti')" title="कृति देव 010 में देखें">
+                  ⌨️ कृति देव
+                </button>
+              </div>
+            ` : ''}
+
+            ${studentText ? `
+              <button type="button" id="btnToggleStudentCompare" class="btn-sm btn-secondary" onclick="stenoComparisonView.toggleStudentCompareBox()">
+                ⚖️ आपका टंकण देखें
+              </button>
+            ` : ''}
+
+            <button type="button" class="btn-sm btn-secondary" onclick="stenoComparisonView.copyMasterPassage()" title="आलेख कॉपी करें">
+              📋 कॉपी
+            </button>
+          </div>
+        </div>
+
+        <div class="result-master-passage-grid" id="resultMasterPassageGrid">
+          <!-- Official Reference Passage Box -->
+          <div class="result-passage-box-wrap" id="officialPassageWrap">
+            <div class="result-box-tag" style="color:#0284c7; background:#e0f2fe;">
+              ✓ आधिकारिक मूल पाठ (Official Reference Text)
+            </div>
+            <div class="result-passage-text-content font-mangal" id="masterOfficialTextDisplay">
+              ${this.escapeHtml(mangalText || krutiText)}
+            </div>
+          </div>
+
+          <!-- Student's Typed Passage Box (Collapsible/Toggleable) -->
+          ${studentText ? `
+            <div class="result-passage-box-wrap" id="studentPassageWrap" style="display:none;">
+              <div class="result-box-tag" style="color:#7c3aed; background:#f3e8ff;">
+                ⌨️ आपका टाइप किया हुआ पाठ (Your Raw Typing)
+              </div>
+              <div class="result-passage-text-content font-mangal" id="studentRawTextDisplay">
+                ${this.escapeHtml(studentText)}
+              </div>
+            </div>
+          ` : ''}
+        </div>
+      </div>
+    `;
+  }
+
+  toggleResultPassageFont(font) {
+    if (!this.currentReport) return;
+    const btnM = document.getElementById('resFontMangalBtn');
+    const btnK = document.getElementById('resFontKrutiBtn');
+    const display = document.getElementById('masterOfficialTextDisplay');
+    if (!display) return;
+
+    if (font === 'kruti') {
+      if (btnM) btnM.classList.remove('active');
+      if (btnK) btnK.classList.add('active');
+      const text = this.currentReport.official_text_krutidev || this.currentReport.official_text || '';
+      display.textContent = text;
+      display.classList.remove('font-mangal');
+      display.classList.add('font-krutidev');
+    } else {
+      if (btnK) btnK.classList.remove('active');
+      if (btnM) btnM.classList.add('active');
+      const text = this.currentReport.official_text || this.currentReport.official_text_krutidev || '';
+      display.textContent = text;
+      display.classList.remove('font-krutidev');
+      display.classList.add('font-mangal');
+    }
+  }
+
+  toggleStudentCompareBox() {
+    const wrap = document.getElementById('studentPassageWrap');
+    const grid = document.getElementById('resultMasterPassageGrid');
+    const btn = document.getElementById('btnToggleStudentCompare');
+    if (!wrap || !grid) return;
+
+    if (wrap.style.display === 'none' || wrap.style.display === '') {
+      wrap.style.display = 'block';
+      grid.style.gridTemplateColumns = 'repeat(auto-fit, minmax(320px, 1fr))';
+      if (btn) btn.innerHTML = '⚖️ केवल मूल आलेख देखें';
+    } else {
+      wrap.style.display = 'none';
+      grid.style.gridTemplateColumns = '1fr';
+      if (btn) btn.innerHTML = '⚖️ आपका टंकण देखें';
+    }
+  }
+
+  copyMasterPassage() {
+    const display = document.getElementById('masterOfficialTextDisplay');
+    if (!display) return;
+    const text = display.textContent;
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(text).then(() => {
+        stenoApp.showToast('मास्टर आलेख क्लिपबोर्ड में कॉपी हो गया! 📋', 'success');
+      }).catch(() => {
+        stenoApp.showToast('कॉपी करने में असमर्थ।', 'warning');
+      });
+    } else {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      stenoApp.showToast('मास्टर आलेख कॉपी हो गया! 📋', 'success');
+    }
+  }
+
+  openStenoLightbox(url, type, title) {
+    if (!url) return;
+    type = type || (url.toLowerCase().endsWith('.pdf') ? 'pdf' : 'image');
+    title = title || 'स्टेनो आउटलाइन व नोट्स';
+
+    const titleEl = document.getElementById('stenoLightboxTitle');
+    const dlBtn = document.getElementById('stenoLightboxDownloadBtn');
+    const contentEl = document.getElementById('stenoLightboxContent');
+    if (!contentEl) return;
+
+    if (titleEl) titleEl.textContent = `📝 ${title}`;
+    if (dlBtn) {
+      dlBtn.href = url;
+      dlBtn.download = url.split('/').pop() || 'steno_outline';
+      dlBtn.style.display = 'inline-flex';
+    }
+
+    if (type === 'pdf') {
+      contentEl.innerHTML = `
+        <iframe src="${url}" style="width:100%; height:75vh; border:none; border-radius:6px; background:#fff;" title="Steno PDF Document"></iframe>
+      `;
+    } else {
+      contentEl.innerHTML = `
+        <div style="max-height:75vh; width:100%; overflow:auto; display:flex; flex-direction:column; align-items:center; justify-content:center;">
+          <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:8px;">💡 चित्र पर क्लिक करके 1.75x ज़ूम करें या ज़ूम आउट करें</div>
+          <img src="${url}" style="max-width:100%; max-height:68vh; object-fit:contain; border-radius:6px; cursor:zoom-in; transition:transform 0.25s ease;"
+               onclick="this.style.transform = (this.style.transform === 'scale(1.75)' ? 'scale(1)' : 'scale(1.75)'); this.style.cursor = (this.style.transform === 'scale(1.75)' ? 'zoom-out' : 'zoom-in');"
+               alt="Steno Shorthand HD Outline">
+        </div>
+      `;
+    }
+
+    stenoApp.openModal('stenoAttachmentLightboxModal');
   }
 }
 

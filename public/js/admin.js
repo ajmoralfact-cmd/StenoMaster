@@ -250,8 +250,15 @@ class StenoAdmin {
       <tr>
         <td><strong>#${p.id}</strong></td>
         <td>
-          <div style="font-weight:600;">${p.title}</div>
-          <div style="font-size:0.78rem; color:var(--text-muted);">${p.category_name}</div>
+          <div style="font-weight:600;">${this.escapeHtml(p.title)}</div>
+          <div style="font-size:0.78rem; color:var(--text-muted); display:flex; align-items:center; gap:6px; margin-top:2px; flex-wrap:wrap;">
+            <span>${this.escapeHtml(p.category_name || '')}</span>
+            ${p.steno_notes_url ? `
+              <span class="badge" style="background:#e0e7ff; color:#4338ca; font-size:0.7rem; cursor:pointer; padding:2px 6px;" onclick="stenoComparisonView.openStenoLightbox('${p.steno_notes_url}', '${p.steno_notes_type || 'image'}', '${this.escapeHtml(p.title)}')" title="स्टेनो आउटलाइन पूर्वावलोकन">
+                📎 स्टेनो ${p.steno_notes_type === 'pdf' ? 'PDF' : 'आउटलाइन'}
+              </span>
+            ` : ''}
+          </div>
         </td>
         <td><span class="badge badge-${p.language}">${p.language}</span></td>
         <td><span class="badge badge-${p.difficulty}">${p.difficulty}</span></td>
@@ -372,6 +379,7 @@ class StenoAdmin {
     if (krutiInput) krutiInput.value = '';
     const mangalInput = document.getElementById('passageOfficialTextInput');
     if (mangalInput) mangalInput.value = '';
+    this.clearStenoNotesFile();
     this.setTypingSystem(sys);
     stenoApp.openModal('passageEditModal');
   }
@@ -396,6 +404,18 @@ class StenoAdmin {
     const krutiInput = document.getElementById('passageOfficialKrutiInput');
     if (krutiInput) krutiInput.value = p.official_text_krutidev || p.official_kruti_dev_text || '';
     document.getElementById('passageTagsInput').value = p.tags || '';
+
+    // Steno Notes / Outline attachment
+    if (p.steno_notes_url) {
+      const urlInput = document.getElementById('passageStenoNotesUrlInput');
+      if (urlInput) urlInput.value = p.steno_notes_url;
+      const type = p.steno_notes_type || (p.steno_notes_url.toLowerCase().endsWith('.pdf') ? 'pdf' : 'image');
+      const typeInput = document.getElementById('passageStenoNotesType');
+      if (typeInput) typeInput.value = type;
+      this.renderStenoNotesPreview(p.steno_notes_url, p.steno_notes_url.split('/').pop(), type);
+    } else {
+      this.clearStenoNotesFile();
+    }
 
     const pSys = p.typing_system || (p.official_text && p.official_text_krutidev ? 'dual' : (p.official_text_krutidev ? 'kruti_dev_010' : 'mangal_unicode'));
     this.setTypingSystem(pSys);
@@ -458,6 +478,11 @@ class StenoAdmin {
     let official_kruti = krutiInput ? krutiInput.value.trim() : '';
     let typing_system = document.getElementById('passageTypingSystem')?.value || this.currentTypingSystem || 'dual';
     const tags = document.getElementById('passageTagsInput')?.value.trim() || '';
+    const steno_notes_url = document.getElementById('passageStenoNotesUrlInput')?.value.trim() || '';
+    let steno_notes_type = document.getElementById('passageStenoNotesType')?.value || '';
+    if (steno_notes_url && !steno_notes_type) {
+      steno_notes_type = steno_notes_url.toLowerCase().endsWith('.pdf') ? 'pdf' : 'image';
+    }
 
     if (!title) {
       stenoApp.showToast('आलेख का शीर्षक आवश्यक है।', 'error');
@@ -525,6 +550,8 @@ class StenoAdmin {
       official_kruti_dev_text: official_kruti,
       official_text: official_mangal,
       official_text_krutidev: official_kruti,
+      steno_notes_url,
+      steno_notes_type,
       tags,
       status: 'published'
     };
@@ -588,6 +615,95 @@ class StenoAdmin {
       }
     };
     reader.readAsDataURL(file);
+  }
+
+  async handleStenoNotesFileUpload(fileInput) {
+    const file = fileInput.files[0];
+    if (!file) return;
+
+    const ext = file.name.split('.').pop().toLowerCase();
+    if (!['png', 'jpg', 'jpeg', 'webp', 'pdf'].includes(ext)) {
+      stenoApp.showToast('अनुमति प्राप्त फ़ाइलें: PNG, JPG, JPEG, WEBP, PDF', 'warning');
+      return;
+    }
+
+    stenoApp.showToast('स्टेनो फ़ाइल अपलोड हो रही है...', 'info');
+    const reader = new FileReader();
+    reader.onload = async () => {
+      try {
+        const base64Data = reader.result;
+        const res = await stenoApp.apiCall('/api/admin/steno-notes-upload', 'POST', {
+          filename: file.name,
+          data: base64Data
+        });
+        if (res && res.file_url) {
+          const urlInput = document.getElementById('passageStenoNotesUrlInput');
+          if (urlInput) urlInput.value = res.file_url;
+          const type = res.file_type || (ext === 'pdf' ? 'pdf' : 'image');
+          const typeInput = document.getElementById('passageStenoNotesType');
+          if (typeInput) typeInput.value = type;
+          this.renderStenoNotesPreview(res.file_url, res.filename || file.name, type);
+          stenoApp.showToast('स्टेनो आउटलाइन फ़ाइल सफलतापूर्वक अपलोड हुई! 📝', 'success');
+        }
+      } catch (err) {
+        stenoApp.showToast('स्टेनो फ़ाइल अपलोड विफल: ' + err.message, 'error');
+      }
+    };
+    reader.readAsDataURL(file);
+  }
+
+  updateStenoPreviewFromUrl(url) {
+    url = (url || '').trim();
+    if (!url) {
+      this.clearStenoNotesFile();
+      return;
+    }
+    const type = url.toLowerCase().endsWith('.pdf') ? 'pdf' : 'image';
+    const typeInput = document.getElementById('passageStenoNotesType');
+    if (typeInput) typeInput.value = type;
+    this.renderStenoNotesPreview(url, url.split('/').pop(), type);
+  }
+
+  renderStenoNotesPreview(url, name, type) {
+    const wrap = document.getElementById('stenoNotesPreviewWrap');
+    const thumb = document.getElementById('stenoNotesPreviewThumb');
+    const nameEl = document.getElementById('stenoNotesPreviewName');
+    const typeEl = document.getElementById('stenoNotesPreviewType');
+    if (!wrap) return;
+
+    wrap.style.display = 'flex';
+    if (nameEl) nameEl.textContent = name || url.split('/').pop() || 'steno_attachment';
+
+    if (type === 'pdf') {
+      if (thumb) thumb.innerHTML = '<span style="font-size:1.5rem;">📄</span>';
+      if (typeEl) typeEl.textContent = 'PDF दस्तावेज़ (Shorthand Notes)';
+    } else {
+      if (thumb) {
+        thumb.innerHTML = `<img src="${url}" style="width:100%; height:100%; object-fit:cover; border-radius:4px;" alt="preview" onerror="this.parentElement.innerHTML='🖼️'">`;
+      }
+      if (typeEl) typeEl.textContent = 'इमेज फ़ाइल (Shorthand Image)';
+    }
+  }
+
+  clearStenoNotesFile() {
+    const fileInput = document.getElementById('passageStenoNotesFileInput');
+    if (fileInput) fileInput.value = '';
+    const urlInput = document.getElementById('passageStenoNotesUrlInput');
+    if (urlInput) urlInput.value = '';
+    const typeInput = document.getElementById('passageStenoNotesType');
+    if (typeInput) typeInput.value = 'image';
+    const wrap = document.getElementById('stenoNotesPreviewWrap');
+    if (wrap) wrap.style.display = 'none';
+  }
+
+  previewStenoNotesFile() {
+    const url = document.getElementById('passageStenoNotesUrlInput')?.value.trim();
+    const type = document.getElementById('passageStenoNotesType')?.value || (url.toLowerCase().endsWith('.pdf') ? 'pdf' : 'image');
+    if (!url) {
+      stenoApp.showToast('कोई फ़ाइल अपलोड नहीं की गई है।', 'warning');
+      return;
+    }
+    stenoComparisonView.openStenoLightbox(url, type, 'स्टेनो आउटलाइन पूर्वावलोकन');
   }
 
   openBulkImportModal() {

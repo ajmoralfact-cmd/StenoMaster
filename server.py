@@ -209,7 +209,7 @@ class StenoMasterHandler(http.server.SimpleHTTPRequestHandler):
                 self._serve_audio_file(file_path)
                 return
             else:
-                self.send_error(404, "Audio file not found")
+                self.send_error(404, "File not found")
                 return
 
         # API Routes
@@ -899,6 +899,11 @@ class StenoMasterHandler(http.server.SimpleHTTPRequestHandler):
             eval_result["selected_typing_system"] = effective_typing_system
             eval_result["exam_rule"] = eval_result.get("exam_rule", requested_exam_rule)
             eval_result["difficulty"] = passage["difficulty"]
+            eval_result["official_text"] = passage.get("official_text", "")
+            eval_result["official_text_krutidev"] = passage.get("official_text_krutidev", "")
+            eval_result["student_text"] = raw_input
+            eval_result["steno_notes_url"] = passage.get("steno_notes_url", "")
+            eval_result["steno_notes_type"] = passage.get("steno_notes_type", "")
 
             self._send_json(200, eval_result)
             return
@@ -1036,6 +1041,10 @@ class StenoMasterHandler(http.server.SimpleHTTPRequestHandler):
                 self._handle_audio_upload()
                 return
 
+            if path == '/api/admin/steno-notes-upload':
+                self._handle_steno_notes_upload()
+                return
+
             # Phase 3: Admin Review Payment Requests
             if path == '/api/admin/payments/review':
                 data = self._read_json_body()
@@ -1151,6 +1160,41 @@ class StenoMasterHandler(http.server.SimpleHTTPRequestHandler):
         else:
             self._send_json(400, {"error": "Please provide audio payload in JSON base64 format"})
 
+    def _handle_steno_notes_upload(self):
+        content_type = self.headers.get('Content-Type', '')
+        if 'application/json' in content_type:
+            data = self._read_json_body()
+            import base64
+            orig_filename = data.get('filename', f"steno_{int(datetime.now().timestamp())}.png")
+            clean_name = os.path.basename(orig_filename).replace(' ', '_')
+            ext = os.path.splitext(clean_name)[1].lower()
+            if ext not in ('.png', '.jpg', '.jpeg', '.webp', '.pdf'):
+                self._send_json(400, {"error": "अनुमति प्राप्त फ़ाइल प्रकार: .png, .jpg, .jpeg, .webp, .pdf"})
+                return
+            b64_data = data.get('data', '')
+            if ',' in b64_data:
+                b64_data = b64_data.split(',')[1]
+            try:
+                raw_bytes = base64.b64decode(b64_data)
+            except Exception as e:
+                self._send_json(400, {"error": f"Base64 decode failed: {e}"})
+                return
+            timestamp_prefix = int(datetime.now().timestamp())
+            final_filename = f"steno_{timestamp_prefix}_{clean_name}"
+            save_path = os.path.join(UPLOADS_DIR, final_filename)
+            with open(save_path, 'wb') as f:
+                f.write(raw_bytes)
+            file_type = 'pdf' if ext == '.pdf' else 'image'
+            file_url = f"/uploads/{final_filename}"
+            self._send_json(200, {
+                "success": True,
+                "file_url": file_url,
+                "filename": final_filename,
+                "file_type": file_type
+            })
+        else:
+            self._send_json(400, {"error": "Please provide steno notes file in JSON base64 format"})
+
     def _handle_qr_upload(self):
         content_type = self.headers.get('Content-Type', '')
         if 'application/json' in content_type:
@@ -1185,7 +1229,17 @@ class StenoMasterHandler(http.server.SimpleHTTPRequestHandler):
         range_header = self.headers.get('Range', None)
         mime_type, _ = mimetypes.guess_type(file_path)
         if not mime_type:
-            mime_type = 'audio/mpeg'
+            fp_lower = file_path.lower()
+            if fp_lower.endswith('.pdf'):
+                mime_type = 'application/pdf'
+            elif fp_lower.endswith(('.jpg', '.jpeg')):
+                mime_type = 'image/jpeg'
+            elif fp_lower.endswith('.png'):
+                mime_type = 'image/png'
+            elif fp_lower.endswith('.webp'):
+                mime_type = 'image/webp'
+            else:
+                mime_type = 'audio/mpeg'
 
         if not range_header:
             self.send_response(200)

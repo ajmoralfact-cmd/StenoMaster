@@ -1625,6 +1625,17 @@ class StenoApp {
     const instrEl = document.getElementById('practiceInstructions');
     if (instrEl) instrEl.textContent = this.currentPassage.instructions || 'ऑडियो ध्यानपूर्वक सुनें और शुद्धता के साथ टाइप करें।';
 
+    // Show Steno Outline Button if notes are attached
+    const stenoBtn = document.getElementById('practiceStenoNotesBtn');
+    if (stenoBtn) {
+      if (this.currentPassage.steno_notes_url) {
+        stenoBtn.style.display = 'inline-flex';
+        stenoBtn.textContent = this.currentPassage.steno_notes_type === 'pdf' ? '📄 स्टेनो PDF देखें' : '📝 स्टेनो आउटलाइन देखें';
+      } else {
+        stenoBtn.style.display = 'none';
+      }
+    }
+
     // Reference text for audio player if synthesizing speech (never mix: use chosen reference text)
     const audioRefText = selectedSystem === 'kruti_dev_010'
       ? (this.currentPassage.official_kruti_dev_text || this.currentPassage.official_text_krutidev || this.currentPassage.official_text)
@@ -1647,6 +1658,19 @@ class StenoApp {
     this.setExamRule(this.currentExamRule || defaultRule, false);
 
     this.navigate('practice');
+  }
+
+  openCurrentPassageStenoNotes() {
+    if (!this.currentPassage || !this.currentPassage.steno_notes_url) {
+      this.showToast('इस आलेख के लिए स्टेनो आउटलाइन संलग्न नहीं है।', 'info');
+      return;
+    }
+    const type = this.currentPassage.steno_notes_type || (this.currentPassage.steno_notes_url.toLowerCase().endsWith('.pdf') ? 'pdf' : 'image');
+    stenoComparisonView.openStenoLightbox(
+      this.currentPassage.steno_notes_url,
+      type,
+      this.currentPassage.title || 'स्टेनो आउटलाइन व नोट्स'
+    );
   }
 
   async submitPractice() {

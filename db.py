@@ -209,6 +209,8 @@ def init_db():
         audio_url TEXT,
         audio_filename TEXT,
         thumbnail TEXT,
+        steno_notes_url TEXT,
+        steno_notes_type TEXT,
         tags TEXT,
         status TEXT NOT NULL DEFAULT 'published',
         view_count INTEGER DEFAULT 0,
@@ -486,6 +488,10 @@ def init_db():
         c.execute("ALTER TABLE passages ADD COLUMN official_text_krutidev TEXT")
     if 'typing_system' not in p_cols:
         c.execute("ALTER TABLE passages ADD COLUMN typing_system TEXT DEFAULT 'dual'")
+    if 'steno_notes_url' not in p_cols:
+        c.execute("ALTER TABLE passages ADD COLUMN steno_notes_url TEXT")
+    if 'steno_notes_type' not in p_cols:
+        c.execute("ALTER TABLE passages ADD COLUMN steno_notes_type TEXT")
 
     # Safe Canonical Typing System Backfill (Phase 6)
     c.execute("""
@@ -1248,7 +1254,8 @@ def get_passages(
 
     query = """
         SELECT p.id, p.title, p.category_id, p.language, p.difficulty, p.instructions,
-               p.target_wpm, p.duration_seconds, p.audio_url, p.thumbnail, p.tags, p.status, p.is_premium,
+               p.target_wpm, p.duration_seconds, p.audio_url, p.steno_notes_url, p.steno_notes_type,
+               p.thumbnail, p.tags, p.status, p.is_premium,
                p.typing_system,
                p.view_count, p.attempt_count, p.created_at,
                c.name as category_name, c.slug as category_slug
@@ -1329,7 +1336,8 @@ def get_passage_detail(passage_id: int, user_id: Optional[int] = None, include_o
 
     query = """
         SELECT p.id, p.title, p.category_id, p.language, p.difficulty, p.instructions,
-               p.target_wpm, p.duration_seconds, p.audio_url, p.thumbnail, p.tags, p.status, p.is_premium,
+               p.target_wpm, p.duration_seconds, p.audio_url, p.steno_notes_url, p.steno_notes_type,
+               p.thumbnail, p.tags, p.status, p.is_premium,
                p.typing_system,
                p.view_count, p.attempt_count, p.created_at,
                c.name as category_name, c.slug as category_slug
@@ -1583,6 +1591,7 @@ def get_attempt_detail(attempt_id: int, user_id: Optional[int] = None) -> Option
     c = conn.cursor()
     query = """
         SELECT pa.*, p.title as passage_title, p.language, p.difficulty, p.target_wpm,
+               p.official_text, p.official_text_krutidev, p.steno_notes_url, p.steno_notes_type,
                c.name as category_name
         FROM practice_attempts pa
         JOIN passages p ON pa.passage_id = p.id
@@ -1605,6 +1614,18 @@ def get_attempt_detail(attempt_id: int, user_id: Optional[int] = None) -> Option
         res["report"] = json.loads(res["report_json"])
     except Exception:
         res["report"] = {}
+
+    if isinstance(res.get("report"), dict):
+        if "official_text" not in res["report"]:
+            res["report"]["official_text"] = res.get("official_text")
+        if "official_text_krutidev" not in res["report"]:
+            res["report"]["official_text_krutidev"] = res.get("official_text_krutidev")
+        if "steno_notes_url" not in res["report"]:
+            res["report"]["steno_notes_url"] = res.get("steno_notes_url")
+        if "steno_notes_type" not in res["report"]:
+            res["report"]["steno_notes_type"] = res.get("steno_notes_type")
+        if "student_text" not in res["report"]:
+            res["report"]["student_text"] = res.get("raw_input")
     return res
 
 
@@ -1946,19 +1967,29 @@ def admin_save_passage(data: Dict[str, Any]) -> int:
                     raise ValueError("कृति देव 010 संदर्भ पाठ आवश्यक है। (Official Kruti Dev text is required)")
             official_mangal = official_mangal or ""
 
+        steno_notes_url = (data.get("steno_notes_url") or "").strip()
+        steno_notes_type = (data.get("steno_notes_type") or "").strip().lower()
+        if steno_notes_url and not steno_notes_type:
+            if steno_notes_url.lower().endswith('.pdf'):
+                steno_notes_type = 'pdf'
+            else:
+                steno_notes_type = 'image'
+
         if p_id:
             c.execute("""
                 UPDATE passages
                 SET title = ?, category_id = ?, language = ?, difficulty = ?,
                     official_text = ?, official_text_krutidev = ?, typing_system = ?,
                     instructions = ?, target_wpm = ?, duration_seconds = ?,
-                    audio_url = ?, tags = ?, status = ?, updated_at = ?
+                    audio_url = ?, steno_notes_url = ?, steno_notes_type = ?,
+                    tags = ?, status = ?, updated_at = ?
                 WHERE id = ?
             """, (
                 title, data.get("category_id", 1), data.get("language", "hindi"), data.get("difficulty", "medium"),
                 official_mangal, official_kruti, typing_system,
                 data.get("instructions", ""), data.get("target_wpm", 40),
-                data.get("duration_seconds", 180), data.get("audio_url", ""), data.get("tags", ""),
+                data.get("duration_seconds", 180), data.get("audio_url", ""),
+                steno_notes_url, steno_notes_type, data.get("tags", ""),
                 data.get("status", "published"), now_iso, p_id
             ))
             passage_id = p_id
@@ -1966,13 +1997,15 @@ def admin_save_passage(data: Dict[str, Any]) -> int:
             c.execute("""
                 INSERT INTO passages (
                     title, category_id, language, difficulty, official_text, official_text_krutidev,
-                    typing_system, instructions, target_wpm, duration_seconds, audio_url, tags, status, created_at, updated_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    typing_system, instructions, target_wpm, duration_seconds, audio_url,
+                    steno_notes_url, steno_notes_type, tags, status, created_at, updated_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """, (
                 title, data.get("category_id", 1), data.get("language", "hindi"), data.get("difficulty", "medium"),
                 official_mangal, official_kruti, typing_system,
                 data.get("instructions", ""), data.get("target_wpm", 40),
-                data.get("duration_seconds", 180), data.get("audio_url", ""), data.get("tags", ""),
+                data.get("duration_seconds", 180), data.get("audio_url", ""),
+                steno_notes_url, steno_notes_type, data.get("tags", ""),
                 data.get("status", "published"), now_iso, now_iso
             ))
             passage_id = c.lastrowid
