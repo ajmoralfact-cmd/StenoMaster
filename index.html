@@ -9,7 +9,7 @@
   <meta name="theme-color" content="#2563eb">
   <link rel="icon" type="image/png" href="/assets/logo.png">
   <link rel="apple-touch-icon" href="/assets/logo.png">
-  <link rel="stylesheet" href="/css/style.css?v=4.0">
+  <link rel="stylesheet" href="/css/style.css?v=4.2">
 </head>
 <body>
 
@@ -529,6 +529,19 @@
           <!-- Typing Editor Card -->
           <div class="typing-editor-card">
             <div class="editor-toolbar">
+              <!-- Exam Evaluation Rule Selector (SSC vs UPSSSC) -->
+              <div class="exam-rule-group" style="display:flex; align-items:center; gap:8px; background:var(--bg-subtle); padding:4px 10px; border-radius:var(--radius-md); border:1px solid var(--border-subtle);">
+                <label class="mode-label" style="margin:0; font-weight:700; font-size:0.82rem;">🎯 परीक्षा नियम:</label>
+                <div style="display:flex; gap:4px;">
+                  <button type="button" id="examRuleSscBtn" class="btn-sm" onclick="stenoApp.setExamRule('ssc_steno')" style="font-size:0.75rem; padding:4px 10px; font-weight:700; border-radius:6px; background:#0284c7; color:#fff; border:1px solid #0284c7; cursor:pointer;">
+                    🎯 SSC Steno (5%/7%)
+                  </button>
+                  <button type="button" id="examRuleUpssscBtn" class="btn-sm" onclick="stenoApp.setExamRule('upsssc')" style="font-size:0.75rem; padding:4px 10px; font-weight:700; border-radius:6px; background:transparent; color:var(--text-secondary); border:1px solid var(--border); cursor:pointer;">
+                    🏛️ UPSSSC (25 WPM + 5%)
+                  </button>
+                </div>
+              </div>
+
               <!-- Typing Mode Selector -->
               <div class="typing-mode-group">
                 <label class="mode-label" for="typingModeSelect">Typing Mode:</label>
@@ -551,7 +564,7 @@
                 <button type="button" id="toggleBackspaceBtn" class="btn-secondary" onclick="stenoTypingEngine.toggleBackspaceLock()" style="padding:5px 10px; font-size:0.78rem;">
                   🔓 Backspace: ON
                 </button>
-                <button type="button" class="btn-secondary" onclick="document.getElementById('altCodesModal').style.display='flex'" style="padding:5px 10px; font-size:0.78rem;" title="कृति देव स्पेशल कोड्स देखें">
+                <button type="button" class="btn-secondary" onclick="stenoApp.openModal('altCodesModal')" style="padding:5px 10px; font-size:0.78rem;" title="कृति देव स्पेशल कोड्स देखें">
                   ⌨️ Alt Codes
                 </button>
               </div>
@@ -907,154 +920,257 @@
            VIEW: SUBSCRIPTION (PRO MEMBERSHIP & PAYMENTS)
            =================================================================== -->
       <main class="page-view" id="view-subscription">
-        <div class="section-header">
-          <div>
-            <h2 class="section-title">सदस्यता एवं प्रो प्लान (Subscription & Pro Access)</h2>
-            <p class="section-subtitle">प्रीमियम विधिक डिक्टेशन, असीमित अभ्यास और विशेष मॉक टेस्ट अनलॉक करें</p>
-          </div>
-          <div id="subCurrentStatusBadgeWrap">
-            <!-- Populated dynamically -->
-          </div>
-        </div>
+        <div class="clean-sub-container">
 
-        <div class="subscription-grid-layout" style="display:grid; grid-template-columns: 1fr 1fr; gap:24px; margin-bottom:28px;">
-          <!-- Plan Details & Features Card -->
-          <div class="stat-card plan-showcase-card" style="padding:26px; border:2px solid var(--primary); position:relative; overflow:hidden;">
-            <div style="position:absolute; top:0; right:0; background:linear-gradient(135deg, #10b981, #059669); color:#fff; font-size:0.72rem; font-weight:800; padding:6px 16px; border-bottom-left-radius:12px; letter-spacing:0.04em;">
-              ⚡ तुरंत सक्रियण (INSTANT UNLOCK)
+          <!-- Header with Title & Live Status -->
+          <div class="section-header" style="margin-bottom:20px;">
+            <div>
+              <h2 class="section-title">👑 StenoMaster Pro सदस्यता</h2>
+              <p class="section-subtitle">अपनी परीक्षा (SSC, UPSSSC, High Court) अनुसार प्लान चुनें और सभी 100+ डिक्टेशन तुरंत अनलॉक करें</p>
             </div>
+            <div id="subCurrentStatusBadgeWrap">
+              <!-- Populated dynamically -->
+            </div>
+          </div>
 
-            <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-top:6px;">
+          <!-- Expiring Soon Warning Banner -->
+          <div id="subExpiringSoonBanner" class="expiring-soon-banner" style="display:none;">
+            <div style="display:flex; align-items:center; gap:12px;">
+              <span style="font-size:1.6rem;">⚠️</span>
               <div>
-                <span class="badge badge-primary" style="font-size:0.75rem; text-transform:uppercase; letter-spacing:0.05em;">सर्वश्रेष्ठ स्टेनो प्लान (Best Choice)</span>
-                <h3 style="font-size:1.45rem; font-weight:800; margin-top:8px;" id="subPlanTitleDisplay">StenoMaster Pro — 1 Month</h3>
+                <div style="font-weight:800; font-size:0.92rem; color:#b45309;" id="subExpiryAlertTitle">आपकी प्रो सदस्यता जल्द समाप्त होने वाली है!</div>
+                <div style="font-size:0.8rem; color:var(--text-secondary);" id="subExpiryAlertSubtitle">बिना रुकावट डिक्टेशन अभ्यास जारी रखने के लिए अभी अपना पसंदीदा प्लान चुनें।</div>
+              </div>
+            </div>
+            <button class="btn-primary" style="background:#d97706; border-color:#d97706; padding:8px 16px; font-size:0.84rem;" onclick="document.getElementById('subPlansGrid').scrollIntoView({behavior:'smooth'})">
+              अभी रिन्यू करें ⚡
+            </button>
+          </div>
+
+          <!-- 4-Tier Subscription Plans Selector Grid -->
+          <div style="margin-bottom:14px;">
+            <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px;">
+              <h3 style="font-size:1.12rem; font-weight:800; margin:0;">✨ 1. प्लान चुनें (Select Plan)</h3>
+              <span style="font-size:0.8rem; color:var(--primary); font-weight:600;">🎁 पहली 2 कक्षाएं प्रत्येक छात्र के लिए 100% फ्री हैं</span>
+            </div>
+          </div>
+          <div id="subPlansGrid" class="subscription-plans-grid">
+            <!-- Populated dynamically via stenoApp.renderSubscriptionPlans() -->
+          </div>
+
+          <!-- Unified Clean Checkout Card -->
+          <div class="clean-checkout-card">
+            <div class="clean-checkout-header">
+              <div>
+                <span class="badge badge-primary" id="subSelectedPlanBadge" style="font-size:0.75rem; text-transform:uppercase; letter-spacing:0.04em;">चयनित प्लान (Selected Plan)</span>
+                <h3 style="font-size:1.4rem; font-weight:800; margin-top:6px; margin-bottom:0;" id="subPlanTitleDisplay">StenoMaster Pro — 1 Month</h3>
               </div>
               <div style="text-align:right;">
-                <div style="font-size:2.2rem; font-weight:900; color:var(--primary);" id="subPlanPriceDisplay">₹100</div>
-                <span style="font-size:0.78rem; color:var(--text-muted); font-weight:600;">/ 30 दिन (30 Days)</span>
+                <div style="font-size:2.2rem; font-weight:900; color:var(--primary); line-height:1;" id="subPlanPriceDisplay">₹100</div>
+                <span style="font-size:0.8rem; color:var(--text-muted); font-weight:600;" id="subPlanDaysDisplay">/ 30 दिन (30 Days)</span>
               </div>
             </div>
 
-            <hr style="border:none; border-top:1px solid var(--border-subtle); margin:18px 0;">
-
-            <ul style="list-style:none; padding:0; margin:0 0 20px 0; display:flex; flex-direction:column; gap:11px; font-size:0.92rem;">
-              <li style="display:flex; align-items:center; gap:10px;">✅ <span><strong>सभी लॉक कक्षाएं एवं आलेख अनलॉक</strong> (2 फ्री + सभी प्रीमियम)</span></li>
-              <li style="display:flex; align-items:center; gap:10px;">✅ <span><strong>उच्च न्यायालय, SSC व UPSSSC</strong> विशेष विधिक डिक्टेशन</span></li>
-              <li style="display:flex; align-items:center; gap:10px;">✅ <span><strong>मंगल एवं कृति देव 010</strong> दोनों फ़ॉन्ट्स में सटीक मूल्यांकन</span></li>
-              <li style="display:flex; align-items:center; gap:10px;">✅ <span><strong>असीमित ऑडियो प्लेबैक</strong> (0.5x से 2.0x गति नियंत्रण)</span></li>
-              <li style="display:flex; align-items:center; gap:10px;">✅ <span><strong>विस्तृत परीक्षा रिपोर्ट कार्ड</strong> एवं त्रुटि विश्लेषण</span></li>
-            </ul>
-
-            <!-- Free Trial Info Pill -->
-            <div style="background:rgba(16, 185, 129, 0.08); border-left:4px solid #10b981; padding:12px 14px; border-radius:8px; font-size:0.84rem; color:var(--text-secondary); line-height:1.5; margin-bottom:18px;">
-              🎁 <strong>निःशुल्क ट्रायल:</strong> प्रत्येक छात्र को <strong>पहली 2 कक्षाएं पूर्णतः फ्री</strong> दी गई हैं। बाकी सभी डिक्टेशन अभ्यास करने के लिए यह ₹100 का मासिक प्लान लें।
+            <!-- Key Features Grid (Crisp & Clean) -->
+            <div class="clean-checkout-features">
+              <div class="clean-feature-item">
+                <span>⚡</span> <span><strong>सभी लॉक डिक्टेशन अनलॉक</strong> (100+ विधिक व परीक्षा आलेख)</span>
+              </div>
+              <div class="clean-feature-item">
+                <span>🎯</span> <span><strong>SSC व UPSSSC परीक्षा नियम</strong> अनुसार सटीक मूल्यांकन</span>
+              </div>
+              <div class="clean-feature-item">
+                <span>🎧</span> <span><strong>मंगल व कृति देव 010</strong> दोनों में ऑडियो (0.5x – 2.0x) गति</span>
+              </div>
+              <div class="clean-feature-item">
+                <span>🔒</span> <span><strong>सुरक्षित ऑनलाइन पेमेंट</strong> (Cashfree द्वारा स्वतः तत्काल सक्रियण)</span>
+              </div>
             </div>
 
-            <!-- Online Cashfree Checkout Trigger Button -->
-            <button type="button" class="btn-primary" id="btnCashfreeCheckout" onclick="stenoApp.initiateCashfreePayment()"
-                    style="width:100%; padding:14px; font-size:1.08rem; font-weight:800; border-radius:12px; display:flex; align-items:center; justify-content:center; gap:10px; box-shadow:0 8px 24px rgba(37, 99, 235, 0.35);">
-              <span>⚡ ₹100 का भुगतान करें (Pay ₹100 via Cashfree)</span>
-              <span>→</span>
-            </button>
-            <div style="display:flex; justify-content:center; align-items:center; gap:14px; margin-top:10px; font-size:0.75rem; color:var(--text-muted);">
-              <span>🔒 100% सुरक्षित भुगतान</span>
+            <!-- Primary Payment Button -->
+            <div class="clean-checkout-cta">
+              <button type="button" class="clean-pay-btn" id="btnCashfreeCheckout" onclick="stenoApp.initiateCashfreePayment()">
+                <span id="btnCashfreeText">⚡ ₹100 का सुरक्षित भुगतान करें (Pay ₹100 via Cashfree)</span>
+                <span>→</span>
+              </button>
+              <div class="clean-pay-subtitle">
+                🔒 <strong>100% सुरक्षित भुगतान:</strong> Google Pay, PhonePe, Paytm, BHIM UPI, डेबिट/क्रेडिट कार्ड एवं नेट बैंकिंग
+              </div>
+            </div>
+
+            <!-- Quick Policy Links -->
+            <div style="margin-top:20px; padding-top:14px; border-top:1px dashed var(--border-subtle); display:flex; justify-content:center; flex-wrap:wrap; gap:16px; font-size:0.8rem;">
+              <a href="javascript:void(0)" onclick="stenoApp.togglePolicyAccordion('subPolicyRefund')" style="color:var(--text-secondary); text-decoration:underline; font-weight:700;">🔄 7-दिवसीय 100% रिफंड गारंटी</a>
               <span>•</span>
-              <span>UPI / GPay / PhonePe / Paytm / Cards</span>
+              <a href="javascript:void(0)" onclick="stenoApp.togglePolicyAccordion('subPolicyTerms')" style="color:var(--text-secondary); text-decoration:underline;">📜 नियम एवं शर्तें</a>
+              <span>•</span>
+              <a href="javascript:void(0)" onclick="stenoApp.togglePolicyAccordion('subPolicyPrivacy')" style="color:var(--text-secondary); text-decoration:underline;">🔒 गोपनीयता नीति</a>
+              <span>•</span>
+              <a href="javascript:void(0)" onclick="stenoApp.togglePolicyAccordion('subPolicyContact')" style="color:var(--text-secondary); text-decoration:underline;">📞 24/7 छात्र सहायता</a>
             </div>
           </div>
 
-          <!-- Cashfree Gateways & Instant Online Options Card -->
-          <div class="stat-card" style="padding:26px; display:flex; flex-direction:column; justify-content:space-between;">
-            <div>
-              <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:14px;">
-                <h3 style="font-size:1.2rem; font-weight:800; color:var(--text-primary); margin:0;">💳 सुरक्षित ऑनलाइन भुगतान (Cashfree PG)</h3>
-                <span class="badge badge-success" style="font-size:0.75rem;">सक्रिय (LIVE)</span>
+          <!-- Dedicated Inline Policies Section inside Subscription View ("subscribe button ke andr dalo ye sb") -->
+          <div class="sub-policies-section">
+            <div class="sub-policies-header">
+              <div>
+                <h4 style="font-size:1.05rem; font-weight:800; margin:0; color:var(--text-main);">📜 StenoMaster छात्र नीतियां एवं गारंटी (Policies & Student Protection)</h4>
+                <p style="font-size:0.8rem; color:var(--text-muted); margin:4px 0 0 0;">पूर्ण पारदर्शिता के साथ अभ्यास करें — किसी भी नीति पर क्लिक करके विस्तार से पढ़ें:</p>
               </div>
-              <p style="font-size:0.86rem; color:var(--text-secondary); line-height:1.5; margin-bottom:20px;">
-                Cashfree के माध्यम से किसी भी UPI ऐप (GPay, PhonePe, Paytm), डेबिट/क्रेडिट कार्ड या नेट बैंकिंग से भुगतान करें। भुगतान पूरा होते ही आपकी प्रो सदस्यता <strong>तुरंत 30 दिनों के लिए अनलॉक</strong> हो जाएगी।
-              </p>
+              <span class="secure-pay-pill" style="font-size:0.72rem;">RBI Compliant</span>
+            </div>
 
-              <!-- Supported Badges Grid -->
-              <div style="display:grid; grid-template-columns: repeat(2, 1fr); gap:12px; margin-bottom:24px;">
-                <div style="background:var(--bg-card-hover); padding:12px; border-radius:10px; border:1px solid var(--border-subtle); display:flex; align-items:center; gap:10px;">
-                  <span style="font-size:1.4rem;">📱</span>
-                  <div>
-                    <div style="font-weight:700; font-size:0.86rem;">UPI Apps</div>
-                    <div style="font-size:0.72rem; color:var(--text-muted);">GPay, PhonePe, Paytm, BHIM</div>
-                  </div>
-                </div>
-                <div style="background:var(--bg-card-hover); padding:12px; border-radius:10px; border:1px solid var(--border-subtle); display:flex; align-items:center; gap:10px;">
-                  <span style="font-size:1.4rem;">💳</span>
-                  <div>
-                    <div style="font-weight:700; font-size:0.86rem;">Cards</div>
-                    <div style="font-size:0.72rem; color:var(--text-muted);">Visa, Mastercard, RuPay</div>
-                  </div>
-                </div>
-                <div style="background:var(--bg-card-hover); padding:12px; border-radius:10px; border:1px solid var(--border-subtle); display:flex; align-items:center; gap:10px;">
-                  <span style="font-size:1.4rem;">🏦</span>
-                  <div>
-                    <div style="font-weight:700; font-size:0.86rem;">NetBanking</div>
-                    <div style="font-size:0.72rem; color:var(--text-muted);">SBI, HDFC, ICICI & 50+ Banks</div>
-                  </div>
-                </div>
-                <div style="background:var(--bg-card-hover); padding:12px; border-radius:10px; border:1px solid var(--border-subtle); display:flex; align-items:center; gap:10px;">
-                  <span style="font-size:1.4rem;">⚡</span>
-                  <div>
-                    <div style="font-weight:700; font-size:0.86rem;">Instant Activation</div>
-                    <div style="font-size:0.72rem; color:var(--text-muted);">स्वतः 30 दिन चालू</div>
-                  </div>
+            <!-- 1. Refund Policy Accordion -->
+            <div class="sub-policy-accordion">
+              <div class="sub-policy-summary" onclick="stenoApp.togglePolicyAccordion('subPolicyRefund')">
+                <span style="display:flex; align-items:center; gap:8px;">
+                  <span>🔄</span> <strong>रिफंड एवं रद्दीकरण नीति (7-Day Refund Policy)</strong>
+                  <span class="badge badge-success" style="font-size:0.65rem; padding:2px 6px;">100% सुरक्षित</span>
+                </span>
+                <span id="subPolicyRefund-icon">▼</span>
+              </div>
+              <div class="sub-policy-content" id="subPolicyRefund" style="display:none;">
+                <p><strong>1. 2 फ्री कक्षाओं का निःशुल्क ट्रायल:</strong> प्रत्येक छात्र बिना किसी भुगतान के पहली 2 डिक्टेशन कक्षाएं पूर्णतः फ्री अभ्यास कर सकते हैं। ऑडियो और मूल्यांकन संतुष्टि के बाद ही प्रो प्लान खरीदें।</p>
+                <p><strong>2. 7-दिवसीय मनी-बैक गारंटी:</strong> यदि सदस्यता के 7 दिनों के भीतर कोई वास्तविक तकनीकी समस्या (जैसे प्रो कक्षाएं अनलॉक न होना या दोहरा भुगतान कटना) आती है और हमारी तकनीकी टीम 48 घंटे में समाधान नहीं कर पाती, तो 100% रिफंड दिया जाएगा।</p>
+                <p><strong>3. रिफंड क्लेम एवं निपटान:</strong> रिफंड हेतु <a href="mailto:support@stenomaster.com" style="color:var(--primary); font-weight:700;">support@stenomaster.com</a> पर Student Code व Cashfree Order ID भेजें। स्वीकृत राशि <strong>5 से 7 कार्यदिवस (Working Days)</strong> में सीधे आपके मूल बैंक/UPI खाते में वापस जमा हो जाएगी।</p>
+                <div style="margin-top:10px;">
+                  <button type="button" class="btn-secondary" style="font-size:0.78rem; padding:5px 12px;" onclick="stenoApp.openModal('refundModal')">पॉपअप मोडल में पूरा कानूनी विवरण देखें ↗</button>
                 </div>
               </div>
             </div>
 
-            <!-- Manual QR Alternate Accordion (Optional Fallback) -->
-            <details style="background:var(--bg-subtle); border:1px dashed var(--border-subtle); border-radius:10px; padding:12px 16px;">
-              <summary style="font-size:0.84rem; font-weight:700; cursor:pointer; color:var(--text-secondary);">
-                📲 अथवा QR कोड स्कैन कर UTR से भुगतान करें (Manual Option)
+            <!-- 2. Terms & Conditions Accordion -->
+            <div class="sub-policy-accordion">
+              <div class="sub-policy-summary" onclick="stenoApp.togglePolicyAccordion('subPolicyTerms')">
+                <span style="display:flex; align-items:center; gap:8px;">
+                  <span>⚖️</span> <strong>नियम एवं शर्तें (Terms & Conditions)</strong>
+                </span>
+                <span id="subPolicyTerms-icon">▼</span>
+              </div>
+              <div class="sub-policy-content" id="subPolicyTerms" style="display:none;">
+                <p><strong>1. सेवा का स्वरूप:</strong> StenoMaster एक निजी ऑनलाइन शैक्षणिक व आशुलिपि कौशल मूल्यांकन प्लेटफ़ॉर्म है।</p>
+                <p><strong>2. एकल डिवाइस नियम (Single-Device Access):</strong> एक समय में केवल एक ही कंप्यूटर या मोबाइल पर लॉगिन की अनुमति है। खाता विवरण किसी अन्य से साझा करना प्रतिबंधित है।</p>
+                <p><strong>3. तुरंत डिजिटल एक्सेस:</strong> Cashfree भुगतान की पुष्टि होते ही प्रो सदस्यता तुरंत अनलॉक कर दी जाती है।</p>
+                <p><strong>4. गैर-सरकारी अस्वीकरण:</strong> StenoMaster एक स्वतंत्र एड-टेक प्लेटफ़ॉर्म है और किसी सरकारी संस्था से संबद्ध नहीं है। अभ्यास परीक्षा प्रारूप छात्रों की तैयारी हेतु है।</p>
+                <div style="margin-top:10px;">
+                  <button type="button" class="btn-secondary" style="font-size:0.78rem; padding:5px 12px;" onclick="stenoApp.openModal('termsModal')">पॉपअप मोडल में पूरा कानूनी विवरण देखें ↗</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- 3. Privacy Policy Accordion -->
+            <div class="sub-policy-accordion">
+              <div class="sub-policy-summary" onclick="stenoApp.togglePolicyAccordion('subPolicyPrivacy')">
+                <span style="display:flex; align-items:center; gap:8px;">
+                  <span>🔒</span> <strong>गोपनीयता नीति (Privacy Policy)</strong>
+                  <span class="badge badge-primary" style="font-size:0.65rem; padding:2px 6px;">Zero Card Storage</span>
+                </span>
+                <span id="subPolicyPrivacy-icon">▼</span>
+              </div>
+              <div class="sub-policy-content" id="subPolicyPrivacy" style="display:none;">
+                <p><strong>1. शून्य कार्ड भंडारण (Zero Card Storage):</strong> StenoMaster आपके क्रेडिट/डेबिट कार्ड नंबर, CVV अथवा UPI पिन को कभी भी अपने सर्वर पर स्टोर नहीं करता। सभी ऑनलाइन लेन-देन Cashfree के 256-bit SSL एन्क्रिप्टेड गेटवे से सुरक्षित होते हैं।</p>
+                <p><strong>2. न्यूनतम डेटा:</strong> केवल आपका नाम, ईमेल, मोबाइल नंबर और अभ्यास रिपोर्ट सुरक्षित रखी जाती है।</p>
+                <p><strong>3. गैर-साझाकरण गारंटी:</strong> हम आपका व्यक्तिगत डेटा किसी भी तीसरे पक्ष या विज्ञापनदाताओं को कभी नहीं बेचते।</p>
+                <div style="margin-top:10px;">
+                  <button type="button" class="btn-secondary" style="font-size:0.78rem; padding:5px 12px;" onclick="stenoApp.openModal('privacyModal')">पॉपअप मोडल में पूरा कानूनी विवरण देखें ↗</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- 4. Contact Us Accordion -->
+            <div class="sub-policy-accordion">
+              <div class="sub-policy-summary" onclick="stenoApp.togglePolicyAccordion('subPolicyContact')">
+                <span style="display:flex; align-items:center; gap:8px;">
+                  <span>📞</span> <strong>संपर्क एवं छात्र सहायता केंद्र (Contact Us)</strong>
+                </span>
+                <span id="subPolicyContact-icon">▼</span>
+              </div>
+              <div class="sub-policy-content" id="subPolicyContact" style="display:none;">
+                <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:12px; margin-bottom:12px;">
+                  <div style="background:var(--bg-subtle); padding:10px; border-radius:8px; border:1px solid var(--border-subtle);">
+                    <div style="font-size:0.75rem; color:var(--text-muted); font-weight:700;">ईमेल सहायता</div>
+                    <div style="font-size:0.88rem; font-weight:700; color:var(--primary); margin-top:2px;">
+                      <a href="mailto:support@stenomaster.com" style="color:var(--primary);">support@stenomaster.com</a>
+                    </div>
+                  </div>
+                  <div style="background:var(--bg-subtle); padding:10px; border-radius:8px; border:1px solid var(--border-subtle);">
+                    <div style="font-size:0.75rem; color:var(--text-muted); font-weight:700;">हेल्पलाइन / WhatsApp</div>
+                    <div style="font-size:0.88rem; font-weight:700; color:var(--text-main); margin-top:2px;">+91 98765 43210</div>
+                  </div>
+                  <div style="background:var(--bg-subtle); padding:10px; border-radius:8px; border:1px solid var(--border-subtle);">
+                    <div style="font-size:0.75rem; color:var(--text-muted); font-weight:700;">समय</div>
+                    <div style="font-size:0.88rem; font-weight:700; color:var(--text-main); margin-top:2px;">सोम-शनि (10 AM – 6 PM)</div>
+                  </div>
+                </div>
+                <div>
+                  <button type="button" class="btn-secondary" style="font-size:0.78rem; padding:5px 12px;" onclick="stenoApp.openModal('contactModal')">सीधे संदेश भेजें (Quick Query Desk) ↗</button>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Discreet Collapsible Drawers at bottom for legacy / history (Zero Clutter!) -->
+          <div style="display:flex; flex-direction:column; gap:12px; margin-top:20px;">
+            <!-- Payment History Details (Collapsed) -->
+            <details style="background:var(--bg-surface); border:1px solid var(--border-subtle); border-radius:10px; padding:12px 16px;">
+              <summary style="font-size:0.84rem; font-weight:700; color:var(--text-secondary); cursor:pointer;">
+                📜 मेरा पिछला भुगतान इतिहास (Payment Submissions & History)
               </summary>
-              <div style="margin-top:14px;">
-                <div style="display:flex; gap:14px; align-items:center; margin-bottom:14px;">
-                  <img src="/assets/qr_payment.png" id="subActiveQrImg" alt="UPI QR" style="width:90px; height:90px; object-fit:contain; background:#fff; padding:4px; border-radius:8px; border:1px solid var(--border-subtle);">
-                  <div style="font-size:0.8rem; color:var(--text-secondary); line-height:1.4;">
-                    QR कोड स्कैन कर ₹100 भेजें और 12-अंकीय UTR आईडी दर्ज करें:
+              <div style="margin-top:14px;" class="table-responsive">
+                <table class="data-table" id="studentPaymentsTable">
+                  <thead>
+                    <tr>
+                      <th>अनुरोध ID</th>
+                      <th>प्लान</th>
+                      <th>राशि</th>
+                      <th>Transaction ID (UTR)</th>
+                      <th>स्थिति (Status)</th>
+                      <th>दिनांक</th>
+                      <th>टिप्पणी (Admin Remarks)</th>
+                    </tr>
+                  </thead>
+                  <tbody id="studentPaymentsTableBody">
+                    <tr><td colspan="7" style="text-align:center; color:var(--text-muted);">कोई पूर्व भुगतान अनुरोध नहीं मिला।</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </details>
+
+            <!-- Manual UPI UTR Fallback (Collapsed) -->
+            <details style="background:var(--bg-surface); border:1px solid var(--border-subtle); border-radius:10px; padding:12px 16px;" id="qrAccordionSection">
+              <summary style="font-size:0.84rem; font-weight:700; color:var(--text-muted); cursor:pointer;">
+                ⚙️ वैकल्पिक: मैन्युअल UPI UTR सबमिट करें (Manual Fallback)
+              </summary>
+              <div style="margin-top:14px; padding-top:12px; border-top:1px solid var(--border-subtle);">
+                <div style="display:flex; gap:14px; align-items:center; margin-bottom:14px; flex-wrap:wrap;">
+                  <img src="/assets/qr_payment.png" id="subActiveQrImg" alt="UPI QR" style="width:85px; height:85px; object-fit:contain; background:#fff; padding:4px; border-radius:8px; border:1px solid var(--border-subtle);">
+                  <div style="flex:1; font-size:0.82rem; color:var(--text-secondary); line-height:1.45;">
+                    <div>QR कोड स्कैन कर <strong style="color:var(--primary); font-size:0.95rem;" id="qrPayAmountLabel">₹100</strong> भेजें।</div>
+                    <div style="margin-top:4px; display:flex; align-items:center; gap:6px;">
+                      <span>UPI ID:</span>
+                      <code id="subUpiIdDisplay" style="background:var(--bg-surface); padding:2px 8px; border-radius:4px; font-weight:700; color:var(--text-main);">stenomaster@upi</code>
+                      <button type="button" class="btn-secondary" style="padding:2px 8px; font-size:0.72rem;" onclick="stenoApp.copyUpiId()">📋 कॉपी</button>
+                    </div>
                   </div>
                 </div>
                 <form onsubmit="stenoApp.handlePaymentSubmit(event)">
                   <div class="form-group" style="margin-bottom:8px;">
-                    <input type="text" id="payTransactionIdInput" class="form-input" placeholder="12-अंक UPI UTR / Txn ID दर्ज करें" style="font-size:0.85rem;">
+                    <label class="form-label" style="font-size:0.75rem;">12-अंकीय UPI Transaction ID (UTR):</label>
+                    <input type="text" id="payTransactionIdInput" class="form-input" placeholder="जैसे 328409182736" style="font-size:0.85rem;" required pattern="[0-9A-Za-z]{8,24}">
                   </div>
-                  <input type="hidden" id="payAmountInput" value="₹100">
+                  <input type="hidden" id="payAmountInput" value="100">
+                  <input type="hidden" id="payPlanNameInput" value="StenoMaster Pro — 1 Month (₹100/माह)">
+                  <input type="hidden" id="payPlanDaysInput" value="30">
                   <div id="paymentSubmitMsg" style="display:none; font-size:0.8rem; margin-bottom:8px;"></div>
-                  <button type="submit" id="submitPaymentBtn" class="btn-secondary" style="width:100%; padding:8px; font-size:0.84rem;">
+                  <button type="submit" id="submitPaymentBtn" class="btn-secondary" style="width:100%; padding:10px; font-size:0.86rem; font-weight:700;">
                     मैन्युअल UTR सबमिट करें
                   </button>
                 </form>
               </div>
             </details>
           </div>
-        </div>
 
-        <!-- Student's Payment History Table -->
-        <div class="chart-card">
-          <h3 style="font-size:1.1rem; font-weight:700; margin-bottom:14px;">📜 मेरे भुगतान अनुरोध (My Payment Submissions)</h3>
-          <div class="table-responsive">
-            <table class="data-table" id="studentPaymentsTable">
-              <thead>
-                <tr>
-                  <th>अनुरोध ID</th>
-                  <th>प्लान</th>
-                  <th>राशि</th>
-                  <th>Transaction ID (UTR)</th>
-                  <th>स्थिति (Status)</th>
-                  <th>दिनांक</th>
-                  <th>टिप्पणी (Admin Remarks)</th>
-                </tr>
-              </thead>
-              <tbody id="studentPaymentsTableBody">
-                <!-- Rendered dynamically -->
-              </tbody>
-            </table>
-          </div>
         </div>
       </main>
 
@@ -1256,6 +1372,50 @@
           </div>
         </div>
 
+        <!-- Admin Subscribers & Pro Members Management Section -->
+        <div class="chart-card" id="adminSubscribersSection" style="margin-bottom: 28px;">
+          <div class="section-header" style="margin-bottom: 16px;">
+            <div>
+              <h3 style="font-size:1.15rem; font-weight:700;">👥 छात्र सब्सक्राइबर प्रबंधन (Subscribers & Pro Access)</h3>
+              <p class="section-subtitle">छात्रों की Pro सदस्यता स्थिति, वैधता (Days), सीधे Pro सक्रियण एवं विस्तार नियंत्रण</p>
+            </div>
+            <button class="btn-secondary" onclick="stenoAdmin.loadSubscribers()">🔄 रीफ़्रेश (Refresh)</button>
+          </div>
+
+          <!-- Subscribers Filter Toolbar -->
+          <div class="subscribers-toolbar">
+            <div class="sub-filter-pills" id="subscribersFilterPills">
+              <button type="button" class="sub-filter-pill active" onclick="stenoAdmin.filterSubscribers('all', this)">सभी छात्र (All)</button>
+              <button type="button" class="sub-filter-pill" onclick="stenoAdmin.filterSubscribers('active', this)">👑 सक्रिय प्रो (Active Pro)</button>
+              <button type="button" class="sub-filter-pill" onclick="stenoAdmin.filterSubscribers('expired', this)">⏳ समाप्त (Expired)</button>
+              <button type="button" class="sub-filter-pill" onclick="stenoAdmin.filterSubscribers('free', this)">🆓 फ्री टियर (Free)</button>
+            </div>
+            <div style="flex:1; max-width:320px;">
+              <input type="text" id="subscriberSearchInput" class="form-input" placeholder="🔍 नाम, छात्र कोड, फोन या ईमेल खोजें..." oninput="stenoAdmin.searchSubscribers(this.value)" style="font-size:0.84rem; padding:7px 12px;">
+            </div>
+          </div>
+
+          <div class="table-responsive">
+            <table class="data-table" id="adminSubscribersTable">
+              <thead>
+                <tr>
+                  <th>छात्र कोड व नाम</th>
+                  <th>संपर्क (Email / Phone)</th>
+                  <th>सदस्यता स्थिति</th>
+                  <th>सक्रिय प्लान</th>
+                  <th>वैधता (Days Left)</th>
+                  <th>समाप्ति तिथि (End Date)</th>
+                  <th>अभ्यास</th>
+                  <th style="text-align:right;">Pro प्रबंधन कार्रवाई</th>
+                </tr>
+              </thead>
+              <tbody id="adminSubscribersTableBody">
+                <!-- Populated dynamically via stenoAdmin.loadSubscribers() -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
         <!-- Phase 3: Admin Payment Verifications & Subscriptions Section -->
         <div class="chart-card" id="adminPaymentsSection" style="margin-bottom: 28px;">
           <div class="section-header" style="margin-bottom: 16px;">
@@ -1304,13 +1464,42 @@
                 </div>
               </div>
 
+              <!-- UPI ID setting -->
+              <div class="form-group" style="margin-top:12px;">
+                <label class="form-label">सक्रिय UPI ID (Payment UPI ID):</label>
+                <input type="text" id="adminSubUpiIdInput" class="form-input" value="stenomaster@upi" placeholder="e.g. yourname@oksbi / upi" required>
+              </div>
+
+              <!-- Multi-Tier Plan Prices Grid -->
+              <div style="margin-top:14px;">
+                <label class="form-label" style="font-weight:700; color:var(--primary); margin-bottom:8px; display:block;">💎 सदस्यता प्लान मूल्य निर्धारण (Plan Pricing ₹):</label>
+                <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap:10px;">
+                  <div class="form-group" style="margin-bottom:0;">
+                    <label class="form-label" style="font-size:0.78rem;">1 माह (30 दिन) ₹:</label>
+                    <input type="number" id="adminSubPrice1m" class="form-input" value="100" min="1" required>
+                  </div>
+                  <div class="form-group" style="margin-bottom:0;">
+                    <label class="form-label" style="font-size:0.78rem;">3 माह (90 दिन) ₹:</label>
+                    <input type="number" id="adminSubPrice3m" class="form-input" value="250" min="1" required>
+                  </div>
+                  <div class="form-group" style="margin-bottom:0;">
+                    <label class="form-label" style="font-size:0.78rem;">6 माह (180 दिन) ₹:</label>
+                    <input type="number" id="adminSubPrice6m" class="form-input" value="450" min="1" required>
+                  </div>
+                  <div class="form-group" style="margin-bottom:0;">
+                    <label class="form-label" style="font-size:0.78rem;">1 वर्ष (365 दिन) ₹:</label>
+                    <input type="number" id="adminSubPrice1y" class="form-input" value="800" min="1" required>
+                  </div>
+                </div>
+              </div>
+
               <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-top:14px;">
                 <div class="form-group">
-                  <label class="form-label">प्लान नाम (Plan Title):</label>
+                  <label class="form-label">डिफ़ॉल्ट प्लान नाम (Default Plan Title):</label>
                   <input type="text" id="adminSubPlanNameInput" class="form-input" value="StenoMaster Pro — 1 Month (₹100/माह)" required>
                 </div>
                 <div class="form-group">
-                  <label class="form-label">प्लान मूल्य ₹ (Monthly Price):</label>
+                  <label class="form-label">डिफ़ॉल्ट मासिक मूल्य ₹ (Monthly Price):</label>
                   <input type="number" id="adminSubPlanPriceInput" class="form-input" value="100" required min="1">
                 </div>
               </div>
@@ -1370,25 +1559,59 @@
         <!-- Scoring Rules Configurator -->
         <div class="charts-grid">
           <div class="chart-card" id="adminScoringSection">
-            <h3 style="font-size:1.1rem; font-weight:700; margin-bottom:12px;">⚙️ परीक्षा मूल्यांकन नियम (Scoring Preset)</h3>
+            <h3 style="font-size:1.1rem; font-weight:700; margin-bottom:12px;">⚙️ परीक्षा मूल्यांकन नियम (Exam Scoring Presets)</h3>
             <form onsubmit="stenoAdmin.saveScoringConfig(event)">
               <div class="form-group">
-                <label class="form-label">परीक्षा मोड (Exam Preset):</label>
+                <label class="form-label">डिफ़ॉल्ट परीक्षा मोड (Default Platform Preset):</label>
                 <select id="adminScoringModeSelect" class="form-select">
+                  <option value="ssc">🎯 SSC Stenographer Grade C & D Mode</option>
+                  <option value="upsssc">🏛️ UPSSSC Skill Test Mode (25 WPM Hindi + 5% Error)</option>
+                  <option value="court">⚖️ High Court Strict Mode (1.0 Penalty)</option>
                   <option value="standard">Standard Exam Rule (Half Penalty on Matra/Spelling)</option>
-                  <option value="ssc">SSC Stenographer Grade C & D Mode</option>
-                  <option value="court">High Court Strict Mode (1.0 Penalty)</option>
                 </select>
               </div>
-              <div class="form-group">
-                <label class="form-label">SSC त्रुटि दंड कारक (Error Factor):</label>
-                <input type="number" id="adminSscFactorInput" class="form-input" step="0.1" value="1.0">
+
+              <!-- SSC Specific Configurations -->
+              <div style="background:rgba(2, 132, 199, 0.05); border:1px solid #bae6fd; border-radius:8px; padding:12px; margin-bottom:12px;">
+                <div style="font-weight:700; font-size:0.88rem; color:#0284c7; margin-bottom:8px;">🎯 SSC Stenographer कटऑफ सेटिंग्स:</div>
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                  <div class="form-group" style="margin-bottom:6px;">
+                    <label class="form-label" style="font-size:0.8rem;">Grade C सामान्य (UR %):</label>
+                    <input type="number" id="adminSscGradeCInput" class="form-input" step="0.5" value="5.0">
+                  </div>
+                  <div class="form-group" style="margin-bottom:6px;">
+                    <label class="form-label" style="font-size:0.8rem;">Grade D सामान्य (UR %):</label>
+                    <input type="number" id="adminSscGradeDInput" class="form-input" step="0.5" value="7.0">
+                  </div>
+                </div>
               </div>
-              <div class="form-group">
-                <label class="form-label">Court त्रुटि दंड कारक:</label>
-                <input type="number" id="adminCourtFactorInput" class="form-input" step="0.1" value="1.2">
+
+              <!-- UPSSSC Specific Configurations -->
+              <div style="background:rgba(124, 58, 237, 0.05); border:1px solid #ddd6fe; border-radius:8px; padding:12px; margin-bottom:12px;">
+                <div style="font-weight:700; font-size:0.88rem; color:#7c3aed; margin-bottom:8px;">🏛️ UPSSSC स्किल टेस्ट सेटिंग्स:</div>
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                  <div class="form-group" style="margin-bottom:6px;">
+                    <label class="form-label" style="font-size:0.8rem;">हिंदी न्यूनतम WPM:</label>
+                    <input type="number" id="adminUpssscMinWpmInput" class="form-input" value="25">
+                  </div>
+                  <div class="form-group" style="margin-bottom:6px;">
+                    <label class="form-label" style="font-size:0.8rem;">अधिकतम त्रुटि (%):</label>
+                    <input type="number" id="adminUpssscMaxErrInput" class="form-input" step="0.5" value="5.0">
+                  </div>
+                </div>
               </div>
-              <button type="submit" class="btn-primary">नियम सहेजें (Save Scoring)</button>
+
+              <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                <div class="form-group">
+                  <label class="form-label">SSC त्रुटि दंड कारक:</label>
+                  <input type="number" id="adminSscFactorInput" class="form-input" step="0.1" value="1.0">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Court त्रुटि दंड कारक:</label>
+                  <input type="number" id="adminCourtFactorInput" class="form-input" step="0.1" value="1.2">
+                </div>
+              </div>
+              <button type="submit" class="btn-primary" style="width:100%;">नियम सहेजें (Save Scoring)</button>
             </form>
           </div>
 
@@ -1433,6 +1656,70 @@
           </div>
         </div>
       </main>
+ 
+      <!-- ===================================================================
+           GLOBAL PLATFORM FOOTER (RBI & Cashfree Compliance)
+           =================================================================== -->
+      <footer class="platform-global-footer">
+        <div class="footer-container">
+          <div class="footer-top-row">
+            <div class="footer-brand-col">
+              <div class="footer-brand-title">
+                <span>🎓</span> <span>StenoMaster</span>
+              </div>
+              <p class="footer-tagline">
+                भारत का अग्रणी ऑनलाइन हिंदी एवं अंग्रेजी आशुलिपि (Steno) व टंकण मूल्यांकन प्लेटफ़ॉर्म। SSC, UPSSSC व उच्च न्यायालय विशेष डिक्टेशन एवं परीक्षा आधारित रिपोर्ट।
+              </p>
+              <div class="footer-payment-badges">
+                <span class="secure-pay-pill">🔒 256-Bit SSL Encrypted</span>
+                <span class="secure-pay-pill">⚡ Cashfree Verified Gateway</span>
+                <span class="secure-pay-pill">🇮🇳 100% Indian Aspirants Platform</span>
+              </div>
+            </div>
+
+            <div class="footer-links-col">
+              <h4 class="footer-col-heading">📜 कानूनी नीतियां (Legal & Policies)</h4>
+              <ul class="footer-links-list">
+                <li><a href="javascript:void(0)" onclick="stenoApp.openModal('termsModal')">⚖️ नियम एवं शर्तें (Terms & Conditions)</a></li>
+                <li><a href="javascript:void(0)" onclick="stenoApp.openModal('privacyModal')">🔒 गोपनीयता नीति (Privacy Policy)</a></li>
+                <li><a href="javascript:void(0)" onclick="stenoApp.openModal('refundModal')">🔄 रिफंड एवं रद्दीकरण (Refund Policy)</a></li>
+                <li><a href="javascript:void(0)" onclick="stenoApp.openModal('contactModal')">📞 संपर्क एवं सहायता (Contact Us)</a></li>
+              </ul>
+            </div>
+
+            <div class="footer-contact-col">
+              <h4 class="footer-col-heading">📞 सहायता केंद्र (Student Helpdesk)</h4>
+              <div class="footer-contact-item">
+                <span>📧</span> <span>ईमेल: <a href="mailto:support@stenomaster.com">support@stenomaster.com</a></span>
+              </div>
+              <div class="footer-contact-item">
+                <span>📱</span> <span>WhatsApp / हेल्पलाइन: +91 98765 43210</span>
+              </div>
+              <div class="footer-contact-item">
+                <span>🕒</span> <span>समय: सोमवार से शनिवार (10:00 AM – 06:00 PM IST)</span>
+              </div>
+              <div class="footer-contact-item">
+                <span>📍</span> <span>भारत (India) • 100% ऑनलाइन सेवा</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="footer-bottom-bar">
+            <div>
+              © 2026 StenoMaster. सर्वाधिकार सुरक्षित। All Rights Reserved.
+            </div>
+            <div class="footer-bottom-links">
+              <a href="javascript:void(0)" onclick="stenoApp.openModal('privacyModal')">Privacy</a>
+              <span>•</span>
+              <a href="javascript:void(0)" onclick="stenoApp.openModal('termsModal')">Terms</a>
+              <span>•</span>
+              <a href="javascript:void(0)" onclick="stenoApp.openModal('refundModal')">Refund Policy</a>
+              <span>•</span>
+              <a href="javascript:void(0)" onclick="stenoApp.openModal('contactModal')">Contact Us</a>
+            </div>
+          </div>
+        </div>
+      </footer>
 
     </div><!-- .main-wrapper -->
 
@@ -1770,7 +2057,7 @@
   </div>
 
   <!-- Dual Passage Typing Mode Selection Modal (Phase 8) -->
-  <div class="modal-overlay" id="dualModeSelectModal" style="display:none; z-index:10000;">
+  <div class="modal-overlay" id="dualModeSelectModal" style="z-index:10000;" onclick="if(event.target===this) stenoApp.closeModal('dualModeSelectModal')">
     <div class="modal-card" style="max-width: 460px; text-align:center; padding:28px 22px;">
       <div style="font-size:44px; margin-bottom:8px;">⌨️</div>
       <h3 class="modal-title" style="font-size:1.3rem; margin-bottom:6px;">टाइपिंग फ़ॉन्ट चुनें (Select Typing Font)</h3>
@@ -1796,7 +2083,7 @@
   </div>
 
   <!-- Student Registration Success / Credentials Card Modal -->
-  <div class="modal-overlay" id="studentCredentialsModal" style="display:none; z-index:10000;">
+  <div class="modal-overlay" id="studentCredentialsModal" style="z-index:10000;" onclick="if(event.target===this) stenoApp.closeModal('studentCredentialsModal')">
     <div class="modal-card" style="max-width: 480px; text-align:center; padding:28px 24px;">
       <div style="font-size:48px; margin-bottom:8px;">🎉</div>
       <h3 class="modal-title" style="font-size:1.35rem; color:var(--primary); margin-bottom:6px;">खाता सफलतापूर्वक बन गया!</h3>
@@ -1855,9 +2142,9 @@
   </div>
 
   <!-- Kruti Dev / Remington Alt Codes Helper Modal -->
-  <div class="modal-overlay" id="altCodesModal" style="display:none;">
+  <div class="modal-overlay" id="altCodesModal" onclick="if(event.target===this) stenoApp.closeModal('altCodesModal')">
     <div class="modal-card" style="max-width: 680px; max-height:85vh; overflow-y:auto;">
-      <button class="modal-close-btn" onclick="document.getElementById('altCodesModal').style.display='none'">✕</button>
+      <button class="modal-close-btn" onclick="stenoApp.closeModal('altCodesModal')">✕</button>
       <h3 class="modal-title">⌨️ कृति देव 010 / रेमिंगटन विशेष कोड्स (Alt Codes)</h3>
       <p class="modal-subtitle">टाइप करते समय Numpad पर `Alt` दबाकर अंक कोड टाइप करें:</p>
 
@@ -1894,9 +2181,300 @@
       </div>
 
       <div style="margin-top:16px; text-align:center;">
-        <button type="button" class="btn-primary" onclick="document.getElementById('altCodesModal').style.display='none'" style="padding:6px 20px;">
+        <button type="button" class="btn-primary" onclick="stenoApp.closeModal('altCodesModal')" style="padding:6px 20px;">
           समझ गए (Close)
         </button>
+      </div>
+  <!-- Admin Grant / Extend Pro Subscription Modal -->
+  <div class="modal-overlay" id="adminGrantProModal" onclick="if(event.target===this) stenoApp.closeModal('adminGrantProModal')">
+    <div class="modal-card" style="max-width: 520px;">
+      <button class="modal-close-btn" onclick="stenoApp.closeModal('adminGrantProModal')">✕</button>
+      <div style="display:flex; align-items:center; gap:10px; margin-bottom:6px;">
+        <span style="font-size:1.8rem;">👑</span>
+        <div>
+          <h3 class="modal-title" style="margin:0;">प्रो सदस्यता प्रदान / विस्तारित करें</h3>
+          <p class="modal-subtitle" style="margin:0;">Grant or Extend Student's Pro Subscription</p>
+        </div>
+      </div>
+
+      <!-- Student Target Summary Card -->
+      <div id="grantProStudentInfo" style="background:var(--bg-subtle); border:1px solid var(--border-subtle); border-radius:10px; padding:12px 14px; margin:14px 0; font-size:0.86rem; line-height:1.5;">
+        <!-- Populated via stenoAdmin.openGrantProModal() -->
+      </div>
+
+      <form onsubmit="stenoAdmin.submitGrantPro(event)">
+        <input type="hidden" id="grantProUserId">
+
+        <div class="form-group" style="margin-bottom:12px;">
+          <label class="form-label" style="font-weight:700;">वैधता अवधि चुनें (Duration to Add):</label>
+          <select id="grantProDaysSelect" class="form-select" onchange="stenoAdmin.onGrantDaysChange(this.value)" style="font-size:0.9rem; font-weight:600;">
+            <option value="30">+30 दिन (1 माह • ₹100 Plan)</option>
+            <option value="90">+90 दिन (3 माह • ₹250 Popular)</option>
+            <option value="180">+180 दिन (6 माह • ₹450 Super Saver)</option>
+            <option value="365">+365 दिन (1 वर्ष • ₹800 Best Value)</option>
+            <option value="custom">✏️ कस्टम दिन (Custom Number of Days)...</option>
+            <option value="9999">🌟 असीमित / लाइफटाइम (Lifetime Pro)</option>
+          </select>
+        </div>
+
+        <div class="form-group" id="grantProCustomDaysGroup" style="display:none; margin-bottom:12px;">
+          <label class="form-label" style="font-size:0.8rem;">कस्टम दिनों की संख्या (Custom Days):</label>
+          <input type="number" id="grantProCustomDaysInput" class="form-input" min="1" max="3650" placeholder="e.g. 45 or 60">
+        </div>
+
+        <div class="form-group" style="margin-bottom:12px;">
+          <label class="form-label" style="font-size:0.82rem;">प्लान का शीर्षक (Plan Name):</label>
+          <input type="text" id="grantProPlanNameInput" class="form-input" value="StenoMaster Pro (Admin Grant)" style="font-size:0.86rem;">
+        </div>
+
+        <div class="form-group" style="margin-bottom:14px;">
+          <label class="form-label" style="font-size:0.82rem;">एडमिन नोट / संदर्भ (Admin Note - Optional):</label>
+          <input type="text" id="grantProNotesInput" class="form-input" placeholder="जैसे: विशेष छात्र ऑफर, ऑफलाइन नकद भुगतान, आदि" style="font-size:0.86rem;">
+        </div>
+
+        <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:16px;">
+          <button type="button" class="btn-secondary" onclick="stenoApp.closeModal('adminGrantProModal')">रद्द करें</button>
+          <button type="submit" class="btn-primary" style="background:linear-gradient(135deg, #10b981, #059669); border-color:#059669; font-weight:700;">
+            👑 प्रो सक्रिय करें (Activate Pro)
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Locked Class Pro Upgrade Modal -->
+  <div class="modal-overlay" id="lockedClassProModal" onclick="if(event.target===this) stenoApp.closeModal('lockedClassProModal')">
+    <div class="modal-card" style="max-width: 580px; text-align:center; padding:32px 24px;">
+      <button class="modal-close-btn" onclick="stenoApp.closeModal('lockedClassProModal')">✕</button>
+
+      <div style="width:68px; height:68px; background:linear-gradient(135deg, #fef3c7, #fde68a); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:2.2rem; margin:0 auto 16px auto; box-shadow:0 8px 20px rgba(245, 158, 11, 0.25);">
+        🔒
+      </div>
+
+      <h3 style="font-size:1.45rem; font-weight:800; margin-bottom:8px; color:var(--text-main);">
+        प्रीमियम डिक्टेशन अनलॉक करें
+      </h3>
+      <p style="font-size:0.88rem; color:var(--text-secondary); max-width:440px; margin:0 auto 20px auto; line-height:1.55;">
+        यह डिक्टेशन <strong>StenoMaster Pro</strong> सदस्यों के लिए है। उच्च न्यायालय, SSC व UPSSSC में सफलता हेतु अपना पसंदीदा प्लान चुनें:
+      </p>
+
+      <!-- Mini Plans Grid in Modal -->
+      <div style="display:grid; grid-template-columns: repeat(2, 1fr); gap:12px; margin-bottom:22px; text-align:left;">
+        <div style="background:var(--bg-subtle); border:1px solid var(--border-subtle); border-radius:10px; padding:12px 14px; cursor:pointer;" onclick="stenoApp.closeModal('lockedClassProModal'); stenoApp.selectSubscriptionPlan('1m'); stenoApp.navigate('subscription');">
+          <div style="font-size:0.75rem; color:var(--text-muted); font-weight:700;">1 माह प्लान</div>
+          <div style="font-size:1.3rem; font-weight:900; color:var(--primary);">₹100</div>
+          <div style="font-size:0.72rem; color:var(--text-secondary); margin-top:2px;">बेसिक मासिक अभ्यास (30 दिन)</div>
+        </div>
+        <div style="background:rgba(245, 158, 11, 0.08); border:2px solid #f59e0b; border-radius:10px; padding:12px 14px; cursor:pointer; position:relative;" onclick="stenoApp.closeModal('lockedClassProModal'); stenoApp.selectSubscriptionPlan('3m'); stenoApp.navigate('subscription');">
+          <span style="position:absolute; top:-9px; right:10px; background:#f59e0b; color:#fff; font-size:0.62rem; font-weight:800; padding:2px 8px; border-radius:10px;">POPULAR</span>
+          <div style="font-size:0.75rem; color:#b45309; font-weight:700;">3 माह प्लान (90 दिन)</div>
+          <div style="font-size:1.3rem; font-weight:900; color:#b45309;">₹250</div>
+          <div style="font-size:0.72rem; color:#b45309; margin-top:2px;">₹50 बचत • सबसे लोकप्रिय</div>
+        </div>
+      </div>
+
+      <div style="display:flex; flex-direction:column; gap:10px;">
+        <button type="button" class="btn-primary" style="padding:14px; font-size:1.05rem; font-weight:800; border-radius:12px; box-shadow:0 8px 24px rgba(37, 99, 235, 0.35);" onclick="stenoApp.closeModal('lockedClassProModal'); stenoApp.navigate('subscription');">
+          ⚡ सभी प्लान्स देखें व अनलॉक करें (View Plans & Pay) →
+        </button>
+        <button type="button" class="btn-secondary" style="border:none; color:var(--text-muted); font-size:0.82rem;" onclick="stenoApp.closeModal('lockedClassProModal')">
+          बाद में देखें (Close)
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================================================================
+       LEGAL POLICY MODAL: TERMS & CONDITIONS
+       =================================================================== -->
+  <div class="modal-overlay" id="termsModal" onclick="if(event.target===this) stenoApp.closeModal('termsModal')">
+    <div class="modal-card" style="max-width: 680px;">
+      <button class="modal-close-btn" onclick="stenoApp.closeModal('termsModal')">✕</button>
+      <div style="display:flex; align-items:center; gap:10px; margin-bottom:12px; border-bottom:1px solid var(--border-subtle); padding-bottom:10px;">
+        <span style="font-size:1.8rem;">⚖️</span>
+        <div>
+          <h3 class="modal-title" style="margin:0;">नियम एवं शर्तें (Terms & Conditions)</h3>
+          <p class="modal-subtitle" style="margin:0;">Last Updated: September 2026 • StenoMaster</p>
+        </div>
+      </div>
+      <div class="policy-modal-body">
+        <p><strong>StenoMaster</strong> प्लेटफ़ॉर्म में आपका स्वागत है। हमारी वेबसाइट एवं सेवाओं का उपयोग करने से पूर्व कृपया इन नियमों एवं शर्तों को ध्यानपूर्वक पढ़ें। प्लेटफ़ॉर्म पर पंजीकरण या भुगतान करके आप इन शर्तों से बाध्य होने की सहमति देते हैं।</p>
+
+        <h4>1. प्लेटफ़ॉर्म का परिचय एवं सेवा का स्वरूप</h4>
+        <p>StenoMaster एक ऑनलाइन शैक्षणिक एवं टंकण कौशल मूल्यांकन (Typing & Shorthand Practice) प्लेटफ़ॉर्म है। यह छात्रों को SSC आशुलिपिक, UPSSSC, उच्च न्यायालय एवं अन्य प्रतियोगी परीक्षाओं हेतु ऑडियो डिक्टेशन, गति मापन एवं त्रुटि विश्लेषण की डिजिटल सुविधा प्रदान करता है।</p>
+
+        <h4>2. उपयोगकर्ता खाता एवं एकल-डिवाइस नियम (Single-Device Policy)</h4>
+        <p>प्रत्येक खाता केवल एक अभ्यर्थी के व्यक्तिगत उपयोग हेतु है। सुरक्षा एवं परीक्षा गुणवत्ता बनाए रखने हेतु <strong>एक समय में केवल एक ही डिवाइस (Computer / Mobile)</strong> पर सक्रिय रहने की अनुमति है। एक साथ कई डिवाइस पर लॉगिन करने पर पूर्व सत्र स्वतः समाप्त कर दिया जाएगा। खाता विवरण किसी अन्य व्यक्ति के साथ साझा करना प्रतिबंधित है।</p>
+
+        <h4>3. सदस्यता एवं डिजिटल सेवाओं की डिलीवरी</h4>
+        <p>निःशुल्क परीक्षण के रूप में प्रत्येक नए छात्र को <strong>2 अभ्यास कक्षाएं पूर्णतः फ्री</strong> दी जाती हैं। इसके पश्चात प्रीमियम डिक्टेशन हेतु 1 माह, 3 माह, 6 माह या 1 वर्ष का प्रो प्लान लिया जा सकता है। भुगतान की पुष्टि होते ही सदस्यता तुरंत (Instant Unlock) सक्रिय कर दी जाती है।</p>
+
+        <h4>4. निषिद्ध आचरण (Prohibited Conduct)</h4>
+        <p>उपयोगकर्ता द्वारा प्लेटफ़ॉर्म के ऑडियो डिक्टेशन, टेक्स्ट सामग्री या मूल्यांकन प्रणाली को अवैध रूप से कॉपी करना, रिकॉर्ड कर सार्वजनिक रूप से वितरित करना, स्वचालित बॉट्स (Automated Scripts) चलाना या रिवर्स-इंजीनियरिंग का प्रयास करना पूर्णतः प्रतिबंधित है।</p>
+
+        <h4>5. सरकारी संबंध का अस्वीकरण (Government Disclaimer)</h4>
+        <p>StenoMaster एक स्वतंत्र निजी एड-टेक (Ed-Tech) प्लेटफ़ॉर्म है। यह SSC, UPSSSC, किसी उच्च न्यायालय अथवा भारत सरकार या राज्य सरकार की किसी आधिकारिक संस्था से संबद्ध या अनुमोदित नहीं है। परीक्षा प्रारूप एवं मूल्यांकन नियम केवल छात्रों के अभ्यास व तैयारी को आसान बनाने हेतु तैयार किए गए हैं।</p>
+
+        <h4>6. लागू कानून एवं क्षेत्राधिकार (Governing Law)</h4>
+        <p>ये नियम भारत के कानूनों के अनुसार शासित और व्याख्यायित होंगे। किसी भी विवाद की स्थिति में न्यायिक क्षेत्राधिकार संबंधित भारतीय न्यायालयों का होगा।</p>
+      </div>
+      <div style="display:flex; justify-content:flex-end; margin-top:20px;">
+        <button type="button" class="btn-primary" onclick="stenoApp.closeModal('termsModal')">स्वीकार है एवं बंद करें (I Understand)</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================================================================
+       LEGAL POLICY MODAL: PRIVACY POLICY
+       =================================================================== -->
+  <div class="modal-overlay" id="privacyModal" onclick="if(event.target===this) stenoApp.closeModal('privacyModal')">
+    <div class="modal-card" style="max-width: 680px;">
+      <button class="modal-close-btn" onclick="stenoApp.closeModal('privacyModal')">✕</button>
+      <div style="display:flex; align-items:center; gap:10px; margin-bottom:12px; border-bottom:1px solid var(--border-subtle); padding-bottom:10px;">
+        <span style="font-size:1.8rem;">🔒</span>
+        <div>
+          <h3 class="modal-title" style="margin:0;">गोपनीयता नीति (Privacy Policy)</h3>
+          <p class="modal-subtitle" style="margin:0;">Last Updated: September 2026 • StenoMaster</p>
+        </div>
+      </div>
+      <div class="policy-modal-body">
+        <p>StenoMaster पर आपकी व्यक्तिगत जानकारी की गोपनीयता और सुरक्षा हमारी सर्वोच्च प्राथमिकता है। यह नीति स्पष्ट करती है कि हम आपकी जानकारी कैसे एकत्र, सुरक्षित और उपयोग करते हैं।</p>
+
+        <h4>1. हम कौन सी जानकारी एकत्र करते हैं?</h4>
+        <p>पंजीकरण एवं अभ्यास के समय हम निम्नलिखित न्यूनतम जानकारी एकत्र करते हैं:
+        <br>• बुनियादी प्रोफ़ाइल: नाम, ईमेल आईडी, मोबाइल नंबर, लक्ष्य परीक्षा (जैसे SSC / UPSSSC)।
+        <br>• अभ्यास रिकॉर्ड: टाइपिंग गति (WPM), सटीकता प्रतिशत, हल किए गए डिक्टेशन एवं दैनिक स्ट्रीक।
+        <br>• तकनीकी डेटा: सुरक्षा ऑडिट हेतु IP पता, लॉगिन डिवाइस व ब्राउज़र का प्रकार।</p>
+
+        <h4>2. भुगतान सुरक्षा एवं पेमेंट गेटवे (Payment Security)</h4>
+        <div class="policy-highlight-card">
+          🛡️ <strong>शून्य कार्ड डेटा भंडारण:</strong> StenoMaster आपके क्रेडिट कार्ड/डेबिट कार्ड नंबर, CVV अथवा UPI पिन को कभी भी अपने सर्वर पर स्टोर नहीं करता है। सभी ऑनलाइन लेन-देन RBI द्वारा लाइसेंस प्राप्त सुरक्षित पेमेंट गेटवे (<strong>Cashfree Payments</strong>) के 256-Bit SSL एन्क्रिप्टेड माध्यम से संपन्न होते हैं।
+        </div>
+
+        <h4>3. डेटा का उपयोग एवं गैर-साझाकरण (Data Usage)</h4>
+        <p>आपके व्यक्तिगत डेटा का उपयोग केवल आपके सीखने के अनुभव को बेहतर बनाने, अभ्यास रिपोर्ट तैयार करने और प्रो सदस्यता सक्रिय करने हेतु किया जाता है। <strong>हम आपकी व्यक्तिगत जानकारी किसी भी तीसरे पक्ष, मार्केटिंग कंपनी या विज्ञापनदाताओं को कभी नहीं बेचते या किराए पर नहीं देते।</strong></p>
+
+        <h4>4. कुकीज़ एवं लोकल सेशन (Cookies)</h4>
+        <p>हम सुरक्षित प्रमाणीकरण टोकन (Authentication Session) और थीम प्राथमिकताओं (Light/Dark mode) को याद रखने हेतु आवश्यक ब्राउज़र स्टोरेज का उपयोग करते हैं।</p>
+
+        <h4>5. उपयोगकर्ता अधिकार एवं डेटा विलोपन (Your Rights)</h4>
+        <p>यदि आप अपनी प्रोफ़ाइल जानकारी अपडेट करना चाहते हैं या अपना खाता व डेटा पूरी तरह हटाना चाहते हैं, तो आप <a href="mailto:support@stenomaster.com" style="color:var(--primary);">support@stenomaster.com</a> पर ईमेल भेजकर अनुरोध कर सकते हैं।</p>
+      </div>
+      <div style="display:flex; justify-content:flex-end; margin-top:20px;">
+        <button type="button" class="btn-primary" onclick="stenoApp.closeModal('privacyModal')">समझ गए (Close)</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================================================================
+       LEGAL POLICY MODAL: REFUND & CANCELLATION POLICY
+       =================================================================== -->
+  <div class="modal-overlay" id="refundModal" onclick="if(event.target===this) stenoApp.closeModal('refundModal')">
+    <div class="modal-card" style="max-width: 680px;">
+      <button class="modal-close-btn" onclick="stenoApp.closeModal('refundModal')">✕</button>
+      <div style="display:flex; align-items:center; gap:10px; margin-bottom:12px; border-bottom:1px solid var(--border-subtle); padding-bottom:10px;">
+        <span style="font-size:1.8rem;">🔄</span>
+        <div>
+          <h3 class="modal-title" style="margin:0;">रिफंड एवं रद्दीकरण नीति (Refund & Cancellation)</h3>
+          <p class="modal-subtitle" style="margin:0;">Last Updated: September 2026 • StenoMaster</p>
+        </div>
+      </div>
+      <div class="policy-modal-body">
+        <p>StenoMaster अपने छात्रों को पूर्ण पारदर्शिता और संतोषजनक सेवा प्रदान करने के लिए प्रतिबद्ध है। हमारी रिफंड और रद्दीकरण नीति भारतीय उपभोक्ता एवं डिजिटल सेवा मानकों के अनुरूप है:</p>
+
+        <h4>1. 2 फ्री कक्षाओं का निःशुल्क ट्रायल (Try Before You Buy)</h4>
+        <p>प्रत्येक छात्र को बिना किसी अग्रिम भुगतान के <strong>पहली 2 पूर्ण डिक्टेशन कक्षाएं निःशुल्क अभ्यास</strong> करने की सुविधा दी गई है। छात्र ऑडियो की स्पष्टता, फ़ॉन्ट अनुकूलता और मूल्यांकन प्रणाली की जांच करने के बाद ही प्रो सदस्यता खरीदने का निर्णय लें।</p>
+
+        <h4>2. 7-दिवसीय रिफंड पात्रता (7-Day Money-Back Guarantee)</h4>
+        <p>यदि सदस्यता लेने के <strong>7 दिनों के भीतर</strong> आपको निम्नलिखित वास्तविक तकनीकी समस्याओं का सामना करना पड़ता है और हमारी तकनीकी टीम 48 घंटे में उसका समाधान नहीं कर पाती, तो आप 100% रिफंड के पात्र होंगे:
+        <br>• भुगतान सफल होने के बाद भी प्रो कक्षाएं अनलॉक न होना।
+        <br>• ऑडियो प्लेबैक या टंकण मूल्यांकन में गंभीर तकनीकी रुकावट।
+        <br>• तकनीकी त्रुटि के कारण दोहरा भुगतान (Duplicate Payment) कट जाना।</p>
+
+        <h4>3. रिफंड अनुरोध कैसे दर्ज करें? (How to Claim Refund)</h4>
+        <p>रिफंड अनुरोध दर्ज करने के लिए कृपया अपने पंजीकृत ईमेल से <a href="mailto:support@stenomaster.com" style="color:var(--primary); font-weight:700;">support@stenomaster.com</a> पर निम्नलिखित विवरण सहित ईमेल भेजें:
+        <br>1. छात्र का नाम एवं Student Code (जैसे `STM-2026-XXXXXX`)
+        <br>2. Cashfree ऑर्डर ID अथवा 12-अंकीय UPI UTR नंबर
+        <br>3. रिफंड का स्पष्ट कारण एवं स्क्रीनशॉट (यदि उपलब्ध हो)।</p>
+
+        <h4>4. रिफंड निपटान समयसीमा (Settlement Timeline)</h4>
+        <p>सत्यापन उपरांत स्वीकृत रिफंड <strong>5 से 7 कार्यदिवस (Working Days)</strong> के भीतर आपके मूल भुगतान स्रोत (जिस बैंक खाते/UPI ऐप से भुगतान हुआ था) में स्वतः क्रेडिट कर दिया जाएगा।</p>
+
+        <h4>5. गैर-रिफंडेबल स्थितियां (Non-Refundable Cases)</h4>
+        <p>सदस्यता की 7 दिन की अवधि पूर्ण होने के उपरांत, या नियम एवं शर्तों के उल्लंघन (जैसे एकाधिक डिवाइस साझाकरण या अनुचित आचरण) के कारण खाता निलंबित होने पर रिफंड देय नहीं होगा।</p>
+      </div>
+      <div style="display:flex; justify-content:flex-end; margin-top:20px;">
+        <button type="button" class="btn-primary" onclick="stenoApp.closeModal('refundModal')">स्वीकार है (Close)</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================================================================
+       LEGAL POLICY MODAL: CONTACT US & SUPPORT
+       =================================================================== -->
+  <div class="modal-overlay" id="contactModal" onclick="if(event.target===this) stenoApp.closeModal('contactModal')">
+    <div class="modal-card" style="max-width: 640px;">
+      <button class="modal-close-btn" onclick="stenoApp.closeModal('contactModal')">✕</button>
+      <div style="display:flex; align-items:center; gap:10px; margin-bottom:12px; border-bottom:1px solid var(--border-subtle); padding-bottom:10px;">
+        <span style="font-size:1.8rem;">📞</span>
+        <div>
+          <h3 class="modal-title" style="margin:0;">संपर्क एवं सहायता केंद्र (Contact Us)</h3>
+          <p class="modal-subtitle" style="margin:0;">StenoMaster Student Support & Grievance Desk</p>
+        </div>
+      </div>
+      <div class="policy-modal-body">
+        <p>किसी भी तकनीकी समस्या, डिक्टेशन त्रुटि, भुगतान प्रश्न अथवा सुझाव हेतु हमारी सहायता टीम से सीधे संपर्क करें:</p>
+
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin:16px 0;">
+          <div style="background:var(--bg-subtle); border:1px solid var(--border-subtle); border-radius:10px; padding:14px;">
+            <div style="font-size:0.75rem; color:var(--text-muted); font-weight:700;">आधिकारिक सहायता ईमेल</div>
+            <div style="font-size:0.95rem; font-weight:700; color:var(--primary); margin-top:4px;">
+              <a href="mailto:support@stenomaster.com" style="color:var(--primary); text-decoration:none;">support@stenomaster.com</a>
+            </div>
+            <div style="font-size:0.72rem; color:var(--text-secondary); margin-top:2px;">उत्तर: 24 कार्य घंटों में</div>
+          </div>
+
+          <div style="background:var(--bg-subtle); border:1px solid var(--border-subtle); border-radius:10px; padding:14px;">
+            <div style="font-size:0.75rem; color:var(--text-muted); font-weight:700;">WhatsApp / हेल्पलाइन</div>
+            <div style="font-size:0.95rem; font-weight:700; color:var(--text-main); margin-top:4px;">
+              +91 98765 43210
+            </div>
+            <div style="font-size:0.72rem; color:var(--text-secondary); margin-top:2px;">सोमवार - शनिवार, 10 AM - 6 PM</div>
+          </div>
+        </div>
+
+        <h4>त्वरित संदेश भेजें (Send a Quick Query):</h4>
+        <form onsubmit="event.preventDefault(); stenoApp.closeModal('contactModal'); stenoApp.showToast('आपका संदेश प्राप्त हुआ! हमारी टीम 24 घंटे में संपर्क करेगी। ✉️', 'success');">
+          <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:10px;">
+            <div class="form-group" style="margin-bottom:0;">
+              <label class="form-label" style="font-size:0.78rem;">आपका नाम (Full Name):</label>
+              <input type="text" class="form-input" placeholder="जैसे: राहुल शर्मा" required>
+            </div>
+            <div class="form-group" style="margin-bottom:0;">
+              <label class="form-label" style="font-size:0.78rem;">ईमेल अथवा मोबाइल:</label>
+              <input type="text" class="form-input" placeholder="email / phone" required>
+            </div>
+          </div>
+          <div class="form-group" style="margin-bottom:12px;">
+            <label class="form-label" style="font-size:0.78rem;">विषय / प्रश्न का प्रकार:</label>
+            <select class="form-select" style="font-size:0.85rem;">
+              <option>सदस्यता / भुगतान संबंधी प्रश्न (Payment Query)</option>
+              <option>डिक्टेशन / टाइपिंग सॉफ्टवेयर समस्या (Technical Issue)</option>
+              <option>रिफंड अनुरोध (Refund Request)</option>
+              <option>सामान्य पूछताछ (General Inquiry)</option>
+            </select>
+          </div>
+          <div class="form-group" style="margin-bottom:14px;">
+            <label class="form-label" style="font-size:0.78rem;">संदेश (Message):</label>
+            <textarea class="form-input" rows="3" placeholder="कृपया अपनी समस्या का संक्षिप्त विवरण यहाँ लिखें..." required style="resize:vertical;"></textarea>
+          </div>
+          <div style="display:flex; justify-content:flex-end; gap:10px;">
+            <button type="button" class="btn-secondary" onclick="stenoApp.closeModal('contactModal')">रद्द करें</button>
+            <button type="submit" class="btn-primary" style="font-weight:700;">
+              संदेश भेजें (Send Message) →
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   </div>
@@ -1984,11 +2562,11 @@
   <script src="https://sdk.cashfree.com/js/v3/cashfree.js"></script>
 
   <!-- Scripts -->
-  <script src="/js/charts.js?v=4.1"></script>
-  <script src="/js/audio_player.js?v=4.1"></script>
-  <script src="/js/typing_engine.js?v=4.1"></script>
-  <script src="/js/comparison_view.js?v=4.1"></script>
-  <script src="/js/admin.js?v=4.1"></script>
-  <script src="/js/app.js?v=4.1"></script>
+  <script src="/js/charts.js?v=4.2"></script>
+  <script src="/js/audio_player.js?v=4.2"></script>
+  <script src="/js/typing_engine.js?v=4.2"></script>
+  <script src="/js/comparison_view.js?v=4.2"></script>
+  <script src="/js/admin.js?v=4.2"></script>
+  <script src="/js/app.js?v=4.2"></script>
 </body>
 </html>
