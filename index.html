@@ -1323,9 +1323,249 @@
       </main>
 
       <!-- ===================================================================
+           VIEW: EXAM RULES (परीक्षा नियम)
+           =================================================================== -->
+      <main class="page-view" id="view-rules">
+        <div class="section-header">
+          <div>
+            <h2 class="section-title">📜 परीक्षा नियम (Exam Rules)</h2>
+            <p class="section-subtitle">UPSSSC और SSC स्टेनो परीक्षाओं के आधिकारिक मूल्यांकन नियम — पास/फेल मानदंड, भ्रांति वर्गीकरण एवं टंकण निर्देश</p>
+          </div>
+        </div>
+
+        <!-- Rules Tabs -->
+        <div class="rules-tab-bar">
+          <button class="rules-tab-btn active" onclick="stenoApp.switchRulesTab('upsssc', this)">
+            🏛️ UPSSSC नियम 2026
+          </button>
+          <button class="rules-tab-btn" onclick="stenoApp.switchRulesTab('ssc', this)">
+            📋 SSC Steno नियम
+          </button>
+        </div>
+
+        <!-- UPSSSC 2026 Rules -->
+        <div id="rules-upsssc" class="rules-section-panel">
+
+          <div class="rules-alert rules-alert-blue">
+            <strong>📌 स्रोत:</strong> उत्तर प्रदेश अधीनस्थ सेवा चयन आयोग (UPSSSC) — हिंदी आशुलिपि कौशल परीक्षा 2026 (आशुलिपिक / कनिष्ठ सहायक)
+          </div>
+
+          <!-- Dictation Rules -->
+          <div class="rules-card">
+            <div class="rules-card-header" onclick="stenoApp.toggleRuleCard(this)">
+              <span>🎙️ श्रुतलेख / डिक्टेशन नियम</span>
+              <span class="rules-arrow">▾</span>
+            </div>
+            <div class="rules-card-body">
+              <ol class="rules-list">
+                <li>अभ्यर्थियों को कुल <strong>400 शब्दों का</strong>, <strong>80 शब्द प्रतिमिनट</strong> की गति से <strong>05 मिनट</strong> का श्रुतलेख/डिक्टेशन ऑडियो द्वारा सुनाया जाएगा।</li>
+                <li>श्रुतलेख सुनते समय परीक्षा कक्ष में <strong>पूर्ण शांति</strong> बनाए रखना सभी अभ्यर्थियों के लिए अनिवार्य होगा।</li>
+                <li>श्रुतलेख के दौरान किसी भी शब्द, वाक्य या अनुच्छेद को पुनः सुनाने का अनुरोध <strong>स्वीकार नहीं</strong> किया जाएगा।</li>
+                <li>अभ्यर्थी हिंदी आशुलिपि को अंकित करने के लिए <strong>40 मिनट</strong> में कंप्यूटर पर प्रतिलिप्यंतरण/टाइप (Transcription) देनागरी लिपि में <strong>हिंदी-मंगल फ़ॉन्ट (Inscript) अथवा कृतिदेव-010 फ़ॉन्ट</strong> में करना होगा।</li>
+                <li>इसके अतिरिक्त <strong>अन्य कोई फ़ॉन्ट स्वीकार्य नहीं</strong> है।</li>
+              </ol>
+            </div>
+          </div>
+
+          <!-- Error Calculation -->
+          <div class="rules-card">
+            <div class="rules-card-header" onclick="stenoApp.toggleRuleCard(this)">
+              <span>📊 त्रुटि गणना एवं पास/फेल मानदंड</span>
+              <span class="rules-arrow">▾</span>
+            </div>
+            <div class="rules-card-body">
+              <ol class="rules-list">
+                <li>आशुलिपि (हिंदी) गति की गणना के लिये कुल <strong>बीस (20) अशुद्धियों</strong> की छूट प्रदान की जाती है।</li>
+                <li>यदि अशुद्धियाँ बीस अथवा बीस से कम हों तो <strong>कुल टंकित किये गए शब्दों पर ही टंकण गति</strong> की गणना की जाएगी।</li>
+                <li>यदि अशुद्धियाँ <strong>05 से ज्यादा</strong> हैं तो उस स्थिति में प्रथम 05 अशुद्धियाँ सम्मिलित करते हुए के अनुसार टंकण गति की गणना की जाएगी।</li>
+                <li>शेष बचे शुद्ध शब्दों (छूट प्रदत 05 अशुद्धियों को सम्मिलित करते हुए) के अनुसार <strong>टंकण गति की गणना</strong> की जाएगी।</li>
+                <li>आशुलिपि परीक्षा एक अर्हकारी परीक्षा है जिसे उत्तीर्ण करने हेतु प्रत्येक अभ्यर्थी को हिंदी आशुलिपि में <strong>80 शब्द प्रति मिनट</strong> की गति प्राप्त करना अनिवार्य है।</li>
+              </ol>
+              <div class="rules-highlight-box">
+                <strong>⚠️ महत्वपूर्ण:</strong> यदि अशुद्धियाँ <strong>5% से अधिक</strong> (बीस से अधिक) हों तो अभ्यर्थी <strong>असफल</strong> घोषित किया जाएगा।
+              </div>
+            </div>
+          </div>
+
+          <!-- Typing Test Rules -->
+          <div class="rules-card">
+            <div class="rules-card-header" onclick="stenoApp.toggleRuleCard(this)">
+              <span>⌨️ हिंदी टंकण परीक्षा — विशेष निर्देश</span>
+              <span class="rules-arrow">▾</span>
+            </div>
+            <div class="rules-card-body">
+              <ol class="rules-list">
+                <li>अभ्यर्थी टंकण परीक्षा के समय <strong>Back Space Key</strong> का प्रयोग वर्तमान शब्द एवं उससे पहले के <strong>01 शब्द को संशोधित</strong> करने हेतु प्रयुक्त कर सकता है। (कुल <strong>02 शब्द</strong> तक संशोधन)</li>
+                <li>टंकण (हिंदी) गति की गणना के लिये <strong>05 अशुद्धियों की छूट</strong> प्रदान की जाएगी।</li>
+                <li>यदि अशुद्धियाँ 05 अथवा 05 से कम हैं तो कुल टंकित किये गए शब्दों पर ही टंकण गति की गणना की जाएगी।</li>
+                <li>यदि अशुद्धियाँ <strong>05 से ज्यादा</strong> हैं तो उस स्थिति में प्रथम 05 अशुद्धियाँ को सम्मिलित करते हुए के अनुसार टंकण गति की गणना की जाएगी।</li>
+                <li>अभ्यर्थी को हिंदी टंकण परीक्षा देनागरी लिपि (हिंदी) में <strong>मंगल फ़ॉन्ट (Inscript) अथवा कृतिदेव-010 फ़ॉन्ट पर ही</strong> देना होगा। इसके अतिरिक्त अन्य कोई फ़ॉन्ट स्वीकार्य नहीं है।</li>
+              </ol>
+            </div>
+          </div>
+
+          <!-- Full Mistake -->
+          <div class="rules-card">
+            <div class="rules-card-header rules-card-red" onclick="stenoApp.toggleRuleCard(this)">
+              <span>❌ पूर्ण भ्रांति / Full Mistake (= 1 गलती)</span>
+              <span class="rules-arrow">▾</span>
+            </div>
+            <div class="rules-card-body">
+              <p class="rules-subhead">निम्नलिखित भ्रांतियों को एक पूर्ण भ्रांति माना जाएगा:</p>
+              <ol class="rules-list">
+                <li>किसी शब्द या अंक (Figure) का <strong>छूट जाना</strong></li>
+                <li>किसी शब्द या अंक के स्थान पर <strong>गलत शब्द या अंक लिखना</strong></li>
+                <li>मूल पाठ में न होने वाले शब्द, अंक या <strong>अमान्य शब्द/अंक को जोड़ना</strong></li>
+                <li><strong>वर्तनी (Spelling) की भ्रांतियाँ</strong></li>
+              </ol>
+              <div class="rules-special-box">
+                <strong>📌 विशेष प्रावधान:</strong>
+                <ul class="rules-list" style="margin-top:8px;">
+                  <li>यदि किसी अंक को अंकों या शब्दों में लिखा गया है तो उसे सही माना जाएगा।</li>
+                  <li>ऐसे शब्द जिन्हें एक से अधिक रूपों में लिखा जा सकता है — ऐसी सभी वर्तनी/शब्दों के रूप स्वीकार्य होंगे।</li>
+                  <li>एक शब्द में एक से अधिक भ्रांतियाँ होने पर भी <strong>अधिकतम एक पूर्ण भ्रांति</strong> ही गिनी जाएगी।</li>
+                  <li>किसी एक शब्द की वर्तनी (Spelling) अशुद्ध हो और उस शब्द की वर्तनी की एक समान अशुद्धि उसी शब्द के सापेक्ष बार-बार हो रही हो तो उसे <strong>पूर्ण भ्रांति</strong> ही माना जाएगा।</li>
+                  <li><strong>नोट:</strong> अभ्यर्थी यदि किसी शब्दों के समूह/वाक्य की पुनरावृत्ति करता है तो पुनरावृत्ति/दोहराए गए सारे शब्दों को अलग-अलग भ्रांति (पूर्ण) मानी जाएगी।</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <!-- Half Mistake -->
+          <div class="rules-card">
+            <div class="rules-card-header rules-card-orange" onclick="stenoApp.toggleRuleCard(this)">
+              <span>⚡ अर्ध भ्रांति / Half Mistake (= 0.5 गलती)</span>
+              <span class="rules-arrow">▾</span>
+            </div>
+            <div class="rules-card-body">
+              <p class="rules-subhead">निम्नलिखित भ्रांतियों को अर्ध भ्रांति माना जाएगा:</p>
+              <div style="margin-bottom:12px;">
+                <strong>(क) स्पेसिंग भ्रांतियाँ (Spacing Error):</strong>
+                <ol class="rules-list" style="margin-top:6px;">
+                  <li>दो शब्दों के बीच <strong>स्पेस (Space) न देना</strong> अर्थात् दो शब्दों को आपस में चिपका देना।</li>
+                  <li>किसी एक शब्द के बीच <strong>अतिरिक्त स्पेस (Space) देना</strong> अर्थात् एक ही शब्द को स्पेस देकर तोड़ देना।</li>
+                </ol>
+              </div>
+              <div style="margin-bottom:12px;">
+                <strong>(ख) दो शब्दों की आपस में <strong>अदला-बदली (Transposition)</strong> होने पर आधी अशुद्धि</strong> मानी जाएगी बशर्ते वाक्य का अर्थ न बदले।
+                <br><em>जैसे: "मुझे जाना है" के स्थान पर "मुझे है जाना"</em>
+              </div>
+              <div>
+                <strong>(ग) एकवचन/बहुवचन संबंधी भ्रांतियाँ:</strong> एकवचन के स्थान पर बहुवचन या बहुवचन के स्थान पर एकवचन का प्रयोग।
+              </div>
+            </div>
+          </div>
+
+          <!-- NOT counted as error -->
+          <div class="rules-card">
+            <div class="rules-card-header rules-card-green" onclick="stenoApp.toggleRuleCard(this)">
+              <span>✅ जिन भ्रांतियों को नहीं गिना जाएगा (Ignored Errors)</span>
+              <span class="rules-arrow">▾</span>
+            </div>
+            <div class="rules-card-body">
+              <p class="rules-subhead">चंद्रबिंदु एवं बिंदु का परस्पर प्रयोग — माफ किया जाएगा:</p>
+              <div class="rules-highlight-box rules-highlight-green">
+                <strong>ँ (चंद्रबिंदु) एवं ं (अनुस्वार) का परस्पर प्रयोग</strong> — दोनों सही मानी जाएगी
+                <br>
+                <em>जैसे: <strong>चाँद / चांद</strong> &nbsp;|&nbsp; <strong>हूँ / हूं</strong> — दोनों रूप मान्य हैं</em>
+              </div>
+            </div>
+          </div>
+
+        </div><!-- /#rules-upsssc -->
+
+        <!-- SSC Steno Rules -->
+        <div id="rules-ssc" class="rules-section-panel" style="display:none;">
+
+          <div class="rules-alert rules-alert-blue">
+            <strong>📌 स्रोत:</strong> कर्मचारी चयन आयोग (SSC) — Stenographer Grade 'C' & Grade 'D' Skill Test Evaluation Rules
+          </div>
+
+          <!-- Speed & Pattern -->
+          <div class="rules-card">
+            <div class="rules-card-header" onclick="stenoApp.toggleRuleCard(this)">
+              <span>📊 परीक्षा पैटर्न एवं गति मानदंड</span>
+              <span class="rules-arrow">▾</span>
+            </div>
+            <div class="rules-card-body">
+              <div class="rules-table-wrap">
+                <table class="rules-table">
+                  <thead>
+                    <tr><th>पोस्ट</th><th>श्रुतलेख गति</th><th>समय</th><th>UR कटऑफ</th><th>Reserved कटऑफ</th></tr>
+                  </thead>
+                  <tbody>
+                    <tr><td>Grade C (हिंदी)</td><td>80 WPM</td><td>10 मिनट</td><td>≤ 5% गलती</td><td>≤ 7% गलती</td></tr>
+                    <tr><td>Grade D (हिंदी)</td><td>80 WPM</td><td>10 मिनट</td><td>≤ 7% गलती</td><td>≤ 10% गलती</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- SSC Full Mistake -->
+          <div class="rules-card">
+            <div class="rules-card-header rules-card-red" onclick="stenoApp.toggleRuleCard(this)">
+              <span>❌ पूर्ण अशुद्धियाँ / Full Mistakes (= 1 गलती)</span>
+              <span class="rules-arrow">▾</span>
+            </div>
+            <div class="rules-card-body">
+              <ol class="rules-list">
+                <li>शब्द/अंकड़ों (word/figure) के <strong>छूट जाने पर</strong></li>
+                <li>गलत शब्द/अंकड़ों के <strong>प्रतिस्थापन (substitution) पर</strong></li>
+                <li>गद्यांश में न पाए जाने वाले किसी भी <strong>शब्द/अंकड़ों के जोड़ने (addition) पर</strong></li>
+                <li>शब्द/अक्षरों की पुनरावृत्ति, जोड़ जाने या प्रतिस्थापन के माध्यम से होने वाली प्रत्येक <strong>वर्णी (spelling) की भूल पर</strong></li>
+                <li>शब्द/अंकड़ों की पुनरावृत्ति पर — उदाहरण के लिए: <em>'मैं घर जा हूँ ..................'</em></li>
+                <li>आधे टाइप किए गए शब्दों को <strong>गलती माना जाएगा</strong></li>
+              </ol>
+            </div>
+          </div>
+
+          <!-- SSC Half Mistake -->
+          <div class="rules-card">
+            <div class="rules-card-header rules-card-orange" onclick="stenoApp.toggleRuleCard(this)">
+              <span>⚡ अर्द्ध-अशुद्धियाँ / Half Mistakes (= 0.5 गलती)</span>
+              <span class="rules-arrow">▾</span>
+            </div>
+            <div class="rules-card-body">
+              <div style="margin-bottom:10px;">
+                <strong>A. स्पेस संबंधी भ्रांतियाँ (Spacing Error):</strong>
+                <br>जहाँ दो शब्दों के बीच कोई स्पेस न दिया गया हो, उदाहरण के लिए — <em>'नूतन आ'</em> या शब्दों के बीच या किसी शब्द के अक्षरों के बीच अत्याधिक स्पेस दिया गया हो, उदाहरण के लिए <em>'नूतन  आ'</em> (Spacing Error)।
+              </div>
+              <div>
+                <strong>B. विराम चिह्न (Punctuation) संबंधी भ्रांतियाँ:</strong>
+                <br>जहाँ विराम चिह्न छूट गया हो या जोड़ गया हो, या उसकी जगह हटा दी गई हो — यह अर्ध-अशुद्धि मानी जाएगी।
+              </div>
+            </div>
+          </div>
+
+          <!-- Scoring Formula -->
+          <div class="rules-card">
+            <div class="rules-card-header rules-card-green" onclick="stenoApp.toggleRuleCard(this)">
+              <span>🔢 गलती प्रतिशत गणना सूत्र</span>
+              <span class="rules-arrow">▾</span>
+            </div>
+            <div class="rules-card-body">
+              <div class="rules-highlight-box rules-highlight-green">
+                <strong>भ्रांति % = (पूर्ण भ्रांतियाँ × 1 + अर्ध भ्रांतियाँ × 0.5) ÷ कुल शब्द × 100</strong>
+              </div>
+              <ul class="rules-list" style="margin-top:12px;">
+                <li>Grade C UR: भ्रांति % ≤ <strong>5%</strong> → सफल</li>
+                <li>Grade C Reserved: भ्रांति % ≤ <strong>7%</strong> → सफल</li>
+                <li>Grade D UR: भ्रांति % ≤ <strong>7%</strong> → सफल</li>
+                <li>Grade D Reserved: भ्रांति % ≤ <strong>10%</strong> → सफल</li>
+              </ul>
+            </div>
+          </div>
+
+        </div><!-- /#rules-ssc -->
+
+      </main><!-- /#view-rules -->
+
+      <!-- ===================================================================
            VIEW: ADMIN DASHBOARD
            =================================================================== -->
       <main class="page-view" id="view-admin">
+
         <div class="section-header">
           <div>
             <h2 class="section-title">एडमिन कंट्रोल पैनल (Admin Dashboard)</h2>
@@ -1736,8 +1976,8 @@
       <button class="mobile-nav-btn" data-nav="my-practice">
         <span>✍️</span> <span>अभ्यास</span>
       </button>
-      <button class="mobile-nav-btn" data-nav="progress">
-        <span>📈</span> <span>प्रगति</span>
+      <button class="mobile-nav-btn" data-nav="rules">
+        <span>📜</span> <span>नियम</span>
       </button>
       <button class="mobile-nav-btn" data-nav="profile">
         <span>👤</span> <span>प्रोफ़ाइल</span>
