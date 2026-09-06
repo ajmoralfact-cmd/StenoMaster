@@ -185,6 +185,7 @@ class StenoApp {
     if (appContainer) appContainer.style.display = 'none';
 
     this.switchAuthTab(tab);
+    this.loadSavedCredentials();
 
     const stuErr = document.getElementById('stuAuthError');
     const adminErr = document.getElementById('adminAuthError');
@@ -207,6 +208,84 @@ class StenoApp {
     if (appContainer) appContainer.style.display = 'flex';
   }
 
+  loadSavedCredentials() {
+    // 1. Student Saved Credentials
+    try {
+      const stuRaw = localStorage.getItem('stenomaster_saved_student_creds');
+      if (stuRaw) {
+        const stuCreds = JSON.parse(stuRaw);
+        const emailInp = document.getElementById('stuAuthEmail');
+        const passInp = document.getElementById('stuAuthPassword');
+        const card = document.getElementById('stuQuickLoginCard');
+        const nameEl = document.getElementById('stuQuickLoginName');
+        const clearBtn = document.getElementById('stuClearSavedCredsBtn');
+
+        if (emailInp && stuCreds.email_or_username) emailInp.value = stuCreds.email_or_username;
+        if (passInp && stuCreds.password) passInp.value = stuCreds.password;
+        if (card) card.style.display = 'block';
+        if (nameEl) nameEl.textContent = stuCreds.name || stuCreds.email_or_username;
+        if (clearBtn) clearBtn.style.display = 'inline-block';
+      }
+    } catch (e) {
+      console.warn('Failed to load saved student credentials', e);
+    }
+
+    // 2. Admin Saved Credentials
+    try {
+      const adminRaw = localStorage.getItem('stenomaster_saved_admin_creds');
+      if (adminRaw) {
+        const adminCreds = JSON.parse(adminRaw);
+        const emailInp = document.getElementById('adminAuthEmail');
+        const passInp = document.getElementById('adminAuthPassword');
+        const card = document.getElementById('adminQuickLoginCard');
+        const nameEl = document.getElementById('adminQuickLoginName');
+        const clearBtn = document.getElementById('adminClearSavedCredsBtn');
+
+        if (emailInp && adminCreds.email_or_username) emailInp.value = adminCreds.email_or_username;
+        if (passInp && adminCreds.password) passInp.value = adminCreds.password;
+        if (card) card.style.display = 'block';
+        if (nameEl) nameEl.textContent = adminCreds.name || adminCreds.email_or_username || 'Administrator';
+        if (clearBtn) clearBtn.style.display = 'inline-block';
+      }
+    } catch (e) {
+      console.warn('Failed to load saved admin credentials', e);
+    }
+  }
+
+  clearSavedStudentCreds() {
+    localStorage.removeItem('stenomaster_saved_student_creds');
+    const emailInp = document.getElementById('stuAuthEmail');
+    const passInp = document.getElementById('stuAuthPassword');
+    const card = document.getElementById('stuQuickLoginCard');
+    const clearBtn = document.getElementById('stuClearSavedCredsBtn');
+    if (emailInp) emailInp.value = '';
+    if (passInp) passInp.value = '';
+    if (card) card.style.display = 'none';
+    if (clearBtn) clearBtn.style.display = 'none';
+    this.showToast('सहेजी गई छात्र लॉगिन जानकारी हटा दी गई।', 'info');
+  }
+
+  clearSavedAdminCreds() {
+    localStorage.removeItem('stenomaster_saved_admin_creds');
+    const emailInp = document.getElementById('adminAuthEmail');
+    const passInp = document.getElementById('adminAuthPassword');
+    const card = document.getElementById('adminQuickLoginCard');
+    const clearBtn = document.getElementById('adminClearSavedCredsBtn');
+    if (emailInp) emailInp.value = '';
+    if (passInp) passInp.value = '';
+    if (card) card.style.display = 'none';
+    if (clearBtn) clearBtn.style.display = 'none';
+    this.showToast('सहेजी गई एडमिन लॉगिन जानकारी हटा दी गई।', 'info');
+  }
+
+  oneClickStudentLogin() {
+    this.handleStudentLogin();
+  }
+
+  oneClickAdminLogin() {
+    this.handleAdminLogin();
+  }
+
   switchAuthTab(tab) {
     const studentBtn = document.getElementById('tabStudentBtn');
     const adminBtn = document.getElementById('tabAdminBtn');
@@ -221,8 +300,9 @@ class StenoApp {
       if (studentPanel) studentPanel.style.display = 'none';
       if (adminPanel) {
         adminPanel.style.display = 'block';
+        this.loadSavedCredentials();
         const inp = document.getElementById('adminAuthEmail');
-        if (inp) setTimeout(() => inp.focus(), 80);
+        if (inp && !inp.value) setTimeout(() => inp.focus(), 80);
       }
     } else {
       if (studentBtn) { studentBtn.classList.add('active'); studentBtn.setAttribute('aria-selected', 'true'); }
@@ -230,8 +310,9 @@ class StenoApp {
       if (indicator) indicator.classList.remove('slide-right');
       if (studentPanel) {
         studentPanel.style.display = 'block';
+        this.loadSavedCredentials();
         const inp = document.getElementById('stuAuthEmail');
-        if (inp) setTimeout(() => inp.focus(), 80);
+        if (inp && !inp.value) setTimeout(() => inp.focus(), 80);
       }
       if (adminPanel) adminPanel.style.display = 'none';
     }
@@ -317,6 +398,13 @@ class StenoApp {
         password: password
       };
 
+      // Auto-save newly registered student credentials for instant 1-click login
+      localStorage.setItem('stenomaster_saved_student_creds', JSON.stringify({
+        email_or_username: this._registeredCreds.username,
+        password: password,
+        name: fullName
+      }));
+
       // Populate & open Credentials Modal
       const codeEl = document.getElementById('credStudentCode');
       const userEl = document.getElementById('credUsername');
@@ -369,6 +457,18 @@ class StenoApp {
       this.user = res.user;
       localStorage.setItem('stenomaster_token', this.token);
 
+      // Save Student Credentials for 1-Click Login if Remember Me is checked
+      const rememberStudent = document.getElementById('stuRememberMe')?.checked ?? true;
+      if (rememberStudent) {
+        localStorage.setItem('stenomaster_saved_student_creds', JSON.stringify({
+          email_or_username: email,
+          password: password,
+          name: this.user.display_name || this.user.username
+        }));
+      } else {
+        localStorage.removeItem('stenomaster_saved_student_creds');
+      }
+
       this.hideAuthGateway();
       this.updateUserUI();
       await this.loadCategories();
@@ -390,7 +490,7 @@ class StenoApp {
         this.showToast(msg, 'error');
       }
     } finally {
-      if (submitBtn) { submitBtn.disabled = false; submitBtn.innerHTML = '<span>Login</span> <span>→</span>'; }
+      if (submitBtn) { submitBtn.disabled = false; submitBtn.innerHTML = '<span>लॉगिन करें (Login)</span> <span>→</span>'; }
     }
   }
 
@@ -428,6 +528,18 @@ class StenoApp {
       this.token = res.token;
       this.user = res.user;
       localStorage.setItem('stenomaster_token', this.token);
+
+      // Save Admin Credentials for 1-Click Login if Remember Me is checked
+      const rememberAdmin = document.getElementById('adminRememberMe')?.checked ?? true;
+      if (rememberAdmin) {
+        localStorage.setItem('stenomaster_saved_admin_creds', JSON.stringify({
+          email_or_username: email,
+          password: password,
+          name: this.user.display_name || this.user.username || 'Administrator'
+        }));
+      } else {
+        localStorage.removeItem('stenomaster_saved_admin_creds');
+      }
 
       this.hideAuthGateway();
       this.updateUserUI();
@@ -759,25 +871,13 @@ class StenoApp {
     const currentView = this.activeView || 'home';
 
     if (isAdmin) {
-      // Admin Sidebar Items
+      // Streamlined Admin Sidebar Items (Most useful tools only)
       const adminItems = [
-        { id: 'admin', icon: '📊', label: 'Overview & Metrics', sub: 'कंसोल अवलोकन', view: 'admin' },
-        { id: 'admin-users', icon: '👥', label: 'Users & Roles', sub: 'उपयोगकर्ता प्रबंधन', action: 'users' },
-        { id: 'admin-subscribers', icon: '👑', label: 'Subscribers & Pro', sub: 'सब्सक्राइबर प्रबंधन', view: 'admin', section: 'adminSubscribersSection' },
+        { id: 'admin', icon: '📊', label: 'Overview', sub: 'कंसोल मेट्रिक्स', view: 'admin' },
+        { id: 'admin-passages', icon: '📝', label: 'Passages (आलेख)', sub: 'आलेख सूची एवं संपादन', view: 'admin', section: 'adminPassagesSection' },
+        { id: 'admin-subscribers', icon: '👥', label: 'Students & Free Access', sub: 'छात्र व फ्री एक्सेस टिक', view: 'admin', section: 'adminSubscribersSection' },
         { id: 'admin-payments', icon: '💳', label: 'Payments & UTR', sub: 'भुगतान सत्यापन', view: 'admin', section: 'adminPaymentsSection' },
-        { id: 'admin-pricing', icon: '💎', label: 'Plan Pricing & QR', sub: 'प्लान मूल्य एवं QR', view: 'admin', section: 'adminSubscriptionConfigSection' },
-        { id: 'admin-categories', icon: '📚', label: 'Categories', sub: 'श्रेणी प्रबंधन', action: 'category' },
-        { id: 'admin-passages', icon: '📝', label: 'Passage Management', sub: 'आलेख सूची एवं संपादन', view: 'admin', section: 'adminPassagesSection' },
-        { id: 'admin-audio', icon: '🎧', label: 'Audio Dictations', sub: 'ऑडियो प्रबंधन', view: 'admin', section: 'adminPassagesSection' },
-        { id: 'admin-attempts', icon: '📋', label: 'Practice Attempts', sub: 'छात्र अभ्यास रिकॉर्ड', view: 'admin', section: 'adminOverviewMetrics' },
-        { id: 'admin-reports', icon: '📈', label: 'Reports & Analytics', sub: 'समग्र रिपोर्ट', view: 'admin', section: 'adminOverviewMetrics' },
-        { id: 'leaderboard', icon: '🏆', label: 'Leaderboard', sub: 'रैंकिंग बोर्ड', view: 'leaderboard' },
-        { id: 'notifications', icon: '🔔', label: 'Notifications', sub: 'अधिसूचनाएं', view: 'notifications' },
-        { id: 'refer', icon: '🎁', label: 'Referral Logs', sub: 'रेफरल रिकॉर्ड', view: 'refer' },
-        { id: 'admin-scoring', icon: '⚙️', label: 'Scoring Presets', sub: 'मूल्यांकन नियम', view: 'admin', section: 'adminScoringSection' },
-        { id: 'admin-branding', icon: '🎨', label: 'Platform Branding', sub: 'ब्रांडिंग एवं नाम', view: 'admin', section: 'adminBrandingSection' },
-        { id: 'admin-targets', icon: '🎯', label: 'Daily Targets', sub: 'दैनिक लक्ष्य सेटिंग्स', view: 'admin', section: 'adminBrandingSection' },
-        { id: 'admin-settings', icon: '🔧', label: 'System Settings', sub: 'सिस्टम विन्यास', view: 'admin', section: 'adminBrandingSection' }
+        { id: 'admin-pricing', icon: '⚙️', label: 'Pricing, QR & Scoring', sub: 'प्लान, QR व नियम', view: 'admin', section: 'adminSubscriptionConfigSection' }
       ];
 
       navContainer.innerHTML = `
@@ -1210,8 +1310,9 @@ class StenoApp {
     const secs = (p.duration_seconds || 180) % 60;
     const durStr = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
     const progressPercent = p.best_wpm ? Math.min(100, Math.round((p.best_wpm / p.target_wpm) * 100)) : 0;
-    const isLocked = !!p.is_locked;
-    const isFree = !!p.is_free_tier;
+    const hasFullAccess = !!(this.user && (this.user.role === 'admin' || this.user.subscription_status === 'active' || this.user.is_free_access));
+    const isLocked = !hasFullAccess && !!p.is_locked;
+    const isFree = !!p.is_free_tier || hasFullAccess;
 
     return `
       <div class="class-card ${isLocked ? 'locked-card' : ''}" onclick="${isLocked ? `stenoApp.handleLockedPassageClick(${p.id})` : `stenoApp.openPractice(${p.id})`}" style="cursor:pointer;">
@@ -1320,7 +1421,8 @@ class StenoApp {
       this.currentPassage = res.passage;
 
       // Access control check for premium passage (free tier passages are 100% free)
-      if (!this.currentPassage.is_free_tier && this.currentPassage.is_premium && (!this.user || (this.user.role !== 'admin' && this.user.subscription_status !== 'active'))) {
+      const hasFullAccess = !!(this.user && (this.user.role === 'admin' || this.user.subscription_status === 'active' || this.user.is_free_access));
+      if (!this.currentPassage.is_free_tier && this.currentPassage.is_premium && !hasFullAccess) {
         this.handleLockedPassageClick(passageId);
         return;
       }
