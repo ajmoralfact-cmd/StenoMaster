@@ -15,6 +15,8 @@ class StenoAdmin {
     this.activeTab = 'overview';
     this.passagesList = [];
     this.categoriesList = [];
+    this.subscribersList = [];
+    this.currentSubFilter = 'all';
     this.settings = {};
   }
 
@@ -22,6 +24,7 @@ class StenoAdmin {
     try {
       const res = await stenoApp.apiCall('/api/admin/overview');
       this.renderOverviewMetrics(res);
+      await this.loadSubscribers();
       await this.loadPayments();
       await this.loadRewardsLedger();
       await this.loadSubscriptionSettings();
@@ -494,7 +497,7 @@ class StenoAdmin {
     try {
       const res = await stenoApp.apiCall('/api/settings');
       this.settings = res.settings || {};
-      const scoringMode = this.settings.scoring_mode || 'standard';
+      const scoringMode = this.settings.scoring_mode || 'ssc';
       const modeSelect = document.getElementById('adminScoringModeSelect');
       if (modeSelect) modeSelect.value = scoringMode;
 
@@ -503,6 +506,18 @@ class StenoAdmin {
 
       const courtFactor = document.getElementById('adminCourtFactorInput');
       if (courtFactor) courtFactor.value = this.settings.court_error_factor || '1.2';
+
+      const sscGradeC = document.getElementById('adminSscGradeCInput');
+      if (sscGradeC) sscGradeC.value = this.settings.ssc_grade_c_cutoff_ur || '5.0';
+
+      const sscGradeD = document.getElementById('adminSscGradeDInput');
+      if (sscGradeD) sscGradeD.value = this.settings.ssc_grade_d_cutoff_ur || '7.0';
+
+      const upssscMinWpm = document.getElementById('adminUpssscMinWpmInput');
+      if (upssscMinWpm) upssscMinWpm.value = this.settings.upsssc_min_wpm_hindi || '25';
+
+      const upssscMaxErr = document.getElementById('adminUpssscMaxErrInput');
+      if (upssscMaxErr) upssscMaxErr.value = this.settings.upsssc_max_error_percent || '5.0';
     } catch (err) {
       console.error('Failed to load scoring config:', err);
     }
@@ -513,14 +528,22 @@ class StenoAdmin {
     const scoring_mode = document.getElementById('adminScoringModeSelect').value;
     const ssc_error_factor = document.getElementById('adminSscFactorInput').value;
     const court_error_factor = document.getElementById('adminCourtFactorInput').value;
+    const ssc_grade_c_cutoff_ur = document.getElementById('adminSscGradeCInput') ? document.getElementById('adminSscGradeCInput').value : '5.0';
+    const ssc_grade_d_cutoff_ur = document.getElementById('adminSscGradeDInput') ? document.getElementById('adminSscGradeDInput').value : '7.0';
+    const upsssc_min_wpm_hindi = document.getElementById('adminUpssscMinWpmInput') ? document.getElementById('adminUpssscMinWpmInput').value : '25';
+    const upsssc_max_error_percent = document.getElementById('adminUpssscMaxErrInput') ? document.getElementById('adminUpssscMaxErrInput').value : '5.0';
 
     try {
       await stenoApp.apiCall('/api/admin/settings/update', 'POST', {
         scoring_mode,
         ssc_error_factor,
-        court_error_factor
+        court_error_factor,
+        ssc_grade_c_cutoff_ur,
+        ssc_grade_d_cutoff_ur,
+        upsssc_min_wpm_hindi,
+        upsssc_max_error_percent
       });
-      stenoApp.showToast('मूल्यांकन नियम सहेज लिए गए! ✅', 'success');
+      stenoApp.showToast('परीक्षा मूल्यांकन नियम सफलतापूर्वक सहेजे गए! ✅', 'success');
     } catch (err) {
       stenoApp.showToast('नियम सहेजने में त्रुटि: ' + err.message, 'error');
     }
@@ -658,6 +681,224 @@ class StenoAdmin {
   }
 
   // -------------------------------------------------------------------------
+  // Subscribers Management & Manual Pro Grant / Revocation
+  // -------------------------------------------------------------------------
+  async loadSubscribers(filter = 'all') {
+    this.currentSubFilter = filter;
+    const tbody = document.getElementById('adminSubscribersTableBody');
+    if (!tbody) return;
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding:24px; color:var(--text-muted);">सब्सक्राइबर सूची लोड हो रही है...</td></tr>';
+    try {
+      const res = await stenoApp.apiCall('/api/admin/users');
+      this.subscribersList = res.users || [];
+      this.renderSubscribersTable();
+    } catch (err) {
+      tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; padding:24px; color:var(--accent-red);">त्रुटि: ${this.escapeHtml(err.message)}</td></tr>`;
+    }
+  }
+
+  filterSubscribers(filter, btnEl) {
+    this.currentSubFilter = filter;
+    if (btnEl) {
+      document.querySelectorAll('#subscribersFilterPills .sub-filter-pill').forEach(b => b.classList.remove('active'));
+      btnEl.classList.add('active');
+    }
+    this.renderSubscribersTable();
+  }
+
+  searchSubscribers(query) {
+    this.renderSubscribersTable(query);
+  }
+
+  renderSubscribersTable(searchQuery = '') {
+    const tbody = document.getElementById('adminSubscribersTableBody');
+    if (!tbody) return;
+
+    const q = (searchQuery || document.getElementById('subscriberSearchInput')?.value || '').trim().toLowerCase();
+
+    let filtered = this.subscribersList.filter(u => {
+      // 1. Status filter
+      if (this.currentSubFilter === 'active') {
+        if (u.effective_status !== 'active') return false;
+      } else if (this.currentSubFilter === 'expired') {
+        if (u.effective_status !== 'expired') return false;
+      } else if (this.currentSubFilter === 'free') {
+        if (u.effective_status !== 'free' && u.effective_status !== 'expired') return false;
+        if (u.role === 'admin' || u.effective_status === 'active') return false;
+      }
+
+      // 2. Search filter
+      if (q) {
+        const name = (u.display_name || u.username || '').toLowerCase();
+        const code = (u.student_code || '').toLowerCase();
+        const email = (u.email || '').toLowerCase();
+        const phone = (u.phone || '').toLowerCase();
+        if (!name.includes(q) && !code.includes(q) && !email.includes(q) && !phone.includes(q)) {
+          return false;
+        }
+      }
+      return true;
+    });
+
+    if (filtered.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding:28px; color:var(--text-muted);">कोई छात्र/सब्सक्राइबर नहीं मिला।</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = filtered.map(u => {
+      const isPro = u.effective_status === 'active';
+      const isExpired = u.effective_status === 'expired';
+      const isAdmin = u.role === 'admin';
+
+      let statusBadge = `<span class="sub-status-badge free">🆓 Free Tier</span>`;
+      let daysBadge = `<span style="color:var(--text-muted);">—</span>`;
+
+      if (isAdmin) {
+        statusBadge = `<span class="badge badge-hard" style="font-size:0.72rem;">🛡️ Admin</span>`;
+        daysBadge = `<span style="font-weight:700; color:var(--accent-green);">असीमित (Lifetime)</span>`;
+      } else if (isPro) {
+        const days = u.subscription_days_left;
+        statusBadge = `<span class="sub-status-badge active-pro">👑 Active Pro</span>`;
+        daysBadge = `<span style="font-weight:700; color:#d97706;">${days >= 9999 ? 'असीमित' : `${days} दिन शेष`}</span>`;
+      } else if (isExpired) {
+        statusBadge = `<span class="sub-status-badge expired">⏳ Expired</span>`;
+        daysBadge = `<span style="color:#dc2626; font-size:0.8rem; font-weight:600;">समाप्त</span>`;
+      }
+
+      let endDateStr = '—';
+      if (isAdmin) {
+        endDateStr = 'लाइफटाइम';
+      } else if (u.subscription_end) {
+        const d = new Date(u.subscription_end);
+        if (!isNaN(d.getTime())) {
+          endDateStr = d.toLocaleDateString('hi-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+        }
+      }
+
+      const planName = isAdmin ? 'System Administrator' : (u.subscription_plan || (isPro ? 'StenoMaster Pro' : 'Free Tier'));
+
+      return `
+        <tr>
+          <td>
+            <div style="font-weight:700; color:var(--text-main);">${this.escapeHtml(u.display_name || u.username)}</div>
+            <div style="font-size:0.75rem; color:var(--primary); font-weight:700;">${this.escapeHtml(u.student_code || `#${u.id}`)}</div>
+          </td>
+          <td>
+            <div style="font-size:0.82rem;">${this.escapeHtml(u.email)}</div>
+            <div style="font-size:0.75rem; color:var(--text-muted);">${this.escapeHtml(u.phone || '—')}</div>
+          </td>
+          <td>${statusBadge}</td>
+          <td><span style="font-size:0.8rem; font-weight:600;">${this.escapeHtml(planName)}</span></td>
+          <td>${daysBadge}</td>
+          <td style="font-size:0.8rem; color:var(--text-muted);">${endDateStr}</td>
+          <td>
+            <span class="badge" style="background:var(--bg-subtle); color:var(--text-main); font-weight:700; font-size:0.75rem;">
+              ${u.attempts_count || 0} अभ्यास
+            </span>
+          </td>
+          <td style="text-align:right;">
+            ${!isAdmin ? `
+              <div style="display:inline-flex; gap:6px;">
+                <button class="btn-primary" style="padding:4px 10px; font-size:0.75rem; background:linear-gradient(135deg, #10b981, #059669); border-color:#059669;"
+                        onclick="stenoAdmin.openGrantProModal(${u.id}, '${this.escapeHtml(u.display_name || u.username).replace(/'/g, "\\'")}', '${this.escapeHtml(u.student_code || '')}', '${u.effective_status}', ${u.subscription_days_left || 0})">
+                  👑 Pro दें/बढ़ाएं
+                </button>
+                ${isPro ? `
+                  <button class="btn-secondary" style="padding:4px 10px; font-size:0.75rem; color:var(--accent-red);"
+                          onclick="stenoAdmin.revokePro(${u.id}, '${this.escapeHtml(u.display_name || u.username).replace(/'/g, "\\'")}')">
+                    ✕ रद्द
+                  </button>
+                ` : ''}
+              </div>
+            ` : `<span style="font-size:0.75rem; color:var(--text-muted);">Admin</span>`}
+          </td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+  openGrantProModal(userId, userName, studentCode, currentStatus, daysLeft) {
+    const infoBox = document.getElementById('grantProStudentInfo');
+    const idInput = document.getElementById('grantProUserId');
+    const daysSelect = document.getElementById('grantProDaysSelect');
+    const customDaysGroup = document.getElementById('grantProCustomDaysGroup');
+    const planInput = document.getElementById('grantProPlanNameInput');
+
+    if (idInput) idInput.value = userId;
+    if (daysSelect) daysSelect.value = '30';
+    if (customDaysGroup) customDaysGroup.style.display = 'none';
+    if (planInput) planInput.value = 'StenoMaster Pro';
+
+    if (infoBox) {
+      const statusText = currentStatus === 'active' ? `<span style="color:#d97706; font-weight:700;">👑 Pro सक्रिय (${daysLeft} दिन शेष)</span>` : `<span style="color:var(--text-muted);">निःशुल्क टियर (Free Tier)</span>`;
+      infoBox.innerHTML = `
+        <div><strong>छात्र:</strong> ${this.escapeHtml(userName)} (${this.escapeHtml(studentCode)})</div>
+        <div style="margin-top:2px;"><strong>वर्तमान स्थिति:</strong> ${statusText}</div>
+        <div style="font-size:0.78rem; color:var(--text-muted); margin-top:4px;">
+          💡 <em>नोट: यदि छात्र के पास पहले से सक्रिय दिन शेष हैं, तो नए दिन वर्तमान समाप्ति तिथि के आगे स्वतः जुड़ जाएंगे।</em>
+        </div>
+      `;
+    }
+
+    stenoApp.openModal('adminGrantProModal');
+  }
+
+  onGrantDaysChange(val) {
+    const group = document.getElementById('grantProCustomDaysGroup');
+    if (group) group.style.display = val === 'custom' ? 'block' : 'none';
+  }
+
+  async submitGrantPro(e) {
+    e.preventDefault();
+    const userId = document.getElementById('grantProUserId')?.value;
+    const daysSelect = document.getElementById('grantProDaysSelect')?.value;
+    const customInput = document.getElementById('grantProCustomDaysInput')?.value;
+    const planName = document.getElementById('grantProPlanNameInput')?.value.trim() || 'StenoMaster Pro';
+    const notes = document.getElementById('grantProNotesInput')?.value.trim();
+
+    let days = parseInt(daysSelect);
+    if (daysSelect === 'custom') {
+      days = parseInt(customInput);
+      if (!days || days <= 0) {
+        stenoApp.showToast('कृपया मान्य दिनों की संख्या दर्ज करें', 'error');
+        return;
+      }
+    }
+
+    try {
+      const res = await stenoApp.apiCall('/api/admin/users/grant-subscription', 'POST', {
+        user_id: parseInt(userId),
+        plan_name: planName,
+        days: days,
+        notes: notes
+      });
+      stenoApp.closeModal('adminGrantProModal');
+      stenoApp.showToast(res.message || 'प्रो सदस्यता सफलतापूर्वक प्रदान की गई! 🎉', 'success');
+      await this.loadSubscribers(this.currentSubFilter);
+      await this.loadUsers();
+    } catch (err) {
+      stenoApp.showToast('प्रो सक्रियण विफल: ' + err.message, 'error');
+    }
+  }
+
+  async revokePro(userId, userName) {
+    const reason = prompt(`क्या आप निश्चित रूप से ${userName} की प्रो सदस्यता रद्द करना चाहते हैं?\nकारण दर्ज करें (वैकल्पिक):`, 'एडमिन द्वारा रद्द');
+    if (reason === null) return;
+
+    try {
+      const res = await stenoApp.apiCall('/api/admin/users/revoke-subscription', 'POST', {
+        user_id: parseInt(userId),
+        reason: reason
+      });
+      stenoApp.showToast(res.message || 'सदस्यता रद्द की गई।', 'info');
+      await this.loadSubscribers(this.currentSubFilter);
+      await this.loadUsers();
+    } catch (err) {
+      stenoApp.showToast('रद्द करने में त्रुटि: ' + err.message, 'error');
+    }
+  }
+
+  // -------------------------------------------------------------------------
   // Phase 3: Payment Verification & Subscription Management
   // -------------------------------------------------------------------------
   async loadPayments() {
@@ -764,6 +1005,11 @@ class StenoAdmin {
       const settings = res.settings || {};
       const planNameInput = document.getElementById('adminSubPlanNameInput');
       const planPriceInput = document.getElementById('adminSubPlanPriceInput');
+      const p1mInput = document.getElementById('adminSubPrice1m');
+      const p3mInput = document.getElementById('adminSubPrice3m');
+      const p6mInput = document.getElementById('adminSubPrice6m');
+      const p1yInput = document.getElementById('adminSubPrice1y');
+      const upiIdInput = document.getElementById('adminSubUpiIdInput');
       const qrPreview = document.getElementById('adminQrPreviewImg');
       const cfAppIdInput = document.getElementById('adminCashfreeAppIdInput');
       const cfSecretInput = document.getElementById('adminCashfreeSecretInput');
@@ -771,6 +1017,11 @@ class StenoAdmin {
 
       if (planNameInput && settings.subscription_plan_name) planNameInput.value = settings.subscription_plan_name;
       if (planPriceInput && settings.subscription_plan_price) planPriceInput.value = settings.subscription_plan_price;
+      if (p1mInput && settings.subscription_price_1m) p1mInput.value = settings.subscription_price_1m;
+      if (p3mInput && settings.subscription_price_3m) p3mInput.value = settings.subscription_price_3m;
+      if (p6mInput && settings.subscription_price_6m) p6mInput.value = settings.subscription_price_6m;
+      if (p1yInput && settings.subscription_price_1y) p1yInput.value = settings.subscription_price_1y;
+      if (upiIdInput && settings.subscription_upi_id) upiIdInput.value = settings.subscription_upi_id;
       if (qrPreview && settings.subscription_qr_url) qrPreview.src = `${settings.subscription_qr_url}?t=${Date.now()}`;
       if (cfAppIdInput && settings.cashfree_app_id) cfAppIdInput.value = settings.cashfree_app_id;
       if (cfSecretInput && settings.cashfree_secret_key) cfSecretInput.value = settings.cashfree_secret_key;
@@ -784,6 +1035,11 @@ class StenoAdmin {
     e.preventDefault();
     const plan_name = document.getElementById('adminSubPlanNameInput')?.value.trim();
     const plan_price = document.getElementById('adminSubPlanPriceInput')?.value.trim();
+    const subscription_price_1m = document.getElementById('adminSubPrice1m')?.value.trim();
+    const subscription_price_3m = document.getElementById('adminSubPrice3m')?.value.trim();
+    const subscription_price_6m = document.getElementById('adminSubPrice6m')?.value.trim();
+    const subscription_price_1y = document.getElementById('adminSubPrice1y')?.value.trim();
+    const subscription_upi_id = document.getElementById('adminSubUpiIdInput')?.value.trim();
     const cashfree_app_id = document.getElementById('adminCashfreeAppIdInput')?.value.trim();
     const cashfree_secret_key = document.getElementById('adminCashfreeSecretInput')?.value.trim();
     const cashfree_env = document.getElementById('adminCashfreeEnvSelect')?.value || 'SANDBOX';
@@ -792,11 +1048,17 @@ class StenoAdmin {
       await stenoApp.apiCall('/api/admin/subscription/settings', 'POST', {
         plan_name,
         plan_price,
+        subscription_price_1m,
+        subscription_price_3m,
+        subscription_price_6m,
+        subscription_price_1y,
+        subscription_upi_id,
         cashfree_app_id,
         cashfree_secret_key,
         cashfree_env
       });
       stenoApp.showToast('सदस्यता सेटिंग्स सफलतापूर्वक सहेजी गईं! ✅', 'success');
+      await this.loadSubscriptionSettings();
     } catch (err) {
       stenoApp.showToast('सेटिंग्स सहेजने में त्रुटि: ' + err.message, 'error');
     }
