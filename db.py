@@ -842,22 +842,24 @@ def seed_initial_data():
         }
     ]
 
-    for p in passages_data:
-        cat_id = cat_map.get(p["category_slug"], 1)
-        # Check if already exists
-        c.execute("SELECT id FROM passages WHERE title = ?", (p["title"],))
-        existing = c.fetchone()
-        if not existing:
-            c.execute("""
-                INSERT INTO passages (
-                    title, category_id, language, difficulty, official_text, instructions,
-                    target_wpm, duration_seconds, tags, status, created_at, updated_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'published', ?, ?)
-            """, (
-                p["title"], cat_id, p["language"], p["difficulty"], p["official_text"],
-                p["instructions"], p["target_wpm"], p["duration_seconds"], p["tags"],
-                now_iso, now_iso
-            ))
+    # Only seed sample passages on very first fresh setup when table is completely empty
+    c.execute("SELECT COUNT(*) FROM passages")
+    if c.fetchone()[0] == 0:
+        for p in passages_data:
+            cat_id = cat_map.get(p["category_slug"], 1)
+            c.execute("SELECT id FROM passages WHERE title = ?", (p["title"],))
+            existing = c.fetchone()
+            if not existing:
+                c.execute("""
+                    INSERT INTO passages (
+                        title, category_id, language, difficulty, official_text, instructions,
+                        target_wpm, duration_seconds, tags, status, created_at, updated_at
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'published', ?, ?)
+                """, (
+                    p["title"], cat_id, p["language"], p["difficulty"], p["official_text"],
+                    p["instructions"], p["target_wpm"], p["duration_seconds"], p["tags"],
+                    now_iso, now_iso
+                ))
 
     conn.commit()
     conn.close()
