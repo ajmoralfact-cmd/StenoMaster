@@ -214,8 +214,10 @@ class StenoAdmin {
     try {
       const res = await stenoApp.apiCall('/api/admin/passages/toggle-status', 'POST', { id });
       stenoApp.showToast(`आलेख स्थिति बदली गई: ${res.status.toUpperCase()}`, 'info');
+      localStorage.removeItem('stenomaster_cached_passages');
+      localStorage.setItem('stenomaster_passages_version', Date.now().toString());
       this.loadPassages();
-      stenoApp.loadPassages();
+      await stenoApp.loadPassages(true);
     } catch (err) {
       stenoApp.showToast('स्थिति बदलने में त्रुटि: ' + err.message, 'error');
     }
@@ -476,8 +478,10 @@ class StenoAdmin {
       await stenoApp.apiCall('/api/admin/passages/save', 'POST', payload);
       stenoApp.showToast('आलेख सफलतापूर्ण सहेजा गया! 🎉', 'success');
       stenoApp.closeModal('passageEditModal');
+      localStorage.removeItem('stenomaster_cached_passages');
+      localStorage.setItem('stenomaster_passages_version', Date.now().toString());
       await this.loadPassages();
-      await stenoApp.loadPassages();
+      await stenoApp.loadPassages(true);
     } catch (err) {
       stenoApp.showToast('आलेख सहेजने में त्रुटि: ' + (err.message || 'अज्ञात त्रुटि'), 'error');
     } finally {
@@ -493,8 +497,10 @@ class StenoAdmin {
     try {
       await stenoApp.apiCall('/api/admin/passages/delete', 'POST', { id });
       stenoApp.showToast('आलेख हटा दिया गया।', 'info');
-      this.loadPassages();
-      stenoApp.loadPassages();
+      localStorage.removeItem('stenomaster_cached_passages');
+      localStorage.setItem('stenomaster_passages_version', Date.now().toString());
+      await this.loadPassages();
+      await stenoApp.loadPassages(true);
     } catch (err) {
       stenoApp.showToast('आलेख हटाने में त्रुटि: ' + err.message, 'error');
     }
