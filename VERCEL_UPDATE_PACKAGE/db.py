@@ -44,7 +44,15 @@ class PostgresCursorWrapper:
         self.lastrowid = None
 
     def execute(self, sql, params=None):
+        import re
         pg_sql = sql.replace('?', '%s').strip()
+        
+        # Translate SQLite INSERT OR IGNORE INTO to PostgreSQL ON CONFLICT DO NOTHING
+        if re.search(r'(?i)\bINSERT\s+OR\s+IGNORE\s+INTO\b', pg_sql):
+            pg_sql = re.sub(r'(?i)\bINSERT\s+OR\s+IGNORE\s+INTO\b', 'INSERT INTO', pg_sql)
+            if 'ON CONFLICT' not in pg_sql.upper():
+                pg_sql = pg_sql + ' ON CONFLICT DO NOTHING'
+
         tables_with_id = ('USERS', 'PRACTICE_ATTEMPTS', 'PASSAGES', 'CATEGORIES', 'PAYMENT_REQUESTS', 'CASHFREE_ORDERS', 'NOTIFICATIONS', 'REFERRALS', 'REWARD_TRANSACTIONS')
         sql_upper = pg_sql.upper()
         if any(f"INSERT INTO {tbl}" in sql_upper for tbl in tables_with_id) and 'RETURNING' not in sql_upper:
@@ -683,7 +691,7 @@ def seed_initial_data():
         ('reward_points_streak_7', '50')
     ]
     for k, v in default_settings:
-        c.execute("INSERT OR IGNORE INTO admin_settings (key, value, updated_at) VALUES (?, ?, ?)", (k, v, now_iso))
+        c.execute("INSERT INTO admin_settings (key, value, updated_at) VALUES (?, ?, ?) ON CONFLICT (key) DO NOTHING", (k, v, now_iso))
 
     # Migrate existing subscription pricing to ₹100
     c.execute("UPDATE admin_settings SET value = '100' WHERE key = 'subscription_plan_price' AND value = '299'")
@@ -695,6 +703,32 @@ def seed_initial_data():
         yr = row['created_at'][:4] if row['created_at'] else str(datetime.now().year)
         code = f"STM-{yr}-{row['id']:06d}"
         c.execute("UPDATE users SET student_code = ? WHERE id = ?", (code, row['id']))
+
+    # 4. Seed Default Categories (only if categories table is empty)
+    c.execute("SELECT COUNT(*) as cnt FROM categories")
+    if c.fetchone()['cnt'] > 0:
+        conn.commit()
+    else:
+        categories_data = [
+            ("दैनिक समाचार संपादकीय", "daily-editorial", "प्रतिष्ठित समाचार पत्रों (दैनिक जागरण, जनसत्ता) के समसामयिक संपादकीय", "hindi", "newspaper", 1),
+            ("विधिक शब्दावली (कोर्ट डिक्टेशन)", "court-legal", "अदालती आदेश, निर्णय, वाद-पत्र और कानूनी मामलों की विशिष्ट शब्दावली", "hindi", "scale", 2),
+            ("प्रशासनिक एवं सरकारी पत्राचार", "governance-admin", "संसदीय कार्यवाही, प्रशासनिक परिपत्र, सरकारी योजनाएं और नीतिगत आलेख", "hindi", "landmark", 3),
+            ("साहित्यिक एवं दार्शनिक गद्यांश", "literature-classic", "प्रेमचंद, दिनकर, महादेवी वर्मा आदि कालजयी रचनाकारों के गद्य", "hindi", "book-open", 4),
+            ("प्रतियोगी परीक्षा स्पेशल", "exam-special", "SSC Stenographer Grade C & D, UPSSSC, रेलवे आदि के पिछले वर्षों के पेपर्स", "hindi", "trophy", 5),
+            ("General English", "general-english", "Standard contemporary and formal English prose for all examinations", "english", "book", 6),
+            ("Legal English", "legal-english", "Court judgments, legal proceedings, and statutory legal dictation", "english", "file-text", 7),
+            ("Parliamentary Debates", "parliament-english", "Official parliamentary proceeding transcripts and policy speeches", "english", "flag", 8),
+            ("SSC Stenographer", "ssc-steno", "कर्मचारी चयन आयोग ग्रेड 'सी' और 'डी' मॉडल टेस्ट", "both", "award", 9),
+            ("UPSSSC Steno", "upsssc-steno", "उत्तर प्रदेश अधीनस्थ सेवा चयन आयोग आशुलिपिक परीक्षा", "hindi", "briefcase", 10),
+            ("High Court Steno", "court-steno", "उच्च न्यायालय एवं जिला न्यायालय आशुलिपिक विधिक डिक्टेशन", "both", "scale", 11),
+        ]
+        for name, slug, desc, lang, icon, order in categories_data:
+            c.execute("""
+                INSERT INTO categories (name, slug, description, language, icon, sort_order)
+                VALUES (?, ?, ?, ?, ?, ?)
+                ON CONFLICT (slug) DO NOTHING
+            """, (name, slug, desc, lang, icon, order))
+        conn.commit()
 
     # Seed initial payment QR placeholder file if missing
     qr_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'public', 'assets')
@@ -1678,42 +1712,58 @@ def save_practice_attempt(
         if cur_streak > longest_streak:
             longest_streak = cur_streak
 
-    # 1. Practice Attempt Reward (Idempotent per attempt_id)
-    c.execute("""
-        INSERT OR IGNORE INTO reward_transactions (user_id, points, type, reference_id, description, created_at)
-        VALUES (?, ?, 'practice', ?, ?, ?)
-    """, (user_id, practice_pts, f"attempt:{attempt_id}", f"डिक्टेशन अभ्यास #{attempt_id} पूर्ण", now_iso))
+    # Commit attempt immediately so student attempt is never lost
+    try:
+        conn.commit()
+    except Exception:
+        pass
 
-    # 2. Daily Goal Reward
-    c.execute("SELECT COUNT(*) as count FROM practice_attempts WHERE user_id = ? AND date(created_at) = date(?)", (user_id, now_iso))
-    today_count = c.fetchone()['count']
-    if today_count >= target_dictations:
+    # Safe Reward Ledger & Achievement processing (non-fatal)
+    try:
+        # 1. Practice Attempt Reward (Idempotent per attempt_id)
         c.execute("""
-            INSERT OR IGNORE INTO reward_transactions (user_id, points, type, reference_id, description, created_at)
-            VALUES (?, ?, 'daily_goal', ?, ?, ?)
-        """, (user_id, daily_goal_pts, f"goal:{today_str}", f"दैनिक लक्ष्य ({target_dictations} डिक्टेशन) पूर्ण", now_iso))
+            INSERT INTO reward_transactions (user_id, points, type, reference_id, description, created_at)
+            VALUES (?, ?, 'practice', ?, ?, ?)
+            ON CONFLICT DO NOTHING
+        """, (user_id, practice_pts, f"attempt:{attempt_id}", f"डिक्टेशन अभ्यास #{attempt_id} पूर्ण", now_iso))
 
-    # 3. 7-Day Streak Milestone Reward
-    if cur_streak >= 7 and cur_streak % 7 == 0:
+        # 2. Daily Goal Reward
+        c.execute("SELECT COUNT(*) as count FROM practice_attempts WHERE user_id = ? AND date(created_at) = date(?)", (user_id, now_iso))
+        today_row = c.fetchone()
+        today_count = today_row['count'] if today_row else 0
+        if today_count >= target_dictations:
+            c.execute("""
+                INSERT INTO reward_transactions (user_id, points, type, reference_id, description, created_at)
+                VALUES (?, ?, 'daily_goal', ?, ?, ?)
+                ON CONFLICT DO NOTHING
+            """, (user_id, daily_goal_pts, f"goal:{today_str}", f"दैनिक लक्ष्य ({target_dictations} डिक्टेशन) पूर्ण", now_iso))
+
+        # 3. 7-Day Streak Milestone Reward
+        if cur_streak >= 7 and cur_streak % 7 == 0:
+            c.execute("""
+                INSERT INTO reward_transactions (user_id, points, type, reference_id, description, created_at)
+                VALUES (?, ?, 'streak_7', ?, ?, ?)
+                ON CONFLICT DO NOTHING
+            """, (user_id, streak_7_pts, f"streak_7:{today_str}", f"{cur_streak}-दिवसीय अभ्यास स्ट्रीक बोनस", now_iso))
+
+        # Recalculate total points strictly from immutable reward ledger
+        c.execute("SELECT COALESCE(SUM(points), 0) as total_pts FROM reward_transactions WHERE user_id = ?", (user_id,))
+        total_pts_row = c.fetchone()
+        total_ledger_pts = total_pts_row['total_pts'] if total_pts_row else 0
+
         c.execute("""
-            INSERT OR IGNORE INTO reward_transactions (user_id, points, type, reference_id, description, created_at)
-            VALUES (?, ?, 'streak_7', ?, ?, ?)
-        """, (user_id, streak_7_pts, f"streak_7:{today_str}", f"{cur_streak}-दिवसीय अभ्यास स्ट्रीक बोनस", now_iso))
+            UPDATE profiles
+            SET streak_days = ?, longest_streak = ?, last_practice_date = ?, points = ?
+            WHERE user_id = ?
+        """, (cur_streak, longest_streak, today_str, total_ledger_pts, user_id))
 
-    # Recalculate total points strictly from immutable reward ledger
-    c.execute("SELECT COALESCE(SUM(points), 0) as total_pts FROM reward_transactions WHERE user_id = ?", (user_id,))
-    total_ledger_pts = c.fetchone()['total_pts']
+        # Check and unlock achievements
+        check_and_unlock_achievements(c, user_id, net_wpm, accuracy, cur_streak)
 
-    c.execute("""
-        UPDATE profiles
-        SET streak_days = ?, longest_streak = ?, last_practice_date = ?, points = ?
-        WHERE user_id = ?
-    """, (cur_streak, longest_streak, today_str, total_ledger_pts, user_id))
+        conn.commit()
+    except Exception as reward_err:
+        print(f"Non-critical reward update error: {reward_err}")
 
-    # Check and unlock achievements
-    check_and_unlock_achievements(c, user_id, net_wpm, accuracy, cur_streak)
-
-    conn.commit()
     conn.close()
     return attempt_id
 
@@ -1738,8 +1788,9 @@ def check_and_unlock_achievements(cursor, user_id: int, net_wpm: float, accuracy
     for key, title, desc, icon, cond in rules:
         if cond:
             cursor.execute("""
-                INSERT OR IGNORE INTO achievements (user_id, badge_key, title, description, icon, unlocked_at)
+                INSERT INTO achievements (user_id, badge_key, title, description, icon, unlocked_at)
                 VALUES (?, ?, ?, ?, ?, ?)
+                ON CONFLICT DO NOTHING
             """, (user_id, key, title, desc, icon, now_iso))
 
 
