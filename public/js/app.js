@@ -841,6 +841,7 @@ class StenoApp {
         { id: 'progress', icon: '📊', label: 'Progress & Analytics', sub: 'प्रगति चार्ट' },
         { id: 'leaderboard', icon: '🏆', label: 'Leaderboard', sub: 'रैंकिंग बोर्ड' },
         { id: 'bookmarks', icon: '🔖', label: 'Bookmarks', sub: 'सहेजे गए आलेख' },
+        { id: 'rules', icon: '📋', label: 'परीक्षा नियम', sub: 'UPSSSC & SSC Rules' },
         { id: 'profile', icon: '👤', label: 'My Profile', sub: 'मेरी प्रोफ़ाइल' },
         { id: 'refer', icon: '🎁', label: 'Refer & Earn', sub: 'रेफरल एवं अंक' },
         { id: 'settings', icon: '⚙️', label: 'Settings', sub: 'प्राथमिकताएं' }
@@ -983,6 +984,7 @@ class StenoApp {
       'refer': 'Refer & Earn',
       'notifications': 'Notifications',
       'settings': 'Settings',
+      'rules': '📜 परीक्षा नियम',
       'admin': 'Admin Console'
     };
     const badge = document.getElementById('activeViewBadge');
@@ -1044,7 +1046,11 @@ class StenoApp {
       case 'settings':
         this.renderSettings();
         break;
+      case 'rules':
+        // Rules view is static HTML — just scroll to top, no async load needed
+        break;
       case 'admin':
+
         stenoAdmin.loadOverview();
         stenoAdmin.loadPassages();
         stenoAdmin.loadScoringConfig();
@@ -2232,6 +2238,40 @@ class StenoApp {
     clickedChip.classList.add('active');
   }
 
+  // -----------------------------------------------------------------------
+  // Exam Rules Tab Switching (UPSSSC / SSC)
+  // -----------------------------------------------------------------------
+  switchRulesTab(tab, clickedBtn) {
+    // Toggle panel visibility
+    const upssscPanel = document.getElementById('rules-upsssc');
+    const sscPanel = document.getElementById('rules-ssc');
+    if (upssscPanel) upssscPanel.style.display = tab === 'upsssc' ? 'block' : 'none';
+    if (sscPanel) sscPanel.style.display = tab === 'ssc' ? 'block' : 'none';
+
+    // Toggle button active states
+    document.querySelectorAll('.rules-tab-btn').forEach(btn => btn.classList.remove('active'));
+    if (clickedBtn) clickedBtn.classList.add('active');
+  }
+
+  // Accordion card open/close for rules page
+  toggleRuleCard(headerEl) {
+    if (!headerEl) return;
+    const card = headerEl.closest('.rules-card');
+    if (!card) return;
+    const body = card.querySelector('.rules-card-body');
+    const arrow = card.querySelector('.rules-arrow');
+    if (!body) return;
+
+    const isOpen = body.style.display !== 'none' && body.style.maxHeight !== '0px';
+    if (isOpen) {
+      body.style.display = 'none';
+      if (arrow) arrow.textContent = '▾';
+    } else {
+      body.style.display = 'block';
+      if (arrow) arrow.textContent = '▴';
+    }
+  }
+
   escapeHtml(str) {
     if (!str) return '';
     return String(str)
@@ -2242,6 +2282,7 @@ class StenoApp {
       .replace(/'/g, '&#039;');
   }
 }
+
 
 window.stenoApp = new StenoApp();
 
