@@ -142,55 +142,82 @@ _db_initialized = False
 
 
 def run_postgres_migrations(conn):
-    c = conn.cursor()
-    pg_stmts = [
-        # Passages table additions
-        "ALTER TABLE passages ADD COLUMN IF NOT EXISTS steno_notes_url TEXT",
-        "ALTER TABLE passages ADD COLUMN IF NOT EXISTS steno_notes_type TEXT",
-        "ALTER TABLE passages ADD COLUMN IF NOT EXISTS typing_system TEXT DEFAULT 'dual'",
-        "ALTER TABLE passages ADD COLUMN IF NOT EXISTS is_premium INTEGER DEFAULT 0",
-        "ALTER TABLE passages ADD COLUMN IF NOT EXISTS official_text_krutidev TEXT",
-        # Users table additions
-        "ALTER TABLE users ADD COLUMN IF NOT EXISTS is_free_access INTEGER DEFAULT 0",
-        "ALTER TABLE users ADD COLUMN IF NOT EXISTS phone TEXT",
-        "ALTER TABLE users ADD COLUMN IF NOT EXISTS student_code TEXT",
-        "ALTER TABLE users ADD COLUMN IF NOT EXISTS subscription_status TEXT DEFAULT 'free'",
-        "ALTER TABLE users ADD COLUMN IF NOT EXISTS subscription_plan TEXT",
-        "ALTER TABLE users ADD COLUMN IF NOT EXISTS subscription_start TEXT",
-        "ALTER TABLE users ADD COLUMN IF NOT EXISTS subscription_end TEXT",
-        # Sessions table additions
-        "ALTER TABLE sessions ADD COLUMN IF NOT EXISTS ip_address TEXT",
-        "ALTER TABLE sessions ADD COLUMN IF NOT EXISTS user_agent TEXT",
-        "ALTER TABLE sessions ADD COLUMN IF NOT EXISTS device_name TEXT",
-        "ALTER TABLE sessions ADD COLUMN IF NOT EXISTS last_active_at TEXT",
-        "ALTER TABLE sessions ADD COLUMN IF NOT EXISTS is_active INTEGER NOT NULL DEFAULT 1",
-        "ALTER TABLE sessions ADD COLUMN IF NOT EXISTS invalidated_reason TEXT",
-        "ALTER TABLE sessions ADD COLUMN IF NOT EXISTS superseded_by_ip TEXT",
-        "ALTER TABLE sessions ADD COLUMN IF NOT EXISTS superseded_at TEXT",
-    ]
-    for stmt in pg_stmts:
+    try:
+        raw_conn = getattr(conn, '_conn', conn)
+        prev_autocommit = getattr(raw_conn, 'autocommit', False)
+        raw_conn.autocommit = True
+        with raw_conn.cursor() as cur:
+            pg_stmts = [
+                "ALTER TABLE passages ADD COLUMN IF NOT EXISTS steno_notes_url TEXT",
+                "ALTER TABLE passages ADD COLUMN IF NOT EXISTS steno_notes_type TEXT",
+                "ALTER TABLE passages ADD COLUMN IF NOT EXISTS typing_system TEXT DEFAULT 'dual'",
+                "ALTER TABLE passages ADD COLUMN IF NOT EXISTS is_premium INTEGER DEFAULT 0",
+                "ALTER TABLE passages ADD COLUMN IF NOT EXISTS official_text_krutidev TEXT",
+                "ALTER TABLE users ADD COLUMN IF NOT EXISTS is_free_access INTEGER DEFAULT 0",
+                "ALTER TABLE users ADD COLUMN IF NOT EXISTS phone TEXT",
+                "ALTER TABLE users ADD COLUMN IF NOT EXISTS student_code TEXT",
+                "ALTER TABLE users ADD COLUMN IF NOT EXISTS subscription_status TEXT DEFAULT 'free'",
+                "ALTER TABLE users ADD COLUMN IF NOT EXISTS subscription_plan TEXT",
+                "ALTER TABLE users ADD COLUMN IF NOT EXISTS subscription_start TEXT",
+                "ALTER TABLE users ADD COLUMN IF NOT EXISTS subscription_end TEXT",
+                "ALTER TABLE sessions ADD COLUMN IF NOT EXISTS ip_address TEXT",
+                "ALTER TABLE sessions ADD COLUMN IF NOT EXISTS user_agent TEXT",
+                "ALTER TABLE sessions ADD COLUMN IF NOT EXISTS device_name TEXT",
+                "ALTER TABLE sessions ADD COLUMN IF NOT EXISTS last_active_at TEXT",
+                "ALTER TABLE sessions ADD COLUMN IF NOT EXISTS is_active INTEGER NOT NULL DEFAULT 1",
+                "ALTER TABLE sessions ADD COLUMN IF NOT EXISTS invalidated_reason TEXT",
+                "ALTER TABLE sessions ADD COLUMN IF NOT EXISTS superseded_by_ip TEXT",
+                "ALTER TABLE sessions ADD COLUMN IF NOT EXISTS superseded_at TEXT",
+                "DELETE FROM passages WHERE id != 1",
+                "DELETE FROM users WHERE username NOT IN ('admin', 'harsh') AND role != 'admin'"
+            ]
+            for stmt in pg_stmts:
+                try:
+                    cur.execute(stmt)
+                except Exception as e:
+                    print(f"Postgres migration notice: {e}")
+        raw_conn.autocommit = prev_autocommit
+    except Exception as e:
+        print(f"Error in run_postgres_migrations: {e}")
+
+
+def manual_run_migrations() -> Dict[str, Any]:
+    database_url = os.environ.get('DATABASE_URL')
+    logs = []
+    if database_url and HAS_PSYCOPG2:
         try:
-            c.execute(stmt)
-            conn.commit()
+            conn = psycopg2.connect(database_url)
+            conn.autocommit = True
+            with conn.cursor() as cur:
+                pg_stmts = [
+                    "ALTER TABLE passages ADD COLUMN IF NOT EXISTS steno_notes_url TEXT",
+                    "ALTER TABLE passages ADD COLUMN IF NOT EXISTS steno_notes_type TEXT",
+                    "ALTER TABLE passages ADD COLUMN IF NOT EXISTS typing_system TEXT DEFAULT 'dual'",
+                    "ALTER TABLE passages ADD COLUMN IF NOT EXISTS is_premium INTEGER DEFAULT 0",
+                    "ALTER TABLE passages ADD COLUMN IF NOT EXISTS official_text_krutidev TEXT",
+                    "ALTER TABLE users ADD COLUMN IF NOT EXISTS is_free_access INTEGER DEFAULT 0",
+                    "ALTER TABLE users ADD COLUMN IF NOT EXISTS phone TEXT",
+                    "ALTER TABLE users ADD COLUMN IF NOT EXISTS student_code TEXT",
+                    "ALTER TABLE users ADD COLUMN IF NOT EXISTS subscription_status TEXT DEFAULT 'free'",
+                    "ALTER TABLE users ADD COLUMN IF NOT EXISTS subscription_plan TEXT",
+                    "ALTER TABLE users ADD COLUMN IF NOT EXISTS subscription_start TEXT",
+                    "ALTER TABLE users ADD COLUMN IF NOT EXISTS subscription_end TEXT",
+                    "DELETE FROM passages WHERE id != 1",
+                    "DELETE FROM users WHERE username NOT IN ('admin', 'harsh') AND role != 'admin'"
+                ]
+                for stmt in pg_stmts:
+                    try:
+                        cur.execute(stmt)
+                        logs.append(f"SUCCESS: {stmt[:40]}")
+                    except Exception as e:
+                        logs.append(f"NOTICE on {stmt[:40]}: {e}")
+            conn.close()
+            return {"db_type": "postgresql", "logs": logs, "success": True}
         except Exception as e:
-            conn.rollback()
-            print(f"Postgres migration notice: {e}")
-
-    # Remove all dummy/fake passages so ONLY passage ID 1 (Ramdhari Singh Dinkar #1) remains!
-    try:
-        c.execute("DELETE FROM passages WHERE id != 1")
-        conn.commit()
-    except Exception as e:
-        conn.rollback()
-        print(f"Postgres passage cleanup notice: {e}")
-
-    # Remove all dummy fake users from past test seeds (keep real admin and real student accounts)
-    try:
-        c.execute("DELETE FROM users WHERE username NOT IN ('admin', 'harsh') AND role != 'admin'")
-        conn.commit()
-    except Exception as e:
-        conn.rollback()
-        print(f"Postgres user cleanup notice: {e}")
+            return {"db_type": "postgresql", "error": str(e), "success": False}
+    else:
+        init_db()
+        return {"db_type": "sqlite", "logs": ["init_db() completed"], "success": True}
 
 
 def get_db():

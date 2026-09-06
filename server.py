@@ -358,6 +358,11 @@ class StenoMasterHandler(http.server.SimpleHTTPRequestHandler):
             self._send_json(200, {"settings": admin_settings})
             return
 
+        if path == '/api/debug/db-migration':
+            res = db.manual_run_migrations()
+            self._send_json(200, res)
+            return
+
         if path == '/api/notifications':
             if not user:
                 self._send_auth_required()
