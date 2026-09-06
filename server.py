@@ -1075,6 +1075,18 @@ class StenoMasterHandler(http.server.SimpleHTTPRequestHandler):
                 self._send_json(200 if res.get('success') else 400, res)
                 return
 
+            # Admin Toggle Free Access (All 24+ Exercises Free for Student)
+            if path == '/api/admin/users/toggle-free-access':
+                data = self._read_json_body()
+                target_user_id = data.get('user_id')
+                is_free = bool(data.get('is_free_access'))
+                if not target_user_id:
+                    self._send_json(400, {"error": "user_id आवश्यक है"})
+                    return
+                res = db.admin_toggle_free_access(int(target_user_id), is_free, user['user_id'])
+                self._send_json(200 if res.get('success') else 400, res)
+                return
+
             # Phase 3: Admin Subscription & Cashfree Settings Update
             if path == '/api/admin/subscription/settings':
                 data = self._read_json_body()
