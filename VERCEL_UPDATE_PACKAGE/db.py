@@ -1277,6 +1277,12 @@ def authenticate_user(email_or_username: str, password: str) -> Optional[Dict[st
     raw_identifier = (email_or_username or '').strip()
     clean_phone = re.sub(r'[^0-9]', '', raw_identifier)
 
+    # Alias shortcuts
+    if clean_identifier in ('student', 'demostudent', 'steno student'):
+        clean_identifier = 'student@stenomaster.com'
+    if clean_identifier in ('admin', 'administrator'):
+        clean_identifier = 'admin@stenomaster.com'
+
     # 1. Primary lookup
     c.execute("""
         SELECT u.id, u.username, u.email, u.phone, u.student_code, u.password_hash, u.role, u.is_active,
@@ -1286,14 +1292,12 @@ def authenticate_user(email_or_username: str, password: str) -> Optional[Dict[st
         FROM users u
         LEFT JOIN profiles p ON u.id = p.user_id
         WHERE (
-            LOWER(u.email) = LOWER(?)
-            OR LOWER(u.username) = LOWER(?)
+            LOWER(u.email) = ?
+            OR LOWER(u.username) = ?
             OR u.phone = ?
-            OR UPPER(u.student_code) = UPPER(?)
-            OR (LOWER(?) = 'student' AND (LOWER(u.username) = 'stenostudent' OR LOWER(u.email) = 'student@stenomaster.com'))
-            OR (LOWER(?) = 'admin' AND (LOWER(u.username) = 'admin' OR LOWER(u.email) = 'admin@stenomaster.com'))
+            OR UPPER(u.student_code) = ?
         ) AND u.is_active = 1
-    """, (clean_identifier, clean_identifier, raw_identifier, raw_identifier, clean_identifier, clean_identifier))
+    """, (clean_identifier, clean_identifier, raw_identifier, raw_identifier.upper()))
     user = c.fetchone()
 
     # 2. Fallback lookup by phone digits if user entered with/without +91
