@@ -131,6 +131,20 @@ def analyze_hindi_word_difference(official_word: str, student_word: str) -> Tupl
         return ("wrong", f"भिन्न शब्द (अपेक्षित शब्द: '{official_word}')")
 
 
+def normalize_upsssc(text: str) -> str:
+    """
+    UPSSSC 2026 Rule: चंद्रबिंदु (ँ) और अनुस्वार (ं) का परस्पर प्रयोग त्रुटि नहीं मानी जाएगी।
+    जैसे: चाँद / चांद, हूँ / हूं — दोनों सही।
+    This normalizes ँ → ं so both forms match.
+    """
+    return text.replace('\u0901', '\u0902')  # ँ (chandrabindu) → ं (anusvara)
+
+
+def is_upsssc_chandrabindu_equivalent(w1: str, w2: str) -> bool:
+    """Returns True if w1 and w2 differ only in chandrabindu vs anusvara usage (UPSSSC ignored error)."""
+    return normalize_upsssc(w1) == normalize_upsssc(w2)
+
+
 # Common particles / stopwords in Hindi, English, and Kruti Dev to avoid accidental resynchronization
 HINDI_STOPWORDS = {
     'का', 'के', 'की', 'को', 'में', 'पर', 'से', 'है', 'हैं', 'था', 'थी', 'थे',
@@ -743,22 +757,38 @@ def evaluate_practice_attempt(
     else:
         exam_key = 'ssc_steno'
 
-    # Error definitions common across Indian Steno examinations:
-    # Full Mistakes (1.0x): Omission, Substitution, Addition
-    full_mistakes = missing_count + extra_count + wrong_count
-    # Half Mistakes (0.5x): Matra errors, Character/letter confusions, Spelling errors, Punctuation errors
-    half_mistakes = matra_count + char_count + spelling_count + punct_count
+    # Error definitions per UPSSSC 2026 and SSC Steno rules:
+    # -----------------------------------------------------------------------
+    # UPSSSC 2026:
+    #   Full Mistake (पूर्ण भ्रांति = 1.0): Missing word/figure, Wrong word/figure, Extra word/figure, Spelling error
+    #   Half Mistake (अर्ध भ्रांति = 0.5): Spacing error, Transposition, Singular/Plural error
+    #   NOT counted as mistake: Chandrabindu/Anusvara interchangeable use (चाँद/चांद, हूँ/हूं)
+    # SSC Steno:
+    #   Full Mistake (1.0): Missing, Wrong, Extra
+    #   Half Mistake (0.5): Matra, Spelling, Character, Punctuation, Spacing errors
+    # -----------------------------------------------------------------------
 
-    # Weighted errors according to exam
-    if exam_key == 'court':
+    if exam_key == 'upsssc':
+        # UPSSSC 2026: Transposition is a Half Mistake; Matra/Character errors are Full Mistakes (spelling errors)
+        transposition_count = sum(1 for t in aligned_tokens if t.get('error_type') == 'transposition')
+        # Spacing errors not separately tracked in token alignment — treated in total half mistakes
+        # Full mistakes: omission + substitution (wrong/spelling/matra/char) + extra (additions)
+        upsssc_full = missing_count + wrong_count + extra_count + matra_count + char_count + spelling_count
+        # Half mistakes: transposition + punctuation spacing errors
+        upsssc_half = transposition_count + punct_count
+        full_mistakes = upsssc_full
+        half_mistakes = upsssc_half
+        weighted_errors = (upsssc_full * 1.0) + (upsssc_half * 0.5)
+        error_penalty_factor = float(config.get("upsssc_error_factor", 1.0))
+    elif exam_key == 'court':
+        full_mistakes = missing_count + extra_count + wrong_count
+        half_mistakes = matra_count + char_count + spelling_count + punct_count
         weighted_errors = float(total_errors)
         error_penalty_factor = float(config.get("court_error_factor", 1.2))
-    elif exam_key == 'upsssc':
-        # UPSSSC: Full mistake = 1.0, Half mistake = 0.5
-        weighted_errors = (full_mistakes * 1.0) + (half_mistakes * 0.5)
-        error_penalty_factor = float(config.get("upsssc_error_factor", 1.0))
     else:
         # SSC Stenographer (Default) & Standard:
+        full_mistakes = missing_count + extra_count + wrong_count
+        half_mistakes = matra_count + char_count + spelling_count + punct_count
         weighted_errors = (full_mistakes * 1.0) + (half_mistakes * 0.5)
         error_penalty_factor = float(config.get("ssc_error_factor", 1.0))
 
@@ -798,33 +828,57 @@ def evaluate_practice_attempt(
         "is_qualified_any": mistake_percent <= max(ssc_c_res, ssc_d_res)
     }
 
-    # UPSSSC Thresholds
+    # UPSSSC Thresholds (per UPSSSC Skill Test 2026 notification)
+    # Rule: कुल बीस (20) अशुद्धियों की छूट (5% of 400 words = 20)
+    # या कुल टंकित शब्दों का 5% — जो भी कम हो, वह अनुमन्य त्रुटि सीमा है
     upsssc_min_wpm = float(config.get("upsssc_min_wpm_hindi", 25.0) if language == 'hindi' else config.get("upsssc_min_wpm_english", 30.0))
     upsssc_max_err = float(config.get("upsssc_max_error_percent", 5.0))
+    upsssc_total_words = float(config.get("upsssc_total_passage_words", 400.0))
 
+    # Max allowed mistakes = 5% of passage words (e.g. 400 × 5% = 20 mistakes)
+    upsssc_max_allowed_mistakes = upsssc_total_words * upsssc_max_err / 100.0
+
+    # Chandrabindu/Anusvara equivalents NOT counted in weighted_errors (already normalized in matching)
     upsssc_speed_ok = net_wpm >= upsssc_min_wpm
-    upsssc_err_ok = mistake_percent <= upsssc_max_err
+    upsssc_err_ok = weighted_errors <= upsssc_max_allowed_mistakes
     upsssc_is_qualified = upsssc_speed_ok and upsssc_err_ok
 
     if upsssc_is_qualified:
-        upsssc_reason = f"बधाई! आपकी नेट गति ({net_wpm} WPM) न्यूनतम आवश्यक {upsssc_min_wpm} WPM से अधिक है और त्रुटियां ({mistake_percent}%) अनुमन्य सीमा ({upsssc_max_err}%) के भीतर हैं।"
+        upsssc_reason = (
+            f"🎉 बधाई! आप सफल हैं। "
+            f"नेट गति: {net_wpm} WPM (आवश्यक: {upsssc_min_wpm} WPM से अधिक) ✅ | "
+            f"कुल भ्रांतियाँ: {round(weighted_errors, 1)} (अनुमन्य सीमा: {upsssc_max_allowed_mistakes:.0f}) ✅"
+        )
     elif not upsssc_speed_ok and not upsssc_err_ok:
-        upsssc_reason = f"गति ({net_wpm} WPM < {upsssc_min_wpm} WPM) और त्रुटियां ({mistake_percent}% > {upsssc_max_err}%) दोनों मानक पर खरे नहीं उतरे।"
+        upsssc_reason = (
+            f"❌ असफल। गति ({net_wpm} WPM < {upsssc_min_wpm} WPM आवश्यक) और "
+            f"भ्रांतियाँ ({round(weighted_errors,1)} > {upsssc_max_allowed_mistakes:.0f} अनुमन्य) — दोनों अपर्याप्त।"
+        )
     elif not upsssc_speed_ok:
-        upsssc_reason = f"गति अपर्याप्त है। आपकी नेट गति {net_wpm} WPM है जबकि न्यूनतम {upsssc_min_wpm} WPM आवश्यक है।"
+        upsssc_reason = (
+            f"❌ गति अपर्याप्त। आपकी नेट गति {net_wpm} WPM है, "
+            f"जबकि न्यूनतम {upsssc_min_wpm} WPM आवश्यक है।"
+        )
     else:
-        upsssc_reason = f"त्रुटियां अनुमन्य सीमा से अधिक हैं ({mistake_percent}% > {upsssc_max_err}%)।"
+        upsssc_reason = (
+            f"❌ भ्रांतियाँ सीमा से अधिक। "
+            f"कुल भ्रांतियाँ {round(weighted_errors,1)} हैं, "
+            f"जबकि अनुमन्य सीमा {upsssc_max_allowed_mistakes:.0f} ({upsssc_max_err}%) है।"
+        )
 
     upsssc_eval = {
         "required_wpm": upsssc_min_wpm,
         "achieved_wpm": net_wpm,
         "speed_qualified": upsssc_speed_ok,
         "max_mistake_percent": upsssc_max_err,
+        "max_allowed_mistakes": upsssc_max_allowed_mistakes,
+        "achieved_weighted_mistakes": round(weighted_errors, 2),
         "achieved_mistake_percent": mistake_percent,
         "mistake_qualified": upsssc_err_ok,
         "is_qualified": upsssc_is_qualified,
-        "verdict": "सफल (QUALIFIED)" if upsssc_is_qualified else "असफल (NOT QUALIFIED)",
-        "status_reason": upsssc_reason
+        "verdict": "✅ सफल (QUALIFIED)" if upsssc_is_qualified else "❌ असफल (NOT QUALIFIED)",
+        "status_reason": upsssc_reason,
+        "note": "नोट: चंद्रबिंदु (ँ) और अनुस्वार (ं) का परस्पर प्रयोग त्रुटि नहीं माना जाता (UPSSSC 2026)।"
     }
 
     exam_summary = {
