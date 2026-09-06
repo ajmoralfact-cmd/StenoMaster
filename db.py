@@ -1879,21 +1879,48 @@ def admin_save_passage(data: Dict[str, Any]) -> int:
         official_mangal = (data.get("official_mangal_text") or data.get("official_text") or "").strip()
         official_kruti = (data.get("official_kruti_dev_text") or data.get("official_text_krutidev") or "").strip()
 
-        # Strict Validation (Phase 3 & 5)
-        # Do NOT silently auto-convert or overwrite - admin's input is authoritative
-        if typing_system == "mangal_unicode":
+        # Validation & Auto-Conversion
+        if typing_system == "dual":
+            try:
+                import hindi_converter
+            except ImportError:
+                hindi_converter = None
+
+            if not official_kruti and official_mangal:
+                if hindi_converter and hasattr(hindi_converter, 'unicode_to_kruti_dev'):
+                    try:
+                        official_kruti = hindi_converter.unicode_to_kruti_dev(official_mangal)
+                    except Exception:
+                        official_kruti = official_mangal
+                else:
+                    official_kruti = official_mangal
+
+            elif not official_mangal and official_kruti:
+                if hindi_converter and hasattr(hindi_converter, 'kruti_dev_to_unicode'):
+                    try:
+                        official_mangal = hindi_converter.kruti_dev_to_unicode(official_kruti)
+                    except Exception:
+                        official_mangal = official_kruti
+                else:
+                    official_mangal = official_kruti
+
+            if not official_mangal and not official_kruti:
+                raise ValueError("आलेख का संदर्भ पाठ आवश्यक है।")
+
+        elif typing_system == "mangal_unicode":
             if not official_mangal:
-                raise ValueError("मंगल / यूनिकोड संदर्भ पाठ आवश्यक है। (Official Mangal text is required)")
+                if official_kruti:
+                    official_mangal = official_kruti
+                else:
+                    raise ValueError("मंगल / यूनिकोड संदर्भ पाठ आवश्यक है। (Official Mangal text is required)")
             official_kruti = official_kruti or ""
         elif typing_system == "kruti_dev_010":
             if not official_kruti:
-                raise ValueError("कृति देव 010 संदर्भ पाठ आवश्यक है। (Official Kruti Dev text is required)")
+                if official_mangal:
+                    official_kruti = official_mangal
+                else:
+                    raise ValueError("कृति देव 010 संदर्भ पाठ आवश्यक है। (Official Kruti Dev text is required)")
             official_mangal = official_mangal or ""
-        elif typing_system == "dual":
-            if not official_mangal:
-                raise ValueError("Dual आलेख के लिए मंगल / यूनिकोड संदर्भ पाठ आवश्यक है।")
-            if not official_kruti:
-                raise ValueError("Dual आलेख के लिए कृति देव 010 संदर्भ पाठ आवश्यक है।")
 
         if p_id:
             c.execute("""
