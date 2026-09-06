@@ -2361,6 +2361,7 @@ def get_admin_users() -> List[Dict[str, Any]]:
                (SELECT COUNT(*) FROM practice_attempts WHERE user_id = u.id) as attempts_count
         FROM users u
         LEFT JOIN profiles p ON u.id = p.user_id
+        WHERE u.role != 'admin'
         ORDER BY u.id ASC
     """)
     rows = [dict(r) for r in c.fetchall()]
