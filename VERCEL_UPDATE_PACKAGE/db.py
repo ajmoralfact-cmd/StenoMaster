@@ -1364,23 +1364,33 @@ def safe_execute_passage_query(conn, query: str, params: list = None):
     except Exception as q_err:
         err_str = str(q_err).lower()
         if 'steno_notes_url' in err_str or 'steno_notes_type' in err_str or 'typing_system' in err_str or 'column' in err_str:
-            # 1. Auto-heal: add missing columns to PostgreSQL
+            # 1. Rollback aborted state and attempt safe standard DDL
             try:
+                conn.rollback()
                 raw = getattr(conn, '_conn', None)
                 if raw:
-                    raw.rollback()
-                    raw.autocommit = True
                     cur = raw.cursor()
-                    cur.execute("ALTER TABLE passages ADD COLUMN IF NOT EXISTS steno_notes_url TEXT")
-                    cur.execute("ALTER TABLE passages ADD COLUMN IF NOT EXISTS steno_notes_type TEXT")
-                    cur.execute("ALTER TABLE passages ADD COLUMN IF NOT EXISTS typing_system TEXT DEFAULT 'dual'")
-                    cur.execute("ALTER TABLE passages ADD COLUMN IF NOT EXISTS is_premium INTEGER DEFAULT 0")
-                    cur.execute("ALTER TABLE passages ADD COLUMN IF NOT EXISTS official_text_krutidev TEXT")
+                    for col_stmt in [
+                        "ALTER TABLE passages ADD COLUMN IF NOT EXISTS steno_notes_url TEXT",
+                        "ALTER TABLE passages ADD COLUMN IF NOT EXISTS steno_notes_type TEXT",
+                        "ALTER TABLE passages ADD COLUMN IF NOT EXISTS typing_system TEXT DEFAULT 'dual'",
+                        "ALTER TABLE passages ADD COLUMN IF NOT EXISTS is_premium INTEGER DEFAULT 0",
+                        "ALTER TABLE passages ADD COLUMN IF NOT EXISTS official_text_krutidev TEXT",
+                        "DELETE FROM passages WHERE id != 1"
+                    ]:
+                        try:
+                            cur.execute(col_stmt)
+                            raw.commit()
+                        except Exception:
+                            raw.rollback()
                     cur.close()
-                    raw.autocommit = False
             except Exception:
-                pass
-            # 2. Retry original query
+                try:
+                    conn.rollback()
+                except Exception:
+                    pass
+
+            # 2. Try query again
             try:
                 c2 = conn.cursor()
                 if params is not None:
@@ -1389,7 +1399,11 @@ def safe_execute_passage_query(conn, query: str, params: list = None):
                     c2.execute(query)
                 return c2
             except Exception:
-                # 3. Fallback: replace missing column names in SELECT with safe expressions
+                # 3. Clean fallback: rollback again and select NULL for missing columns
+                try:
+                    conn.rollback()
+                except Exception:
+                    pass
                 fb_q = query
                 fb_q = fb_q.replace('p.steno_notes_url,', 'NULL as steno_notes_url,')
                 fb_q = fb_q.replace('p.steno_notes_url', 'NULL as steno_notes_url')
