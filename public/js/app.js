@@ -107,6 +107,13 @@ class StenoApp {
     this.initNavigation();
     this.initSessionHeartbeat();
 
+    // Cross-tab real-time sync when Admin edits or deletes passages
+    window.addEventListener('storage', (e) => {
+      if (e.key === 'stenomaster_passages_version' || e.key === 'stenomaster_cached_passages') {
+        this.loadPassages(true);
+      }
+    });
+
     // Check existing auth session
     if (this.token) {
       try {
@@ -1275,31 +1282,31 @@ class StenoApp {
   }
 
   async loadPassages(forceRefresh = false) {
-    // If not forced and passages are already in memory, filter instantly!
-    if (!forceRefresh && this.allPassages && this.allPassages.length > 0) {
+    // 1. If passages exist in memory/cache, render immediately so user sees zero delay
+    if (this.allPassages && this.allPassages.length > 0) {
       this.applyPassageFilters();
       this.updateFontSwitcherUI();
-      return;
-    }
-
-    if (!this.allPassages || this.allPassages.length === 0) {
+    } else {
       this.renderPassagesSkeleton();
     }
 
+    // 2. ALWAYS fetch fresh passages from server to stay 100% in sync with admin edits/deletes
     try {
       const res = await this.apiCall('/api/passages');
       this.allPassages = res.passages || [];
 
       // Populate bookmarks set
+      this.bookmarks.clear();
       this.allPassages.forEach(p => {
         if (p.is_bookmarked) this.bookmarks.add(p.id);
       });
 
-      // Save to localStorage for instant startup on subsequent visits
+      // Save fresh data to cache
       try {
         localStorage.setItem('stenomaster_cached_passages', JSON.stringify(this.allPassages));
       } catch (e) {}
 
+      // Re-render with 100% updated server data
       this.applyPassageFilters();
       this.updateFontSwitcherUI();
     } catch (err) {
@@ -1525,15 +1532,7 @@ class StenoApp {
   // -------------------------------------------------------------------------
   async openPractice(passageId) {
     try {
-      const localPassage = (this.allPassages || []).find(p => p.id === passageId) || (this.passages || []).find(p => p.id === passageId);
-      const hasFullAccess = !!(this.user && (this.user.role === 'admin' || this.user.subscription_status === 'active' || this.user.is_free_access));
-
-      if (localPassage && !localPassage.is_free_tier && localPassage.is_premium && !hasFullAccess) {
-        this.handleLockedPassageClick(passageId);
-        return;
-      }
-
-      // Visual feedback on clicked card
+      const pId = parseInt(passageId, 10);
       const cardEl = document.querySelector(`.class-card[onclick*="openPractice(${passageId})"]`);
       if (cardEl) {
         cardEl.style.transition = 'opacity 0.15s ease, transform 0.15s ease';
@@ -1541,20 +1540,27 @@ class StenoApp {
         cardEl.style.transform = 'scale(0.99)';
       }
 
-      const res = await this.apiCall(`/api/passages/${passageId}`);
+      const res = await this.apiCall(`/api/passages/${pId}`);
       if (cardEl) {
         cardEl.style.opacity = '1';
         cardEl.style.transform = 'none';
       }
 
-      if (res.passage && res.passage.is_locked) {
-        this.handleLockedPassageClick(passageId);
+      if (!res || !res.passage) {
+        this.showToast('यह आलेख अब उपलब्ध नहीं है। सूची अपडेट की जा रही है...', 'warning');
+        await this.loadPassages(true);
+        return;
+      }
+
+      if (res.passage.is_locked) {
+        this.handleLockedPassageClick(pId);
         return;
       }
       this.currentPassage = res.passage;
 
+      const hasFullAccess = !!(this.user && (this.user.role === 'admin' || this.user.subscription_status === 'active' || this.user.is_free_access));
       if (!this.currentPassage.is_free_tier && this.currentPassage.is_premium && !hasFullAccess) {
-        this.handleLockedPassageClick(passageId);
+        this.handleLockedPassageClick(pId);
         return;
       }
 
@@ -1579,6 +1585,9 @@ class StenoApp {
       }
       if (err.message && (err.message.includes('PRO_SUBSCRIPTION_REQUIRED') || err.message.includes('लॉक') || err.message.includes('सदस्यता'))) {
         this.handleLockedPassageClick(passageId);
+      } else if (err.message && (err.message.includes('not found') || err.message.includes('नहीं मिला') || err.message.includes('404'))) {
+        this.showToast('आलेख सूची अपडेट की जा रही है...', 'info');
+        this.loadPassages(true);
       } else {
         this.showToast('आलेख लोड करने में विफलता: ' + err.message, 'error');
       }
