@@ -127,6 +127,8 @@ def parse_db_datetime(val):
         return None
     if isinstance(val, datetime):
         return val
+    if isinstance(val, date):
+        return datetime.combine(val, datetime.min.time())
     if isinstance(val, str):
         try:
             return datetime.fromisoformat(val)
@@ -1697,14 +1699,24 @@ def save_practice_attempt(
 
         # Streak calculation
         if last_date:
-            last_dt = date.fromisoformat(last_date)
-            diff = (date.today() - last_dt).days
-            if diff == 0:
-                # Same day practice, maintain streak
-                pass
-            elif diff == 1:
-                cur_streak += 1
-            else:
+            try:
+                if isinstance(last_date, str):
+                    last_dt = date.fromisoformat(last_date[:10])
+                elif isinstance(last_date, datetime):
+                    last_dt = last_date.date()
+                elif isinstance(last_date, date):
+                    last_dt = last_date
+                else:
+                    last_dt = date.today()
+                diff = (date.today() - last_dt).days
+                if diff == 0:
+                    # Same day practice, maintain streak
+                    pass
+                elif diff == 1:
+                    cur_streak += 1
+                else:
+                    cur_streak = 1
+            except Exception:
                 cur_streak = 1
         else:
             cur_streak = 1
