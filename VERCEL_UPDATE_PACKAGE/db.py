@@ -138,12 +138,72 @@ def is_expired_datetime(exp_val) -> bool:
 
 
 
+_db_initialized = False
+
+
+def run_postgres_migrations(conn):
+    c = conn.cursor()
+    pg_stmts = [
+        # Passages table additions
+        "ALTER TABLE passages ADD COLUMN IF NOT EXISTS steno_notes_url TEXT",
+        "ALTER TABLE passages ADD COLUMN IF NOT EXISTS steno_notes_type TEXT",
+        "ALTER TABLE passages ADD COLUMN IF NOT EXISTS typing_system TEXT DEFAULT 'dual'",
+        "ALTER TABLE passages ADD COLUMN IF NOT EXISTS is_premium INTEGER DEFAULT 0",
+        "ALTER TABLE passages ADD COLUMN IF NOT EXISTS official_text_krutidev TEXT",
+        # Users table additions
+        "ALTER TABLE users ADD COLUMN IF NOT EXISTS is_free_access INTEGER DEFAULT 0",
+        "ALTER TABLE users ADD COLUMN IF NOT EXISTS phone TEXT",
+        "ALTER TABLE users ADD COLUMN IF NOT EXISTS student_code TEXT",
+        "ALTER TABLE users ADD COLUMN IF NOT EXISTS subscription_status TEXT DEFAULT 'free'",
+        "ALTER TABLE users ADD COLUMN IF NOT EXISTS subscription_plan TEXT",
+        "ALTER TABLE users ADD COLUMN IF NOT EXISTS subscription_start TEXT",
+        "ALTER TABLE users ADD COLUMN IF NOT EXISTS subscription_end TEXT",
+        # Sessions table additions
+        "ALTER TABLE sessions ADD COLUMN IF NOT EXISTS ip_address TEXT",
+        "ALTER TABLE sessions ADD COLUMN IF NOT EXISTS user_agent TEXT",
+        "ALTER TABLE sessions ADD COLUMN IF NOT EXISTS device_name TEXT",
+        "ALTER TABLE sessions ADD COLUMN IF NOT EXISTS last_active_at TEXT",
+        "ALTER TABLE sessions ADD COLUMN IF NOT EXISTS is_active INTEGER NOT NULL DEFAULT 1",
+        "ALTER TABLE sessions ADD COLUMN IF NOT EXISTS invalidated_reason TEXT",
+        "ALTER TABLE sessions ADD COLUMN IF NOT EXISTS superseded_by_ip TEXT",
+        "ALTER TABLE sessions ADD COLUMN IF NOT EXISTS superseded_at TEXT",
+    ]
+    for stmt in pg_stmts:
+        try:
+            c.execute(stmt)
+            conn.commit()
+        except Exception as e:
+            conn.rollback()
+            print(f"Postgres migration notice: {e}")
+
+    # Remove all dummy/fake passages so ONLY passage ID 1 (Ramdhari Singh Dinkar #1) remains!
+    try:
+        c.execute("DELETE FROM passages WHERE id != 1")
+        conn.commit()
+    except Exception as e:
+        conn.rollback()
+        print(f"Postgres passage cleanup notice: {e}")
+
+    # Remove all dummy fake users from past test seeds (keep real admin and real student accounts)
+    try:
+        c.execute("DELETE FROM users WHERE username NOT IN ('admin', 'harsh') AND role != 'admin'")
+        conn.commit()
+    except Exception as e:
+        conn.rollback()
+        print(f"Postgres user cleanup notice: {e}")
+
+
 def get_db():
+    global _db_initialized
     database_url = os.environ.get('DATABASE_URL')
     if database_url and HAS_PSYCOPG2:
         try:
             conn = psycopg2.connect(database_url, cursor_factory=RealDictCursor)
-            return PostgresConnWrapper(conn)
+            wrapper = PostgresConnWrapper(conn)
+            if not _db_initialized:
+                _db_initialized = True
+                run_postgres_migrations(wrapper)
+            return wrapper
         except Exception as e:
             # Fall back to sqlite if network error
             print(f"Postgres connection warning, falling back to SQLite: {e}")
@@ -151,6 +211,12 @@ def get_db():
     conn = sqlite3.connect(get_db_path())
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA foreign_keys = ON")
+    if not _db_initialized:
+        _db_initialized = True
+        try:
+            init_db()
+        except Exception as e:
+            print(f"SQLite init warning: {e}")
     return conn
 
 
@@ -161,6 +227,9 @@ def hash_password(password: str) -> str:
 def init_db():
     """Creates all database tables and inserts default initial data."""
     conn = get_db()
+    if isinstance(conn, PostgresConnWrapper):
+        run_postgres_migrations(conn)
+        return
     c = conn.cursor()
 
     # 1. Users
