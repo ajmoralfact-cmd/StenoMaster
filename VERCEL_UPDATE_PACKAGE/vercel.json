@@ -1,6 +1,4 @@
 {
-  "$comment": "build-v2-admin-fix-326a6d81",
-
   "rewrites": [
     {
       "source": "/api/(.*)",
