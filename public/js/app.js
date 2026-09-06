@@ -184,7 +184,11 @@ class StenoApp {
   initPWA() {
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('/service-worker.js')
-        .then(() => console.log('ServiceWorker registered'))
+        .then((reg) => {
+          console.log('ServiceWorker registered');
+          // Actively check for latest updates on every visit
+          reg.update().catch(() => {});
+        })
         .catch(err => console.warn('ServiceWorker error:', err));
     }
   }
@@ -227,6 +231,7 @@ class StenoApp {
   // Authentication Gateway & Role Selection
   // -------------------------------------------------------------------------
   showAuthGateway(tab = 'student', inlineError = null) {
+    document.documentElement.classList.add('no-auth-session');
     const gateway = document.getElementById('authGatewayView');
     const appContainer = document.getElementById('appContainer');
     if (gateway) gateway.style.display = 'flex';
@@ -250,6 +255,7 @@ class StenoApp {
   }
 
   hideAuthGateway() {
+    document.documentElement.classList.remove('no-auth-session');
     const gateway = document.getElementById('authGatewayView');
     const appContainer = document.getElementById('appContainer');
     if (gateway) gateway.style.display = 'none';
