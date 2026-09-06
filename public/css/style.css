@@ -1860,35 +1860,49 @@ body {
    Modals & Popups
    ========================================================================== */
 .modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.55);
-  backdrop-filter: blur(4px);
-  z-index: 90;
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  background-color: rgba(0, 0, 0, 0.72) !important;
+  backdrop-filter: blur(6px) !important;
+  -webkit-backdrop-filter: blur(6px) !important;
+  z-index: 999999 !important;
   display: none;
-  align-items: center;
-  justify-content: center;
-  padding: 16px;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 16px !important;
 }
 
 .modal-overlay.active {
-  display: flex;
+  display: flex !important;
 }
 
 .modal-card {
-  background-color: var(--bg-surface);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-lg);
-  max-width: 500px;
+  background-color: var(--bg-surface) !important;
+  border: 1px solid var(--border-subtle) !important;
+  border-radius: var(--radius-lg) !important;
+  max-width: 620px;
   width: 100%;
-  padding: 28px;
-  box-shadow: var(--shadow-xl);
-  position: relative;
-  max-height: 90vh;
-  overflow-y: auto;
+  padding: 26px !important;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.5) !important;
+  position: relative !important;
+  max-height: 90vh !important;
+  overflow-y: auto !important;
+  z-index: 1000000 !important;
+  animation: modalPopIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes modalPopIn {
+  from {
+    transform: scale(0.96);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
 
 .modal-title {
@@ -3127,5 +3141,553 @@ body {
   background: linear-gradient(135deg, #d97706, #b45309) !important;
   transform: translateY(-1px);
 }
+
+/* ==========================================================================
+   Multi-Tier Subscription Plans & Subscriber Management Styles
+   ========================================================================== */
+.subscription-plans-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 18px;
+  margin-bottom: 24px;
+}
+
+.sub-plan-card {
+  background: var(--bg-surface);
+  border: 2px solid var(--border-subtle);
+  border-radius: 14px;
+  padding: 22px 18px;
+  position: relative;
+  cursor: pointer;
+  transition: all 0.22s ease-in-out;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.sub-plan-card:hover {
+  border-color: var(--primary);
+  transform: translateY(-3px);
+  box-shadow: 0 10px 24px rgba(37, 99, 235, 0.12);
+}
+
+.sub-plan-card.selected {
+  border-color: var(--primary);
+  background: rgba(37, 99, 235, 0.03);
+  box-shadow: 0 0 0 2px var(--primary), 0 12px 28px rgba(37, 99, 235, 0.16);
+}
+
+.sub-plan-card-tag {
+  position: absolute;
+  top: -11px;
+  right: 14px;
+  font-size: 0.68rem;
+  font-weight: 800;
+  padding: 3px 10px;
+  border-radius: 20px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.4);
+}
+
+.sub-plan-card-tag.tag-popular {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.4);
+}
+
+.sub-plan-card-tag.tag-best {
+  background: linear-gradient(135deg, #8b5cf6, #6d28d9);
+  box-shadow: 0 2px 8px rgba(139, 92, 246, 0.4);
+}
+
+.sub-plan-title {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--text-main);
+  margin-bottom: 4px;
+}
+
+.sub-plan-subtitle {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  margin-bottom: 12px;
+}
+
+.sub-plan-price-row {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.sub-plan-amount {
+  font-size: 2rem;
+  font-weight: 900;
+  color: var(--primary);
+  line-height: 1;
+}
+
+.sub-plan-period {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.sub-plan-savings-pill {
+  display: inline-block;
+  background: rgba(16, 185, 129, 0.12);
+  color: #059669;
+  font-weight: 800;
+  font-size: 0.72rem;
+  padding: 3px 8px;
+  border-radius: 6px;
+  margin-bottom: 14px;
+}
+
+.sub-plan-features {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 16px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+}
+
+.sub-plan-features li {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  line-height: 1.35;
+}
+
+.sub-plan-features li::before {
+  content: "✓";
+  color: #10b981;
+  font-weight: 900;
+  flex-shrink: 0;
+}
+
+.sub-select-btn {
+  width: 100%;
+  padding: 10px;
+  border-radius: 10px;
+  font-weight: 700;
+  font-size: 0.88rem;
+  cursor: pointer;
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-surface);
+  color: var(--text-main);
+  transition: all 0.2s ease;
+}
+
+.sub-plan-card.selected .sub-select-btn {
+  background: var(--primary);
+  color: #fff;
+  border-color: var(--primary);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+}
+
+/* Admin Subscribers Filter Toolbar */
+.subscribers-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.sub-filter-pills {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.sub-filter-pill {
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-subtle);
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  color: var(--text-secondary);
+  transition: all 0.18s ease;
+}
+
+.sub-filter-pill.active {
+  background: var(--primary);
+  color: #fff;
+  border-color: var(--primary);
+}
+
+.sub-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 0.74rem;
+  font-weight: 800;
+}
+
+.sub-status-badge.active-pro {
+  background: rgba(245, 158, 11, 0.15);
+  color: #b45309;
+  border: 1px solid rgba(245, 158, 11, 0.35);
+}
+
+.sub-status-badge.expired {
+  background: rgba(239, 68, 68, 0.12);
+  color: #dc2626;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.sub-status-badge.free {
+  background: rgba(100, 116, 139, 0.12);
+  color: #475569;
+  border: 1px solid rgba(100, 116, 139, 0.25);
+}
+
+/* Low Validity Expiry Alert Banner */
+.expiring-soon-banner {
+  background: linear-gradient(135deg, #fffbeb, #fef3c7);
+  border: 1px solid #fde68a;
+  border-left: 5px solid #f59e0b;
+  border-radius: 10px;
+  padding: 12px 16px;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.1);
+}
+
+/* ==========================================================================
+   Global Platform Footer (RBI & Payment Gateway Compliance)
+   ========================================================================== */
+.platform-global-footer {
+  margin-top: 48px;
+  background-color: var(--bg-surface);
+  border-top: 1px solid var(--border-subtle);
+  padding: 40px 24px 24px 24px;
+  color: var(--text-secondary);
+  font-size: 0.88rem;
+}
+
+.footer-container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.footer-top-row {
+  display: grid;
+  grid-template-columns: 2fr 1.2fr 1.5fr;
+  gap: 36px;
+  margin-bottom: 32px;
+}
+
+@media (max-width: 900px) {
+  .footer-top-row {
+    grid-template-columns: 1fr;
+    gap: 28px;
+  }
+}
+
+.footer-brand-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: var(--primary);
+  letter-spacing: -0.01em;
+  margin-bottom: 10px;
+}
+
+.footer-tagline {
+  font-size: 0.86rem;
+  line-height: 1.6;
+  color: var(--text-secondary);
+  margin-bottom: 16px;
+  max-width: 440px;
+}
+
+.footer-payment-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.secure-pay-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-subtle);
+  border-radius: 20px;
+  padding: 4px 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.footer-col-heading {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-main);
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.footer-links-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.footer-links-list a {
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-size: 0.85rem;
+  transition: color var(--transition-fast);
+}
+
+.footer-links-list a:hover {
+  color: var(--primary);
+  text-decoration: underline;
+}
+
+.footer-contact-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 10px;
+  font-size: 0.84rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.footer-contact-item a {
+  color: var(--primary);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.footer-contact-item a:hover {
+  text-decoration: underline;
+}
+
+.footer-bottom-bar {
+  border-top: 1px solid var(--border-subtle);
+  padding-top: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 14px;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.footer-bottom-links {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.footer-bottom-links a {
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.footer-bottom-links a:hover {
+  color: var(--primary);
+}
+
+/* Legal Policy Modals Content Formatting */
+.policy-modal-body {
+  font-size: 0.88rem;
+  line-height: 1.65;
+  color: var(--text-secondary);
+  padding-right: 4px;
+}
+
+.policy-modal-body h4 {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-main);
+  margin: 18px 0 6px 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.policy-modal-body p {
+  margin-bottom: 12px;
+}
+
+.policy-highlight-card {
+  background: var(--bg-subtle);
+  border-left: 4px solid var(--primary);
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin: 14px 0;
+  font-size: 0.85rem;
+}
+
+/* ==========================================================================
+   Clean Streamlined Subscription & Inline Policy Styles
+   ========================================================================== */
+.clean-sub-container {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 0 4px;
+}
+
+.clean-checkout-card {
+  background: var(--bg-surface);
+  border: 2px solid var(--primary);
+  border-radius: 16px;
+  padding: 28px;
+  box-shadow: 0 12px 32px rgba(37, 99, 235, 0.12);
+  margin-bottom: 24px;
+  position: relative;
+  overflow: hidden;
+}
+
+.clean-checkout-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.clean-checkout-features {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.clean-feature-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.88rem;
+  color: var(--text-main);
+  background: var(--bg-subtle);
+  padding: 10px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--border-subtle);
+}
+
+.clean-checkout-cta {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.clean-pay-btn {
+  width: 100%;
+  max-width: 520px;
+  padding: 16px 24px;
+  font-size: 1.15rem;
+  font-weight: 800;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  color: #fff;
+  border: none;
+  box-shadow: 0 8px 24px rgba(37, 99, 235, 0.35);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+.clean-pay-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 28px rgba(37, 99, 235, 0.45);
+}
+
+.clean-pay-subtitle {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+/* Inline Policy Accordions inside Subscription */
+.sub-policies-section {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: 14px;
+  padding: 24px;
+  margin-bottom: 24px;
+}
+
+.sub-policies-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border-subtle);
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.sub-policy-accordion {
+  border: 1px solid var(--border-subtle);
+  border-radius: 10px;
+  margin-bottom: 10px;
+  overflow: hidden;
+  background: var(--bg-subtle);
+  transition: all 0.2s ease;
+}
+
+.sub-policy-summary {
+  padding: 14px 18px;
+  font-weight: 700;
+  font-size: 0.92rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  user-select: none;
+  color: var(--text-main);
+  transition: background 0.15s ease;
+}
+
+.sub-policy-summary:hover {
+  background: var(--bg-card-hover);
+}
+
+.sub-policy-content {
+  padding: 16px 18px;
+  font-size: 0.86rem;
+  line-height: 1.6;
+  color: var(--text-secondary);
+  border-top: 1px solid var(--border-subtle);
+  background: var(--bg-surface);
+}
+
 
 
