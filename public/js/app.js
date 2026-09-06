@@ -24,7 +24,13 @@ class StenoApp {
     this.selectedTypingSystem = localStorage.getItem('stenomaster_preferred_font') || localStorage.getItem('stenomaster_typing_mode') || 'mangal_unicode';
     if (this.selectedTypingSystem === 'krutidev') this.selectedTypingSystem = 'kruti_dev_010';
 
-    // Restore cached passages immediately for instant 0ms startup
+    // Restore cached user and passages immediately for instant 0ms startup
+    try {
+      const cachedUser = localStorage.getItem('stenomaster_user');
+      if (cachedUser) {
+        this.user = JSON.parse(cachedUser);
+      }
+    } catch(e) {}
     try {
       const cached = localStorage.getItem('stenomaster_cached_passages');
       if (cached) {
@@ -114,7 +120,25 @@ class StenoApp {
       }
     });
 
-    // Check existing auth session
+    // 0ms Instant Hydration: If token & cached user exist, display dashboard immediately without waiting
+    if (this.token && this.user) {
+      this.hideAuthGateway();
+      this.updateUserUI();
+      if (this.user.role === 'admin') {
+        this.navigate('admin');
+      } else {
+        this.navigate('home');
+      }
+      // Re-validate and sync fresh data in background seamlessly
+      Promise.all([
+        this.fetchCurrentUser().catch(() => {}),
+        this.loadCategories().catch(() => {}),
+        this.loadPassages().catch(() => {})
+      ]);
+      return;
+    }
+
+    // Check existing auth session if user profile wasn't cached
     if (this.token) {
       try {
         await this.fetchCurrentUser();
@@ -196,35 +220,49 @@ class StenoApp {
   // -------------------------------------------------------------------------
   // API Helper
   // -------------------------------------------------------------------------
-  async apiCall(endpoint, method = 'GET', body = null) {
+  async apiCall(endpoint, method = 'GET', body = null, timeoutMs = 12000) {
     const headers = { 'Content-Type': 'application/json' };
     if (this.token) {
       headers['Authorization'] = `Bearer ${this.token}`;
     }
 
-    const opts = { method, headers };
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+
+    const opts = { method, headers, signal: controller.signal };
     if (body) {
       opts.body = JSON.stringify(body);
     }
 
-    const response = await fetch(endpoint, opts);
-    const data = await response.json().catch(() => ({}));
+    try {
+      const response = await fetch(endpoint, opts);
+      clearTimeout(timer);
+      const data = await response.json().catch(() => ({}));
 
-    if (!response.ok) {
-      // Check for Single-Device Eviction (Another login detected)
-      if (response.status === 401 && (data.error === 'concurrent_login' || data.code === 'CONCURRENT_LOGIN_DETECTED')) {
-        this.handleConcurrentLoginEviction(data);
-        const err = new Error(data.message || 'आपका खाता किसी अन्य डिवाइस पर लॉगिन हो गया है।');
-        err.status = 401;
-        err.concurrent = true;
+      if (!response.ok) {
+        // Check for Single-Device Eviction (Another login detected)
+        if (response.status === 401 && (data.error === 'concurrent_login' || data.code === 'CONCURRENT_LOGIN_DETECTED')) {
+          this.handleConcurrentLoginEviction(data);
+          const err = new Error(data.message || 'आपका खाता किसी अन्य डिवाइस पर लॉगिन हो गया है।');
+          err.status = 401;
+          err.concurrent = true;
+          throw err;
+        }
+
+        const err = new Error(data.error || 'Server request failed');
+        err.status = response.status;
         throw err;
       }
-
-      const err = new Error(data.error || 'Server request failed');
-      err.status = response.status;
+      return data;
+    } catch (err) {
+      clearTimeout(timer);
+      if (err.name === 'AbortError') {
+        const timeoutErr = new Error('सर्वर से प्रतिक्रिया में अधिक समय लगा (Network Timeout)');
+        timeoutErr.status = 408;
+        throw timeoutErr;
+      }
       throw err;
     }
-    return data;
   }
 
   // -------------------------------------------------------------------------
@@ -510,6 +548,7 @@ class StenoApp {
       this.token = res.token;
       this.user = res.user;
       localStorage.setItem('stenomaster_token', this.token);
+      localStorage.setItem('stenomaster_user', JSON.stringify(this.user));
 
       // Save Student Credentials for 1-Click Login if Remember Me is checked
       const rememberStudent = document.getElementById('stuRememberMe')?.checked ?? true;
@@ -582,6 +621,7 @@ class StenoApp {
       this.token = res.token;
       this.user = res.user;
       localStorage.setItem('stenomaster_token', this.token);
+      localStorage.setItem('stenomaster_user', JSON.stringify(this.user));
 
       // Save Admin Credentials for 1-Click Login if Remember Me is checked
       const rememberAdmin = document.getElementById('adminRememberMe')?.checked ?? true;
@@ -689,10 +729,15 @@ class StenoApp {
     try {
       const res = await this.apiCall('/api/auth/me');
       this.user = res.user;
+      localStorage.setItem('stenomaster_user', JSON.stringify(this.user));
       this.updateUserUI();
     } catch (err) {
-      console.warn('Session expired, logging out');
-      this.logout(false);
+      if (err.status === 401) {
+        console.warn('Session expired (401), logging out');
+        this.logout(false);
+      } else {
+        console.warn('Transient error in fetchCurrentUser, retaining session:', err);
+      }
       throw err;
     }
   }
@@ -705,6 +750,7 @@ class StenoApp {
       this.token = res.token;
       this.user = res.user;
       localStorage.setItem('stenomaster_token', this.token);
+      localStorage.setItem('stenomaster_user', JSON.stringify(this.user));
       this.hideAuthGateway();
       this.updateUserUI();
       this.closeModal('registerModal');
@@ -722,6 +768,7 @@ class StenoApp {
     this.token = null;
     this.user = null;
     localStorage.removeItem('stenomaster_token');
+    localStorage.removeItem('stenomaster_user');
     this.updateUserUI();
     this.showAuthGateway('student');
     if (showToast) this.showToast('लॉगआउट सफल। (Logged out successfully)', 'info');
@@ -732,6 +779,7 @@ class StenoApp {
     this.token = null;
     this.user = null;
     localStorage.removeItem('stenomaster_token');
+    localStorage.removeItem('stenomaster_user');
 
     // 2. Halt audio playback immediately
     if (window.stenoAudioPlayer && typeof window.stenoAudioPlayer.stop === 'function') {
