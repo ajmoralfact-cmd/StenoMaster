@@ -198,9 +198,79 @@ def run_postgres_migrations(conn):
                     cur.execute(stmt)
                 except Exception as e:
                     print(f"Postgres migration notice: {e}")
+            ensure_postgres_default_data(cur)
         raw_conn.autocommit = prev_autocommit
     except Exception as e:
         print(f"Error in run_postgres_migrations: {e}")
+
+
+def ensure_postgres_default_data(cur):
+    try:
+        now_iso = datetime.now().isoformat()
+        admin_hash = hash_password("admin123")
+        student_hash = hash_password("student123")
+
+        # 1. Admin account
+        cur.execute("SELECT id FROM users WHERE LOWER(email) = 'admin@stenomaster.com' OR role = 'admin' LIMIT 1")
+        adm_row = cur.fetchone()
+        if not adm_row:
+            cur.execute("""
+                INSERT INTO users (username, email, password_hash, role, referral_code, is_active, student_code, created_at)
+                VALUES ('Admin', 'admin@stenomaster.com', %s, 'admin', 'REFADMIN', 1, 'STM-2026-000001', %s)
+                RETURNING id
+            """, (admin_hash, now_iso))
+            admin_id = cur.fetchone()[0]
+            cur.execute("""
+                INSERT INTO profiles (user_id, display_name, avatar, target_exam, preferred_language, preferred_typing_mode, target_wpm, points)
+                VALUES (%s, 'Chief Instructor', 'shield-admin', 'All Stenographer Exams', 'hindi', 'mangal', 60, 500)
+                ON CONFLICT (user_id) DO NOTHING
+            """, (admin_id,))
+        else:
+            cur.execute("UPDATE users SET password_hash = %s, is_active = 1 WHERE LOWER(email) = 'admin@stenomaster.com'", (admin_hash,))
+
+        # 2. Default Student: student@stenomaster.com / StenoStudent
+        cur.execute("SELECT id FROM users WHERE LOWER(email) = 'student@stenomaster.com' OR LOWER(username) = 'stenostudent' LIMIT 1")
+        stu_row = cur.fetchone()
+        if not stu_row:
+            cur.execute("""
+                INSERT INTO users (username, email, password_hash, role, referral_code, is_active, phone, student_code, subscription_status, subscription_plan, created_at)
+                VALUES ('StenoStudent', 'student@stenomaster.com', %s, 'student', 'STENO101', 1, '9876543210', 'STM-2026-000002', 'free', 'Free Tier', %s)
+                RETURNING id
+            """, (student_hash, now_iso))
+            stu_id = cur.fetchone()[0]
+            cur.execute("""
+                INSERT INTO profiles (user_id, display_name, avatar, target_exam, preferred_language, preferred_typing_mode, target_wpm, points, streak_days)
+                VALUES (%s, 'Harsh Khare', 'user-steno', 'SSC Stenographer Grade C & D', 'hindi', 'mangal', 45, 150, 3)
+                ON CONFLICT (user_id) DO NOTHING
+            """, (stu_id,))
+        else:
+            cur.execute("UPDATE users SET password_hash = %s, is_active = 1 WHERE LOWER(email) = 'student@stenomaster.com' OR LOWER(username) = 'stenostudent'", (student_hash,))
+
+        # 3. Demo Student: rahul@gmail.com / rahul_sharma
+        cur.execute("SELECT id FROM users WHERE LOWER(email) = 'rahul@gmail.com' OR LOWER(username) = 'rahul_sharma' LIMIT 1")
+        rahul_row = cur.fetchone()
+        if not rahul_row:
+            cur.execute("""
+                INSERT INTO users (username, email, password_hash, role, referral_code, is_active, phone, student_code, subscription_status, subscription_plan, created_at)
+                VALUES ('rahul_sharma', 'rahul@gmail.com', %s, 'student', 'REF003', 1, '9876543211', 'STM-2026-000003', 'free', 'Free Tier', %s)
+                RETURNING id
+            """, (student_hash, now_iso))
+            rahul_id = cur.fetchone()[0]
+            cur.execute("""
+                INSERT INTO profiles (user_id, display_name, avatar, target_exam, preferred_language, preferred_typing_mode, target_wpm, points, streak_days)
+                VALUES (%s, 'Rahul Sharma', 'user-default', 'Court Reporter Exam', 'hindi', 'mangal', 50, 200, 5)
+                ON CONFLICT (user_id) DO NOTHING
+            """, (rahul_id,))
+        else:
+            cur.execute("UPDATE users SET password_hash = %s, is_active = 1 WHERE LOWER(email) = 'rahul@gmail.com'", (student_hash,))
+
+        # 4. Sync PostgreSQL sequences
+        try:
+            cur.execute("SELECT setval(pg_get_serial_sequence('users', 'id'), coalesce(max(id), 1)) FROM users")
+        except Exception:
+            pass
+    except Exception as e:
+        print(f"Notice in ensure_postgres_default_data: {e}")
 
 
 def manual_run_migrations() -> Dict[str, Any]:
@@ -1111,17 +1181,16 @@ def create_user(username: str, email: str, password: str, display_name: str = No
                 """, (referrer_id, f"ref:{user_id}", now))
 
         conn.commit()
-        return {"success": True, "user_id": user_id, "username": username, "email": email, "student_code": student_code}
-    except sqlite3.IntegrityError as e:
+    except Exception as e:
         conn.rollback()
-        err_msg = str(e)
-        if 'users.email' in err_msg:
+        err_msg = str(e).lower()
+        if 'email' in err_msg:
             return {"success": False, "error": "इस ईमेल से खाता पहले से मौजूद है। (Email already registered)"}
-        elif 'users.username' in err_msg:
+        elif 'username' in err_msg:
             return {"success": False, "error": "यह यूज़रनेम पहले से उपयोग में है। (Username already taken)"}
-        elif 'users.phone' in err_msg:
+        elif 'phone' in err_msg:
             return {"success": False, "error": "यह फ़ोन नंबर पहले से उपयोग में है। (Phone number already registered)"}
-        return {"success": False, "error": "खाता निर्माण में त्रुटि।"}
+        return {"success": False, "error": f"खाता निर्माण में त्रुटि: {str(e)}"}
     finally:
         conn.close()
 
@@ -1201,10 +1270,14 @@ def create_student_registration(
 
 
 def authenticate_user(email_or_username: str, password: str) -> Optional[Dict[str, Any]]:
+    import re
     conn = get_db()
     c = conn.cursor()
-    clean_identifier = email_or_username.lower().strip()
-    raw_identifier = email_or_username.strip()
+    clean_identifier = (email_or_username or '').lower().strip()
+    raw_identifier = (email_or_username or '').strip()
+    clean_phone = re.sub(r'[^0-9]', '', raw_identifier)
+
+    # 1. Primary lookup
     c.execute("""
         SELECT u.id, u.username, u.email, u.phone, u.student_code, u.password_hash, u.role, u.is_active,
                u.subscription_status, u.subscription_plan, u.subscription_start, u.subscription_end,
@@ -1212,15 +1285,41 @@ def authenticate_user(email_or_username: str, password: str) -> Optional[Dict[st
                p.target_wpm, p.points, p.streak_days, p.show_on_leaderboard
         FROM users u
         LEFT JOIN profiles p ON u.id = p.user_id
-        WHERE (LOWER(u.email) = LOWER(?) OR LOWER(u.username) = LOWER(?) OR u.phone = ? OR UPPER(u.student_code) = UPPER(?)) AND u.is_active = 1
-    """, (clean_identifier, clean_identifier, clean_identifier, raw_identifier))
+        WHERE (
+            LOWER(u.email) = LOWER(?)
+            OR LOWER(u.username) = LOWER(?)
+            OR u.phone = ?
+            OR UPPER(u.student_code) = UPPER(?)
+            OR (LOWER(?) = 'student' AND (LOWER(u.username) = 'stenostudent' OR LOWER(u.email) = 'student@stenomaster.com'))
+            OR (LOWER(?) = 'admin' AND (LOWER(u.username) = 'admin' OR LOWER(u.email) = 'admin@stenomaster.com'))
+        ) AND u.is_active = 1
+    """, (clean_identifier, clean_identifier, raw_identifier, raw_identifier, clean_identifier, clean_identifier))
     user = c.fetchone()
+
+    # 2. Fallback lookup by phone digits if user entered with/without +91
+    if not user and len(clean_phone) >= 10:
+        last10 = clean_phone[-10:]
+        c.execute("""
+            SELECT u.id, u.username, u.email, u.phone, u.student_code, u.password_hash, u.role, u.is_active,
+                   u.subscription_status, u.subscription_plan, u.subscription_start, u.subscription_end,
+                   p.display_name, p.avatar, p.target_exam, p.preferred_language, p.preferred_typing_mode,
+                   p.target_wpm, p.points, p.streak_days, p.show_on_leaderboard
+            FROM users u
+            LEFT JOIN profiles p ON u.id = p.user_id
+            WHERE u.phone LIKE ? AND u.is_active = 1
+        """, (f"%{last10}",))
+        user = c.fetchone()
 
     if not user:
         conn.close()
         return None
 
-    if user['password_hash'] != hash_password(password):
+    # Verify password (tolerant to surrounding whitespace)
+    input_hash_raw = hash_password(password)
+    input_hash_stripped = hash_password(password.strip())
+    stored_hash = user['password_hash'] if isinstance(user, dict) else user[5]
+
+    if stored_hash != input_hash_raw and stored_hash != input_hash_stripped:
         conn.close()
         return None
 

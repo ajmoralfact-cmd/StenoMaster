@@ -753,6 +753,40 @@ class StenoApp {
     }
   }
 
+  async login(emailOrUser, password) {
+    const email = (emailOrUser || '').trim();
+    const pwd = password || '';
+    if (!email || !pwd) {
+      this.showToast('कृपया ईमेल/यूज़रनेम और पासवर्ड दर्ज करें।', 'warning');
+      return;
+    }
+    try {
+      this.showToast('सत्यापन हो रहा है... ⏳', 'info');
+      const res = await this.apiCall('/api/auth/login', 'POST', {
+        email_or_username: email,
+        password: pwd
+      });
+      this.token = res.token;
+      this.user = res.user;
+      localStorage.setItem('stenomaster_token', this.token);
+      localStorage.setItem('stenomaster_user', JSON.stringify(this.user));
+      this.closeModal('loginModal');
+      this.hideAuthGateway();
+      this.updateUserUI();
+      await this.loadCategories();
+      await this.loadPassages();
+      this.showToast(`स्वागतम्, ${this.user.display_name || this.user.username}! 👋`, 'success');
+      if (this.user.role === 'admin') {
+        this.navigate('admin');
+      } else {
+        this.navigate('home');
+      }
+    } catch (err) {
+      const msg = err.status === 401 ? 'गलत ईमेल/यूज़रनेम अथवा पासवर्ड।' : (err.message || 'लॉगिन विफल रहा।');
+      this.showToast(msg, 'error');
+    }
+  }
+
   async handleAdminLogin(e) {
     if (e) e.preventDefault();
     const emailInput = document.getElementById('adminAuthEmail');
