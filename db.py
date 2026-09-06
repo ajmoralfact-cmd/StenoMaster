@@ -475,6 +475,8 @@ def init_db():
         c.execute("ALTER TABLE users ADD COLUMN subscription_start TEXT")
     if 'subscription_end' not in u_cols:
         c.execute("ALTER TABLE users ADD COLUMN subscription_end TEXT")
+    if 'is_free_access' not in u_cols:
+        c.execute("ALTER TABLE users ADD COLUMN is_free_access INTEGER DEFAULT 0")
 
     c.execute("PRAGMA table_info(passages)")
     p_cols = {col['name'] for col in c.fetchall()}
@@ -2032,12 +2034,13 @@ def admin_delete_category(category_id: int) -> bool:
 
 
 def get_admin_users() -> List[Dict[str, Any]]:
-    """Returns a list of all registered users with their profiles, subscription info, dynamic days left, and attempt counts."""
+    """Returns a list of all registered users with their profiles, subscription info, is_free_access flag, dynamic days left, and attempt counts."""
     conn = get_db()
     c = conn.cursor()
     c.execute("""
         SELECT u.id, u.username, u.email, u.phone, u.student_code, u.role, u.is_active, u.created_at,
                u.subscription_status, u.subscription_plan, u.subscription_start, u.subscription_end,
+               COALESCE(u.is_free_access, 0) as is_free_access,
                p.display_name, p.target_exam, p.preferred_language, p.target_wpm, p.points, p.streak_days,
                (SELECT COUNT(*) FROM practice_attempts WHERE user_id = u.id) as attempts_count
         FROM users u
@@ -2049,8 +2052,12 @@ def get_admin_users() -> List[Dict[str, Any]]:
 
     now_dt = datetime.now()
     for r in rows:
+        r["is_free_access"] = bool(r.get("is_free_access", 0))
         if r["role"] == "admin":
             r["effective_status"] = "admin"
+            r["subscription_days_left"] = 9999
+        elif r["is_free_access"]:
+            r["effective_status"] = "free_access"
             r["subscription_days_left"] = 9999
         elif r.get("subscription_status") == "active":
             end_val = r.get("subscription_end")
@@ -2076,6 +2083,46 @@ def get_admin_users() -> List[Dict[str, Any]]:
             r["subscription_days_left"] = 0
 
     return rows
+
+
+def admin_toggle_free_access(user_id: int, is_free: bool, admin_id: int = 1) -> Dict[str, Any]:
+    """
+    Admin grants or revokes 100% free access to all exercises for a user.
+    When enabled (is_free=True):
+      - is_free_access set to 1
+      - subscription_status set to 'active'
+      - subscription_plan set to 'All Exercises Free (लाइफटाइम)'
+      - all 24+ exercises immediately unlocked for this student
+    """
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("SELECT id, username, email FROM users WHERE id = ?", (user_id,))
+    u = c.fetchone()
+    if not u:
+        conn.close()
+        return {"success": False, "error": "उपयोगकर्ता नहीं मिला"}
+
+    val = 1 if is_free else 0
+    if val == 1:
+        c.execute("""
+            UPDATE users 
+            SET is_free_access = 1, 
+                subscription_status = 'active',
+                subscription_plan = 'All Exercises Free (लाइफटाइम छूट)',
+                subscription_end = NULL
+            WHERE id = ?
+        """, (user_id,))
+    else:
+        c.execute("""
+            UPDATE users 
+            SET is_free_access = 0, 
+                subscription_status = 'free',
+                subscription_plan = 'Free Tier'
+            WHERE id = ?
+        """, (user_id,))
+    conn.commit()
+    conn.close()
+    return {"success": True, "user_id": user_id, "is_free_access": bool(val)}
 
 
 # ==========================================
@@ -2400,17 +2447,17 @@ def admin_review_payment(request_id: int, action: str, admin_id: int, notes: str
 
 
 def is_user_premium(user_id: int) -> bool:
-    """Verifies whether a user has active premium access. Automatically expires in DB if period ended."""
+    """Verifies whether a user has active premium access. Automatically expires in DB if period ended. Also checks is_free_access."""
     if not user_id:
         return False
     conn = get_db()
     c = conn.cursor()
-    c.execute("SELECT role, subscription_status, subscription_end FROM users WHERE id = ?", (user_id,))
+    c.execute("SELECT role, subscription_status, subscription_end, is_free_access FROM users WHERE id = ?", (user_id,))
     user = c.fetchone()
     if not user:
         conn.close()
         return False
-    if user["role"] == "admin":
+    if user["role"] == "admin" or bool(user["is_free_access"]):
         conn.close()
         return True
     if user["subscription_status"] == "active":
@@ -2430,17 +2477,18 @@ def is_user_premium(user_id: int) -> bool:
 
 
 def get_user_subscription_info(user_id: int) -> Dict[str, Any]:
-    """Returns detailed subscription information for user including remaining days."""
+    """Returns detailed subscription information for user including remaining days and free access status."""
     conn = get_db()
     c = conn.cursor()
-    c.execute("SELECT role, subscription_status, subscription_plan, subscription_start, subscription_end FROM users WHERE id = ?", (user_id,))
+    c.execute("SELECT role, subscription_status, subscription_plan, subscription_start, subscription_end, is_free_access FROM users WHERE id = ?", (user_id,))
     user = c.fetchone()
     conn.close()
     if not user:
-        return {"is_premium": False, "status": "free", "days_left": 0}
+        return {"is_premium": False, "status": "free", "days_left": 0, "is_free_access": False}
     user = dict(user)
 
     is_admin = user["role"] == "admin"
+    has_free_access = bool(user.get("is_free_access"))
     is_active = is_user_premium(user_id)
     days_left = 0
     if is_admin:
@@ -2449,7 +2497,18 @@ def get_user_subscription_info(user_id: int) -> Dict[str, Any]:
             "status": "admin",
             "plan": "System Administrator",
             "days_left": 9999,
-            "end_date": None
+            "end_date": None,
+            "is_free_access": True
+        }
+
+    if has_free_access:
+        return {
+            "is_premium": True,
+            "status": "active",
+            "plan": "All Exercises Free (लाइफटाइम फ्री एक्सेस)",
+            "days_left": 9999,
+            "end_date": None,
+            "is_free_access": True
         }
 
     if is_active and user["subscription_end"]:
@@ -2467,7 +2526,8 @@ def get_user_subscription_info(user_id: int) -> Dict[str, Any]:
         "plan": user.get("subscription_plan") or "StenoMaster Pro — 1 Month (₹100/माह)",
         "start_date": user.get("subscription_start"),
         "end_date": user.get("subscription_end"),
-        "days_left": days_left
+        "days_left": days_left,
+        "is_free_access": False
     }
 
 
