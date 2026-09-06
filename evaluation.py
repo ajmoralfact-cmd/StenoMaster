@@ -131,177 +131,349 @@ def analyze_hindi_word_difference(official_word: str, student_word: str) -> Tupl
         return ("wrong", f"भिन्न शब्द (अपेक्षित शब्द: '{official_word}')")
 
 
+# Common particles / stopwords in Hindi, English, and Kruti Dev to avoid accidental resynchronization
+HINDI_STOPWORDS = {
+    'का', 'के', 'की', 'को', 'में', 'पर', 'से', 'है', 'हैं', 'था', 'थी', 'थे',
+    'और', 'या', 'तो', 'भी', 'ही', 'ने', 'हो', 'दो', 'दे', 'ना', 'नहीं', 'कर',
+    'रहा', 'रही', 'रहे', 'इस', 'उस', 'यह', 'वह', 'जो', 'कि', 'एक'
+}
+
+KRUTI_STOPWORDS = {
+    'dk', 'ds', 'dh', 'dks', 'esa', 'ij', 'ls', 'gS', 'gSa', 'Fkk', 'Fkh', 'Fks',
+    'vkSj', ';k', 'rks', 'Hkh', 'gh', 'us', 'gks', 'nks', 'ns', 'uk', 'ugha', 'dj',
+    'jgk', 'jgh', 'jgs', 'bl', 'ml', ';g', 'og', 'tks', 'fd', 'd'
+}
+
+ENGLISH_STOPWORDS = {
+    'a', 'an', 'the', 'in', 'on', 'at', 'to', 'for', 'of', 'and', 'or', 'is',
+    'are', 'was', 'were', 'it', 'be', 'by', 'as', 'with', 'that', 'this'
+}
+
+
+def _is_token_match(t1: str, t2: str, language: str = 'hindi') -> bool:
+    """Checks whether two tokens match exactly or are close enough to be considered the same word."""
+    if not t1 or not t2:
+        return False
+    if t1 == t2:
+        return True
+
+    if language in ('krutidev', 'devlys'):
+        n1 = t1.replace('¡', 'a').rstrip(',.A"\'')
+        n2 = t2.replace('¡', 'a').rstrip(',.A"\'')
+        if n1 == n2:
+            return True
+        if n1.replace('+', '') == n2.replace('+', ''):
+            return True
+        return difflib.SequenceMatcher(None, n1, n2).ratio() >= 0.82
+
+    c1 = clean_word_for_similarity(t1, language)
+    c2 = clean_word_for_similarity(t2, language)
+    if not c1 or not c2:
+        return t1 == t2
+    if c1 == c2:
+        return True
+    if language == 'hindi':
+        import hindi_converter
+        norm1 = hindi_converter.normalize_hindi_unicode(c1)
+        norm2 = hindi_converter.normalize_hindi_unicode(c2)
+        if norm1 == norm2:
+            return True
+        if len(norm1) >= 4 and len(norm2) >= 4:
+            return difflib.SequenceMatcher(None, norm1, norm2).ratio() >= 0.82
+    else:
+        if c1.lower() == c2.lower():
+            return True
+        if len(c1) >= 4 and len(c2) >= 4:
+            return difflib.SequenceMatcher(None, c1.lower(), c2.lower()).ratio() >= 0.82
+
+    return False
+
+
+def _is_stopword(token: str, language: str = 'hindi') -> bool:
+    c = clean_word_for_similarity(token, language).lower()
+    if language in ('krutidev', 'devlys'):
+        return c in KRUTI_STOPWORDS
+    elif language == 'hindi':
+        return c in HINDI_STOPWORDS
+    else:
+        return c in ENGLISH_STOPWORDS
+
+
 def align_tokens_dp(official_tokens: List[str], student_tokens: List[str], language: str = 'hindi') -> List[Dict[str, Any]]:
     """
-    Needleman-Wunsch / Levenshtein Dynamic Programming Sequence Alignment
-    to align official and student token sequences globally.
-    Prevents offset drift when tokens are omitted or inserted.
+    Sequential Word-by-Word Sequence Alignment with Local Resynchronization.
+    Matches student typing against official passage tokens strictly in sequence.
+    Prevents jumping across distant parts of the passage when common words match.
+    """
+    return align_tokens_sequential(official_tokens, student_tokens, language)
+
+
+def align_tokens_sequential(official_tokens: List[str], student_tokens: List[str], language: str = 'hindi') -> List[Dict[str, Any]]:
+    """
+    Sequential Word-by-Word Alignment Algorithm:
+    - Compares student words sequentially word-by-word against official words.
+    - Local resynchronization: Checks up to 3 words lookahead for omission or insertion,
+      requiring anchor confirmation (next word match or non-stopword content match)
+      to completely avoid false jumps on common particles.
+    - Untyped passage words appear cleanly at the end as missing words.
     """
     n = len(official_tokens)
     m = len(student_tokens)
-
-    # DP cost matrix
-    # dp[i][j] = (min_cost, operation)
-    dp = [[0.0] * (m + 1) for _ in range(n + 1)]
-
-    # Scoring constants
-    MATCH_COST = 0.0
-    INSERTION_COST = 1.0   # Student inserted extra word
-    DELETION_COST = 1.0    # Student missed a word
-
-    for i in range(1, n + 1):
-        dp[i][0] = i * DELETION_COST
-    for j in range(1, m + 1):
-        dp[0][j] = j * INSERTION_COST
-
-    def token_diff_cost(t1: str, t2: str) -> float:
-        if t1 == t2:
-            return MATCH_COST
-        if language in ('krutidev', 'devlys'):
-            n1 = t1.replace('¡', 'a').rstrip(',.A"\'')
-            n2 = t2.replace('¡', 'a').rstrip(',.A"\'')
-            if n1 == n2:
-                return 0.1  # Punctuation or Chandrabindu tolerance
-            if n1.replace('+', '') == n2.replace('+', ''):
-                return 0.2  # Nukta difference
-            ratio = difflib.SequenceMatcher(None, n1, n2).ratio()
-            return 1.0 - (ratio * 0.7)
-
-        c1 = clean_word_for_similarity(t1, language)
-        c2 = clean_word_for_similarity(t2, language)
-        if c1 == c2:
-            return 0.3  # Punctuation difference only
-        # Word similarity
-        ratio = difflib.SequenceMatcher(None, c1, c2).ratio()
-        return 1.0 - (ratio * 0.7)  # Higher similarity = lower substitution cost
-
-    for i in range(1, n + 1):
-        for j in range(1, m + 1):
-            sub_cost = dp[i - 1][j - 1] + token_diff_cost(official_tokens[i - 1], student_tokens[j - 1])
-            del_cost = dp[i - 1][j] + DELETION_COST
-            ins_cost = dp[i][j - 1] + INSERTION_COST
-
-            dp[i][j] = min(sub_cost, del_cost, ins_cost)
-
-    # Backtracking to build aligned token sequence
+    i = 0
+    j = 0
     aligned = []
-    i = n
-    j = m
+    MAX_LOOKAHEAD = 3
 
-    while i > 0 or j > 0:
-        if i > 0 and j > 0:
-            sub_cost = token_diff_cost(official_tokens[i - 1], student_tokens[j - 1])
-            if abs(dp[i][j] - (dp[i - 1][j - 1] + sub_cost)) < 1e-5:
-                off_t = official_tokens[i - 1]
-                stu_t = student_tokens[j - 1]
+    def build_comparison_item(off_t: str, stu_t: str) -> Dict[str, Any]:
+        """Analyzes a word pair at the current sequential position."""
+        if off_t == stu_t:
+            return {
+                "status": "correct",
+                "official": off_t,
+                "student": stu_t,
+                "error_type": "none",
+                "detail": "बिल्कुल सही" if language in ('hindi', 'krutidev', 'devlys') else "Exact match"
+            }
 
-                if off_t == stu_t:
-                    aligned.append({
-                        "status": "correct",
-                        "official": off_t,
-                        "student": stu_t,
-                        "error_type": "none",
-                        "detail": "बिल्कुल सही" if language in ('hindi', 'krutidev', 'devlys') else "Exact match"
-                    })
-                elif language in ('krutidev', 'devlys') and off_t.replace('¡', 'a').rstrip(',.A"\'') == stu_t.replace('¡', 'a').rstrip(',.A"\''):
-                    aligned.append({
-                        "status": "correct",
-                        "official": off_t,
-                        "student": stu_t,
-                        "error_type": "none",
-                        "detail": "बिल्कुल सही"
-                    })
-                elif language in ('krutidev', 'devlys') and off_t.replace('+', '').replace('¡', 'a').rstrip(',.A"\'') == stu_t.replace('+', '').replace('¡', 'a').rstrip(',.A"\''):
-                    aligned.append({
-                        "status": "wrong",
-                        "official": off_t,
-                        "student": stu_t,
-                        "error_type": "character",
-                        "detail": f"नुक्ता (+) अंतर (अपेक्षित: '{off_t}')"
-                    })
-                else:
-                    if language in ('krutidev', 'devlys'):
-                        ratio = difflib.SequenceMatcher(None, off_t, stu_t).ratio()
-                        import hindi_converter
-                        off_u = hindi_converter.kruti_dev_to_unicode(off_t)
-                        stu_u = hindi_converter.kruti_dev_to_unicode(stu_t)
-                        if off_u == stu_u:
-                            err_type = "matra"
-                            detail = f"कीस्ट्रोक अशुद्धि (अपेक्षित: '{off_t}' [{off_u}])"
-                        elif ratio >= 0.7:
-                            err_type = "spelling"
-                            detail = f"वर्तनी त्रुटि (अपेक्षित: '{off_t}' [{off_u}])"
-                        else:
-                            err_type = "wrong"
-                            detail = f"गलत शब्द (अपेक्षित: '{off_t}' [{off_u}])"
-                    elif language == 'hindi':
-                        err_type, detail = analyze_hindi_word_difference(off_t, stu_t)
-                    else:
-                        c1 = clean_word_for_similarity(off_t, language).lower()
-                        c2 = clean_word_for_similarity(stu_t, language).lower()
-                        if c1 == c2:
-                            err_type = "punctuation"
-                            detail = f"Punctuation error (Expected '{off_t}')"
-                        elif difflib.SequenceMatcher(None, c1, c2).ratio() >= 0.7:
-                            err_type = "spelling"
-                            detail = f"Spelling error (Expected '{off_t}')"
-                        else:
-                            err_type = "wrong"
-                            detail = f"Wrong word (Expected '{off_t}')"
+        if language in ('krutidev', 'devlys'):
+            n1 = off_t.replace('¡', 'a').rstrip(',.A"\'')
+            n2 = stu_t.replace('¡', 'a').rstrip(',.A"\'')
+            if n1 == n2:
+                return {
+                    "status": "correct",
+                    "official": off_t,
+                    "student": stu_t,
+                    "error_type": "none",
+                    "detail": "बिल्कुल सही"
+                }
+            if n1.replace('+', '') == n2.replace('+', ''):
+                return {
+                    "status": "wrong",
+                    "official": off_t,
+                    "student": stu_t,
+                    "error_type": "character",
+                    "detail": f"नुक्ता (+) अंतर (अपेक्षित: '{off_t}')"
+                }
+            import hindi_converter
+            off_u = hindi_converter.kruti_dev_to_unicode(off_t)
+            stu_u = hindi_converter.kruti_dev_to_unicode(stu_t)
+            ratio = difflib.SequenceMatcher(None, off_t, stu_t).ratio()
+            if off_u == stu_u:
+                return {
+                    "status": "wrong",
+                    "official": off_t,
+                    "student": stu_t,
+                    "error_type": "matra",
+                    "detail": f"कीस्ट्रोक अशुद्धि (अपेक्षित: '{off_t}' [{off_u}])"
+                }
+            elif ratio >= 0.7:
+                return {
+                    "status": "wrong",
+                    "official": off_t,
+                    "student": stu_t,
+                    "error_type": "spelling",
+                    "detail": f"वर्तनी त्रुटि (अपेक्षित: '{off_t}' [{off_u}])"
+                }
+            else:
+                return {
+                    "status": "wrong",
+                    "official": off_t,
+                    "student": stu_t,
+                    "error_type": "wrong",
+                    "detail": f"गलत शब्द (अपेक्षित: '{off_t}' [{off_u}])"
+                }
 
-                    aligned.append({
-                        "status": "wrong",
-                        "official": off_t,
-                        "student": stu_t,
-                        "error_type": err_type,
-                        "detail": detail
-                    })
-                i -= 1
-                j -= 1
+        elif language == 'hindi':
+            err_type, detail = analyze_hindi_word_difference(off_t, stu_t)
+            status = "correct" if err_type == "none" else "wrong"
+            return {
+                "status": status,
+                "official": off_t,
+                "student": stu_t,
+                "error_type": err_type,
+                "detail": detail
+            }
+        else:
+            c1 = clean_word_for_similarity(off_t, language).lower()
+            c2 = clean_word_for_similarity(stu_t, language).lower()
+            if c1 == c2:
+                return {
+                    "status": "wrong",
+                    "official": off_t,
+                    "student": stu_t,
+                    "error_type": "punctuation",
+                    "detail": f"Punctuation error (Expected '{off_t}')"
+                }
+            elif difflib.SequenceMatcher(None, c1, c2).ratio() >= 0.7:
+                return {
+                    "status": "wrong",
+                    "official": off_t,
+                    "student": stu_t,
+                    "error_type": "spelling",
+                    "detail": f"Spelling error (Expected '{off_t}')"
+                }
+            else:
+                return {
+                    "status": "wrong",
+                    "official": off_t,
+                    "student": stu_t,
+                    "error_type": "wrong",
+                    "detail": f"Wrong word (Expected '{off_t}')"
+                }
+
+    while i < n and j < m:
+        off = official_tokens[i]
+        stu = student_tokens[j]
+
+        # 1. Exact or High-Similarity Direct Sequential Match
+        if _is_token_match(off, stu, language):
+            aligned.append(build_comparison_item(off, stu))
+            i += 1
+            j += 1
+            continue
+
+        # 2. Check Transposition (Adjacent Words Inverted / Swapped)
+        if i + 1 < n and j + 1 < m:
+            if _is_token_match(official_tokens[i], student_tokens[j + 1], language) and \
+               _is_token_match(official_tokens[i + 1], student_tokens[j], language):
+                aligned.append({
+                    "status": "wrong",
+                    "official": official_tokens[i],
+                    "student": student_tokens[j],
+                    "error_type": "transposition",
+                    "detail": f"शब्द क्रम उलट गया (अपेक्षित: '{official_tokens[i]}')" if language == 'hindi' else f"Transposed word (Expected: '{official_tokens[i]}')"
+                })
+                aligned.append({
+                    "status": "wrong",
+                    "official": official_tokens[i + 1],
+                    "student": student_tokens[j + 1],
+                    "error_type": "transposition",
+                    "detail": f"शब्द क्रम उलट गया (अपेक्षित: '{official_tokens[i + 1]}')" if language == 'hindi' else f"Transposed word (Expected: '{official_tokens[i + 1]}')"
+                })
+                i += 2
+                j += 2
                 continue
 
-        if i > 0 and (j == 0 or abs(dp[i][j] - (dp[i - 1][j] + DELETION_COST)) < 1e-5):
-            # Missing token (present in official, skipped by student)
-            off_val = official_tokens[i - 1]
-            if not clean_word_for_similarity(off_val):
-                aligned.append({
-                    "status": "wrong",
-                    "official": off_val,
-                    "student": "",
-                    "error_type": "punctuation",
-                    "detail": f"विराम चिह्न छूटा (अपेक्षित: '{off_val}')" if language == 'hindi' else f"Missing punctuation (Expected: '{off_val}')"
-                })
-            else:
-                aligned.append({
-                    "status": "missing",
-                    "official": off_val,
-                    "student": "",
-                    "error_type": "missing",
-                    "detail": f"छूटा हुआ शब्द (अपेक्षित: '{off_val}')" if language == 'hindi' else f"Missing word (Expected: '{off_val}')"
-                })
-            i -= 1
-        else:
-            # Extra token (typed by student, not in official)
-            stu_val = student_tokens[j - 1]
-            if not clean_word_for_similarity(stu_val):
-                aligned.append({
-                    "status": "wrong",
-                    "official": "",
-                    "student": stu_val,
-                    "error_type": "punctuation",
-                    "detail": f"अनावश्यक विराम चिह्न ('{stu_val}')" if language == 'hindi' else f"Unnecessary punctuation ('{stu_val}')"
-                })
-            else:
-                aligned.append({
-                    "status": "extra",
-                    "official": "",
-                    "student": stu_val,
-                    "error_type": "extra",
-                    "detail": f"अतिरिक्त शब्द ('{stu_val}')" if language == 'hindi' else f"Extra word ('{stu_val}')"
-                })
-            j -= 1
+        # 3. Check Local Omission (Student skipped 1 to MAX_LOOKAHEAD words in official)
+        found_omission = False
+        for k in range(1, MAX_LOOKAHEAD + 1):
+            if i + k < n and _is_token_match(official_tokens[i + k], stu, language):
+                # Anchor confirmation: next word also matches OR it is a non-stopword content word
+                has_anchor = False
+                if j + 1 < m and i + k + 1 < n and _is_token_match(official_tokens[i + k + 1], student_tokens[j + 1], language):
+                    has_anchor = True
+                elif not _is_stopword(stu, language) and len(clean_word_for_similarity(stu, language)) >= 4:
+                    has_anchor = True
 
-    aligned.reverse()
+                if has_anchor:
+                    for skip_idx in range(i, i + k):
+                        off_val = official_tokens[skip_idx]
+                        if not clean_word_for_similarity(off_val, language):
+                            aligned.append({
+                                "status": "wrong",
+                                "official": off_val,
+                                "student": "",
+                                "error_type": "punctuation",
+                                "detail": f"विराम चिह्न छूटा (अपेक्षित: '{off_val}')" if language == 'hindi' else f"Missing punctuation (Expected: '{off_val}')"
+                            })
+                        else:
+                            aligned.append({
+                                "status": "missing",
+                                "official": off_val,
+                                "student": "",
+                                "error_type": "missing",
+                                "detail": f"छूटा हुआ शब्द (अपेक्षित: '{off_val}')" if language == 'hindi' else f"Missing word (Expected: '{off_val}')"
+                            })
+                    i += k
+                    found_omission = True
+                    break
+
+        if found_omission:
+            continue
+
+        # 4. Check Local Insertion (Student inserted 1 to MAX_LOOKAHEAD extra words)
+        found_insertion = False
+        for k in range(1, MAX_LOOKAHEAD + 1):
+            if j + k < m and _is_token_match(off, student_tokens[j + k], language):
+                has_anchor = False
+                if j + k + 1 < m and i + 1 < n and _is_token_match(official_tokens[i + 1], student_tokens[j + k + 1], language):
+                    has_anchor = True
+                elif not _is_stopword(off, language) and len(clean_word_for_similarity(off, language)) >= 4:
+                    has_anchor = True
+
+                if has_anchor:
+                    for extra_idx in range(j, j + k):
+                        stu_val = student_tokens[extra_idx]
+                        if not clean_word_for_similarity(stu_val, language):
+                            aligned.append({
+                                "status": "wrong",
+                                "official": "",
+                                "student": stu_val,
+                                "error_type": "punctuation",
+                                "detail": f"अनावश्यक विराम चिह्न ('{stu_val}')" if language == 'hindi' else f"Unnecessary punctuation ('{stu_val}')"
+                            })
+                        else:
+                            aligned.append({
+                                "status": "extra",
+                                "official": "",
+                                "student": stu_val,
+                                "error_type": "extra",
+                                "detail": f"अतिरिक्त शब्द ('{stu_val}')" if language == 'hindi' else f"Extra word ('{stu_val}')"
+                            })
+                    j += k
+                    found_insertion = True
+                    break
+
+        if found_insertion:
+            continue
+
+        # 5. Sequential Substitution (Word-by-word mismatch at current position)
+        aligned.append(build_comparison_item(off, stu))
+        i += 1
+        j += 1
+
+    # Remaining student tokens -> Extra words at the end
+    while j < m:
+        stu_val = student_tokens[j]
+        if not clean_word_for_similarity(stu_val, language):
+            aligned.append({
+                "status": "wrong",
+                "official": "",
+                "student": stu_val,
+                "error_type": "punctuation",
+                "detail": f"अनावश्यक विराम चिह्न ('{stu_val}')" if language == 'hindi' else f"Unnecessary punctuation ('{stu_val}')"
+            })
+        else:
+            aligned.append({
+                "status": "extra",
+                "official": "",
+                "student": stu_val,
+                "error_type": "extra",
+                "detail": f"अतिरिक्त शब्द ('{stu_val}')" if language == 'hindi' else f"Extra word ('{stu_val}')"
+            })
+        j += 1
+
+    # Remaining official tokens -> Missing / Untyped words at the end
+    while i < n:
+        off_val = official_tokens[i]
+        if not clean_word_for_similarity(off_val, language):
+            aligned.append({
+                "status": "wrong",
+                "official": off_val,
+                "student": "",
+                "error_type": "punctuation",
+                "detail": f"विराम चिह्न छूटा (अपेक्षित: '{off_val}')" if language == 'hindi' else f"Missing punctuation (Expected: '{off_val}')"
+            })
+        else:
+            aligned.append({
+                "status": "missing",
+                "official": off_val,
+                "student": "",
+                "error_type": "missing",
+                "detail": f"छूटा हुआ शब्द (अपेक्षित: '{off_val}')" if language == 'hindi' else f"Missing word (Expected: '{off_val}')"
+            })
+        i += 1
+
     return aligned
 
 
@@ -447,16 +619,18 @@ def evaluate_practice_attempt(
     time_taken_seconds: int,
     language: str = 'hindi',
     scoring_mode: str = 'standard',
-    scoring_config: Dict[str, Any] = None
+    scoring_config: Dict[str, Any] = None,
+    exam_rule: str = 'ssc_steno'
 ) -> Dict[str, Any]:
     """
     Main evaluation pipeline:
     1. Normalizes texts
     2. Tokenizes
     3. DP Sequence Alignment
-    4. Categorizes errors
+    4. Categorizes errors (Full vs Half mistakes)
     5. Calculates Gross WPM, Net WPM, Accuracy, Error Rate
-    6. Generates side-by-side comparison, error table, weak areas & suggestions
+    6. Applies Exam-Specific Qualifying Rules (SSC Stenographer vs UPSSSC Skill Test)
+    7. Generates side-by-side comparison, error table, weak areas & suggestions
     """
     # 1. Normalize both passages
     norm_official = normalize_for_comparison(official_text, language)
@@ -555,29 +729,38 @@ def evaluate_practice_attempt(
     # Standard formula: Gross WPM = (Typed Characters / 5) / minutes
     gross_wpm = round((typed_characters / 5.0) / minutes, 1)
 
-    # Scoring Rules:
-    # SSC Stenographer Rule:
-    # - Full mistake = Omission, Substitution, Addition (Weight 1.0)
-    # - Half mistake = Spelling, Punctuation, Matra, Capitalization (Weight 0.5)
-    # Court Rule:
-    # - Strict: All mistakes penalized at 1.0
+    # -------------------------------------------------------------------------
+    # Scoring & Exam Rules Engine (SSC Stenographer vs UPSSSC Skill Test)
+    # -------------------------------------------------------------------------
     config = scoring_config or {}
-    mode = scoring_mode.lower()
-
-    if 'ssc' in mode:
-        full_penalty = (missing_count + extra_count + wrong_count) * 1.0
-        half_penalty = (matra_count + char_count + spelling_count + punct_count) * 0.5
-        weighted_errors = full_penalty + half_penalty
-        error_penalty_factor = config.get("ssc_error_factor", 1.0)
-    elif 'court' in mode:
-        weighted_errors = float(total_errors)
-        error_penalty_factor = config.get("court_error_factor", 1.2)
+    resolved_rule = (exam_rule or scoring_mode or 'ssc_steno').lower().strip()
+    if 'upsssc' in resolved_rule:
+        exam_key = 'upsssc'
+    elif 'court' in resolved_rule:
+        exam_key = 'court'
+    elif 'standard' in resolved_rule:
+        exam_key = 'standard'
     else:
-        # Standard
-        full_penalty = (missing_count + extra_count + wrong_count) * 1.0
-        half_penalty = (matra_count + char_count + spelling_count + punct_count) * 0.5
-        weighted_errors = full_penalty + half_penalty
-        error_penalty_factor = 1.0
+        exam_key = 'ssc_steno'
+
+    # Error definitions common across Indian Steno examinations:
+    # Full Mistakes (1.0x): Omission, Substitution, Addition
+    full_mistakes = missing_count + extra_count + wrong_count
+    # Half Mistakes (0.5x): Matra errors, Character/letter confusions, Spelling errors, Punctuation errors
+    half_mistakes = matra_count + char_count + spelling_count + punct_count
+
+    # Weighted errors according to exam
+    if exam_key == 'court':
+        weighted_errors = float(total_errors)
+        error_penalty_factor = float(config.get("court_error_factor", 1.2))
+    elif exam_key == 'upsssc':
+        # UPSSSC: Full mistake = 1.0, Half mistake = 0.5
+        weighted_errors = (full_mistakes * 1.0) + (half_mistakes * 0.5)
+        error_penalty_factor = float(config.get("upsssc_error_factor", 1.0))
+    else:
+        # SSC Stenographer (Default) & Standard:
+        weighted_errors = (full_mistakes * 1.0) + (half_mistakes * 0.5)
+        error_penalty_factor = float(config.get("ssc_error_factor", 1.0))
 
     # Net WPM = max(0, Gross WPM - (Penalty Errors / Minutes))
     wpm_deduction = round((weighted_errors * error_penalty_factor) / minutes, 1)
@@ -590,10 +773,72 @@ def evaluate_practice_attempt(
     # Error Rate percentage
     error_rate = round(min(100.0, (weighted_errors / denom) * 100.0), 1)
 
+    # Official Mistake Percentage
+    mistake_percent = round((weighted_errors / denom) * 100.0, 2)
+
     # Spelling Accuracy
     non_spelling_words = max(1, total_student_tokens)
     spelling_errors = matra_count + char_count + spelling_count
     spelling_accuracy = max(0.0, min(100.0, round((1.0 - (spelling_errors / non_spelling_words)) * 100.0, 1)))
+
+    # -------------------------------------------------------------------------
+    # Official Qualification Logic: SSC vs UPSSSC
+    # -------------------------------------------------------------------------
+    # SSC Thresholds
+    ssc_c_ur = float(config.get("ssc_grade_c_cutoff_ur", 5.0))
+    ssc_c_res = float(config.get("ssc_grade_c_cutoff_res", 7.0))
+    ssc_d_ur = float(config.get("ssc_grade_d_cutoff_ur", 7.0))
+    ssc_d_res = float(config.get("ssc_grade_d_cutoff_res", 10.0))
+
+    ssc_eval = {
+        "grade_c_ur": {"cutoff": ssc_c_ur, "is_qualified": mistake_percent <= ssc_c_ur},
+        "grade_c_res": {"cutoff": ssc_c_res, "is_qualified": mistake_percent <= ssc_c_res},
+        "grade_d_ur": {"cutoff": ssc_d_ur, "is_qualified": mistake_percent <= ssc_d_ur},
+        "grade_d_res": {"cutoff": ssc_d_res, "is_qualified": mistake_percent <= ssc_d_res},
+        "is_qualified_any": mistake_percent <= max(ssc_c_res, ssc_d_res)
+    }
+
+    # UPSSSC Thresholds
+    upsssc_min_wpm = float(config.get("upsssc_min_wpm_hindi", 25.0) if language == 'hindi' else config.get("upsssc_min_wpm_english", 30.0))
+    upsssc_max_err = float(config.get("upsssc_max_error_percent", 5.0))
+
+    upsssc_speed_ok = net_wpm >= upsssc_min_wpm
+    upsssc_err_ok = mistake_percent <= upsssc_max_err
+    upsssc_is_qualified = upsssc_speed_ok and upsssc_err_ok
+
+    if upsssc_is_qualified:
+        upsssc_reason = f"बधाई! आपकी नेट गति ({net_wpm} WPM) न्यूनतम आवश्यक {upsssc_min_wpm} WPM से अधिक है और त्रुटियां ({mistake_percent}%) अनुमन्य सीमा ({upsssc_max_err}%) के भीतर हैं।"
+    elif not upsssc_speed_ok and not upsssc_err_ok:
+        upsssc_reason = f"गति ({net_wpm} WPM < {upsssc_min_wpm} WPM) और त्रुटियां ({mistake_percent}% > {upsssc_max_err}%) दोनों मानक पर खरे नहीं उतरे।"
+    elif not upsssc_speed_ok:
+        upsssc_reason = f"गति अपर्याप्त है। आपकी नेट गति {net_wpm} WPM है जबकि न्यूनतम {upsssc_min_wpm} WPM आवश्यक है।"
+    else:
+        upsssc_reason = f"त्रुटियां अनुमन्य सीमा से अधिक हैं ({mistake_percent}% > {upsssc_max_err}%)।"
+
+    upsssc_eval = {
+        "required_wpm": upsssc_min_wpm,
+        "achieved_wpm": net_wpm,
+        "speed_qualified": upsssc_speed_ok,
+        "max_mistake_percent": upsssc_max_err,
+        "achieved_mistake_percent": mistake_percent,
+        "mistake_qualified": upsssc_err_ok,
+        "is_qualified": upsssc_is_qualified,
+        "verdict": "सफल (QUALIFIED)" if upsssc_is_qualified else "असफल (NOT QUALIFIED)",
+        "status_reason": upsssc_reason
+    }
+
+    exam_summary = {
+        "active_rule": exam_key,
+        "rule_title": "UPSSSC Skill Test (आशुलिपिक / कनिष्ठ सहायक)" if exam_key == 'upsssc' else ("High Court Strict Mode" if exam_key == 'court' else "SSC Stenographer Grade C & D"),
+        "total_official_words": total_official_tokens,
+        "total_words_typed": total_student_tokens,
+        "full_mistakes": full_mistakes,
+        "half_mistakes": half_mistakes,
+        "total_equivalent_mistakes": round(weighted_errors, 2),
+        "mistake_percent": mistake_percent,
+        "ssc": ssc_eval,
+        "upsssc": upsssc_eval
+    }
 
     # Error breakdown counts dictionary
     error_counts = {
@@ -621,6 +866,7 @@ def evaluate_practice_attempt(
             "accuracy": accuracy,
             "spelling_accuracy": spelling_accuracy,
             "error_rate": error_rate,
+            "mistake_percent": mistake_percent,
             "time_taken_seconds": time_taken_seconds,
             "time_formatted": f"{int(time_taken_seconds // 60):02d}:{int(time_taken_seconds % 60):02d}",
             "total_words_official": total_official_tokens,
@@ -630,6 +876,8 @@ def evaluate_practice_attempt(
             "total_errors": total_errors,
             "weighted_errors": round(weighted_errors, 1)
         },
+        "exam_rule": exam_key,
+        "exam_summary": exam_summary,
         "error_counts": error_counts,
         "aligned_tokens": aligned_tokens,
         "error_table": error_table,
