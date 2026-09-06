@@ -37,12 +37,13 @@ class StenoAdmin {
   startSubscribersLiveSync() {
     this.stopSubscribersLiveSync();
     this.subscribersPollInterval = setInterval(async () => {
+      if (document.hidden) return;
       if (window.stenoApp && window.stenoApp.activeView === 'admin' && this.activeTab === 'subscribers') {
         await this.loadSubscribers(this.currentSubFilter, true);
       } else {
         this.stopSubscribersLiveSync();
       }
-    }, 4000);
+    }, 10000);
   }
 
   stopSubscribersLiveSync() {
@@ -675,22 +676,56 @@ class StenoAdmin {
     const file = fileInput.files[0];
     if (!file) return;
 
-    stenoApp.showToast('ऑडियो अपलोड किया जा रहा है...', 'info');
-    const reader = new FileReader();
-    reader.onload = async () => {
-      try {
-        const base64Data = reader.result;
-        const res = await stenoApp.apiCall('/api/admin/audio-upload', 'POST', {
-          filename: file.name,
-          data: base64Data
+    const CHUNK_SIZE = 1.5 * 1024 * 1024; // 1.5MB per chunk (safely under Vercel's 4.5MB limit)
+    const totalChunks = Math.ceil(file.size / CHUNK_SIZE);
+    const uploadId = 'up_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6);
+
+    stenoApp.showToast(`ऑडियो अपलोड शुरू (0/${totalChunks})... 🎵`, 'info');
+
+    try {
+      let finalAudioUrl = '';
+      for (let i = 0; i < totalChunks; i++) {
+        const start = i * CHUNK_SIZE;
+        const end = Math.min(file.size, start + CHUNK_SIZE);
+        const chunkBlob = file.slice(start, end);
+
+        // Read chunk as Base64
+        const chunkBase64 = await new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => {
+            const res = reader.result;
+            resolve(res.includes(',') ? res.split(',')[1] : res);
+          };
+          reader.onerror = reject;
+          reader.readAsDataURL(chunkBlob);
         });
-        document.getElementById('passageAudioUrlInput').value = res.audio_url;
-        stenoApp.showToast('ऑडियो सफलतापूर्ण अपलोड हुआ! 🎵', 'success');
-      } catch (err) {
-        stenoApp.showToast('ऑडियो अपलोड में विफलता: ' + err.message, 'error');
+
+        const percent = Math.round(((i + 1) / totalChunks) * 100);
+        stenoApp.showToast(`ऑडियो अपलोड प्रगति: ${percent}% (${i + 1}/${totalChunks})...`, 'info');
+
+        const res = await stenoApp.apiCall('/api/admin/audio-upload-chunk', 'POST', {
+          upload_id: uploadId,
+          chunk_index: i,
+          total_chunks: totalChunks,
+          filename: file.name,
+          data: chunkBase64
+        });
+
+        if (res && res.audio_url) {
+          finalAudioUrl = res.audio_url;
+        }
       }
-    };
-    reader.readAsDataURL(file);
+
+      if (finalAudioUrl) {
+        document.getElementById('passageAudioUrlInput').value = finalAudioUrl;
+        stenoApp.showToast('ऑडियो 100% सफलतापूर्वक अपलोड हुआ! 🎵🎉', 'success');
+      } else {
+        stenoApp.showToast('ऑडियो अपलोड पूर्ण हुआ, URL सत्यापित करें।', 'info');
+      }
+    } catch (err) {
+      console.error('Audio upload error:', err);
+      stenoApp.showToast('ऑडियो अपलोड में विफलता: ' + (err.message || 'त्रुटि'), 'error');
+    }
   }
 
   async handleStenoNotesFileUpload(fileInput) {

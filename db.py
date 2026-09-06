@@ -101,8 +101,9 @@ class PostgresCursorWrapper:
 
 
 class PostgresConnWrapper:
-    def __init__(self, conn):
+    def __init__(self, conn, from_pool=False):
         self._conn = conn
+        self._from_pool = from_pool
 
     def cursor(self):
         return PostgresCursorWrapper(self._conn.cursor())
@@ -116,10 +117,23 @@ class PostgresConnWrapper:
         self._conn.commit()
 
     def rollback(self):
-        self._conn.rollback()
+        try:
+            self._conn.rollback()
+        except Exception:
+            pass
 
     def close(self):
-        self._conn.close()
+        if self._from_pool and _pg_pool is not None:
+            try:
+                self._conn.rollback()
+                _pg_pool.putconn(self._conn)
+                return
+            except Exception:
+                pass
+        try:
+            self._conn.close()
+        except Exception:
+            pass
 
 
 def parse_db_datetime(val):
@@ -226,20 +240,46 @@ def manual_run_migrations() -> Dict[str, Any]:
         return {"db_type": "sqlite", "logs": ["init_db() completed"], "success": True}
 
 
-def get_db():
-    global _db_initialized
+_pg_pool = None
+
+def get_pg_pool():
+    global _pg_pool
     default_pg_url = 'postgresql://postgres.dtsqqdxveiyvmtjyerui:Harsh%401997Hk@aws-0-ap-northeast-1.pooler.supabase.com:6543/postgres'
     database_url = os.environ.get('DATABASE_URL') or default_pg_url
-    if database_url and HAS_PSYCOPG2:
+    if _pg_pool is None and database_url and HAS_PSYCOPG2:
         try:
-            conn = psycopg2.connect(database_url, cursor_factory=RealDictCursor)
-            wrapper = PostgresConnWrapper(conn)
+            from psycopg2.pool import ThreadedConnectionPool
+            _pg_pool = ThreadedConnectionPool(1, 10, database_url, cursor_factory=RealDictCursor)
+        except Exception as e:
+            print(f"Postgres connection pool initialization warning: {e}")
+    return _pg_pool
+
+
+def get_db():
+    global _db_initialized
+    pool = get_pg_pool()
+    if pool:
+        try:
+            conn = pool.getconn()
+            wrapper = PostgresConnWrapper(conn, from_pool=True)
             if not _db_initialized:
                 _db_initialized = True
                 run_postgres_migrations(wrapper)
             return wrapper
         except Exception as e:
-            # Fall back to sqlite if network error
+            print(f"Postgres pool connection warning: {e}")
+
+    default_pg_url = 'postgresql://postgres.dtsqqdxveiyvmtjyerui:Harsh%401997Hk@aws-0-ap-northeast-1.pooler.supabase.com:6543/postgres'
+    database_url = os.environ.get('DATABASE_URL') or default_pg_url
+    if database_url and HAS_PSYCOPG2:
+        try:
+            conn = psycopg2.connect(database_url, cursor_factory=RealDictCursor)
+            wrapper = PostgresConnWrapper(conn, from_pool=False)
+            if not _db_initialized:
+                _db_initialized = True
+                run_postgres_migrations(wrapper)
+            return wrapper
+        except Exception as e:
             print(f"Postgres connection warning, falling back to SQLite: {e}")
 
     conn = sqlite3.connect(get_db_path())
@@ -3060,6 +3100,87 @@ def get_uploaded_file(filename: str):
         return None
     finally:
         conn.close()
+
+
+def save_upload_chunk(upload_id: str, chunk_index: int, data: bytes) -> bool:
+    """Saves a single chunk of an uploaded file into persistent database."""
+    conn = get_db()
+    c = conn.cursor()
+    try:
+        c.execute("""
+            CREATE TABLE IF NOT EXISTS upload_chunks (
+                upload_id TEXT NOT NULL,
+                chunk_index INT NOT NULL,
+                data BLOB NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                PRIMARY KEY (upload_id, chunk_index)
+            )
+        """)
+        conn.commit()
+    except Exception:
+        try: conn.rollback()
+        except: pass
+
+    try:
+        is_pg = HAS_PSYCOPG2 and hasattr(conn, '_conn')
+        if is_pg:
+            from psycopg2 import Binary
+            c.execute("""
+                INSERT INTO upload_chunks (upload_id, chunk_index, data)
+                VALUES (?, ?, ?)
+                ON CONFLICT (upload_id, chunk_index) DO UPDATE SET data = EXCLUDED.data
+            """, (upload_id, chunk_index, Binary(data)))
+        else:
+            c.execute("""
+                INSERT INTO upload_chunks (upload_id, chunk_index, data)
+                VALUES (?, ?, ?)
+                ON CONFLICT(upload_id, chunk_index) DO UPDATE SET data = excluded.data
+            """, (upload_id, chunk_index, data))
+        conn.commit()
+        return True
+    except Exception as e:
+        print(f"Error saving chunk {upload_id} [{chunk_index}]: {e}")
+        try: conn.rollback()
+        except: pass
+        return False
+    finally:
+        conn.close()
+
+
+def assemble_upload_chunks(upload_id: str, total_chunks: int, final_filename: str, mime_type: str = "audio/mpeg") -> Optional[str]:
+    """Combines all received chunks for an upload_id and saves to uploaded_files."""
+    conn = get_db()
+    c = conn.cursor()
+    try:
+        c.execute("SELECT chunk_index, data FROM upload_chunks WHERE upload_id = ? ORDER BY chunk_index ASC", (upload_id,))
+        rows = c.fetchall()
+        if len(rows) < total_chunks:
+            return None
+        chunks = []
+        for r in rows:
+            raw = r['data'] if isinstance(r, dict) else r[1]
+            if isinstance(raw, memoryview):
+                raw = raw.tobytes()
+            chunks.append(bytes(raw))
+        full_bytes = b"".join(chunks)
+
+        # Save to persistent uploaded_files
+        save_uploaded_file(final_filename, mime_type, full_bytes)
+
+        # Cleanup temporary chunks
+        try:
+            c.execute("DELETE FROM upload_chunks WHERE upload_id = ?", (upload_id,))
+            conn.commit()
+        except Exception:
+            pass
+
+        return final_filename
+    except Exception as e:
+        print(f"Error assembling chunks for {upload_id}: {e}")
+        return None
+    finally:
+        conn.close()
+
 
 
 

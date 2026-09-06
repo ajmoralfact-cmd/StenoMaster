@@ -1066,6 +1066,10 @@ class StenoMasterHandler(http.server.SimpleHTTPRequestHandler):
                 self._handle_audio_upload()
                 return
 
+            if path == '/api/admin/audio-upload-chunk':
+                self._handle_audio_upload_chunk()
+                return
+
             if path == '/api/admin/steno-notes-upload':
                 self._handle_steno_notes_upload()
                 return
@@ -1189,6 +1193,69 @@ class StenoMasterHandler(http.server.SimpleHTTPRequestHandler):
             self._send_json(200, {"audio_url": audio_url, "filename": filename})
         else:
             self._send_json(400, {"error": "Please provide audio payload in JSON base64 format"})
+
+    def _handle_audio_upload_chunk(self):
+        content_type = self.headers.get('Content-Type', '')
+        if 'application/json' in content_type:
+            data = self._read_json_body()
+            import base64
+            upload_id = data.get('upload_id')
+            chunk_index = int(data.get('chunk_index', 0))
+            total_chunks = int(data.get('total_chunks', 1))
+            orig_filename = data.get('filename', f"audio_{int(datetime.now().timestamp())}.mp3")
+            b64_data = data.get('data', '')
+            if ',' in b64_data:
+                b64_data = b64_data.split(',')[1]
+
+            try:
+                raw_bytes = base64.b64decode(b64_data)
+            except Exception as e:
+                self._send_json(400, {"error": f"Base64 decode failed: {e}"})
+                return
+
+            if not upload_id:
+                self._send_json(400, {"error": "Missing upload_id"})
+                return
+
+            # Save this chunk to persistent database
+            db.save_upload_chunk(upload_id, chunk_index, raw_bytes)
+
+            # If this is the final chunk, assemble all chunks
+            if chunk_index == total_chunks - 1:
+                clean_name = os.path.basename(orig_filename).replace(' ', '_')
+                timestamp_prefix = int(datetime.now().timestamp())
+                final_filename = f"audio_{timestamp_prefix}_{clean_name}"
+                res_name = db.assemble_upload_chunks(upload_id, total_chunks, final_filename, mime_type='audio/mpeg')
+                if res_name:
+                    # Also write to local disk cache if possible
+                    try:
+                        file_rec = db.get_uploaded_file(res_name)
+                        if file_rec:
+                            save_path = os.path.join(UPLOADS_DIR, res_name)
+                            with open(save_path, 'wb') as f:
+                                f.write(file_rec[1])
+                    except Exception:
+                        pass
+                    audio_url = f"/uploads/{res_name}"
+                    self._send_json(200, {
+                        "success": True,
+                        "audio_url": audio_url,
+                        "filename": res_name,
+                        "completed": True
+                    })
+                    return
+                else:
+                    self._send_json(500, {"error": "कुछ चंक्स सर्वर पर नहीं पहुंचे, कृपया पुनः प्रयास करें"})
+                    return
+
+            self._send_json(200, {
+                "success": True,
+                "received_chunk": chunk_index + 1,
+                "total_chunks": total_chunks,
+                "completed": False
+            })
+        else:
+            self._send_json(400, {"error": "Please provide payload in JSON format"})
 
     def _handle_steno_notes_upload(self):
         content_type = self.headers.get('Content-Type', '')
