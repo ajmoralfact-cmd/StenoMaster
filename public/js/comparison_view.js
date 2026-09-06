@@ -28,6 +28,140 @@ class StenoComparisonView {
     });
   }
 
+  renderExamQualificationCard(report) {
+    const es = report.exam_summary || {};
+    const rule = es.active_rule || report.exam_rule || 'ssc_steno';
+    const m = report.metrics || {};
+    const ec = report.error_counts || {};
+
+    if (rule === 'upsssc') {
+      const u = es.upsssc || {};
+      const isQual = !!u.is_qualified;
+      const speedOk = !!u.speed_qualified;
+      const errOk = !!u.mistake_qualified;
+      const achievedWpm = u.achieved_wpm ?? m.net_wpm ?? 0;
+      const reqWpm = u.required_wpm ?? (report.language === 'hindi' ? 25 : 30);
+      const achievedErr = u.achieved_mistake_percent ?? m.mistake_percent ?? 0;
+      const maxErr = u.max_mistake_percent ?? 5.0;
+
+      return `
+        <div class="chart-card" style="border: 2px solid ${isQual ? '#10b981' : '#ef4444'}; background: ${isQual ? 'rgba(16, 185, 129, 0.04)' : 'rgba(239, 68, 68, 0.04)'}; margin-bottom: 24px; padding: 22px; border-radius: var(--radius-lg);">
+          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:16px;">
+            <div>
+              <span class="badge" style="background:#7c3aed; color:#fff; font-size:0.8rem; font-weight:700; padding:4px 10px;">🏛️ UPSSSC SKILL TEST</span>
+              <h3 style="font-size:1.25rem; font-weight:800; margin-top:6px; color:var(--text-primary);">
+                उ.प्र. अधीनस्थ सेवा चयन आयोग (UPSSSC) मूल्यांकन रिपोर्ट
+              </h3>
+            </div>
+            <div style="font-size:1.15rem; font-weight:800; padding:8px 18px; border-radius:30px; background:${isQual ? '#d1fae5' : '#fee2e2'}; color:${isQual ? '#065f46' : '#991b1b'}; display:flex; align-items:center; gap:8px;">
+              <span>${isQual ? '🎉' : '❌'}</span>
+              <span>${isQual ? 'सफल (QUALIFIED)' : 'असफल (NOT QUALIFIED)'}</span>
+            </div>
+          </div>
+
+          <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap:14px; margin-bottom:16px;">
+            <div style="background:var(--bg-card); border:1px solid var(--border-subtle); padding:14px; border-radius:var(--radius-md);">
+              <div style="font-size:0.8rem; color:var(--text-muted); margin-bottom:4px;">1. गति परीक्षण (Speed Check)</div>
+              <div style="font-size:1.2rem; font-weight:800; color:${speedOk ? '#10b981' : '#ef4444'};">
+                ${achievedWpm} WPM <span style="font-size:0.82rem; font-weight:normal; color:var(--text-secondary);">(न्यूनतम: ${reqWpm} WPM)</span>
+              </div>
+              <div style="font-size:0.75rem; margin-top:4px; font-weight:700; color:${speedOk ? '#10b981' : '#ef4444'};">
+                ${speedOk ? '✓ गति मानक उत्तीर्ण' : '✗ गति न्यूनतम से कम'}
+              </div>
+            </div>
+
+            <div style="background:var(--bg-card); border:1px solid var(--border-subtle); padding:14px; border-radius:var(--radius-md);">
+              <div style="font-size:0.8rem; color:var(--text-muted); margin-bottom:4px;">2. त्रुटि सीमा (Permissible Error)</div>
+              <div style="font-size:1.2rem; font-weight:800; color:${errOk ? '#10b981' : '#ef4444'};">
+                ${achievedErr}% <span style="font-size:0.82rem; font-weight:normal; color:var(--text-secondary);">(अधिकतम: ${maxErr}%)</span>
+              </div>
+              <div style="font-size:0.75rem; margin-top:4px; font-weight:700; color:${errOk ? '#10b981' : '#ef4444'};">
+                ${errOk ? '✓ त्रुटियां सीमा के भीतर' : '✗ त्रुटियां अनुमन्य सीमा से अधिक'}
+              </div>
+            </div>
+
+            <div style="background:var(--bg-card); border:1px solid var(--border-subtle); padding:14px; border-radius:var(--radius-md);">
+              <div style="font-size:0.8rem; color:var(--text-muted); margin-bottom:4px;">3. कुल दंड गलतियां (Mistakes)</div>
+              <div style="font-size:1.2rem; font-weight:800; color:var(--text-primary);">
+                ${es.total_equivalent_mistakes || 0}
+              </div>
+              <div style="font-size:0.75rem; margin-top:4px; color:var(--text-secondary);">
+                पूर्ण: ${es.full_mistakes || 0} (1x) • आधा: ${es.half_mistakes || 0} (0.5x)
+              </div>
+            </div>
+          </div>
+
+          <div style="background:var(--bg-subtle); padding:12px 16px; border-radius:var(--radius-md); font-size:0.88rem; color:var(--text-secondary); border-left:4px solid ${isQual ? '#10b981' : '#ef4444'};">
+            <strong>आयोग टिप्पणी:</strong> ${u.status_reason || 'UPSSSC परीक्षा नियमों के अनुसार परिणाम निर्धारित किया गया।'}
+          </div>
+        </div>
+      `;
+    }
+
+    // Default: SSC Stenographer Grade C & D Mode
+    const s = es.ssc || {};
+    const cUr = s.grade_c_ur || { cutoff: 5.0, is_qualified: false };
+    const cRes = s.grade_c_res || { cutoff: 7.0, is_qualified: false };
+    const dUr = s.grade_d_ur || { cutoff: 7.0, is_qualified: false };
+    const dRes = s.grade_d_res || { cutoff: 10.0, is_qualified: false };
+    const mistakePct = es.mistake_percent ?? m.mistake_percent ?? 0;
+
+    return `
+      <div class="chart-card" style="border: 2px solid #0284c7; background: rgba(2, 132, 199, 0.04); margin-bottom: 24px; padding: 22px; border-radius: var(--radius-lg);">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:16px;">
+          <div>
+            <span class="badge" style="background:#0284c7; color:#fff; font-size:0.8rem; font-weight:700; padding:4px 10px;">🎯 SSC STENOGRAPHER</span>
+            <h3 style="font-size:1.25rem; font-weight:800; margin-top:6px; color:var(--text-primary);">
+              कर्मचारी चयन आयोग (SSC) स्किल टेस्ट मूल्यांकन रिपोर्ट
+            </h3>
+          </div>
+          <div style="font-size:0.88rem; color:var(--text-secondary); background:var(--bg-card); padding:6px 14px; border-radius:20px; border:1px solid var(--border-subtle);">
+            आधिकारिक त्रुटि दर: <strong style="color:${mistakePct <= 7 ? '#10b981' : '#ef4444'}; font-size:1.1rem;">${mistakePct}%</strong>
+          </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap:14px; margin-bottom:16px;">
+          <!-- Grade C Card -->
+          <div style="background:var(--bg-card); border:1px solid var(--border-subtle); padding:16px; border-radius:var(--radius-md); border-top:3px solid #0284c7;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <span style="font-weight:700; font-size:1rem;">Stenographer Grade 'C' (100 WPM)</span>
+              <span class="badge" style="background:${cUr.is_qualified ? '#d1fae5' : (cRes.is_qualified ? '#fef3c7' : '#fee2e2')}; color:${cUr.is_qualified ? '#065f46' : (cRes.is_qualified ? '#92400e' : '#991b1b')}; font-weight:700;">
+                ${cUr.is_qualified ? '✅ QUALIFIED' : (cRes.is_qualified ? '⚠️ RESERVED ONLY' : '❌ DISQUALIFIED')}
+              </span>
+            </div>
+            <div style="font-size:0.82rem; color:var(--text-secondary); line-height:1.5;">
+              • सामान्य (UR) कटऑफ (≤ ${cUr.cutoff}%): <strong style="color:${cUr.is_qualified ? '#10b981' : '#ef4444'}">${cUr.is_qualified ? 'योग्य (Pass)' : 'अयोग्य (Fail)'}</strong><br>
+              • आरक्षित (OBC/SC/ST/EWS ≤ ${cRes.cutoff}%): <strong style="color:${cRes.is_qualified ? '#10b981' : '#ef4444'}">${cRes.is_qualified ? 'योग्य (Pass)' : 'अयोग्य (Fail)'}</strong>
+            </div>
+          </div>
+
+          <!-- Grade D Card -->
+          <div style="background:var(--bg-card); border:1px solid var(--border-subtle); padding:16px; border-radius:var(--radius-md); border-top:3px solid #059669;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <span style="font-weight:700; font-size:1rem;">Stenographer Grade 'D' (80 WPM)</span>
+              <span class="badge" style="background:${dUr.is_qualified ? '#d1fae5' : (dRes.is_qualified ? '#fef3c7' : '#fee2e2')}; color:${dUr.is_qualified ? '#065f46' : (dRes.is_qualified ? '#92400e' : '#991b1b')}; font-weight:700;">
+                ${dUr.is_qualified ? '✅ QUALIFIED' : (dRes.is_qualified ? '⚠️ RESERVED ONLY' : '❌ DISQUALIFIED')}
+              </span>
+            </div>
+            <div style="font-size:0.82rem; color:var(--text-secondary); line-height:1.5;">
+              • सामान्य (UR) कटऑफ (≤ ${dUr.cutoff}%): <strong style="color:${dUr.is_qualified ? '#10b981' : '#ef4444'}">${dUr.is_qualified ? 'योग्य (Pass)' : 'अयोग्य (Fail)'}</strong><br>
+              • आरक्षित (OBC/SC/ST/EWS ≤ ${dRes.cutoff}%): <strong style="color:${dRes.is_qualified ? '#10b981' : '#ef4444'}">${dRes.is_qualified ? 'योग्य (Pass)' : 'अयोग्य (Fail)'}</strong>
+            </div>
+          </div>
+        </div>
+
+        <div style="background:var(--bg-subtle); padding:12px 16px; border-radius:var(--radius-md); font-size:0.84rem; color:var(--text-secondary); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+          <div>
+            <strong>SSC मिस्टेक गणना:</strong> पूर्ण गलतियां (छूटे + गलत + अतिरिक्त): <strong>${es.full_mistakes || 0} × 1.0</strong> | आधी गलतियां (मात्रा + वर्तनी + विराम): <strong>${es.half_mistakes || 0} × 0.5</strong>
+          </div>
+          <div>
+            समतुल्य गलतियां: <strong style="color:var(--accent-red); font-size:0.95rem;">${es.total_equivalent_mistakes || 0}</strong> / ${es.total_official_words || m.total_words_official || 0} शब्द
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
   renderResult(report, container) {
     this.currentReport = report;
     const m = report.metrics || {};
@@ -45,6 +179,9 @@ class StenoComparisonView {
           </button>
         </div>
       </div>
+
+      <!-- Official Exam Qualification Card (SSC vs UPSSSC) -->
+      ${this.renderExamQualificationCard(report)}
 
       <!-- Main Score Metrics Grid -->
       <div class="result-metrics-grid">
