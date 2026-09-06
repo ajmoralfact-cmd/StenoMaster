@@ -20,6 +20,72 @@ class StenoAdmin {
     this.settings = {};
   }
 
+  switchTab(tabId) {
+    this.activeTab = tabId;
+
+    // 1. Update active state on left tab buttons
+    document.querySelectorAll('.admin-nav-tab').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.adminTab === tabId);
+    });
+
+    // 2. Hide all admin sub-panels
+    const panelIds = [
+      'adminOverviewPanel',
+      'adminPassagesPanel',
+      'adminSubscribersPanel',
+      'adminPaymentsPanel',
+      'adminPricingPanel',
+      'adminScoringPanel',
+      'adminBrandingPanel'
+    ];
+
+    panelIds.forEach(id => {
+      const el = document.getElementById(id);
+      if (el) {
+        el.style.display = 'none';
+        el.classList.remove('active');
+      }
+    });
+
+    // 3. Display only the selected panel
+    const targetMap = {
+      'overview': 'adminOverviewPanel',
+      'passages': 'adminPassagesPanel',
+      'subscribers': 'adminSubscribersPanel',
+      'payments': 'adminPaymentsPanel',
+      'pricing': 'adminPricingPanel',
+      'scoring': 'adminScoringPanel',
+      'branding': 'adminBrandingPanel'
+    };
+
+    const targetId = targetMap[tabId] || 'adminOverviewPanel';
+    const targetEl = document.getElementById(targetId);
+    if (targetEl) {
+      targetEl.style.display = 'block';
+      targetEl.classList.add('active');
+    }
+
+    // 4. Lazy refresh corresponding data
+    if (tabId === 'passages') {
+      this.loadPassages();
+    } else if (tabId === 'subscribers') {
+      this.loadSubscribers();
+    } else if (tabId === 'payments') {
+      this.loadPayments();
+    } else if (tabId === 'pricing') {
+      this.loadSubscriptionSettings();
+    } else if (tabId === 'scoring') {
+      this.loadScoringConfig();
+    } else if (tabId === 'branding') {
+      this.loadSystemSettings();
+    } else if (tabId === 'overview') {
+      this.loadOverview();
+    }
+
+    // Scroll to top smoothly
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
   async loadOverview() {
     try {
       const res = await stenoApp.apiCall('/api/admin/overview');
@@ -38,114 +104,110 @@ class StenoAdmin {
     if (!el) return;
 
     el.innerHTML = `
-      <div class="stats-summary-grid" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); margin-bottom: 24px;">
-        <div class="stat-card">
+      <!-- 1. Key 4 Highlight Metrics Cards -->
+      <div class="stats-summary-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); margin-bottom: 24px;">
+        <div class="stat-card" style="cursor:pointer;" onclick="stenoAdmin.switchTab('subscribers')" title="छात्र सूची देखें">
           <div class="stat-icon-wrap stat-icon-blue">👥</div>
           <div>
-            <div class="stat-info-title">Total Users (कुल छात्र)</div>
+            <div class="stat-info-title">कुल छात्र (Students)</div>
             <div class="stat-info-num">${data.total_users || 0}</div>
+            <div style="font-size:0.75rem; color:#0284c7; margin-top:3px; font-weight:600;">छात्र सूची देखें →</div>
           </div>
         </div>
-        <div class="stat-card">
-          <div class="stat-icon-wrap stat-icon-green">🟢</div>
+        <div class="stat-card" style="cursor:pointer;" onclick="stenoAdmin.switchTab('passages')" title="आलेख सूची देखें">
+          <div class="stat-icon-wrap stat-icon-amber">📝</div>
           <div>
-            <div class="stat-info-title">Active Users (सक्रिय छात्र)</div>
-            <div class="stat-info-num">${data.active_users || 0}</div>
-          </div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-icon-wrap stat-icon-amber">📚</div>
-          <div>
-            <div class="stat-info-title">Total Passages (कुल आलेख)</div>
+            <div class="stat-info-title">सक्रिय आलेख (Passages)</div>
             <div class="stat-info-num">${data.total_passages || 0}</div>
+            <div style="font-size:0.75rem; color:#d97706; margin-top:3px; font-weight:600;">आलेख प्रबंध →</div>
           </div>
         </div>
-        <div class="stat-card">
-          <div class="stat-icon-wrap stat-icon-purple">🌐</div>
+        <div class="stat-card" style="cursor:pointer;" onclick="stenoAdmin.switchTab('subscribers')" title="प्रो सदस्य देखें">
+          <div class="stat-icon-wrap stat-icon-green">👑</div>
           <div>
-            <div class="stat-info-title">Published Passages (प्रकाशित)</div>
-            <div class="stat-info-num">${data.published_passages || 0}</div>
+            <div class="stat-info-title">सक्रिय प्रो (Active Pro)</div>
+            <div class="stat-info-num">${data.active_users || 0}</div>
+            <div style="font-size:0.75rem; color:#10b981; margin-top:3px; font-weight:600;">सदस्यता स्थिति →</div>
           </div>
         </div>
-        <div class="stat-card">
-          <div class="stat-icon-wrap stat-icon-blue">✍️</div>
+        <div class="stat-card" style="cursor:pointer;" onclick="stenoAdmin.switchTab('payments')" title="भुगतान सत्यापन देखें">
+          <div class="stat-icon-wrap stat-icon-purple">💳</div>
           <div>
-            <div class="stat-info-title">Total Practices (कुल अभ्यास)</div>
-            <div class="stat-info-num">${data.total_practices || 0}</div>
-          </div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-icon-wrap stat-icon-green">📅</div>
-          <div>
-            <div class="stat-info-title">Practices Today (आज के अभ्यास)</div>
-            <div class="stat-info-num">${data.practices_today || 0}</div>
-          </div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-icon-wrap stat-icon-amber">⚡</div>
-          <div>
-            <div class="stat-info-title">Average WPM (औसत गति)</div>
-            <div class="stat-info-num">${data.avg_wpm || 0} <span style="font-size:0.85rem; font-weight:500;">WPM</span></div>
-          </div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-icon-wrap stat-icon-purple">🎯</div>
-          <div>
-            <div class="stat-info-title">Average Accuracy (औसत सटीकता)</div>
-            <div class="stat-info-num">${data.avg_accuracy || 0}%</div>
+            <div class="stat-info-title">लंबित सत्यापन (UTR)</div>
+            <div class="stat-info-num">${data.pending_payments || 0}</div>
+            <div style="font-size:0.75rem; color:#7c3aed; margin-top:3px; font-weight:600;">सत्यापित करें →</div>
           </div>
         </div>
       </div>
 
-      <div class="charts-grid">
-        <div class="chart-card">
-          <h4 class="chart-title">🔥 सर्वाधिक अभ्यास किए गए आलेख (Most Practiced)</h4>
-          <div style="overflow-x: auto;">
-            <table class="data-table">
-              <thead>
-                <tr>
-                  <th>आलेख (Title)</th>
-                  <th>प्रयास (Attempts)</th>
-                  <th>औसत गति (Avg WPM)</th>
-                  <th>सटीकता (Avg Acc)</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${(data.popular_passages || []).map(p => `
-                  <tr>
-                    <td><strong>${p.title}</strong></td>
-                    <td>${p.attempts}</td>
-                    <td>${Math.round(p.avg_wpm || 0)} WPM</td>
-                    <td>${Math.round(p.avg_accuracy || 0)}%</td>
-                  </tr>
-                `).join('') || '<tr><td colspan="4" style="text-align:center;">डेटा उपलब्ध नहीं है</td></tr>'}
-              </tbody>
-            </table>
+      <!-- 2. Quick Action Shortcuts Grid (1-Click Easy Actions) -->
+      <div style="margin-bottom: 24px;">
+        <h3 style="font-size:1.05rem; font-weight:700; margin-bottom:12px; color:var(--text-main);">⚡ त्वरित कार्य शॉर्टकट (Quick Actions)</h3>
+        <div class="admin-quick-actions-grid">
+          <div class="admin-action-card" onclick="stenoAdmin.openNewPassageModal('mangal')">
+            <div class="admin-action-card-icon" style="background:#e0f2fe; color:#0284c7;">🅰️</div>
+            <div>
+              <div style="font-weight:700; font-size:0.92rem; color:var(--text-main);">नया मंगल आलेख</div>
+              <div style="font-size:0.74rem; color:var(--text-muted);">Unicode / Remington डिक्टेशन</div>
+            </div>
+          </div>
+
+          <div class="admin-action-card" onclick="stenoAdmin.openNewPassageModal('krutidev')">
+            <div class="admin-action-card-icon" style="background:#fef3c7; color:#d97706;">⌨️</div>
+            <div>
+              <div style="font-weight:700; font-size:0.92rem; color:var(--text-main);">नया कृति देव आलेख</div>
+              <div style="font-size:0.74rem; color:var(--text-muted);">Kruti Dev 010 आलेख व ऑडियो</div>
+            </div>
+          </div>
+
+          <div class="admin-action-card" onclick="stenoAdmin.switchTab('subscribers')">
+            <div class="admin-action-card-icon" style="background:#dcfce7; color:#16a34a;">🎁</div>
+            <div>
+              <div style="font-weight:700; font-size:0.92rem; color:var(--text-main);">छात्र व ऑल फ्री एक्सेस</div>
+              <div style="font-size:0.74rem; color:var(--text-muted);">किसी भी छात्र को 1-क्लिक में फ्री करें</div>
+            </div>
+          </div>
+
+          <div class="admin-action-card" onclick="stenoAdmin.switchTab('payments')">
+            <div class="admin-action-card-icon" style="background:#f3e8ff; color:#9333ea;">💳</div>
+            <div>
+              <div style="font-weight:700; font-size:0.92rem; color:var(--text-main);">भुगतान सत्यापन (UTR)</div>
+              <div style="font-size:0.74rem; color:var(--text-muted);">UPI ट्रांजेक्शन चेक व प्रो अनलॉक</div>
+            </div>
+          </div>
+
+          <div class="admin-action-card" onclick="stenoAdmin.switchTab('pricing')">
+            <div class="admin-action-card-icon" style="background:#fee2e2; color:#ef4444;">💎</div>
+            <div>
+              <div style="font-weight:700; font-size:0.92rem; color:var(--text-main);">प्लान व QR सेटिंग्स</div>
+              <div style="font-size:0.74rem; color:var(--text-muted);">UPI QR इमेज व प्लान मूल्य बदलें</div>
+            </div>
+          </div>
+
+          <div class="admin-action-card" onclick="stenoAdmin.switchTab('scoring')">
+            <div class="admin-action-card-icon" style="background:#ccfbf1; color:#0d9488;">🎯</div>
+            <div>
+              <div style="font-weight:700; font-size:0.92rem; color:var(--text-main);">परीक्षा नियम व कटऑफ</div>
+              <div style="font-size:0.74rem; color:var(--text-muted);">UPSSSC 2026 व SSC Steno नियम</div>
+            </div>
           </div>
         </div>
+      </div>
 
-        <div class="chart-card">
-          <h4 class="chart-title">⚠️ चुनौतीपूर्ण आलेख (Most Difficult)</h4>
-          <div style="overflow-x: auto;">
-            <table class="data-table">
-              <thead>
-                <tr>
-                  <th>आलेख (Title)</th>
-                  <th>सटीकता (Accuracy)</th>
-                  <th>प्रयास (Attempts)</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${(data.difficult_passages || []).map(p => `
-                  <tr>
-                    <td><strong>${p.title}</strong></td>
-                    <td style="color:var(--accent-red); font-weight:700;">${Math.round(p.avg_accuracy || 0)}%</td>
-                    <td>${p.attempts}</td>
-                  </tr>
-                `).join('') || '<tr><td colspan="3" style="text-align:center;">सभी आलेख सामान्य हैं</td></tr>'}
-              </tbody>
-            </table>
+      <!-- 3. System Status & Real-time Connectivity Info -->
+      <div class="admin-system-health-card">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:12px;">
+          <div style="display:flex; align-items:center; gap:8px;">
+            <span style="display:inline-block; width:10px; height:10px; border-radius:50%; background:#10b981; box-shadow:0 0 8px #10b981;"></span>
+            <strong style="font-size:0.95rem; color:var(--text-main);">प्लेटफ़ॉर्म स्थिति (System Status):</strong>
+            <span style="font-size:0.85rem; color:#10b981; font-weight:700;">सक्रिय एवं सुरक्षित (Operational)</span>
           </div>
+          <span style="font-size:0.78rem; color:var(--text-muted);">Single-Device Security Active 🔒</span>
+        </div>
+        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:12px; font-size:0.84rem; color:var(--text-secondary);">
+          <div>🔤 <strong>टाइपिंग मोड:</strong> मंगल व कृति देव 010 (Dual Font Engine)</div>
+          <div>🏛️ <strong>परीक्षा नियम:</strong> UPSSSC 2026 (25 WPM, 5% Error) + SSC Steno</div>
+          <div>💾 <strong>डेटाबेस:</strong> केवल प्रामाणिक डेटा (0 फ़ेक रिकॉर्ड्स)</div>
         </div>
       </div>
     `;

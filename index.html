@@ -1633,315 +1633,419 @@
       </main><!-- /#view-rules -->
 
       <!-- ===================================================================
-           VIEW: ADMIN DASHBOARD
+           VIEW: ADMIN DASHBOARD — Modern Left-Tabbed Workspace
            =================================================================== -->
       <main class="page-view" id="view-admin">
 
-        <div class="section-header">
-          <div>
-            <h2 class="section-title">एडमिन कंट्रोल पैनल (Admin Dashboard)</h2>
-            <p class="section-subtitle">आलेख निर्माण, ऑडियो अपलोड, मूल्यांकन नियम व सिस्टम ब्रांडिंग का प्रबंधन</p>
-          </div>
-          <div style="display:flex; gap:8px; flex-wrap:wrap;">
-            <button class="btn-secondary" onclick="stenoAdmin.openCategoryModal()">📁 नई श्रेणी</button>
-            <button class="btn-secondary" onclick="stenoAdmin.openBulkImportModal()">📥 बल्क इम्पोर्ट</button>
-            <button class="btn-primary" onclick="stenoAdmin.openNewPassageModal('mangal')" style="background:#0284c7; border-color:#0284c7;">
-              🅰️ नया मंगल आलेख (Upload Mangal)
-            </button>
-            <button class="btn-primary" onclick="stenoAdmin.openNewPassageModal('krutidev')" style="background:#d97706; border-color:#d97706;">
-              ⌨️ नया कृति देव आलेख (Upload Kruti Dev)
-            </button>
-          </div>
-        </div>
+        <div class="admin-workspace-layout">
 
-        <!-- Admin Overview Metrics Container -->
-        <div id="adminOverviewMetrics"></div>
-
-        <!-- Admin Passages Management Table -->
-        <div class="chart-card" id="adminPassagesSection" style="margin-bottom: 28px;">
-          <div class="section-header" style="margin-bottom: 16px;">
-            <h3 style="font-size:1.1rem; font-weight:700;">आलेख प्रबंधन (Passages Management)</h3>
-          </div>
-          <div class="table-responsive">
-            <table class="data-table" id="adminPassagesTable">
-              <thead>
-                <tr>
-                  <th>ID</th>
-                  <th>शीर्षक / श्रेणी</th>
-                  <th>भाषा</th>
-                  <th>कठिनाई</th>
-                  <th>लक्ष्य गति</th>
-                  <th>उपलब्ध फ़ॉन्ट (Fonts)</th>
-                  <th>स्थिति</th>
-                  <th>कार्रवाई</th>
-                </tr>
-              </thead>
-              <tbody>
-                <!-- Populated dynamically -->
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        <!-- Admin Subscribers & Pro Members Management Section -->
-        <div class="chart-card" id="adminSubscribersSection" style="margin-bottom: 28px;">
-          <div class="section-header" style="margin-bottom: 16px;">
-            <div>
-              <h3 style="font-size:1.15rem; font-weight:700;">👥 छात्र सब्सक्राइबर प्रबंधन (Subscribers & Pro Access)</h3>
-              <p class="section-subtitle">छात्रों की Pro सदस्यता स्थिति, वैधता (Days), सीधे Pro सक्रियण एवं विस्तार नियंत्रण</p>
+          <!-- 1. LEFT SUB-TAB NAVIGATION -->
+          <aside class="admin-left-tabs" role="tablist" aria-label="Admin Navigation Tabs">
+            <div class="admin-left-tabs-header">
+              <span class="admin-panel-shield">🛡️</span>
+              <div>
+                <div style="font-weight:700; font-size:0.92rem; color:var(--text-main); line-height:1.2;">प्रशासन मेनू</div>
+                <div style="font-size:0.7rem; color:var(--text-muted);">Admin Controls</div>
+              </div>
             </div>
-            <button class="btn-secondary" onclick="stenoAdmin.loadSubscribers()">🔄 रीफ़्रेश (Refresh)</button>
-          </div>
+            <nav class="admin-tab-nav">
+              <button type="button" class="admin-nav-tab active" data-admin-tab="overview" onclick="stenoAdmin.switchTab('overview')">
+                <span class="admin-tab-icon">📊</span>
+                <div class="admin-tab-info">
+                  <span class="admin-tab-title">ओवरव्यू (Overview)</span>
+                  <span class="admin-tab-sub">डैशबोर्ड व त्वरित शॉर्टकट</span>
+                </div>
+              </button>
 
-          <!-- Subscribers Filter Toolbar -->
-          <div class="subscribers-toolbar">
-            <div class="sub-filter-pills" id="subscribersFilterPills">
-              <button type="button" class="sub-filter-pill active" onclick="stenoAdmin.filterSubscribers('all', this)">सभी छात्र (All)</button>
-              <button type="button" class="sub-filter-pill" onclick="stenoAdmin.filterSubscribers('free_access', this)">🎁 ऑल फ्री एक्सेस (All Free)</button>
-              <button type="button" class="sub-filter-pill" onclick="stenoAdmin.filterSubscribers('active', this)">👑 सक्रिय प्रो (Active Pro)</button>
-              <button type="button" class="sub-filter-pill" onclick="stenoAdmin.filterSubscribers('expired', this)">⏳ समाप्त (Expired)</button>
-              <button type="button" class="sub-filter-pill" onclick="stenoAdmin.filterSubscribers('free', this)">🆓 फ्री टियर (Free)</button>
-            </div>
-            <div style="flex:1; max-width:320px;">
-              <input type="text" id="subscriberSearchInput" class="form-input" placeholder="🔍 नाम, छात्र कोड, फोन या ईमेल खोजें..." oninput="stenoAdmin.searchSubscribers(this.value)" style="font-size:0.84rem; padding:7px 12px;">
-            </div>
-          </div>
+              <button type="button" class="admin-nav-tab" data-admin-tab="passages" onclick="stenoAdmin.switchTab('passages')">
+                <span class="admin-tab-icon">📝</span>
+                <div class="admin-tab-info">
+                  <span class="admin-tab-title">आलेख प्रबंधन (Passages)</span>
+                  <span class="admin-tab-sub">अपलोड, संपादन व ऑडियो</span>
+                </div>
+              </button>
 
-          <div class="table-responsive">
-            <table class="data-table" id="adminSubscribersTable">
-              <thead>
-                <tr>
-                  <th>छात्र कोड व नाम</th>
-                  <th>संपर्क (Email / Phone)</th>
-                  <th>सदस्यता स्थिति</th>
-                  <th style="text-align:center; background:rgba(16,185,129,0.1); color:#059669; font-weight:700;">🎁 सभी एक्सरसाइज फ्री (Free)?</th>
-                  <th>सक्रिय प्लान</th>
-                  <th>वैधता (Days Left)</th>
-                  <th>अभ्यास</th>
-                  <th style="text-align:right;">Pro प्रबंधन</th>
-                </tr>
-              </thead>
-              <tbody id="adminSubscribersTableBody">
-                <!-- Populated dynamically via stenoAdmin.loadSubscribers() -->
-              </tbody>
-            </table>
-          </div>
-        </div>
+              <button type="button" class="admin-nav-tab" data-admin-tab="subscribers" onclick="stenoAdmin.switchTab('subscribers')">
+                <span class="admin-tab-icon">👥</span>
+                <div class="admin-tab-info">
+                  <span class="admin-tab-title">छात्र व फ्री एक्सेस</span>
+                  <span class="admin-tab-sub">Pro सक्रियण व 1-क्लिक Free</span>
+                </div>
+              </button>
 
-        <!-- Phase 3: Admin Payment Verifications & Subscriptions Section -->
-        <div class="chart-card" id="adminPaymentsSection" style="margin-bottom: 28px;">
-          <div class="section-header" style="margin-bottom: 16px;">
-            <div>
-              <h3 style="font-size:1.1rem; font-weight:700;">💳 छात्र सदस्यता भुगतान सत्यापन (Subscription Payments)</h3>
-              <p class="section-subtitle">छात्रों द्वारा जमा किए गए UPI भुगतान सत्यापन एवं सदस्यता सक्रियण</p>
-            </div>
-            <button class="btn-secondary" onclick="stenoAdmin.loadPayments()">🔄 रीफ़्रेश (Refresh)</button>
-          </div>
-          <div class="table-responsive">
-            <table class="data-table" id="adminPaymentsTable">
-              <thead>
-                <tr>
-                  <th>Req ID</th>
-                  <th>छात्र ID व नाम</th>
-                  <th>मोबाइल / ईमेल</th>
-                  <th>प्लान</th>
-                  <th>राशि</th>
-                  <th>Transaction ID (UTR)</th>
-                  <th>स्थिति</th>
-                  <th>दिनांक</th>
-                  <th>कार्रवाई</th>
-                </tr>
-              </thead>
-              <tbody id="adminPaymentsTableBody">
-                <!-- Populated dynamically -->
-              </tbody>
-            </table>
-          </div>
-        </div>
+              <button type="button" class="admin-nav-tab" data-admin-tab="payments" onclick="stenoAdmin.switchTab('payments')">
+                <span class="admin-tab-icon">💳</span>
+                <div class="admin-tab-info">
+                  <span class="admin-tab-title">भुगतान सत्यापन</span>
+                  <span class="admin-tab-sub">UPI UTR अनुमोदन</span>
+                </div>
+              </button>
 
-        <!-- Phase 3: Subscription Settings & Payment QR Code Upload -->
-        <div class="charts-grid" style="margin-bottom:28px;">
-          <div class="chart-card" id="adminSubscriptionConfigSection">
-            <h3 style="font-size:1.1rem; font-weight:700; margin-bottom:12px;">📱 UPI QR कोड एवं सदस्यता मूल्य सेटिंग्स</h3>
-            <form onsubmit="stenoAdmin.saveSubscriptionSettings(event)">
-              <div class="form-group">
-                <label class="form-label">सक्रिय भुगतान QR कोड:</label>
-                <div style="display:flex; align-items:center; gap:16px; margin-top:8px;">
-                  <img src="/assets/qr_payment.png" id="adminQrPreviewImg" alt="Admin QR Preview" style="width:100px; height:100px; object-fit:contain; border:2px solid var(--border-subtle); border-radius:10px; background:#fff; padding:4px;">
-                  <div style="flex:1;">
-                    <label class="form-label" style="font-size:0.8rem;">नया QR कोड अपलोड करें (.png, .jpg, .jpeg, .webp):</label>
-                    <input type="file" id="adminQrFileInput" class="form-input" accept=".png,.jpg,.jpeg,.webp" onchange="stenoAdmin.handleQrUpload(this)">
-                    <span style="font-size:0.75rem; color:var(--text-muted); display:block; margin-top:4px;">अपलोड होते ही छात्रों के सदस्यता पृष्ठ पर नया QR कोड प्रदर्शित होगा।</span>
-                  </div>
+              <button type="button" class="admin-nav-tab" data-admin-tab="pricing" onclick="stenoAdmin.switchTab('pricing')">
+                <span class="admin-tab-icon">💎</span>
+                <div class="admin-tab-info">
+                  <span class="admin-tab-title">प्लान व QR सेटिंग्स</span>
+                  <span class="admin-tab-sub">मूल्य निर्धारण एवं Cashfree</span>
+                </div>
+              </button>
+
+              <button type="button" class="admin-nav-tab" data-admin-tab="scoring" onclick="stenoAdmin.switchTab('scoring')">
+                <span class="admin-tab-icon">🎯</span>
+                <div class="admin-tab-info">
+                  <span class="admin-tab-title">परीक्षा नियम (Rules)</span>
+                  <span class="admin-tab-sub">UPSSSC व SSC कटऑफ</span>
+                </div>
+              </button>
+
+              <button type="button" class="admin-nav-tab" data-admin-tab="branding" onclick="stenoAdmin.switchTab('branding')">
+                <span class="admin-tab-icon">🏷️</span>
+                <div class="admin-tab-info">
+                  <span class="admin-tab-title">ब्रांडिंग व लक्ष्य</span>
+                  <span class="admin-tab-sub">लोगो व दैनिक WPM लक्ष्य</span>
+                </div>
+              </button>
+            </nav>
+          </aside>
+
+          <!-- 2. MAIN WORKSPACE CONTENT (Displays ONLY the selected tab!) -->
+          <div class="admin-workspace-content">
+
+            <!-- TAB 1: OVERVIEW PANEL (Spacious, airy, clean, uncluttered!) -->
+            <div class="admin-sub-panel active" id="adminOverviewPanel">
+              <div class="admin-overview-hero">
+                <div>
+                  <h2 style="font-size:1.3rem; font-weight:800; margin-bottom:4px; color:var(--text-main);">प्रशासनिक नियंत्रण कक्ष (Admin Overview)</h2>
+                  <p style="font-size:0.85rem; color:var(--text-muted); margin:0;">StenoMaster प्लेटफ़ॉर्म स्थिति, मुख्य आंकड़े एवं त्वरित शॉर्टकट</p>
+                </div>
+                <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                  <button class="btn-primary" onclick="stenoAdmin.switchTab('passages')" style="background:#0284c7; border-color:#0284c7; font-size:0.84rem; padding:8px 14px;">
+                    📝 आलेख सूची देखें →
+                  </button>
+                  <button class="btn-secondary" onclick="stenoAdmin.loadOverview()" style="font-size:0.84rem; padding:8px 14px;">
+                    🔄 रीफ़्रेश
+                  </button>
                 </div>
               </div>
 
-              <!-- UPI ID setting -->
-              <div class="form-group" style="margin-top:12px;">
-                <label class="form-label">सक्रिय UPI ID (Payment UPI ID):</label>
-                <input type="text" id="adminSubUpiIdInput" class="form-input" value="stenomaster@upi" placeholder="e.g. yourname@oksbi / upi" required>
-              </div>
+              <!-- Key 4 Highlight Metrics & Quick Shortcuts injected dynamically -->
+              <div id="adminOverviewMetrics"></div>
+            </div>
 
-              <!-- Multi-Tier Plan Prices Grid -->
-              <div style="margin-top:14px;">
-                <label class="form-label" style="font-weight:700; color:var(--primary); margin-bottom:8px; display:block;">💎 सदस्यता प्लान मूल्य निर्धारण (Plan Pricing ₹):</label>
-                <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap:10px;">
-                  <div class="form-group" style="margin-bottom:0;">
-                    <label class="form-label" style="font-size:0.78rem;">1 माह (30 दिन) ₹:</label>
-                    <input type="number" id="adminSubPrice1m" class="form-input" value="100" min="1" required>
-                  </div>
-                  <div class="form-group" style="margin-bottom:0;">
-                    <label class="form-label" style="font-size:0.78rem;">3 माह (90 दिन) ₹:</label>
-                    <input type="number" id="adminSubPrice3m" class="form-input" value="250" min="1" required>
-                  </div>
-                  <div class="form-group" style="margin-bottom:0;">
-                    <label class="form-label" style="font-size:0.78rem;">6 माह (180 दिन) ₹:</label>
-                    <input type="number" id="adminSubPrice6m" class="form-input" value="450" min="1" required>
-                  </div>
-                  <div class="form-group" style="margin-bottom:0;">
-                    <label class="form-label" style="font-size:0.78rem;">1 वर्ष (365 दिन) ₹:</label>
-                    <input type="number" id="adminSubPrice1y" class="form-input" value="800" min="1" required>
-                  </div>
+            <!-- TAB 2: PASSAGES MANAGEMENT PANEL -->
+            <div class="admin-sub-panel" id="adminPassagesPanel">
+              <div class="section-header">
+                <div>
+                  <h2 class="section-title">आलेख प्रबंधन (Passages Management)</h2>
+                  <p class="section-subtitle">नए आलेख अपलोड करें, ऑडियो जोड़ें, एडिट अथवा डिलीट करें</p>
+                </div>
+                <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                  <button class="btn-secondary" onclick="stenoAdmin.openCategoryModal()">📁 नई श्रेणी</button>
+                  <button class="btn-secondary" onclick="stenoAdmin.openBulkImportModal()">📥 बल्क इम्पोर्ट</button>
+                  <button class="btn-primary" onclick="stenoAdmin.openNewPassageModal('mangal')" style="background:#0284c7; border-color:#0284c7;">
+                    🅰️ नया मंगल आलेख
+                  </button>
+                  <button class="btn-primary" onclick="stenoAdmin.openNewPassageModal('krutidev')" style="background:#d97706; border-color:#d97706;">
+                    ⌨️ नया कृति देव आलेख
+                  </button>
                 </div>
               </div>
 
-              <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-top:14px;">
-                <div class="form-group">
-                  <label class="form-label">डिफ़ॉल्ट प्लान नाम (Default Plan Title):</label>
-                  <input type="text" id="adminSubPlanNameInput" class="form-input" value="StenoMaster Pro — 1 Month (₹100/माह)" required>
+              <div class="chart-card" id="adminPassagesSection" style="margin-bottom: 28px;">
+                <div class="section-header" style="margin-bottom: 16px;">
+                  <h3 style="font-size:1.1rem; font-weight:700;">आलेख सूची (Active Passages)</h3>
                 </div>
-                <div class="form-group">
-                  <label class="form-label">डिफ़ॉल्ट मासिक मूल्य ₹ (Monthly Price):</label>
-                  <input type="number" id="adminSubPlanPriceInput" class="form-input" value="100" required min="1">
+                <div class="table-responsive">
+                  <table class="data-table" id="adminPassagesTable">
+                    <thead>
+                      <tr>
+                        <th>ID</th>
+                        <th>शीर्षक / श्रेणी</th>
+                        <th>भाषा</th>
+                        <th>कठिनाई</th>
+                        <th>लक्ष्य गति</th>
+                        <th>उपलब्ध फ़ॉन्ट (Fonts)</th>
+                        <th>स्थिति</th>
+                        <th>कार्रवाई</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <!-- Populated dynamically via stenoAdmin.renderPassagesTable() -->
+                    </tbody>
+                  </table>
                 </div>
               </div>
+            </div>
 
-              <!-- Cashfree PG Gateway Settings -->
-              <div style="background:var(--bg-card-hover); padding:14px; border-radius:10px; border:1px solid var(--border-subtle); margin-top:12px;">
-                <h4 style="font-size:0.95rem; font-weight:700; margin-bottom:10px; color:var(--primary);">⚡ Cashfree PG API Credentials</h4>
-                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
+            <!-- TAB 3: STUDENTS & SUBSCRIBERS PANEL -->
+            <div class="admin-sub-panel" id="adminSubscribersPanel">
+              <div class="chart-card" id="adminSubscribersSection" style="margin-bottom: 28px;">
+                <div class="section-header" style="margin-bottom: 16px;">
+                  <div>
+                    <h3 style="font-size:1.15rem; font-weight:700;">👥 छात्र सब्सक्राइबर प्रबंधन (Subscribers & Pro Access)</h3>
+                    <p class="section-subtitle">छात्रों की Pro सदस्यता स्थिति, वैधता (Days), सीधे Pro सक्रियण एवं 1-क्लिक ऑल फ्री एक्सेस</p>
+                  </div>
+                  <button class="btn-secondary" onclick="stenoAdmin.loadSubscribers()">🔄 रीफ़्रेश (Refresh)</button>
+                </div>
+
+                <!-- Subscribers Filter Toolbar -->
+                <div class="subscribers-toolbar">
+                  <div class="sub-filter-pills" id="subscribersFilterPills">
+                    <button type="button" class="sub-filter-pill active" onclick="stenoAdmin.filterSubscribers('all', this)">सभी छात्र (All)</button>
+                    <button type="button" class="sub-filter-pill" onclick="stenoAdmin.filterSubscribers('free_access', this)">🎁 ऑल फ्री एक्सेस (All Free)</button>
+                    <button type="button" class="sub-filter-pill" onclick="stenoAdmin.filterSubscribers('active', this)">👑 सक्रिय प्रो (Active Pro)</button>
+                    <button type="button" class="sub-filter-pill" onclick="stenoAdmin.filterSubscribers('expired', this)">⏳ समाप्त (Expired)</button>
+                    <button type="button" class="sub-filter-pill" onclick="stenoAdmin.filterSubscribers('free', this)">🆓 फ्री टियर (Free)</button>
+                  </div>
+                  <div style="flex:1; max-width:320px;">
+                    <input type="text" id="subscriberSearchInput" class="form-input" placeholder="🔍 नाम, छात्र कोड, फोन या ईमेल खोजें..." oninput="stenoAdmin.searchSubscribers(this.value)" style="font-size:0.84rem; padding:7px 12px;">
+                  </div>
+                </div>
+
+                <div class="table-responsive">
+                  <table class="data-table" id="adminSubscribersTable">
+                    <thead>
+                      <tr>
+                        <th>छात्र कोड व नाम</th>
+                        <th>संपर्क (Email / Phone)</th>
+                        <th>सदस्यता स्थिति</th>
+                        <th style="text-align:center; background:rgba(16,185,129,0.1); color:#059669; font-weight:700;">🎁 सभी एक्सरसाइज फ्री (Free)?</th>
+                        <th>सक्रिय प्लान</th>
+                        <th>वैधता (Days Left)</th>
+                        <th>अभ्यास</th>
+                        <th style="text-align:right;">Pro प्रबंधन</th>
+                      </tr>
+                    </thead>
+                    <tbody id="adminSubscribersTableBody">
+                      <!-- Populated dynamically via stenoAdmin.loadSubscribers() -->
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            <!-- TAB 4: PAYMENTS & UTR VERIFICATIONS PANEL -->
+            <div class="admin-sub-panel" id="adminPaymentsPanel">
+              <div class="chart-card" id="adminPaymentsSection" style="margin-bottom: 28px;">
+                <div class="section-header" style="margin-bottom: 16px;">
+                  <div>
+                    <h3 style="font-size:1.1rem; font-weight:700;">💳 छात्र सदस्यता भुगतान सत्यापन (Subscription Payments)</h3>
+                    <p class="section-subtitle">छात्रों द्वारा जमा किए गए UPI भुगतान सत्यापन एवं सदस्यता सक्रियण</p>
+                  </div>
+                  <button class="btn-secondary" onclick="stenoAdmin.loadPayments()">🔄 रीफ़्रेश (Refresh)</button>
+                </div>
+                <div class="table-responsive">
+                  <table class="data-table" id="adminPaymentsTable">
+                    <thead>
+                      <tr>
+                        <th>Req ID</th>
+                        <th>छात्र ID व नाम</th>
+                        <th>मोबाइल / ईमेल</th>
+                        <th>प्लान</th>
+                        <th>राशि</th>
+                        <th>Transaction ID (UTR)</th>
+                        <th>स्थिति</th>
+                        <th>दिनांक</th>
+                        <th>कार्रवाई</th>
+                      </tr>
+                    </thead>
+                    <tbody id="adminPaymentsTableBody">
+                      <!-- Populated dynamically -->
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            <!-- TAB 5: PRICING & UPI QR SETTINGS PANEL -->
+            <div class="admin-sub-panel" id="adminPricingPanel">
+              <div class="chart-card" id="adminSubscriptionConfigSection" style="margin-bottom:28px;">
+                <h3 style="font-size:1.1rem; font-weight:700; margin-bottom:12px;">📱 UPI QR कोड एवं सदस्यता मूल्य सेटिंग्स</h3>
+                <form onsubmit="stenoAdmin.saveSubscriptionSettings(event)">
                   <div class="form-group">
-                    <label class="form-label" style="font-size:0.8rem;">Cashfree App ID (Client ID):</label>
-                    <input type="text" id="adminCashfreeAppIdInput" class="form-input" placeholder="TEST123456... or Live App ID">
+                    <label class="form-label">सक्रिय भुगतान QR कोड:</label>
+                    <div style="display:flex; align-items:center; gap:16px; margin-top:8px;">
+                      <img src="/assets/qr_payment.png" id="adminQrPreviewImg" alt="Admin QR Preview" style="width:100px; height:100px; object-fit:contain; border:2px solid var(--border-subtle); border-radius:10px; background:#fff; padding:4px;">
+                      <div style="flex:1;">
+                        <label class="form-label" style="font-size:0.8rem;">नया QR कोड अपलोड करें (.png, .jpg, .jpeg, .webp):</label>
+                        <input type="file" id="adminQrFileInput" class="form-input" accept=".png,.jpg,.jpeg,.webp" onchange="stenoAdmin.handleQrUpload(this)">
+                        <span style="font-size:0.75rem; color:var(--text-muted); display:block; margin-top:4px;">अपलोड होते ही छात्रों के सदस्यता पृष्ठ पर नया QR कोड प्रदर्शित होगा।</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- UPI ID setting -->
+                  <div class="form-group" style="margin-top:12px;">
+                    <label class="form-label">सक्रिय UPI ID (Payment UPI ID):</label>
+                    <input type="text" id="adminSubUpiIdInput" class="form-input" value="stenomaster@upi" placeholder="e.g. yourname@oksbi / upi" required>
+                  </div>
+
+                  <!-- Multi-Tier Plan Prices Grid -->
+                  <div style="margin-top:14px;">
+                    <label class="form-label" style="font-weight:700; color:var(--primary); margin-bottom:8px; display:block;">💎 सदस्यता प्लान मूल्य निर्धारण (Plan Pricing ₹):</label>
+                    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap:10px;">
+                      <div class="form-group" style="margin-bottom:0;">
+                        <label class="form-label" style="font-size:0.78rem;">1 माह (30 दिन) ₹:</label>
+                        <input type="number" id="adminSubPrice1m" class="form-input" value="100" min="1" required>
+                      </div>
+                      <div class="form-group" style="margin-bottom:0;">
+                        <label class="form-label" style="font-size:0.78rem;">3 माह (90 दिन) ₹:</label>
+                        <input type="number" id="adminSubPrice3m" class="form-input" value="250" min="1" required>
+                      </div>
+                      <div class="form-group" style="margin-bottom:0;">
+                        <label class="form-label" style="font-size:0.78rem;">6 माह (180 दिन) ₹:</label>
+                        <input type="number" id="adminSubPrice6m" class="form-input" value="450" min="1" required>
+                      </div>
+                      <div class="form-group" style="margin-bottom:0;">
+                        <label class="form-label" style="font-size:0.78rem;">1 वर्ष (365 दिन) ₹:</label>
+                        <input type="number" id="adminSubPrice1y" class="form-input" value="800" min="1" required>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-top:14px;">
+                    <div class="form-group">
+                      <label class="form-label">डिफ़ॉल्ट प्लान नाम (Default Plan Title):</label>
+                      <input type="text" id="adminSubPlanNameInput" class="form-input" value="StenoMaster Pro — 1 Month (₹100/माह)" required>
+                    </div>
+                    <div class="form-group">
+                      <label class="form-label">डिफ़ॉल्ट मासिक मूल्य ₹ (Monthly Price):</label>
+                      <input type="number" id="adminSubPlanPriceInput" class="form-input" value="100" required min="1">
+                    </div>
+                  </div>
+
+                  <!-- Cashfree PG Gateway Settings -->
+                  <div style="background:var(--bg-card-hover); padding:14px; border-radius:10px; border:1px solid var(--border-subtle); margin-top:12px;">
+                    <h4 style="font-size:0.95rem; font-weight:700; margin-bottom:10px; color:var(--primary);">⚡ Cashfree PG API Credentials</h4>
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
+                      <div class="form-group">
+                        <label class="form-label" style="font-size:0.8rem;">Cashfree App ID (Client ID):</label>
+                        <input type="text" id="adminCashfreeAppIdInput" class="form-input" placeholder="TEST123456... or Live App ID">
+                      </div>
+                      <div class="form-group">
+                        <label class="form-label" style="font-size:0.8rem;">Cashfree Secret Key:</label>
+                        <input type="password" id="adminCashfreeSecretInput" class="form-input" placeholder="cfsk_ma_test_... or Live Secret">
+                      </div>
+                    </div>
+                    <div class="form-group" style="margin-top:8px;">
+                      <label class="form-label" style="font-size:0.8rem;">Environment (मोड):</label>
+                      <select id="adminCashfreeEnvSelect" class="form-select">
+                        <option value="SANDBOX">Sandbox (Testing / Test Mode)</option>
+                        <option value="PRODUCTION">Production (Live / Real Money)</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <button type="submit" class="btn-primary" style="margin-top:14px;">सदस्यता एवं Cashfree सेटिंग्स सहेजें (Save Settings)</button>
+                </form>
+              </div>
+            </div>
+
+            <!-- TAB 6: EXAM SCORING RULES PANEL -->
+            <div class="admin-sub-panel" id="adminScoringPanel">
+              <div class="chart-card" id="adminScoringSection" style="margin-bottom:28px;">
+                <h3 style="font-size:1.1rem; font-weight:700; margin-bottom:12px;">⚙️ परीक्षा मूल्यांकन नियम (Exam Scoring Presets)</h3>
+                <form onsubmit="stenoAdmin.saveScoringConfig(event)">
+                  <div class="form-group">
+                    <label class="form-label">डिफ़ॉल्ट परीक्षा मोड (Default Platform Preset):</label>
+                    <select id="adminScoringModeSelect" class="form-select">
+                      <option value="ssc">🎯 SSC Stenographer Grade C & D Mode</option>
+                      <option value="upsssc">🏛️ UPSSSC Skill Test Mode (25 WPM Hindi + 5% Error)</option>
+                      <option value="court">⚖️ High Court Strict Mode (1.0 Penalty)</option>
+                      <option value="standard">Standard Exam Rule (Half Penalty on Matra/Spelling)</option>
+                    </select>
+                  </div>
+
+                  <!-- SSC Specific Configurations -->
+                  <div style="background:rgba(2, 132, 199, 0.05); border:1px solid #bae6fd; border-radius:8px; padding:12px; margin-bottom:12px;">
+                    <div style="font-weight:700; font-size:0.88rem; color:#0284c7; margin-bottom:8px;">🎯 SSC Stenographer कटऑफ सेटिंग्स:</div>
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                      <div class="form-group" style="margin-bottom:6px;">
+                        <label class="form-label" style="font-size:0.8rem;">Grade C सामान्य (UR %):</label>
+                        <input type="number" id="adminSscGradeCInput" class="form-input" step="0.5" value="5.0">
+                      </div>
+                      <div class="form-group" style="margin-bottom:6px;">
+                        <label class="form-label" style="font-size:0.8rem;">Grade D सामान्य (UR %):</label>
+                        <input type="number" id="adminSscGradeDInput" class="form-input" step="0.5" value="7.0">
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- UPSSSC Specific Configurations -->
+                  <div style="background:rgba(124, 58, 237, 0.05); border:1px solid #ddd6fe; border-radius:8px; padding:12px; margin-bottom:12px;">
+                    <div style="font-weight:700; font-size:0.88rem; color:#7c3aed; margin-bottom:8px;">🏛️ UPSSSC स्किल टेस्ट सेटिंग्स:</div>
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                      <div class="form-group" style="margin-bottom:6px;">
+                        <label class="form-label" style="font-size:0.8rem;">हिंदी न्यूनतम WPM:</label>
+                        <input type="number" id="adminUpssscMinWpmInput" class="form-input" value="25">
+                      </div>
+                      <div class="form-group" style="margin-bottom:6px;">
+                        <label class="form-label" style="font-size:0.8rem;">अधिकतम त्रुटि (%):</label>
+                        <input type="number" id="adminUpssscMaxErrInput" class="form-input" step="0.5" value="5.0">
+                      </div>
+                    </div>
+                  </div>
+
+                  <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                    <div class="form-group">
+                      <label class="form-label">SSC त्रुटि दंड कारक:</label>
+                      <input type="number" id="adminSscFactorInput" class="form-input" step="0.1" value="1.0">
+                    </div>
+                    <div class="form-group">
+                      <label class="form-label">Court त्रुटि दंड कारक:</label>
+                      <input type="number" id="adminCourtFactorInput" class="form-input" step="0.1" value="1.2">
+                    </div>
+                  </div>
+                  <button type="submit" class="btn-primary" style="width:100%;">नियम सहेजें (Save Scoring)</button>
+                </form>
+              </div>
+            </div>
+
+            <!-- TAB 7: BRANDING & TARGETS PANEL -->
+            <div class="admin-sub-panel" id="adminBrandingPanel">
+              <div class="chart-card" id="adminBrandingSection" style="margin-bottom:28px;">
+                <h3 style="font-size:1.1rem; font-weight:700; margin-bottom:12px;">🏷️ ब्रांडिंग एवं दैनिक लक्ष्य सेटिंग्स</h3>
+                <form onsubmit="stenoAdmin.saveSystemSettings(event)">
+                  <div class="form-group">
+                    <label class="form-label">ब्रांड लोगो (Current Brand Logo):</label>
+                    <div style="display:flex; align-items:center; gap:14px; margin-top:6px;">
+                      <img src="/assets/logo.png" alt="StenoMaster Logo" id="adminLogoPreview" style="width:52px; height:52px; border-radius:12px; border:2px solid var(--border-subtle); object-fit:cover;">
+                      <div style="flex:1;">
+                        <input type="text" id="adminLogoUrlInput" class="form-input" value="/assets/logo.png" placeholder="/assets/logo.png" readonly>
+                        <span style="font-size:0.75rem; color:var(--text-muted);">आधिकारिक StenoMaster लोगो डिफ़ॉल्ट रूप से सक्रिय है।</span>
+                      </div>
+                    </div>
                   </div>
                   <div class="form-group">
-                    <label class="form-label" style="font-size:0.8rem;">Cashfree Secret Key:</label>
-                    <input type="password" id="adminCashfreeSecretInput" class="form-input" placeholder="cfsk_ma_test_... or Live Secret">
+                    <label class="form-label">प्लेटफ़ॉर्म नाम (Product Name):</label>
+                    <input type="text" id="adminAppNameInput" class="form-input" value="StenoMaster">
                   </div>
-                </div>
-                <div class="form-group" style="margin-top:8px;">
-                  <label class="form-label" style="font-size:0.8rem;">Environment (मोड):</label>
-                  <select id="adminCashfreeEnvSelect" class="form-select">
-                    <option value="SANDBOX">Sandbox (Testing / Test Mode)</option>
-                    <option value="PRODUCTION">Production (Live / Real Money)</option>
-                  </select>
-                </div>
-              </div>
-
-              <button type="submit" class="btn-primary" style="margin-top:14px;">सदस्यता एवं Cashfree सेटिंग्स सहेजें (Save Settings)</button>
-            </form>
-          </div>
-        </div>
-
-        <!-- Scoring Rules Configurator -->
-        <div class="charts-grid">
-          <div class="chart-card" id="adminScoringSection">
-            <h3 style="font-size:1.1rem; font-weight:700; margin-bottom:12px;">⚙️ परीक्षा मूल्यांकन नियम (Exam Scoring Presets)</h3>
-            <form onsubmit="stenoAdmin.saveScoringConfig(event)">
-              <div class="form-group">
-                <label class="form-label">डिफ़ॉल्ट परीक्षा मोड (Default Platform Preset):</label>
-                <select id="adminScoringModeSelect" class="form-select">
-                  <option value="ssc">🎯 SSC Stenographer Grade C & D Mode</option>
-                  <option value="upsssc">🏛️ UPSSSC Skill Test Mode (25 WPM Hindi + 5% Error)</option>
-                  <option value="court">⚖️ High Court Strict Mode (1.0 Penalty)</option>
-                  <option value="standard">Standard Exam Rule (Half Penalty on Matra/Spelling)</option>
-                </select>
-              </div>
-
-              <!-- SSC Specific Configurations -->
-              <div style="background:rgba(2, 132, 199, 0.05); border:1px solid #bae6fd; border-radius:8px; padding:12px; margin-bottom:12px;">
-                <div style="font-weight:700; font-size:0.88rem; color:#0284c7; margin-bottom:8px;">🎯 SSC Stenographer कटऑफ सेटिंग्स:</div>
-                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
-                  <div class="form-group" style="margin-bottom:6px;">
-                    <label class="form-label" style="font-size:0.8rem;">Grade C सामान्य (UR %):</label>
-                    <input type="number" id="adminSscGradeCInput" class="form-input" step="0.5" value="5.0">
+                  <div class="form-group">
+                    <label class="form-label">टैगलाइन (Tagline):</label>
+                    <input type="text" id="adminTaglineInput" class="form-input" value="Listen. Type. Improve. Master Steno.">
                   </div>
-                  <div class="form-group" style="margin-bottom:6px;">
-                    <label class="form-label" style="font-size:0.8rem;">Grade D सामान्य (UR %):</label>
-                    <input type="number" id="adminSscGradeDInput" class="form-input" step="0.5" value="7.0">
+                  <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                    <div class="form-group">
+                      <label class="form-label">दैनिक डिक्टेशन लक्ष्य:</label>
+                      <input type="number" id="adminDailyDictInput" class="form-input" value="3">
+                    </div>
+                    <div class="form-group">
+                      <label class="form-label">दैनिक मिनट:</label>
+                      <input type="number" id="adminDailyMinInput" class="form-input" value="15">
+                    </div>
                   </div>
-                </div>
+                  <div class="form-group">
+                    <label class="form-label">दैनिक लक्ष्य गति (WPM):</label>
+                    <input type="number" id="adminDailyWpmInput" class="form-input" value="40">
+                  </div>
+                  <button type="submit" class="btn-primary">ब्रांडिंग सहेजें (Save Branding)</button>
+                </form>
               </div>
+            </div>
 
-              <!-- UPSSSC Specific Configurations -->
-              <div style="background:rgba(124, 58, 237, 0.05); border:1px solid #ddd6fe; border-radius:8px; padding:12px; margin-bottom:12px;">
-                <div style="font-weight:700; font-size:0.88rem; color:#7c3aed; margin-bottom:8px;">🏛️ UPSSSC स्किल टेस्ट सेटिंग्स:</div>
-                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
-                  <div class="form-group" style="margin-bottom:6px;">
-                    <label class="form-label" style="font-size:0.8rem;">हिंदी न्यूनतम WPM:</label>
-                    <input type="number" id="adminUpssscMinWpmInput" class="form-input" value="25">
-                  </div>
-                  <div class="form-group" style="margin-bottom:6px;">
-                    <label class="form-label" style="font-size:0.8rem;">अधिकतम त्रुटि (%):</label>
-                    <input type="number" id="adminUpssscMaxErrInput" class="form-input" step="0.5" value="5.0">
-                  </div>
-                </div>
-              </div>
+          </div><!-- /.admin-workspace-content -->
 
-              <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
-                <div class="form-group">
-                  <label class="form-label">SSC त्रुटि दंड कारक:</label>
-                  <input type="number" id="adminSscFactorInput" class="form-input" step="0.1" value="1.0">
-                </div>
-                <div class="form-group">
-                  <label class="form-label">Court त्रुटि दंड कारक:</label>
-                  <input type="number" id="adminCourtFactorInput" class="form-input" step="0.1" value="1.2">
-                </div>
-              </div>
-              <button type="submit" class="btn-primary" style="width:100%;">नियम सहेजें (Save Scoring)</button>
-            </form>
-          </div>
+        </div><!-- /.admin-workspace-layout -->
 
-          <!-- Platform Branding & Targets -->
-          <div class="chart-card" id="adminBrandingSection">
-            <h3 style="font-size:1.1rem; font-weight:700; margin-bottom:12px;">🏷️ ब्रांडिंग एवं दैनिक लक्ष्य सेटिंग्स</h3>
-            <form onsubmit="stenoAdmin.saveSystemSettings(event)">
-              <div class="form-group">
-                <label class="form-label">ब्रांड लोगो (Current Brand Logo):</label>
-                <div style="display:flex; align-items:center; gap:14px; margin-top:6px;">
-                  <img src="/assets/logo.png" alt="StenoMaster Logo" id="adminLogoPreview" style="width:52px; height:52px; border-radius:12px; border:2px solid var(--border-subtle); object-fit:cover;">
-                  <div style="flex:1;">
-                    <input type="text" id="adminLogoUrlInput" class="form-input" value="/assets/logo.png" placeholder="/assets/logo.png" readonly>
-                    <span style="font-size:0.75rem; color:var(--text-muted);">आधिकारिक StenoMaster लोगो डिफ़ॉल्ट रूप से सक्रिय है।</span>
-                  </div>
-                </div>
-              </div>
-              <div class="form-group">
-                <label class="form-label">प्लेटफ़ॉर्म नाम (Product Name):</label>
-                <input type="text" id="adminAppNameInput" class="form-input" value="StenoMaster">
-              </div>
-              <div class="form-group">
-                <label class="form-label">टैगलाइन (Tagline):</label>
-                <input type="text" id="adminTaglineInput" class="form-input" value="Listen. Type. Improve. Master Steno.">
-              </div>
-              <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
-                <div class="form-group">
-                  <label class="form-label">दैनिक डिक्टेशन लक्ष्य:</label>
-                  <input type="number" id="adminDailyDictInput" class="form-input" value="3">
-                </div>
-                <div class="form-group">
-                  <label class="form-label">दैनिक मिनट:</label>
-                  <input type="number" id="adminDailyMinInput" class="form-input" value="15">
-                </div>
-              </div>
-              <div class="form-group">
-                <label class="form-label">दैनिक लक्ष्य गति (WPM):</label>
-                <input type="number" id="adminDailyWpmInput" class="form-input" value="40">
-              </div>
-              <button type="submit" class="btn-primary">ब्रांडिंग सहेजें (Save Branding)</button>
-            </form>
-          </div>
-        </div>
       </main>
  
       <!-- ===================================================================

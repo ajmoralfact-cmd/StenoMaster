@@ -925,13 +925,15 @@ class StenoApp {
     const currentView = this.activeView || 'home';
 
     if (isAdmin) {
-      // Streamlined Admin Sidebar Items (Most useful tools only)
+      // Streamlined Admin Sidebar Items (Directly mapped to Left Tab Options)
       const adminItems = [
-        { id: 'admin', icon: '📊', label: 'Overview', sub: 'कंसोल मेट्रिक्स', view: 'admin' },
-        { id: 'admin-passages', icon: '📝', label: 'Passages (आलेख)', sub: 'आलेख सूची एवं संपादन', view: 'admin', section: 'adminPassagesSection' },
-        { id: 'admin-subscribers', icon: '👥', label: 'Students & Free Access', sub: 'छात्र व फ्री एक्सेस टिक', view: 'admin', section: 'adminSubscribersSection' },
-        { id: 'admin-payments', icon: '💳', label: 'Payments & UTR', sub: 'भुगतान सत्यापन', view: 'admin', section: 'adminPaymentsSection' },
-        { id: 'admin-pricing', icon: '⚙️', label: 'Pricing, QR & Scoring', sub: 'प्लान, QR व नियम', view: 'admin', section: 'adminSubscriptionConfigSection' }
+        { id: 'admin-overview', icon: '📊', label: 'Overview', sub: 'कंसोल ओवरव्यू', adminTab: 'overview' },
+        { id: 'admin-passages', icon: '📝', label: 'Passages (आलेख)', sub: 'आलेख सूची एवं संपादन', adminTab: 'passages' },
+        { id: 'admin-subscribers', icon: '👥', label: 'Students & Free Access', sub: 'छात्र व 1-क्लिक फ्री', adminTab: 'subscribers' },
+        { id: 'admin-payments', icon: '💳', label: 'Payments & UTR', sub: 'भुगतान सत्यापन', adminTab: 'payments' },
+        { id: 'admin-pricing', icon: '💎', label: 'Pricing & QR', sub: 'प्लान व QR सेटिंग्स', adminTab: 'pricing' },
+        { id: 'admin-scoring', icon: '🎯', label: 'Exam Rules & Cutoffs', sub: 'SSC व UPSSSC नियम', adminTab: 'scoring' },
+        { id: 'admin-branding', icon: '🏷️', label: 'Branding & Goals', sub: 'लोगो व लक्ष्य सेटिंग्स', adminTab: 'branding' }
       ];
 
       navContainer.innerHTML = `
@@ -939,7 +941,7 @@ class StenoApp {
           <span>🛡️</span> <span>ADMIN PORTAL</span>
         </div>
         ${adminItems.map(item => `
-          <a href="javascript:void(0)" class="nav-item ${currentView === item.view && !item.section ? 'active' : ''}" data-sidebar-item="${item.id}" title="${item.label}">
+          <a href="javascript:void(0)" class="nav-item ${currentView === 'admin' && (stenoAdmin.activeTab === item.adminTab || (!stenoAdmin.activeTab && item.adminTab === 'overview')) ? 'active' : ''}" data-sidebar-item="${item.id}" title="${item.label}">
             <span class="nav-item-icon">${item.icon}</span>
             <div style="flex:1; min-width:0;">
               <div style="font-weight:600; font-size:0.86rem; line-height:1.2;">${item.label}</div>
@@ -955,17 +957,7 @@ class StenoApp {
         el.addEventListener('click', (e) => {
           e.preventDefault();
           this.closeSidebar();
-          if (item.action === 'users') {
-            stenoAdmin.openUsersModal();
-          } else if (item.action === 'category') {
-            this.navigate('admin');
-            stenoAdmin.openCategoryModal();
-          } else if (item.section) {
-            this.navigate(item.view || 'admin');
-            setTimeout(() => stenoAdmin.scrollToSection(item.section), 100);
-          } else {
-            this.navigate(item.view || item.id);
-          }
+          this.navigate('admin', { adminTab: item.adminTab });
         });
       });
 
@@ -1205,11 +1197,12 @@ class StenoApp {
         // Rules view is static HTML — just scroll to top, no async load needed
         break;
       case 'admin':
-
         stenoAdmin.loadOverview();
-        stenoAdmin.loadPassages();
-        stenoAdmin.loadScoringConfig();
-        stenoAdmin.loadSystemSettings();
+        if (params && params.adminTab) {
+          stenoAdmin.switchTab(params.adminTab);
+        } else {
+          stenoAdmin.switchTab('overview');
+        }
         break;
     }
   }
