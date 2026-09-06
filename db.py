@@ -529,14 +529,26 @@ def seed_initial_data():
         ('daily_target_dictations', '3'),
         ('daily_target_minutes', '15'),
         ('daily_target_wpm', '40'),
-        ('scoring_mode', 'standard'),
+        ('scoring_mode', 'ssc'),
         ('ssc_error_factor', '1.0'),
         ('court_error_factor', '1.2'),
+        ('upsssc_min_wpm_hindi', '25'),
+        ('upsssc_min_wpm_english', '30'),
+        ('upsssc_max_error_percent', '5.0'),
+        ('ssc_grade_c_cutoff_ur', '5.0'),
+        ('ssc_grade_c_cutoff_res', '7.0'),
+        ('ssc_grade_d_cutoff_ur', '7.0'),
+        ('ssc_grade_d_cutoff_res', '10.0'),
         ('referral_bonus_points', '100'),
         ('allow_public_leaderboard', '1'),
         ('subscription_qr_url', '/assets/qr_payment.png'),
         ('subscription_plan_name', 'StenoMaster Pro — 1 Month (₹100/माह)'),
         ('subscription_plan_price', '100'),
+        ('subscription_price_1m', '100'),
+        ('subscription_price_3m', '250'),
+        ('subscription_price_6m', '450'),
+        ('subscription_price_1y', '800'),
+        ('subscription_upi_id', 'stenomaster@upi'),
         ('cashfree_app_id', ''),
         ('cashfree_secret_key', ''),
         ('cashfree_env', 'SANDBOX'),
@@ -1993,12 +2005,12 @@ def admin_delete_category(category_id: int) -> bool:
 
 
 def get_admin_users() -> List[Dict[str, Any]]:
-    """Returns a list of all registered users with their profiles, subscription info, and attempt counts."""
+    """Returns a list of all registered users with their profiles, subscription info, dynamic days left, and attempt counts."""
     conn = get_db()
     c = conn.cursor()
     c.execute("""
         SELECT u.id, u.username, u.email, u.phone, u.student_code, u.role, u.is_active, u.created_at,
-               u.subscription_status, u.subscription_plan, u.subscription_end,
+               u.subscription_status, u.subscription_plan, u.subscription_start, u.subscription_end,
                p.display_name, p.target_exam, p.preferred_language, p.target_wpm, p.points, p.streak_days,
                (SELECT COUNT(*) FROM practice_attempts WHERE user_id = u.id) as attempts_count
         FROM users u
@@ -2007,6 +2019,35 @@ def get_admin_users() -> List[Dict[str, Any]]:
     """)
     rows = [dict(r) for r in c.fetchall()]
     conn.close()
+
+    now_dt = datetime.now()
+    for r in rows:
+        if r["role"] == "admin":
+            r["effective_status"] = "admin"
+            r["subscription_days_left"] = 9999
+        elif r.get("subscription_status") == "active":
+            end_val = r.get("subscription_end")
+            if not end_val:
+                r["effective_status"] = "active"
+                r["subscription_days_left"] = 9999
+            else:
+                dt = parse_db_datetime(end_val)
+                if dt:
+                    now_adj = datetime.now(dt.tzinfo) if dt.tzinfo else now_dt
+                    if dt > now_adj:
+                        delta = dt - now_adj
+                        r["effective_status"] = "active"
+                        r["subscription_days_left"] = max(1, delta.days + (1 if delta.seconds > 0 else 0))
+                    else:
+                        r["effective_status"] = "expired"
+                        r["subscription_days_left"] = 0
+                else:
+                    r["effective_status"] = "active"
+                    r["subscription_days_left"] = 30
+        else:
+            r["effective_status"] = r.get("subscription_status") or "free"
+            r["subscription_days_left"] = 0
+
     return rows
 
 
@@ -2094,8 +2135,198 @@ def get_all_payment_requests(limit: int = 100) -> List[Dict[str, Any]]:
     return rows
 
 
+def get_subscription_plans() -> List[Dict[str, Any]]:
+    """Returns the multi-tier subscription plans configured in the platform."""
+    settings = get_admin_settings()
+    p1m = int(float(settings.get('subscription_price_1m', '100') or 100))
+    p3m = int(float(settings.get('subscription_price_3m', '250') or 250))
+    p6m = int(float(settings.get('subscription_price_6m', '450') or 450))
+    p1y = int(float(settings.get('subscription_price_1y', '800') or 800))
+
+    return [
+        {
+            "id": "1m",
+            "name": f"StenoMaster Pro — 1 माह (₹{p1m})",
+            "title_hi": "1 माह (30 दिन)",
+            "subtitle_hi": "बेसिक मासिक अभ्यास",
+            "price": p1m,
+            "days": 30,
+            "badge": "",
+            "savings": "",
+            "per_month": f"₹{p1m}/माह",
+            "features": [
+                "सभी लॉक डिक्टेशन अनलॉक (2 फ्री + सभी प्रो आलेख)",
+                "मंगल व कृति देव 010 दोनों में सटीक मूल्यांकन",
+                "ऑडियो प्लेबैक (0.5x से 2.0x) गति नियंत्रण",
+                "विस्तृत परीक्षा रिपोर्ट कार्ड (SSC व UPSSSC नियम)"
+            ]
+        },
+        {
+            "id": "3m",
+            "name": f"StenoMaster Pro — 3 माह (₹{p3m})",
+            "title_hi": "3 माह (90 दिन)",
+            "subtitle_hi": "सबसे लोकप्रिय प्लान",
+            "price": p3m,
+            "days": 90,
+            "badge": "🔥 सबसे लोकप्रिय (POPULAR)",
+            "savings": f"₹{max(0, (p1m * 3) - p3m)} की बचत",
+            "per_month": f"₹{round(p3m / 3)}/माह",
+            "features": [
+                "1 माह वाले सभी प्रीमियम फीचर्स",
+                "90 दिनों तक लगातार असीमित अभ्यास",
+                "प्राथमिकता तकनीकी सहायता (Priority Support)",
+                "सभी आगामी परीक्षा स्पेशल डिक्टेशन"
+            ]
+        },
+        {
+            "id": "6m",
+            "name": f"StenoMaster Pro — 6 माह (₹{p6m})",
+            "title_hi": "6 माह (180 दिन)",
+            "subtitle_hi": "सुपर सेवर प्लान",
+            "price": p6m,
+            "days": 180,
+            "badge": "⚡ सुपर सेवर (SUPER SAVER)",
+            "savings": f"₹{max(0, (p1m * 6) - p6m)} की बचत",
+            "per_month": f"₹{round(p6m / 6)}/माह",
+            "features": [
+                "3 माह वाले सभी फीचर्स",
+                "180 दिनों तक पूर्ण निश्चिंत अभ्यास",
+                "हाई कोर्ट व अधीनस्थ सेवा विशेष पैकेज",
+                "नियमित साप्ताहिक मॉक टेस्ट व कमजोर क्षेत्र विश्लेषण"
+            ]
+        },
+        {
+            "id": "1y",
+            "name": f"StenoMaster Pro — 1 वर्ष (₹{p1y})",
+            "title_hi": "1 वर्ष (365 दिन)",
+            "subtitle_hi": "सर्वश्रेष्ठ वार्षिक मूल्य",
+            "price": p1y,
+            "days": 365,
+            "badge": "👑 अल्टीमेट वैल्यू (BEST VALUE)",
+            "savings": f"₹{max(0, (p1m * 12) - p1y)} की बचत",
+            "per_month": f"₹{round(p1y / 12)}/माह",
+            "features": [
+                "पूरे 1 वर्ष तक संपूर्ण प्लेटफॉर्म की चाबी",
+                "सभी नए जुड़ने वाले 100+ विधिक व सामान्य आलेख",
+                "मात्र ₹67/माह जैसा किफायती अनुभव",
+                "VIP छात्र कम्युनिटी व भविष्य के सभी अपडेट्स"
+            ]
+        }
+    ]
+
+
+def admin_grant_subscription(
+    user_id: int,
+    plan_name: str,
+    days: int,
+    admin_id: int = 1,
+    notes: str = ""
+) -> Dict[str, Any]:
+    """
+    Grants or extends Pro subscription for a user by `days` (or sets lifetime if days >= 9999).
+    If user already has active future subscription, extends from current end date.
+    """
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("SELECT id, username, email, subscription_status, subscription_end FROM users WHERE id = ?", (user_id,))
+    user = c.fetchone()
+    if not user:
+        conn.close()
+        return {"success": False, "error": "छात्र नहीं मिला (User not found)"}
+
+    user = dict(user)
+    now_dt = datetime.now()
+    now_iso = now_dt.isoformat()
+
+    # Lifetime check
+    if days >= 9999:
+        new_end_iso = None  # None indicates lifetime / permanent
+        display_end = "असीमित (Lifetime Pro)"
+        days_added_str = "असीमित (Lifetime)"
+    else:
+        base_dt = now_dt
+        if user.get("subscription_status") == "active" and user.get("subscription_end"):
+            try:
+                curr_end = parse_db_datetime(user["subscription_end"])
+                if curr_end and curr_end > now_dt:
+                    base_dt = curr_end
+            except Exception:
+                pass
+        new_end_dt = base_dt + timedelta(days=days)
+        new_end_iso = new_end_dt.isoformat()
+        display_end = new_end_dt.strftime("%d %b %Y")
+        days_added_str = f"+{days} दिन"
+
+    p_name = plan_name or f"StenoMaster Pro ({days_added_str})"
+
+    c.execute("""
+        UPDATE users
+        SET subscription_status = 'active',
+            subscription_plan = ?,
+            subscription_start = COALESCE(subscription_start, ?),
+            subscription_end = ?
+        WHERE id = ?
+    """, (p_name, now_iso, new_end_iso, user_id))
+
+    # Add notification for student
+    c.execute("""
+        INSERT INTO notifications (user_id, title, message, type, created_at)
+        VALUES (?, '👑 प्रो सदस्यता प्रदान/विस्तारित!', ?, 'success', ?)
+    """, (
+        user_id,
+        f"आपकी {p_name} सदस्यता सक्रिय कर दी गई है ({days_added_str})। वैधता: {display_end} तक।",
+        now_iso
+    ))
+
+    conn.commit()
+    conn.close()
+
+    return {
+        "success": True,
+        "user_id": user_id,
+        "status": "active",
+        "plan": p_name,
+        "subscription_end": new_end_iso,
+        "display_end": display_end,
+        "message": f"छात्र #{user_id} को {days_added_str} प्रो सदस्यता सफलतापूर्वक प्रदान की गई।"
+    }
+
+
+def admin_revoke_subscription(user_id: int, admin_id: int = 1, reason: str = "") -> Dict[str, Any]:
+    """Revokes/expires Pro subscription for a user immediately."""
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("SELECT id, subscription_status FROM users WHERE id = ?", (user_id,))
+    user = c.fetchone()
+    if not user:
+        conn.close()
+        return {"success": False, "error": "छात्र नहीं मिला (User not found)"}
+
+    now_iso = datetime.now().isoformat()
+    c.execute("""
+        UPDATE users
+        SET subscription_status = 'expired',
+            subscription_end = ?
+        WHERE id = ?
+    """, (now_iso, user_id))
+
+    # Add notification for student
+    c.execute("""
+        INSERT INTO notifications (user_id, title, message, type, created_at)
+        VALUES (?, 'सदस्यता समाप्त (Subscription Expired)', ?, 'warning', ?)
+    """, (
+        user_id,
+        f"आपकी प्रो सदस्यता समाप्त कर दी गई है। {f'कारण: {reason}' if reason else 'नवीनतम जानकारी हेतु संपर्क करें।'}",
+        now_iso
+    ))
+
+    conn.commit()
+    conn.close()
+    return {"success": True, "message": f"छात्र #{user_id} की प्रो सदस्यता समाप्त कर दी गई।"}
+
+
 def admin_review_payment(request_id: int, action: str, admin_id: int, notes: str = "") -> Dict[str, Any]:
-    """Admin approves or rejects a student payment request."""
+    """Admin approves or rejects a student payment request with multi-tier plan duration."""
     conn = get_db()
     c = conn.cursor()
     c.execute("SELECT * FROM payment_requests WHERE id = ?", (request_id,))
@@ -2104,6 +2335,7 @@ def admin_review_payment(request_id: int, action: str, admin_id: int, notes: str
         conn.close()
         return {"success": False, "error": "भुगतान अनुरोध नहीं मिला (Payment request not found)"}
 
+    req = dict(req)
     now_dt = datetime.now()
     now_iso = now_dt.isoformat()
     status = "approved" if action == "approve" else "rejected"
@@ -2113,31 +2345,30 @@ def admin_review_payment(request_id: int, action: str, admin_id: int, notes: str
         SET status = ?, admin_notes = ?, reviewed_by = ?, reviewed_at = ?
         WHERE id = ?
     """, (status, notes, admin_id, now_iso, request_id))
-
-    if status == "approved":
-        # Activate student subscription for 30 days
-        expiry_dt = now_dt + timedelta(days=30)
-        c.execute("""
-            UPDATE users
-            SET subscription_status = 'active',
-                subscription_plan = ?,
-                subscription_start = ?,
-                subscription_end = ?
-            WHERE id = ?
-        """, (req["plan_name"], now_iso, expiry_dt.isoformat(), req["user_id"]))
-
-        # Send notification to student
-        c.execute("""
-            INSERT INTO notifications (user_id, title, message, type, created_at)
-            VALUES (?, 'सदस्यता सक्रिय! (Subscription Activated)', ?, 'success', ?)
-        """, (
-            req["user_id"],
-            f"आपकी {req['plan_name']} सदस्यता सक्रिय कर दी गई है। वैधता: 30 दिन।",
-            now_iso
-        ))
-
     conn.commit()
     conn.close()
+
+    if status == "approved":
+        amount = float(req.get("amount") or 100)
+        plan_str = str(req.get("plan_name") or "")
+        days = 30
+        if "1 वर्ष" in plan_str or "365" in plan_str or "1 Year" in plan_str or amount >= 700:
+            days = 365
+        elif "6 माह" in plan_str or "180" in plan_str or "6 Month" in plan_str or amount >= 400:
+            days = 180
+        elif "3 माह" in plan_str or "90" in plan_str or "3 Month" in plan_str or amount >= 200:
+            days = 90
+        else:
+            days = 30
+
+        admin_grant_subscription(
+            user_id=req["user_id"],
+            plan_name=req["plan_name"],
+            days=days,
+            admin_id=admin_id,
+            notes=f"भुगतान #{request_id} (UTR: {req['transaction_id']}) स्वीकृत"
+        )
+
     return {"success": True, "status": status}
 
 
@@ -2261,6 +2492,23 @@ def mark_cashfree_order_paid(
         conn.close()
         return {"success": False, "error": "Order not found"}
 
+    user_id = order["user_id"]
+    plan_days = order["plan_days"] or 30
+
+    # Idempotency guard: prevent duplicate activation or extending subscription multiple times for same order
+    if order["status"] == "PAID":
+        c.execute("SELECT subscription_status, subscription_end FROM users WHERE id = ?", (user_id,))
+        u = c.fetchone()
+        conn.close()
+        return {
+            "success": True,
+            "already_paid": True,
+            "order_id": order_id,
+            "subscription_status": u["subscription_status"] if u else "active",
+            "subscription_end": u["subscription_end"] if u else None,
+            "plan_days": plan_days
+        }
+
     now_dt = datetime.now()
     now_iso = now_dt.isoformat()
     pay_time = payment_time or now_iso
@@ -2271,9 +2519,6 @@ def mark_cashfree_order_paid(
         SET status = 'PAID', cf_payment_id = ?, payment_method = ?, payment_time = ?
         WHERE order_id = ?
     """, (cf_payment_id or '', payment_method or 'Cashfree PG', pay_time, order_id))
-
-    user_id = order["user_id"]
-    plan_days = order["plan_days"] or 30
 
     # Calculate new expiry: if user already has an active future end date, extend from there; otherwise now + plan_days
     c.execute("SELECT subscription_status, subscription_end FROM users WHERE id = ?", (user_id,))
@@ -2289,15 +2534,16 @@ def mark_cashfree_order_paid(
 
     new_end_dt = base_dt + timedelta(days=plan_days)
     new_end_iso = new_end_dt.isoformat()
+    plan_title = f"StenoMaster Pro — {plan_days} दिन (₹{order['amount']:.0f})"
 
     c.execute("""
         UPDATE users
         SET subscription_status = 'active',
-            subscription_plan = 'StenoMaster Pro — 1 Month (₹100/माह)',
+            subscription_plan = ?,
             subscription_start = ?,
             subscription_end = ?
         WHERE id = ?
-    """, (now_iso, new_end_iso, user_id))
+    """, (plan_title, now_iso, new_end_iso, user_id))
 
     # Add celebratory notification for student
     c.execute("""
@@ -2305,7 +2551,7 @@ def mark_cashfree_order_paid(
         VALUES (?, '👑 प्रो सदस्यता सक्रिय (Pro Activated)!', ?, 'success', ?)
     """, (
         user_id,
-        f"आपका ₹{order['amount']:.0f} का भुगतान सफल रहा! आपकी 30 दिन की प्रो सदस्यता सक्रिय कर दी गई है। वैधता: {new_end_dt.strftime('%d %b %Y')} तक।",
+        f"आपका ₹{order['amount']:.0f} का भुगतान सफल रहा! आपकी {plan_days} दिन की प्रो सदस्यता सक्रिय कर दी गई है। वैधता: {new_end_dt.strftime('%d %b %Y')} तक।",
         now_iso
     ))
 
