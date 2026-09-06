@@ -54,6 +54,19 @@
 
             <!-- 1. Student Login Sub-Form -->
             <div id="studentSubLoginForm">
+              <!-- Quick One-Click Login Card (Shown when credentials saved in localStorage) -->
+              <div id="stuQuickLoginCard" style="display:none; background:linear-gradient(135deg, rgba(2, 132, 199, 0.08), rgba(99, 102, 241, 0.08)); border:1.5px solid #0284c7; border-radius:12px; padding:12px 14px; margin-bottom:14px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
+                  <div style="min-width:0;">
+                    <div style="font-size:0.75rem; color:var(--text-muted);">सहेजा गया छात्र खाता (Saved Account):</div>
+                    <strong id="stuQuickLoginName" style="color:var(--text-main); font-size:0.95rem; word-break:break-all;">-</strong>
+                  </div>
+                  <button type="button" class="btn-primary" onclick="stenoApp.oneClickStudentLogin()" style="padding:7px 14px; font-size:0.82rem; font-weight:700; background:#0284c7; border-color:#0284c7; white-space:nowrap; flex-shrink:0;">
+                    ⚡ 1-क्लिक लॉगिन →
+                  </button>
+                </div>
+              </div>
+
               <form onsubmit="stenoApp.handleStudentLogin(event)">
                 <div class="form-group">
                   <label class="form-label">छात्र आईडी, ईमेल, या यूज़रनेम (Student ID, Email or Username)</label>
@@ -72,6 +85,18 @@
                     <input type="password" id="stuAuthPassword" class="form-input" placeholder="••••••••" required autocomplete="current-password">
                   </div>
                 </div>
+
+                <!-- Remember Me & Forget Option -->
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                  <label style="display:inline-flex; align-items:center; gap:6px; font-size:0.82rem; color:var(--text-secondary); cursor:pointer; user-select:none;">
+                    <input type="checkbox" id="stuRememberMe" checked style="width:16px; height:16px; accent-color:#0284c7; cursor:pointer;">
+                    <span>आईडी-पासवर्ड याद रखें (Remember Me)</span>
+                  </label>
+                  <button type="button" id="stuClearSavedCredsBtn" onclick="stenoApp.clearSavedStudentCreds()" style="display:none; background:none; border:none; color:var(--accent-red); font-size:0.75rem; cursor:pointer; text-decoration:underline;">
+                    खाता हटाएं (Forget)
+                  </button>
+                </div>
+
                 <div id="stuAuthError" class="auth-inline-error" style="display:none;"></div>
                 <button type="submit" id="stuLoginSubmitBtn" class="btn-primary auth-submit-btn">
                   <span>लॉगिन करें (Login)</span> <span>→</span>
@@ -182,6 +207,20 @@
             <div class="auth-panel-badge admin-badge">
               <span>🛡️</span> <span>प्रशासनिक नियंत्रण (Admin Security Console)</span>
             </div>
+
+            <!-- Quick One-Click Admin Login Card (Shown when admin credentials saved) -->
+            <div id="adminQuickLoginCard" style="display:none; background:rgba(239, 68, 68, 0.08); border:1.5px solid #ef4444; border-radius:12px; padding:12px 14px; margin-bottom:14px;">
+              <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
+                <div style="min-width:0;">
+                  <div style="font-size:0.75rem; color:var(--text-muted);">सहेजा गया एडमिन (Saved Admin):</div>
+                  <strong id="adminQuickLoginName" style="color:#ef4444; font-size:0.95rem; word-break:break-all;">Administrator</strong>
+                </div>
+                <button type="button" class="btn-primary" onclick="stenoApp.oneClickAdminLogin()" style="padding:7px 14px; font-size:0.82rem; font-weight:700; background:#ef4444; border-color:#ef4444; white-space:nowrap; flex-shrink:0;">
+                  ⚡ 1-क्लिक एडमिन लॉगिन →
+                </button>
+              </div>
+            </div>
+
             <form onsubmit="stenoApp.handleAdminLogin(event)">
               <div class="form-group">
                 <label class="form-label">Admin Email or Username</label>
@@ -197,6 +236,18 @@
                   <input type="password" id="adminAuthPassword" class="form-input" placeholder="••••••••" required autocomplete="current-password">
                 </div>
               </div>
+
+              <!-- Admin Remember Me & Forget Option -->
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                <label style="display:inline-flex; align-items:center; gap:6px; font-size:0.82rem; color:var(--text-secondary); cursor:pointer; user-select:none;">
+                  <input type="checkbox" id="adminRememberMe" checked style="width:16px; height:16px; accent-color:#ef4444; cursor:pointer;">
+                  <span>एडमिन आईडी-पासवर्ड याद रखें (Remember Me)</span>
+                </label>
+                <button type="button" id="adminClearSavedCredsBtn" onclick="stenoApp.clearSavedAdminCreds()" style="display:none; background:none; border:none; color:var(--accent-red); font-size:0.75rem; cursor:pointer; text-decoration:underline;">
+                  हटाएं (Forget)
+                </button>
+              </div>
+
               <div id="adminAuthError" class="auth-inline-error" style="display:none;"></div>
               <button type="submit" id="adminLoginSubmitBtn" class="btn-primary auth-submit-btn admin-btn">
                 <span>🛡️ Secure Admin Login</span>
@@ -1626,6 +1677,7 @@
           <div class="subscribers-toolbar">
             <div class="sub-filter-pills" id="subscribersFilterPills">
               <button type="button" class="sub-filter-pill active" onclick="stenoAdmin.filterSubscribers('all', this)">सभी छात्र (All)</button>
+              <button type="button" class="sub-filter-pill" onclick="stenoAdmin.filterSubscribers('free_access', this)">🎁 ऑल फ्री एक्सेस (All Free)</button>
               <button type="button" class="sub-filter-pill" onclick="stenoAdmin.filterSubscribers('active', this)">👑 सक्रिय प्रो (Active Pro)</button>
               <button type="button" class="sub-filter-pill" onclick="stenoAdmin.filterSubscribers('expired', this)">⏳ समाप्त (Expired)</button>
               <button type="button" class="sub-filter-pill" onclick="stenoAdmin.filterSubscribers('free', this)">🆓 फ्री टियर (Free)</button>
@@ -1642,11 +1694,11 @@
                   <th>छात्र कोड व नाम</th>
                   <th>संपर्क (Email / Phone)</th>
                   <th>सदस्यता स्थिति</th>
+                  <th style="text-align:center; background:rgba(16,185,129,0.1); color:#059669; font-weight:700;">🎁 सभी एक्सरसाइज फ्री (Free)?</th>
                   <th>सक्रिय प्लान</th>
                   <th>वैधता (Days Left)</th>
-                  <th>समाप्ति तिथि (End Date)</th>
                   <th>अभ्यास</th>
-                  <th style="text-align:right;">Pro प्रबंधन कार्रवाई</th>
+                  <th style="text-align:right;">Pro प्रबंधन</th>
                 </tr>
               </thead>
               <tbody id="adminSubscribersTableBody">
@@ -1768,31 +1820,6 @@
 
               <button type="submit" class="btn-primary" style="margin-top:14px;">सदस्यता एवं Cashfree सेटिंग्स सहेजें (Save Settings)</button>
             </form>
-          </div>
-
-          <!-- Phase 3: Immutable Reward Ledger Audit for Admin -->
-          <div class="chart-card" id="adminRewardsLedgerSection">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-              <h3 style="font-size:1.1rem; font-weight:700;">🏆 रिवॉर्ड ट्रांजेक्शन ऑडिट लेजर (Ledger)</h3>
-              <button class="btn-secondary" onclick="stenoAdmin.loadRewardsLedger()" style="padding:4px 10px; font-size:0.75rem;">🔄 रीफ़्रेश</button>
-            </div>
-            <div class="table-responsive" style="max-height: 320px; overflow-y:auto;">
-              <table class="data-table" id="adminRewardsTable">
-                <thead>
-                  <tr>
-                    <th>ID</th>
-                    <th>छात्र ID</th>
-                    <th>अंक</th>
-                    <th>प्रकार</th>
-                    <th>संदर्भ (Ref ID)</th>
-                    <th>दिनांक</th>
-                  </tr>
-                </thead>
-                <tbody id="adminRewardsTableBody">
-                  <!-- Populated dynamically -->
-                </tbody>
-              </table>
-            </div>
           </div>
         </div>
 
