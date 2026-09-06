@@ -1353,6 +1353,59 @@ def get_categories():
     return [dict(r) for r in rows]
 
 
+def safe_execute_passage_query(conn, query: str, params: list = None):
+    c = conn.cursor()
+    try:
+        if params is not None:
+            c.execute(query, params)
+        else:
+            c.execute(query)
+        return c
+    except Exception as q_err:
+        err_str = str(q_err).lower()
+        if 'steno_notes_url' in err_str or 'steno_notes_type' in err_str or 'typing_system' in err_str or 'column' in err_str:
+            # 1. Auto-heal: add missing columns to PostgreSQL
+            try:
+                raw = getattr(conn, '_conn', None)
+                if raw:
+                    raw.rollback()
+                    raw.autocommit = True
+                    cur = raw.cursor()
+                    cur.execute("ALTER TABLE passages ADD COLUMN IF NOT EXISTS steno_notes_url TEXT")
+                    cur.execute("ALTER TABLE passages ADD COLUMN IF NOT EXISTS steno_notes_type TEXT")
+                    cur.execute("ALTER TABLE passages ADD COLUMN IF NOT EXISTS typing_system TEXT DEFAULT 'dual'")
+                    cur.execute("ALTER TABLE passages ADD COLUMN IF NOT EXISTS is_premium INTEGER DEFAULT 0")
+                    cur.execute("ALTER TABLE passages ADD COLUMN IF NOT EXISTS official_text_krutidev TEXT")
+                    cur.close()
+                    raw.autocommit = False
+            except Exception:
+                pass
+            # 2. Retry original query
+            try:
+                c2 = conn.cursor()
+                if params is not None:
+                    c2.execute(query, params)
+                else:
+                    c2.execute(query)
+                return c2
+            except Exception:
+                # 3. Fallback: replace missing column names in SELECT with safe expressions
+                fb_q = query
+                fb_q = fb_q.replace('p.steno_notes_url,', 'NULL as steno_notes_url,')
+                fb_q = fb_q.replace('p.steno_notes_url', 'NULL as steno_notes_url')
+                fb_q = fb_q.replace('p.steno_notes_type,', 'NULL as steno_notes_type,')
+                fb_q = fb_q.replace('p.steno_notes_type', 'NULL as steno_notes_type')
+                fb_q = fb_q.replace('p.typing_system,', "'dual' as typing_system,")
+                fb_q = fb_q.replace('p.typing_system', "'dual' as typing_system")
+                c3 = conn.cursor()
+                if params is not None:
+                    c3.execute(fb_q, params)
+                else:
+                    c3.execute(fb_q)
+                return c3
+        raise q_err
+
+
 def get_passages(
     language: Optional[str] = None,
     difficulty: Optional[str] = None,
@@ -1362,8 +1415,6 @@ def get_passages(
     include_official_text: bool = False
 ) -> List[Dict[str, Any]]:
     conn = get_db()
-    c = conn.cursor()
-
     query = """
         SELECT p.id, p.title, p.category_id, p.language, p.difficulty, p.instructions,
                p.target_wpm, p.duration_seconds, p.audio_url, p.steno_notes_url, p.steno_notes_type,
@@ -1409,7 +1460,7 @@ def get_passages(
 
     query += " ORDER BY p.id ASC "
 
-    c.execute(query, params)
+    c = safe_execute_passage_query(conn, query, params)
     rows = c.fetchall()
 
     # Reuse cursor to get free passage IDs without spawning extra connection
@@ -1476,7 +1527,7 @@ def get_passage_detail(passage_id: int, user_id: Optional[int] = None, include_o
     if not is_admin:
         query += " AND p.status = 'published' "
 
-    c.execute(query, params)
+    c = safe_execute_passage_query(conn, query, params)
     row = c.fetchone()
 
     if row:
@@ -1715,7 +1766,7 @@ def get_attempt_detail(attempt_id: int, user_id: Optional[int] = None) -> Option
         query += " AND pa.user_id = ? "
         params.append(user_id)
 
-    c.execute(query, params)
+    c = safe_execute_passage_query(conn, query, params)
     row = c.fetchone()
     conn.close()
     if not row:
@@ -2086,6 +2137,20 @@ def admin_save_passage(data: Dict[str, Any]) -> int:
                 steno_notes_type = 'pdf'
             else:
                 steno_notes_type = 'image'
+
+        raw = getattr(conn, '_conn', None)
+        if raw:
+            try:
+                old_auto = raw.autocommit
+                raw.autocommit = True
+                cur_init = raw.cursor()
+                cur_init.execute("ALTER TABLE passages ADD COLUMN IF NOT EXISTS steno_notes_url TEXT")
+                cur_init.execute("ALTER TABLE passages ADD COLUMN IF NOT EXISTS steno_notes_type TEXT")
+                cur_init.execute("ALTER TABLE passages ADD COLUMN IF NOT EXISTS typing_system TEXT DEFAULT 'dual'")
+                cur_init.close()
+                raw.autocommit = old_auto
+            except Exception:
+                pass
 
         if p_id:
             c.execute("""
