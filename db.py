@@ -506,9 +506,15 @@ def init_db():
         for row in rows_to_backfill:
             if row['language'] == 'hindi' and row['official_text']:
                 kd_text = hindi_converter.unicode_to_kruti_dev(row['official_text'])
-                c.execute("UPDATE passages SET official_text_krutidev = ? WHERE id = ?", (kd_text, row['id']))
     except Exception as e:
         print(f"Warning during Kruti Dev backfill: {e}")
+
+    # High-Performance Compound Indexes for Instant Queries
+    c.execute("CREATE INDEX IF NOT EXISTS idx_pa_user_passage ON practice_attempts(user_id, passage_id)")
+    c.execute("CREATE INDEX IF NOT EXISTS idx_bookmarks_user_passage ON bookmarks(user_id, passage_id)")
+    c.execute("CREATE INDEX IF NOT EXISTS idx_passages_status_id ON passages(status, id)")
+    c.execute("CREATE INDEX IF NOT EXISTS idx_passages_cat_lang ON passages(category_id, language, difficulty)")
+    c.execute("CREATE INDEX IF NOT EXISTS idx_sessions_token ON sessions(token)")
 
     conn.commit()
     conn.close()
@@ -1284,10 +1290,24 @@ def get_passages(
 
     c.execute(query, params)
     rows = c.fetchall()
-    conn.close()
 
-    free_ids = set(get_free_passage_ids(2))
-    user_has_pro = is_user_premium(user_id) if user_id else False
+    # Reuse cursor to get free passage IDs without spawning extra connection
+    c.execute("SELECT id FROM passages WHERE status = 'published' ORDER BY id ASC LIMIT 2")
+    free_ids = {r["id"] for r in c.fetchall()}
+
+    # Check pro status using current cursor
+    user_has_pro = False
+    if user_id:
+        c.execute("SELECT role, subscription_status, subscription_end, is_free_access FROM users WHERE id = ?", (user_id,))
+        u_row = c.fetchone()
+        if u_row:
+            if u_row["role"] == "admin" or bool(u_row["is_free_access"]):
+                user_has_pro = True
+            elif u_row["subscription_status"] == "active":
+                if not u_row["subscription_end"] or not is_expired_datetime(u_row["subscription_end"]):
+                    user_has_pro = True
+
+    conn.close()
 
     result = []
     for r in rows:
