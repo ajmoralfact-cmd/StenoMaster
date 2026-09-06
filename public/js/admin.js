@@ -283,6 +283,19 @@ class StenoAdmin {
     // Admin reference is authoritative - no silent automatic overwrite on input
   }
 
+  populateCategoryDropdown() {
+    const sel = document.getElementById('passageCategorySelect');
+    if (!sel) return;
+    const cats = (stenoApp && stenoApp.categories && stenoApp.categories.length) ? stenoApp.categories : this.categoriesList;
+    if (cats && cats.length) {
+      const currentVal = sel.value;
+      sel.innerHTML = cats.map(c => `
+        <option value="${c.id}">${this.escapeHtml(c.name)}</option>
+      `).join('');
+      if (currentVal) sel.value = currentVal;
+    }
+  }
+
   openNewPassageModal(mode = 'dual') {
     const sys = (mode === 'krutidev' || mode === 'kruti_dev_010')
       ? 'kruti_dev_010'
@@ -290,6 +303,7 @@ class StenoAdmin {
     document.getElementById('passageModalTitle').textContent = '📝 नया स्टेनो आलेख जोड़ें (Add Passage)';
     document.getElementById('passageEditId').value = '';
     document.getElementById('passageForm').reset();
+    this.populateCategoryDropdown();
     const krutiInput = document.getElementById('passageOfficialKrutiInput');
     if (krutiInput) krutiInput.value = '';
     const mangalInput = document.getElementById('passageOfficialTextInput');
@@ -302,14 +316,16 @@ class StenoAdmin {
     const p = this.passagesList.find(item => item.id === id);
     if (!p) return;
 
+    this.populateCategoryDropdown();
     document.getElementById('passageModalTitle').textContent = 'स्टेनो आलेख संशोधित करें (Edit Passage)';
     document.getElementById('passageEditId').value = p.id;
     document.getElementById('passageTitleInput').value = p.title;
-    document.getElementById('passageCategorySelect').value = p.category_id;
-    document.getElementById('passageLanguageSelect').value = p.language;
-    document.getElementById('passageDifficultySelect').value = p.difficulty;
-    document.getElementById('passageTargetWpmInput').value = p.target_wpm;
-    document.getElementById('passageDurationInput').value = p.duration_seconds;
+    const catSel = document.getElementById('passageCategorySelect');
+    if (catSel) catSel.value = p.category_id;
+    document.getElementById('passageLanguageSelect').value = p.language || 'hindi';
+    document.getElementById('passageDifficultySelect').value = p.difficulty || 'medium';
+    document.getElementById('passageTargetWpmInput').value = p.target_wpm || 40;
+    document.getElementById('passageDurationInput').value = p.duration_seconds || 180;
     document.getElementById('passageAudioUrlInput').value = p.audio_url || '';
     document.getElementById('passageInstructionsInput').value = p.instructions || '';
     document.getElementById('passageOfficialTextInput').value = p.official_text || p.official_mangal_text || '';
@@ -364,45 +380,71 @@ class StenoAdmin {
 
   async savePassage(e) {
     e.preventDefault();
-    const id = document.getElementById('passageEditId').value;
-    const title = document.getElementById('passageTitleInput').value.trim();
-    const category_id = parseInt(document.getElementById('passageCategorySelect').value);
-    const language = document.getElementById('passageLanguageSelect').value;
-    const difficulty = document.getElementById('passageDifficultySelect').value;
-    const target_wpm = parseInt(document.getElementById('passageTargetWpmInput').value) || 40;
-    const duration_seconds = parseInt(document.getElementById('passageDurationInput').value) || 180;
-    const audio_url = document.getElementById('passageAudioUrlInput').value.trim();
-    const instructions = document.getElementById('passageInstructionsInput').value.trim();
-    const official_text = document.getElementById('passageOfficialTextInput').value.trim();
+    const id = document.getElementById('passageEditId')?.value;
+    const title = document.getElementById('passageTitleInput')?.value.trim();
+    const category_id = parseInt(document.getElementById('passageCategorySelect')?.value) || 1;
+    const language = document.getElementById('passageLanguageSelect')?.value || 'hindi';
+    const difficulty = document.getElementById('passageDifficultySelect')?.value || 'medium';
+    const target_wpm = parseInt(document.getElementById('passageTargetWpmInput')?.value) || 40;
+    const duration_seconds = parseInt(document.getElementById('passageDurationInput')?.value) || 180;
+    const audio_url = document.getElementById('passageAudioUrlInput')?.value.trim() || '';
+    const instructions = document.getElementById('passageInstructionsInput')?.value.trim() || '';
+    let official_mangal = document.getElementById('passageOfficialTextInput')?.value.trim() || '';
     const krutiInput = document.getElementById('passageOfficialKrutiInput');
-    const official_text_krutidev = krutiInput ? krutiInput.value.trim() : '';
-    const typing_system = document.getElementById('passageTypingSystem')?.value || this.currentTypingSystem || 'dual';
-    const official_mangal = official_text;
-    const official_kruti = official_text_krutidev;
+    let official_kruti = krutiInput ? krutiInput.value.trim() : '';
+    let typing_system = document.getElementById('passageTypingSystem')?.value || this.currentTypingSystem || 'dual';
+    const tags = document.getElementById('passageTagsInput')?.value.trim() || '';
 
     if (!title) {
       stenoApp.showToast('आलेख का शीर्षक आवश्यक है।', 'error');
       return;
     }
 
-    // Frontend Validation (Phase 4)
-    if (typing_system === 'mangal_unicode' && !official_mangal) {
-      stenoApp.showToast('मंगल / यूनिकोड संदर्भ पाठ आवश्यक है।', 'error');
+    // Auto-convert if in Dual mode and user only provided one font text
+    if (typing_system === 'dual') {
+      if (official_mangal && !official_kruti) {
+        try {
+          const convRes = await stenoApp.apiCall('/api/admin/convert-font', 'POST', {
+            text: official_mangal,
+            direction: 'to_kruti'
+          });
+          if (convRes && convRes.result) {
+            official_kruti = convRes.result;
+            if (krutiInput) krutiInput.value = official_kruti;
+          }
+        } catch (cErr) {
+          console.warn('Auto convert to kruti fallback:', cErr);
+          official_kruti = official_mangal;
+        }
+      } else if (official_kruti && !official_mangal) {
+        try {
+          const convRes = await stenoApp.apiCall('/api/admin/convert-font', 'POST', {
+            text: official_kruti,
+            direction: 'to_mangal'
+          });
+          if (convRes && convRes.result) {
+            official_mangal = convRes.result;
+            const mangalInput = document.getElementById('passageOfficialTextInput');
+            if (mangalInput) mangalInput.value = official_mangal;
+          }
+        } catch (cErr) {
+          console.warn('Auto convert to mangal fallback:', cErr);
+          official_mangal = official_kruti;
+        }
+      }
+    }
+
+    if (!official_mangal && !official_kruti) {
+      stenoApp.showToast('कृपया आलेख का संदर्भ पाठ (Text) दर्ज करें।', 'error');
       return;
+    }
+
+    // Ensure non-empty text for single font modes
+    if (typing_system === 'mangal_unicode' && !official_mangal) {
+      official_mangal = official_kruti;
     }
     if (typing_system === 'kruti_dev_010' && !official_kruti) {
-      stenoApp.showToast('कृति देव 010 संदर्भ पाठ आवश्यक है।', 'error');
-      return;
-    }
-    if (typing_system === 'dual') {
-      if (!official_mangal) {
-        stenoApp.showToast('Dual आलेख के लिए मंगल संदर्भ पाठ आवश्यक है।', 'error');
-        return;
-      }
-      if (!official_kruti) {
-        stenoApp.showToast('Dual आलेख के लिए कृति देव 010 संदर्भ पाठ आवश्यक है।', 'error');
-        return;
-      }
+      official_kruti = official_mangal;
     }
 
     const payload = {
@@ -424,14 +466,25 @@ class StenoAdmin {
     };
     if (id) payload.id = parseInt(id);
 
+    const submitBtn = e.target.querySelector('button[type="submit"]');
+    const origBtnText = submitBtn ? submitBtn.innerHTML : '';
     try {
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<span>⏳ सहेजा जा रहा है...</span>';
+      }
       await stenoApp.apiCall('/api/admin/passages/save', 'POST', payload);
       stenoApp.showToast('आलेख सफलतापूर्ण सहेजा गया! 🎉', 'success');
       stenoApp.closeModal('passageEditModal');
-      this.loadPassages();
-      stenoApp.loadPassages();
+      await this.loadPassages();
+      await stenoApp.loadPassages();
     } catch (err) {
-      stenoApp.showToast('आलेख सहेजने में त्रुटि: ' + err.message, 'error');
+      stenoApp.showToast('आलेख सहेजने में त्रुटि: ' + (err.message || 'अज्ञात त्रुटि'), 'error');
+    } finally {
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = origBtnText || 'आलेख सहेजें (Save)';
+      }
     }
   }
 
