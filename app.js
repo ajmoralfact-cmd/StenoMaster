@@ -20,6 +20,18 @@ class StenoApp {
     this.currentExamRule = 'ssc_steno';
     this.subscriptionPlans = [];
     this.selectedPlan = null;
+    this.allPassages = [];
+    this.selectedTypingSystem = localStorage.getItem('stenomaster_preferred_font') || localStorage.getItem('stenomaster_typing_mode') || 'mangal_unicode';
+    if (this.selectedTypingSystem === 'krutidev') this.selectedTypingSystem = 'kruti_dev_010';
+
+    // Restore cached passages immediately for instant 0ms startup
+    try {
+      const cached = localStorage.getItem('stenomaster_cached_passages');
+      if (cached) {
+        this.allPassages = JSON.parse(cached);
+        this.passages = [...this.allPassages];
+      }
+    } catch(e) {}
 
     this.init();
   }
@@ -57,6 +69,35 @@ class StenoApp {
       if (showNotification) {
         this.showToast('🎯 SSC स्टेनोग्राफर नियम सक्रिय (Grade C & D: 5%/7% कटऑफ)', 'info');
       }
+    }
+  }
+
+  setPreferredFont(font) {
+    const normalizedFont = (font === 'krutidev' || font === 'kruti_dev_010') ? 'kruti_dev_010' : 'mangal_unicode';
+    localStorage.setItem('stenomaster_preferred_font', normalizedFont);
+    localStorage.setItem('stenomaster_typing_mode', normalizedFont === 'kruti_dev_010' ? 'krutidev' : 'mangal');
+    this.selectedTypingSystem = normalizedFont;
+    this.updateFontSwitcherUI();
+    const fontName = normalizedFont === 'kruti_dev_010' ? 'कृति देव 010 (Kruti Dev)' : 'मंगल / यूनिकोड (Mangal / Unicode)';
+    this.showToast(`⌨️ टाइपिंग फ़ॉन्ट चुना गया: ${fontName}`, 'info');
+  }
+
+  updateFontSwitcherUI() {
+    const saved = localStorage.getItem('stenomaster_preferred_font') || this.selectedTypingSystem || 'mangal_unicode';
+    const isKruti = saved === 'kruti_dev_010' || saved === 'krutidev';
+
+    const mangalBtn = document.getElementById('classesFontMangalBtn');
+    const krutiBtn = document.getElementById('classesFontKrutiBtn');
+
+    if (mangalBtn) {
+      mangalBtn.style.background = isKruti ? 'transparent' : '#0284c7';
+      mangalBtn.style.color = isKruti ? 'var(--text-secondary)' : '#fff';
+      mangalBtn.style.border = isKruti ? '1px solid var(--border)' : 'none';
+    }
+    if (krutiBtn) {
+      krutiBtn.style.background = isKruti ? '#d97706' : 'transparent';
+      krutiBtn.style.color = isKruti ? '#fff' : 'var(--text-secondary)';
+      krutiBtn.style.border = isKruti ? 'none' : '1px solid var(--border)';
     }
   }
 
@@ -1118,6 +1159,7 @@ class StenoApp {
         break;
       case 'classes':
         this.renderClasses();
+        this.updateFontSwitcherUI();
         break;
       case 'subscription':
         this.loadSubscription();
@@ -1172,24 +1214,94 @@ class StenoApp {
     }
   }
 
-  async loadPassages() {
-    try {
-      const queryParams = new URLSearchParams();
-      if (this.selectedLanguage !== 'all') queryParams.append('language', this.selectedLanguage);
-      if (this.selectedDifficulty !== 'all') queryParams.append('difficulty', this.selectedDifficulty);
-      if (this.selectedCategory !== 'all') queryParams.append('category_id', this.selectedCategory);
-      if (this.searchQuery) queryParams.append('search', this.searchQuery);
+  applyPassageFilters() {
+    if (!this.allPassages) this.allPassages = [];
+    let list = [...this.allPassages];
 
-      const res = await this.apiCall(`/api/passages?${queryParams.toString()}`);
-      this.passages = res.passages || [];
+    if (this.selectedLanguage && this.selectedLanguage !== 'all') {
+      list = list.filter(p => (p.language || '').toLowerCase() === this.selectedLanguage.toLowerCase());
+    }
+    if (this.selectedDifficulty && this.selectedDifficulty !== 'all') {
+      list = list.filter(p => (p.difficulty || '').toLowerCase() === this.selectedDifficulty.toLowerCase());
+    }
+    if (this.selectedCategory && this.selectedCategory !== 'all') {
+      list = list.filter(p => String(p.category_id) === String(this.selectedCategory));
+    }
+    if (this.searchQuery && this.searchQuery.trim()) {
+      const q = this.searchQuery.trim().toLowerCase();
+      list = list.filter(p =>
+        (p.title && p.title.toLowerCase().includes(q)) ||
+        (p.category_name && p.category_name.toLowerCase().includes(q)) ||
+        (p.tags && p.tags.toLowerCase().includes(q))
+      );
+    }
+    this.passages = list;
+    if (this.activeView === 'home') this.renderHomeCards();
+    if (this.activeView === 'classes') this.renderClasses();
+  }
+
+  onSearchInput(val) {
+    this.searchQuery = val || '';
+    this.applyPassageFilters();
+  }
+
+  onLanguageFilterChange(val) {
+    this.selectedLanguage = val || 'all';
+    this.applyPassageFilters();
+  }
+
+  onDifficultyFilterChange(val) {
+    this.selectedDifficulty = val || 'all';
+    this.applyPassageFilters();
+  }
+
+  renderPassagesSkeleton() {
+    const skeletonHTML = Array(6).fill(0).map(() => `
+      <div class="class-card skeleton-card" style="opacity:0.5; pointer-events:none; border:1px solid var(--border); border-radius:12px; padding:18px;">
+        <div style="display:flex; justify-content:space-between; margin-bottom:12px;">
+          <div style="height:18px; width:70px; background:var(--border); border-radius:4px;"></div>
+          <div style="height:18px; width:40px; background:var(--border); border-radius:4px;"></div>
+        </div>
+        <div style="height:22px; width:80%; background:var(--border); border-radius:4px; margin-bottom:8px;"></div>
+        <div style="height:14px; width:40%; background:var(--border); border-radius:4px; margin-bottom:16px;"></div>
+        <div style="height:32px; width:100%; background:var(--border); border-radius:6px;"></div>
+      </div>
+    `).join('');
+
+    const grid = document.getElementById('classesListGrid');
+    if (grid && (!this.allPassages || this.allPassages.length === 0)) grid.innerHTML = skeletonHTML;
+    const homeGrid = document.getElementById('homeClassCardsGrid');
+    if (homeGrid && (!this.allPassages || this.allPassages.length === 0)) homeGrid.innerHTML = skeletonHTML;
+  }
+
+  async loadPassages(forceRefresh = false) {
+    // If not forced and passages are already in memory, filter instantly!
+    if (!forceRefresh && this.allPassages && this.allPassages.length > 0) {
+      this.applyPassageFilters();
+      this.updateFontSwitcherUI();
+      return;
+    }
+
+    if (!this.allPassages || this.allPassages.length === 0) {
+      this.renderPassagesSkeleton();
+    }
+
+    try {
+      const res = await this.apiCall('/api/passages');
+      this.allPassages = res.passages || [];
 
       // Populate bookmarks set
-      this.passages.forEach(p => {
+      this.allPassages.forEach(p => {
         if (p.is_bookmarked) this.bookmarks.add(p.id);
       });
 
-      if (this.activeView === 'home') this.renderHomeCards();
-      if (this.activeView === 'classes') this.renderClasses();
+      // Save to localStorage for instant startup on subsequent visits
+      try {
+        localStorage.setItem('stenomaster_cached_passages', JSON.stringify(this.allPassages));
+      } catch (e) {}
+
+      this.applyPassageFilters();
+      this.updateFontSwitcherUI();
     } catch (err) {
       console.error('Failed to load passages:', err);
     }
@@ -1216,7 +1328,7 @@ class StenoApp {
       document.querySelectorAll('#homeCategoryPills .cat-pill').forEach(b => b.classList.remove('active'));
       btnEl.classList.add('active');
     }
-    this.loadPassages();
+    this.applyPassageFilters();
   }
 
   renderHome() {
@@ -1413,32 +1525,58 @@ class StenoApp {
   // -------------------------------------------------------------------------
   async openPractice(passageId) {
     try {
+      const localPassage = (this.allPassages || []).find(p => p.id === passageId) || (this.passages || []).find(p => p.id === passageId);
+      const hasFullAccess = !!(this.user && (this.user.role === 'admin' || this.user.subscription_status === 'active' || this.user.is_free_access));
+
+      if (localPassage && !localPassage.is_free_tier && localPassage.is_premium && !hasFullAccess) {
+        this.handleLockedPassageClick(passageId);
+        return;
+      }
+
+      // Visual feedback on clicked card
+      const cardEl = document.querySelector(`.class-card[onclick*="openPractice(${passageId})"]`);
+      if (cardEl) {
+        cardEl.style.transition = 'opacity 0.15s ease, transform 0.15s ease';
+        cardEl.style.opacity = '0.75';
+        cardEl.style.transform = 'scale(0.99)';
+      }
+
       const res = await this.apiCall(`/api/passages/${passageId}`);
+      if (cardEl) {
+        cardEl.style.opacity = '1';
+        cardEl.style.transform = 'none';
+      }
+
       if (res.passage && res.passage.is_locked) {
         this.handleLockedPassageClick(passageId);
         return;
       }
       this.currentPassage = res.passage;
 
-      // Access control check for premium passage (free tier passages are 100% free)
-      const hasFullAccess = !!(this.user && (this.user.role === 'admin' || this.user.subscription_status === 'active' || this.user.is_free_access));
       if (!this.currentPassage.is_free_tier && this.currentPassage.is_premium && !hasFullAccess) {
         this.handleLockedPassageClick(passageId);
         return;
       }
 
-      // Check Canonical Typing System (Phase 8)
+      // Automatically use preferred font (never annoy student with repeated popup modal)
+      const savedPref = localStorage.getItem('stenomaster_preferred_font') || localStorage.getItem('stenomaster_typing_mode') || 'mangal_unicode';
+      const preferredSystem = (savedPref === 'kruti_dev_010' || savedPref === 'krutidev') ? 'kruti_dev_010' : 'mangal_unicode';
+
       const sys = this.currentPassage.typing_system || 'dual';
-      if (sys === 'dual' && this.currentPassage.language === 'hindi') {
-        // Prompt student to choose Mangal / Unicode OR Kruti Dev 010
-        this.openModal('dualModeSelectModal');
-        return;
-      } else if (sys === 'kruti_dev_010') {
+      if (sys === 'kruti_dev_010') {
         this.startPracticeWithSystem('kruti_dev_010');
-      } else {
+      } else if (sys === 'mangal_unicode') {
         this.startPracticeWithSystem('mangal_unicode');
+      } else {
+        // Dual mode: start immediately in student's preferred font!
+        this.startPracticeWithSystem(preferredSystem);
       }
     } catch (err) {
+      const cardEl = document.querySelector(`.class-card[onclick*="openPractice(${passageId})"]`);
+      if (cardEl) {
+        cardEl.style.opacity = '1';
+        cardEl.style.transform = 'none';
+      }
       if (err.message && (err.message.includes('PRO_SUBSCRIPTION_REQUIRED') || err.message.includes('लॉक') || err.message.includes('सदस्यता'))) {
         this.handleLockedPassageClick(passageId);
       } else {
@@ -1449,6 +1587,7 @@ class StenoApp {
 
   confirmDualModeSelection(selectedSystem) {
     this.closeModal('dualModeSelectModal');
+    this.setPreferredFont(selectedSystem);
     this.startPracticeWithSystem(selectedSystem);
   }
 
