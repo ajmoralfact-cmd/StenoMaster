@@ -12,7 +12,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Mukta:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/css/style.css?v=6.1">
+  <link rel="stylesheet" href="/css/style.css?v=6.2">
   <!-- Google Identity Services SDK -->
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   <script>
@@ -584,69 +584,46 @@
               </div>
             </div>
 
-            <!-- 40 to 120 WPM Interactive Dictation Speeder Controller (Top Row) -->
+            <!-- 40 to 120 WPM Interactive Dictation Speeder Controller (Single Row) -->
             <div class="wpm-speeder-card" id="wpmTopSpeederCard">
               <div class="wpm-speeder-top">
                 <div class="wpm-title-group">
                   <span class="wpm-speed-icon">⚡</span>
-                  <span class="wpm-label">डिक्टेशन गति चुनें (WPM):</span>
+                  <span class="wpm-label">डिक्टेशन गति (Speed):</span>
                   <strong id="wpmSpeederValue" class="wpm-val-badge">80 WPM</strong>
                   <span id="wpmMultiplierBadge" class="wpm-mult-badge">(1.00x • मूल 80 WPM)</span>
                 </div>
-
-                <div class="wpm-stepper-actions">
-                  <button type="button" class="btn-wpm-step" onclick="stenoAudioPlayer.stepWpm(-5)" title="5 WPM गति घटाएं">-5 WPM</button>
-                  <button type="button" class="btn-wpm-step" onclick="stenoAudioPlayer.stepWpm(+5)" title="5 WPM गति बढ़ाएं">+5 WPM</button>
-                  <button type="button" class="btn-wpm-step reset-btn" onclick="stenoAudioPlayer.resetToPassageWpm()" title="मूल गति पर रीसेट करें">⟲ मूल गति (80 WPM)</button>
-                </div>
               </div>
 
-              <!-- 40 to 120 WPM Preset Chips with Exact Speed Multipliers -->
+              <!-- 40 to 120 WPM Preset Chips in 1 Clean Horizontal Line -->
               <div class="wpm-chips-row" id="wpmPresetChips">
-                <button type="button" class="wpm-chip" data-wpm="40" onclick="stenoAudioPlayer.setWpm(40)">
-                  <span class="chip-num">40</span> <span class="chip-unit">WPM</span> <span class="badge-sub">0.50x</span>
+                <button type="button" class="wpm-chip" data-wpm="40" onclick="stenoAudioPlayer.setWpm(40)" title="40 WPM">
+                  <span class="chip-num">40</span> <span class="chip-unit">WPM</span>
                 </button>
-                <button type="button" class="wpm-chip" data-wpm="50" onclick="stenoAudioPlayer.setWpm(50)">
-                  <span class="chip-num">50</span> <span class="chip-unit">WPM</span> <span class="badge-sub">0.62x</span>
+                <button type="button" class="wpm-chip" data-wpm="50" onclick="stenoAudioPlayer.setWpm(50)" title="50 WPM">
+                  <span class="chip-num">50</span> <span class="chip-unit">WPM</span>
                 </button>
-                <button type="button" class="wpm-chip" data-wpm="60" onclick="stenoAudioPlayer.setWpm(60)">
-                  <span class="chip-num">60</span> <span class="chip-unit">WPM</span> <span class="badge-sub">0.75x</span>
+                <button type="button" class="wpm-chip" data-wpm="60" onclick="stenoAudioPlayer.setWpm(60)" title="60 WPM">
+                  <span class="chip-num">60</span> <span class="chip-unit">WPM</span>
                 </button>
-                <button type="button" class="wpm-chip" data-wpm="70" onclick="stenoAudioPlayer.setWpm(70)">
-                  <span class="chip-num">70</span> <span class="chip-unit">WPM</span> <span class="badge-sub">0.87x</span>
+                <button type="button" class="wpm-chip" data-wpm="70" onclick="stenoAudioPlayer.setWpm(70)" title="70 WPM">
+                  <span class="chip-num">70</span> <span class="chip-unit">WPM</span>
                 </button>
-                <button type="button" class="wpm-chip active" data-wpm="80" onclick="stenoAudioPlayer.setWpm(80)">
-                  <span class="chip-num">80</span> <span class="chip-unit">WPM</span> <span class="badge-sub gold">मूल • SSC D</span>
+                <button type="button" class="wpm-chip active" data-wpm="80" onclick="stenoAudioPlayer.setWpm(80)" title="80 WPM (मूल गति)">
+                  <span class="chip-num">80</span> <span class="chip-unit">WPM</span>
                 </button>
-                <button type="button" class="wpm-chip" data-wpm="90" onclick="stenoAudioPlayer.setWpm(90)">
-                  <span class="chip-num">90</span> <span class="chip-unit">WPM</span> <span class="badge-sub">1.12x</span>
+                <button type="button" class="wpm-chip" data-wpm="90" onclick="stenoAudioPlayer.setWpm(90)" title="90 WPM">
+                  <span class="chip-num">90</span> <span class="chip-unit">WPM</span>
                 </button>
-                <button type="button" class="wpm-chip" data-wpm="100" onclick="stenoAudioPlayer.setWpm(100)">
-                  <span class="chip-num">100</span> <span class="chip-unit">WPM</span> <span class="badge-sub gold">SSC C</span>
+                <button type="button" class="wpm-chip" data-wpm="100" onclick="stenoAudioPlayer.setWpm(100)" title="100 WPM">
+                  <span class="chip-num">100</span> <span class="chip-unit">WPM</span>
                 </button>
-                <button type="button" class="wpm-chip" data-wpm="110" onclick="stenoAudioPlayer.setWpm(110)">
-                  <span class="chip-num">110</span> <span class="chip-unit">WPM</span> <span class="badge-sub">1.37x</span>
+                <button type="button" class="wpm-chip" data-wpm="110" onclick="stenoAudioPlayer.setWpm(110)" title="110 WPM">
+                  <span class="chip-num">110</span> <span class="chip-unit">WPM</span>
                 </button>
-                <button type="button" class="wpm-chip" data-wpm="120" onclick="stenoAudioPlayer.setWpm(120)">
-                  <span class="chip-num">120</span> <span class="chip-unit">WPM</span> <span class="badge-sub red">रिपोर्टर</span>
+                <button type="button" class="wpm-chip" data-wpm="120" onclick="stenoAudioPlayer.setWpm(120)" title="120 WPM">
+                  <span class="chip-num">120</span> <span class="chip-unit">WPM</span>
                 </button>
-              </div>
-
-              <!-- Interactive Speeder Range Slider (40 to 120 WPM) -->
-              <div class="wpm-slider-row">
-                <span class="wpm-boundary-lbl">40 WPM</span>
-                <div class="wpm-range-wrap">
-                  <input type="range" id="wpmRangeSlider" class="wpm-range-slider" min="40" max="120" step="5" value="80"
-                         oninput="stenoAudioPlayer.setWpm(this.value)" onchange="stenoAudioPlayer.setWpm(this.value)">
-                  <div class="wpm-ticks">
-                    <span style="left:0%">40</span>
-                    <span style="left:25%">60</span>
-                    <span style="left:50%" class="tick-highlight">80 WPM (मूल)</span>
-                    <span style="left:75%" class="tick-highlight">100 WPM</span>
-                    <span style="left:100%">120 WPM</span>
-                  </div>
-                </div>
-                <span class="wpm-boundary-lbl">120 WPM</span>
               </div>
             </div>
 
@@ -2377,10 +2354,10 @@
   <script defer src="https://sdk.cashfree.com/js/v3/cashfree.js"></script>
 
   <!-- Scripts -->
-  <script src="/js/charts.js?v=6.1"></script>
-  <script src="/js/audio_player.js?v=6.1"></script>
-  <script src="/js/typing_engine.js?v=6.1"></script>
-  <script src="/js/comparison_view.js?v=6.1"></script>
-  <script src="/js/app.js?v=6.1"></script>
+  <script src="/js/charts.js?v=6.2"></script>
+  <script src="/js/audio_player.js?v=6.2"></script>
+  <script src="/js/typing_engine.js?v=6.2"></script>
+  <script src="/js/comparison_view.js?v=6.2"></script>
+  <script src="/js/app.js?v=6.2"></script>
 </body>
 </html>
