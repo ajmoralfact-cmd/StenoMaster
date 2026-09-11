@@ -7,6 +7,14 @@
     {
       "source": "/uploads/(.*)",
       "destination": "/api?__path__=/uploads/$1"
+    },
+    {
+      "source": "/admin",
+      "destination": "/admin.html"
+    },
+    {
+      "source": "/admin/(.*)",
+      "destination": "/admin.html"
     }
   ],
   "headers": [

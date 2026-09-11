@@ -230,6 +230,20 @@ class StenoMasterHandler(http.server.SimpleHTTPRequestHandler):
                 self.send_error(404, "File not found")
                 return
 
+        # Serve admin portal
+        if path in ('/admin', '/admin/'):
+            admin_file = os.path.join(STATIC_DIR, 'admin.html')
+            if os.path.exists(admin_file):
+                self.send_response(200)
+                self.send_header('Content-Type', 'text/html; charset=utf-8')
+                self.send_header('Cache-Control', 'no-cache')
+                with open(admin_file, 'rb') as f:
+                    content = f.read()
+                self.send_header('Content-Length', str(len(content)))
+                self.end_headers()
+                self.wfile.write(content)
+                return
+
         # API Routes
         if path == '/api/auth/session-status':
             token = self._get_auth_token()

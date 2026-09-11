@@ -189,9 +189,7 @@ class StenoApp {
         this.navigate('home', {}, true);
         return;
       }
-      const parts = path.split('/');
-      const adminTab = parts[1] || localStorage.getItem('stenomaster_last_admin_tab') || 'overview';
-      this.navigate('admin', { adminTab }, false);
+      window.location.href = '/admin.html';
       return;
     }
 
@@ -236,10 +234,8 @@ class StenoApp {
     }
 
     if (path.startsWith('admin')) {
-      const parts = path.split('/');
-      const targetTab = parts[1] || 'overview';
-      if (this.activeView !== 'admin' || (window.stenoAdmin && window.stenoAdmin.activeTab !== targetTab)) {
-        this.navigate('admin', { adminTab: targetTab }, false);
+      if (isAdmin) {
+        window.location.href = '/admin.html';
       }
       return;
     }
@@ -736,7 +732,8 @@ class StenoApp {
       sessionStorage.removeItem('stenomaster_redirect_after_login');
 
       if (this.user.role === 'admin') {
-        this.restoreRouteOnLoad(redirectRoute && redirectRoute.startsWith('admin') ? redirectRoute : 'admin');
+        window.location.href = '/admin.html';
+        return;
       } else {
         this.restoreRouteOnLoad(redirectRoute && !redirectRoute.startsWith('admin') ? redirectRoute : 'home');
       }
@@ -777,7 +774,8 @@ class StenoApp {
       await this.loadPassages();
       this.showToast(`स्वागतम्, ${this.user.display_name || this.user.username}! 👋`, 'success');
       if (this.user.role === 'admin') {
-        this.navigate('admin');
+        window.location.href = '/admin.html';
+        return;
       } else {
         this.navigate('home');
       }
@@ -837,19 +835,12 @@ class StenoApp {
 
       this.hideAuthGateway();
       this.updateUserUI();
-      await this.loadCategories();
-      await this.loadPassages();
 
       this.showToast('प्रशासनिक कंसोल में आपका स्वागत है! 🛡️', 'success');
 
-      const redirectRoute = sessionStorage.getItem('stenomaster_redirect_after_login') || localStorage.getItem('stenomaster_last_route');
       sessionStorage.removeItem('stenomaster_redirect_after_login');
-
-      if (redirectRoute && redirectRoute.startsWith('admin')) {
-        this.restoreRouteOnLoad(redirectRoute);
-      } else {
-        this.navigate('admin', {}, true);
-      }
+      window.location.href = '/admin.html';
+      return;
     } catch (err) {
       const msg = err.status === 401 ? 'Invalid username or password.' : (err.message || 'Admin authentication failed.');
       if (errBox) {
@@ -1078,8 +1069,8 @@ class StenoApp {
         if (validityPill) {
           validityPill.style.display = 'inline-flex';
           validityPill.className = 'plan-validity-pill is-admin';
-          validityPill.innerHTML = '👑 Pro: Admin Access';
-          validityPill.onclick = null;
+          validityPill.innerHTML = '🛡️ Admin Console ↗';
+          validityPill.onclick = () => { window.location.href = '/admin.html'; };
         }
         if (avatarEl) {
           avatarEl.classList.add('pro-rainbow-ring');
@@ -1186,41 +1177,18 @@ class StenoApp {
     const currentView = this.activeView || 'home';
 
     if (isAdmin) {
-      // Streamlined Admin Sidebar Items (Directly mapped to Left Tab Options)
-      const adminItems = [
-        { id: 'admin-overview', icon: '📊', label: 'Overview', sub: 'कंसोल ओवरव्यू', adminTab: 'overview' },
-        { id: 'admin-passages', icon: '📝', label: 'Passages (आलेख)', sub: 'आलेख सूची एवं संपादन', adminTab: 'passages' },
-        { id: 'admin-subscribers', icon: '👥', label: 'Students & Free Access', sub: 'छात्र व 1-क्लिक फ्री', adminTab: 'subscribers' },
-        { id: 'admin-payments', icon: '💳', label: 'Payments & UTR', sub: 'भुगतान सत्यापन', adminTab: 'payments' },
-        { id: 'admin-pricing', icon: '💎', label: 'Pricing & QR', sub: 'प्लान व QR सेटिंग्स', adminTab: 'pricing' },
-        { id: 'admin-scoring', icon: '🎯', label: 'Exam Rules & Cutoffs', sub: 'SSC व UPSSSC नियम', adminTab: 'scoring' },
-        { id: 'admin-branding', icon: '🏷️', label: 'Branding & Goals', sub: 'लोगो व लक्ष्य सेटिंग्स', adminTab: 'branding' }
-      ];
-
       navContainer.innerHTML = `
         <div class="sidebar-role-badge admin-badge">
           <span>🛡️</span> <span>ADMIN PORTAL</span>
         </div>
-        ${adminItems.map(item => `
-          <a href="javascript:void(0)" class="nav-item ${currentView === 'admin' && (stenoAdmin.activeTab === item.adminTab || (!stenoAdmin.activeTab && item.adminTab === 'overview')) ? 'active' : ''}" data-sidebar-item="${item.id}" title="${item.label}">
-            <span class="nav-item-icon">${item.icon}</span>
-            <div style="flex:1; min-width:0;">
-              <div style="font-weight:600; font-size:0.86rem; line-height:1.2;">${item.label}</div>
-              <div style="font-size:0.7rem; color:var(--text-muted);">${item.sub}</div>
-            </div>
-          </a>
-        `).join('')}
+        <a href="/admin.html" class="nav-item active" style="margin-top:8px; background:rgba(239, 68, 68, 0.08); border:1px solid rgba(239, 68, 68, 0.25); border-radius:10px; padding:12px 14px; text-decoration:none;">
+          <span class="nav-item-icon" style="font-size:1.3rem;">⚙️</span>
+          <div style="flex:1; min-width:0;">
+            <div style="font-weight:700; font-size:0.92rem; color:#ef4444;">एडमिन कंसोल खोलें →</div>
+            <div style="font-size:0.75rem; color:var(--text-muted);">Dedicated Admin Page</div>
+          </div>
+        </a>
       `;
-
-      adminItems.forEach(item => {
-        const el = navContainer.querySelector(`[data-sidebar-item="${item.id}"]`);
-        if (!el) return;
-        el.addEventListener('click', (e) => {
-          e.preventDefault();
-          this.closeSidebar();
-          this.navigate('admin', { adminTab: item.adminTab });
-        });
-      });
 
       if (footerContainer) {
         const adminName = (this.user && (this.user.display_name || this.user.username)) || 'Administrator';
@@ -1238,6 +1206,7 @@ class StenoApp {
           </button>
         `;
       }
+      return;
     } else {
       // Student Sidebar Items (Strictly NO admin items in DOM)
       const studentItems = [
@@ -1371,6 +1340,8 @@ class StenoApp {
         this.navigate('home', {}, true);
         return;
       }
+      window.location.href = '/admin.html';
+      return;
     }
 
     this.startTopLoading();
