@@ -12,7 +12,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Mukta:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/css/style.css?v=6.4">
+  <link rel="stylesheet" href="/css/style.css?v=6.5">
   <!-- Google Identity Services SDK -->
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   <script>
@@ -368,6 +368,11 @@
             <span id="userStreakCount">0 Day Streak</span>
           </div>
 
+          <!-- PWA 1-Click App Install Button -->
+          <button class="pwa-install-btn" id="pwaInstallBtn" onclick="stenoApp.installPwaApp()" style="display:none;" title="StenoMaster ऐप इंस्टॉल करें">
+            <span>📲</span> <span class="hide-mobile">ऐप इंस्टॉल करें</span>
+          </button>
+
           <!-- Theme Toggle -->
           <button class="theme-toggle-btn" id="themeToggleBtn" onclick="stenoApp.toggleTheme()" title="थीम बदलें (Light/Dark)">
             🌙
@@ -711,6 +716,7 @@
 
             <!-- Distraction-free Textarea -->
             <textarea id="typingTextarea" class="typing-textarea font-mangal notranslate" translate="no"
+                      spellcheck="false" autocomplete="off" autocorrect="off" autocapitalize="off"
                       placeholder="डिक्टेशन सुनकर यहाँ टाइप करना प्रारंभ करें... (Start typing the dictated passage here)"></textarea>
 
             
@@ -2345,10 +2351,10 @@
   <script defer src="https://sdk.cashfree.com/js/v3/cashfree.js"></script>
 
   <!-- Scripts -->
-  <script src="/js/charts.js?v=6.4"></script>
-  <script src="/js/audio_player.js?v=6.4"></script>
-  <script src="/js/typing_engine.js?v=6.4"></script>
-  <script src="/js/comparison_view.js?v=6.4"></script>
-  <script src="/js/app.js?v=6.4"></script>
+  <script src="/js/charts.js?v=6.5"></script>
+  <script src="/js/audio_player.js?v=6.5"></script>
+  <script src="/js/typing_engine.js?v=6.5"></script>
+  <script src="/js/comparison_view.js?v=6.5"></script>
+  <script src="/js/app.js?v=6.5"></script>
 </body>
 </html>

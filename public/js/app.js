@@ -352,14 +352,45 @@ class StenoApp {
   }
 
   initPWA() {
+    this.deferredPwaPrompt = null;
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('/service-worker.js')
         .then((reg) => {
-          console.log('ServiceWorker registered');
-          // Actively check for latest updates on every visit
           reg.update().catch(() => {});
         })
         .catch(err => console.warn('ServiceWorker error:', err));
+    }
+
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      this.deferredPwaPrompt = e;
+      const installBtn = document.getElementById('pwaInstallBtn');
+      if (installBtn) {
+        installBtn.style.display = 'inline-flex';
+      }
+    });
+
+    window.addEventListener('appinstalled', () => {
+      this.deferredPwaPrompt = null;
+      const installBtn = document.getElementById('pwaInstallBtn');
+      if (installBtn) installBtn.style.display = 'none';
+      this.showToast('🎉 StenoMaster ऐप सफलतापूर्वक इंस्टॉल हो गया!', 'success');
+    });
+  }
+
+  installPwaApp() {
+    if (this.deferredPwaPrompt) {
+      this.deferredPwaPrompt.prompt();
+      this.deferredPwaPrompt.userChoice.then((choiceResult) => {
+        if (choiceResult.outcome === 'accepted') {
+          console.log('User accepted PWA installation');
+        }
+        this.deferredPwaPrompt = null;
+        const installBtn = document.getElementById('pwaInstallBtn');
+        if (installBtn) installBtn.style.display = 'none';
+      });
+    } else {
+      this.showToast('ब्राउज़र मेनू (⋮) से "Add to Home Screen" या "Install" चुनें।', 'info');
     }
   }
 

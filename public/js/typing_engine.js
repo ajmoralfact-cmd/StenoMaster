@@ -93,6 +93,11 @@ class StenoTypingEngine {
     }
 
     if (this.textarea) {
+      this.textarea.setAttribute('spellcheck', 'false');
+      this.textarea.setAttribute('autocomplete', 'off');
+      this.textarea.setAttribute('autocorrect', 'off');
+      this.textarea.setAttribute('autocapitalize', 'off');
+
       this.textarea.addEventListener('input', () => {
         this.onTextInput();
       });
@@ -175,7 +180,12 @@ class StenoTypingEngine {
   onTextInput() {
     this.isDirty = true;
     this.startTimerIfNeeded();
-    this.updateLiveStats();
+    if (!this._statsRaf) {
+      this._statsRaf = requestAnimationFrame(() => {
+        this.updateLiveStats();
+        this._statsRaf = null;
+      });
+    }
   }
 
   setTypingMode(mode) {
@@ -250,16 +260,10 @@ class StenoTypingEngine {
     if (!this.textarea) return;
     const rawText = this.textarea.value;
 
-    let chars = rawText.length;
-    let words = 0;
-
-    if (this.typingMode === 'krutidev') {
-      const convertedUnicode = krutiDevToUnicodeJS(rawText);
-
-      words = convertedUnicode.trim() ? convertedUnicode.trim().split(/\s+/).length : 0;
-    } else {
-      words = rawText.trim() ? rawText.trim().split(/\s+/).length : 0;
-    }
+    const chars = rawText.length;
+    // Ultra-fast word tokenization (Zero-lag 60 FPS even on large 1000+ word typing sessions)
+    const trimmed = rawText.trim();
+    const words = trimmed ? trimmed.split(/\s+/).length : 0;
 
     if (this.charCountEl) this.charCountEl.textContent = chars;
     if (this.wordCountEl) this.wordCountEl.textContent = words;
