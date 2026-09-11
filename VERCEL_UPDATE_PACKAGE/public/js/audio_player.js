@@ -12,9 +12,16 @@
 class StenoAudioPlayer {
   constructor() {
     this.audioElement = new Audio();
+    try {
+      this.audioElement.preservesPitch = true;
+      this.audioElement.mozPreservesPitch = true;
+      this.audioElement.webkitPreservesPitch = true;
+    } catch (e) {}
     this.isPlaying = false;
     this.currentTime = 0;
     this.duration = 0;
+    this.baseTargetWpm = 80;
+    this.currentWpm = parseInt(localStorage.getItem('stenomaster_target_wpm') || '80');
     this.playbackSpeed = parseFloat(localStorage.getItem('stenomaster_audio_speed') || '1.0');
     this.isMuted = false;
     this.volume = 1.0;
@@ -68,23 +75,40 @@ class StenoAudioPlayer {
     });
   }
 
-  loadAudio(audioUrl, durationSeconds = 180, fallbackText = '', language = 'hindi') {
+  loadAudio(audioUrl, durationSeconds = 180, fallbackText = '', language = 'hindi', targetWpm = 80) {
     this.stop();
     this.duration = durationSeconds;
     this.currentTime = 0;
     this.speechText = fallbackText;
     this.speechLang = language.toLowerCase() === 'hindi' ? 'hi-IN' : 'en-US';
+    this.baseTargetWpm = parseInt(targetWpm) || 80;
+
+    // Use saved WPM if valid, otherwise passage's target WPM
+    const savedWpm = parseInt(localStorage.getItem('stenomaster_target_wpm'));
+    if (!isNaN(savedWpm) && savedWpm >= 40 && savedWpm <= 120) {
+      this.currentWpm = savedWpm;
+    } else {
+      this.currentWpm = this.baseTargetWpm;
+    }
+
+    const rate = this.currentWpm / (this.baseTargetWpm || 80);
+    this.playbackSpeed = Math.max(0.4, Math.min(2.5, rate));
 
     if (audioUrl && audioUrl.trim() !== '') {
       this.isSpeechSynthesis = false;
       this.audioElement.src = audioUrl;
       this.audioElement.playbackRate = this.playbackSpeed;
+      this.audioElement.defaultPlaybackRate = this.playbackSpeed;
+      try {
+        this.audioElement.preservesPitch = true;
+      } catch (e) {}
       this.audioElement.volume = this.isMuted ? 0 : this.volume;
       this.audioElement.load();
     } else {
       // Use dynamic Speech Synthesis
       this.isSpeechSynthesis = true;
     }
+    setTimeout(() => this.updateWpmUI(), 50);
   }
 
   play(forceDirect = false) {
@@ -441,10 +465,75 @@ class StenoAudioPlayer {
     localStorage.setItem('stenomaster_audio_speed', this.playbackSpeed.toString());
     if (this.audioElement) {
       this.audioElement.playbackRate = this.playbackSpeed;
+      this.audioElement.defaultPlaybackRate = this.playbackSpeed;
+      try { this.audioElement.preservesPitch = true; } catch (e) {}
     }
     if (this.isSpeechSynthesis && this.speechUtterance) {
       this.speechUtterance.rate = this.playbackSpeed;
     }
+    // Also estimate WPM from baseTargetWpm * speed
+    this.currentWpm = Math.round((this.baseTargetWpm || 80) * this.playbackSpeed);
+    this.updateWpmUI();
+  }
+
+  setWpm(wpm) {
+    const parsed = parseInt(wpm);
+    if (isNaN(parsed)) return;
+    this.currentWpm = Math.max(40, Math.min(120, parsed));
+    localStorage.setItem('stenomaster_target_wpm', this.currentWpm.toString());
+
+    const base = this.baseTargetWpm || 80;
+    const rate = this.currentWpm / base;
+    this.playbackSpeed = Math.max(0.4, Math.min(2.5, rate));
+    localStorage.setItem('stenomaster_audio_speed', this.playbackSpeed.toFixed(2));
+
+    if (this.audioElement) {
+      this.audioElement.playbackRate = this.playbackSpeed;
+      this.audioElement.defaultPlaybackRate = this.playbackSpeed;
+      try { this.audioElement.preservesPitch = true; } catch (e) {}
+    }
+    if (this.isSpeechSynthesis && this.speechUtterance) {
+      this.speechUtterance.rate = this.playbackSpeed;
+    }
+
+    this.updateWpmUI();
+  }
+
+  stepWpm(delta) {
+    this.setWpm((this.currentWpm || 80) + delta);
+  }
+
+  resetToPassageWpm() {
+    this.setWpm(this.baseTargetWpm || 80);
+  }
+
+  setBaseTargetWpm(wpm) {
+    this.baseTargetWpm = parseInt(wpm) || 80;
+    this.setWpm(this.currentWpm || this.baseTargetWpm);
+  }
+
+  updateWpmUI() {
+    const wpmValEl = document.getElementById('wpmSpeederValue');
+    const multEl = document.getElementById('wpmMultiplierBadge');
+    const slider = document.getElementById('wpmRangeSlider');
+
+    const wpm = this.currentWpm || 80;
+    const rate = (this.playbackSpeed || 1.0).toFixed(2);
+
+    if (wpmValEl) wpmValEl.textContent = `${wpm} WPM`;
+    if (multEl) multEl.textContent = `(${rate}x)`;
+    if (slider) slider.value = wpm;
+
+    // Update active preset chip
+    const chips = document.querySelectorAll('#wpmPresetChips .wpm-chip');
+    chips.forEach(chip => {
+      const chipWpm = parseInt(chip.getAttribute('data-wpm'));
+      if (chipWpm === wpm) {
+        chip.classList.add('active');
+      } else {
+        chip.classList.remove('active');
+      }
+    });
   }
 
   setVolume(vol) {

@@ -2030,7 +2030,8 @@ class StenoApp {
       this.currentPassage.audio_url,
       this.currentPassage.duration_seconds,
       audioRefText,
-      this.currentPassage.language
+      this.currentPassage.language,
+      this.currentPassage.target_wpm || 80
     );
 
     // Pre-unlock audio element synchronously during user click to ensure zero browser autoplay block!
@@ -2055,6 +2056,9 @@ class StenoApp {
     this.setExamRule(this.currentExamRule || defaultRule, false);
 
     this.navigate('practice');
+    if (window.stenoAudioPlayer) {
+      window.stenoAudioPlayer.updateWpmUI();
+    }
 
     // Auto-start dictation with countdown upon entering practice room
     setTimeout(() => {

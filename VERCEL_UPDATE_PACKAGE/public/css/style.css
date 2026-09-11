@@ -1181,9 +1181,220 @@ body {
 }
 
 .volume-slider {
-  width: 80px;
+  width: 85px;
+  accent-color: var(--primary);
+  cursor: pointer;
+}
+
+/* ==========================================================================
+   WPM Speeder Controller (40 to 120 WPM)
+   ========================================================================== */
+.wpm-speeder-card {
+  margin-top: 12px;
+  padding: 12px 14px;
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.wpm-speeder-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.wpm-title-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.86rem;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.wpm-speed-icon {
+  font-size: 1.1rem;
+}
+
+.wpm-val-badge {
+  background: var(--primary);
+  color: #fff;
+  font-size: 0.88rem;
+  font-weight: 800;
+  padding: 3px 10px;
+  border-radius: 20px;
+  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.25);
+  letter-spacing: 0.3px;
+}
+
+.wpm-mult-badge {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.wpm-stepper-actions {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.btn-wpm-step {
+  padding: 3px 9px;
+  font-size: 0.76rem;
+  font-weight: 700;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-wpm-step:hover {
+  background: var(--primary-subtle);
+  color: var(--primary);
+  border-color: var(--primary-border);
+}
+
+.btn-wpm-step.reset-btn {
+  background: transparent;
+  color: var(--text-muted);
+}
+
+.btn-wpm-step.reset-btn:hover {
+  background: var(--bg-surface);
+  color: var(--text-main);
+}
+
+.wpm-slider-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
+
+.wpm-boundary-lbl {
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-align: center;
+  line-height: 1.2;
+  white-space: nowrap;
+  min-width: 48px;
+}
+
+.wpm-boundary-lbl small {
+  font-size: 0.66rem;
+  font-weight: normal;
+}
+
+.wpm-range-wrap {
+  flex: 1;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.wpm-range-slider {
+  width: 100%;
+  height: 6px;
+  border-radius: 4px;
+  outline: none;
+  cursor: pointer;
   accent-color: var(--primary);
 }
+
+.wpm-ticks {
+  position: relative;
+  width: 100%;
+  height: 14px;
+  font-size: 0.68rem;
+  color: var(--text-muted);
+}
+
+.wpm-ticks span {
+  position: absolute;
+  transform: translateX(-50%);
+  white-space: nowrap;
+}
+
+.wpm-ticks .tick-highlight {
+  color: var(--primary);
+  font-weight: 700;
+}
+
+.wpm-chips-row {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-wrap: wrap;
+  padding-top: 2px;
+}
+
+.wpm-chip {
+  padding: 4px 8px;
+  border-radius: 6px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.wpm-chip:hover {
+  background: var(--primary-subtle);
+  border-color: var(--primary-border);
+  color: var(--primary);
+}
+
+.wpm-chip.active {
+  background: var(--primary);
+  color: #fff;
+  border-color: var(--primary);
+  font-weight: 700;
+  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.25);
+}
+
+.wpm-chip .badge-sub {
+  font-size: 0.65rem;
+  opacity: 0.9;
+  background: rgba(0,0,0,0.08);
+  padding: 1px 4px;
+  border-radius: 4px;
+}
+
+.wpm-chip.active .badge-sub {
+  background: rgba(255,255,255,0.25);
+  color: #fff;
+}
+
+.audio-volume-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding-top: 8px;
+  border-top: 1px dashed var(--border-subtle);
+}
+
+.wpm-help-text {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
 
 /* Typing Editor Box - Compact Laptop Fit */
 .typing-editor-card {
