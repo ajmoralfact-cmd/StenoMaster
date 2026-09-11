@@ -162,7 +162,7 @@ def is_expired_datetime(exp_val) -> bool:
 
 
 
-_db_initialized = False
+_db_initialized = True  # Schema verified on Supabase; avoids running 21 DDL statements on every serverless request
 
 
 def run_postgres_migrations(conn):
@@ -1621,7 +1621,15 @@ def is_passage_accessible(user_id: Optional[int], passage_id: int) -> bool:
     return is_user_premium(user_id)
 
 
+_cached_categories = None
+_cached_categories_time = 0
+
 def get_categories():
+    global _cached_categories, _cached_categories_time
+    import time
+    now = time.time()
+    if _cached_categories is not None and (now - _cached_categories_time < 60):
+        return _cached_categories
     conn = get_db()
     c = conn.cursor()
     c.execute("""
@@ -1633,7 +1641,9 @@ def get_categories():
     """)
     rows = c.fetchall()
     conn.close()
-    return [dict(r) for r in rows]
+    _cached_categories = [dict(r) for r in rows]
+    _cached_categories_time = now
+    return _cached_categories
 
 
 def safe_execute_passage_query(conn, query: str, params: list = None):

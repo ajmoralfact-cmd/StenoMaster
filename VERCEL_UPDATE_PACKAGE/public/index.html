@@ -9,7 +9,10 @@
   <meta name="theme-color" content="#2563eb">
   <link rel="icon" type="image/png" href="/assets/logo.png">
   <link rel="apple-touch-icon" href="/assets/logo.png">
-  <link rel="stylesheet" href="/css/style.css?v=6.0">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Mukta:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css?v=6.1">
   <!-- Google Identity Services SDK -->
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   <script>
@@ -767,6 +770,14 @@
       <main class="page-view" id="view-result">
         <div class="practice-container" id="resultReportContainer">
           <!-- Populated dynamically by stenoComparisonView.renderResult() -->
+          <div style="text-align:center; padding: 60px 20px; max-width: 500px; margin: 40px auto; background: var(--surface); border: 1px solid var(--border); border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.05);">
+            <div style="font-size: 3rem; margin-bottom: 16px;">📊</div>
+            <h3 style="margin-bottom: 8px; font-size: 1.3rem;">कोई सक्रिय परिणाम नहीं मिला</h3>
+            <p style="color: var(--text-secondary); margin-bottom: 24px; font-size: 0.95rem;">नया डिक्टेशन अभ्यास शुरू करें और अपनी गति एवं सटीकता का विस्तृत रिपोर्ट कार्ड देखें।</p>
+            <button class="btn-primary" onclick="stenoApp.navigate('home')" style="padding: 10px 24px; font-size: 1rem; border-radius: 8px; cursor:pointer;">
+              🏠 मुख्य पेज (Dashboard) पर जाएं
+            </button>
+          </div>
         </div>
       </main>
 
@@ -2366,10 +2377,10 @@
   <script defer src="https://sdk.cashfree.com/js/v3/cashfree.js"></script>
 
   <!-- Scripts -->
-  <script src="/js/charts.js?v=6.0"></script>
-  <script src="/js/audio_player.js?v=6.0"></script>
-  <script src="/js/typing_engine.js?v=6.0"></script>
-  <script src="/js/comparison_view.js?v=6.0"></script>
-  <script src="/js/app.js?v=6.0"></script>
+  <script src="/js/charts.js?v=6.1"></script>
+  <script src="/js/audio_player.js?v=6.1"></script>
+  <script src="/js/typing_engine.js?v=6.1"></script>
+  <script src="/js/comparison_view.js?v=6.1"></script>
+  <script src="/js/app.js?v=6.1"></script>
 </body>
 </html>

@@ -38,6 +38,12 @@ class StenoApp {
         this.passages = [...this.allPassages];
       }
     } catch(e) {}
+    try {
+      const cachedCats = localStorage.getItem('stenomaster_cached_categories');
+      if (cachedCats) {
+        this.categories = JSON.parse(cachedCats);
+      }
+    } catch(e) {}
 
     this.init();
   }
@@ -161,16 +167,12 @@ class StenoApp {
     if (!route) {
       route = window.location.hash ? window.location.hash.replace(/^#\/?/, '') : '';
     }
+    // When visiting root domain directly without hash, ALWAYS default to 'home'! Never restore stale transient views.
     if (!route) {
-      route = localStorage.getItem('stenomaster_last_route') || '';
+      route = 'home';
     }
 
     const isAdmin = Boolean(this.user && this.user.role === 'admin');
-
-    if (!route) {
-      this.navigate(isAdmin ? 'admin' : 'home', {}, true);
-      return;
-    }
 
     const [pathPart, queryStr] = route.split('?');
     const path = pathPart.replace(/^\/+|\/+$/g, '');
@@ -204,7 +206,16 @@ class StenoApp {
       return;
     }
 
-    // 3. Known valid student views
+    // 3. Result report - fallback to home if no active report exists
+    if (path === 'result') {
+      const reportContainer = document.getElementById('resultReportContainer');
+      if (!reportContainer || !reportContainer.firstElementChild) {
+        this.navigate(isAdmin ? 'admin' : 'home', {}, true);
+        return;
+      }
+    }
+
+    // 4. Known valid student views
     const validViews = [
       'home', 'classes', 'subscription', 'result', 'my-practice',
       'progress', 'leaderboard', 'bookmarks', 'profile', 'refer',
@@ -269,41 +280,28 @@ class StenoApp {
     // Hashchange listener for smooth browser Back/Forward navigation
     window.addEventListener('hashchange', () => this.handleHashChange());
 
-    // 0ms Instant Hydration: If token & cached user exist, restore view immediately without waiting
-    if (this.token && this.user) {
+    // 0ms Instant Hydration: If token exists, display immediate view with zero delay
+    if (this.token) {
       this.hideAuthGateway();
-      this.updateUserUI();
+      if (this.user) {
+        this.updateUserUI();
+      }
       this.restoreRouteOnLoad();
-      // Re-validate and sync fresh data in background seamlessly
+
+      // Parallel background refresh without blocking page render
       Promise.all([
-        this.fetchCurrentUser().catch(() => {}),
+        this.fetchCurrentUser().catch((err) => {
+          if (err && err.status === 401) {
+            this.showAuthGateway('student');
+          }
+        }),
         this.loadCategories().catch(() => {}),
         this.loadPassages().catch(() => {})
       ]);
       return;
     }
 
-    // Check existing auth session if user profile wasn't cached
-    if (this.token) {
-      this.startTopLoading();
-      try {
-        await this.fetchCurrentUser();
-        if (this.user) {
-          this.hideAuthGateway();
-          await this.loadCategories();
-          await this.loadPassages();
-          this.restoreRouteOnLoad();
-          this.finishTopLoading();
-          return;
-        }
-      } catch (err) {
-        console.warn('Session verification failed, showing auth gateway:', err);
-      } finally {
-        this.finishTopLoading();
-      }
-    }
-
-    // If no active or valid session, show the Auth Gateway directly
+    // If no active session token, show Auth Gateway directly
     const hash = window.location.hash || '';
     const isTryingAdmin = hash.toLowerCase().includes('admin');
     this.showAuthGateway(isTryingAdmin ? 'admin' : 'student');
@@ -1474,7 +1472,12 @@ class StenoApp {
         window.location.hash = targetHash;
       }
     }
-    localStorage.setItem('stenomaster_last_route', routeStr);
+    // Transient views must never be remembered across browser launches
+    if (viewId !== 'result' && viewId !== 'practice') {
+      localStorage.setItem('stenomaster_last_route', routeStr);
+    } else {
+      localStorage.setItem('stenomaster_last_route', 'home');
+    }
 
     // Update document title dynamically
     const pageTitles = {
@@ -1576,6 +1579,14 @@ class StenoApp {
       case 'settings':
         this.renderSettings();
         break;
+      case 'result': {
+        const reportContainer = document.getElementById('resultReportContainer');
+        if (!reportContainer || !reportContainer.firstElementChild) {
+          this.navigate('home', {}, true);
+          return;
+        }
+        break;
+      }
       case 'rules':
         // Rules view is static HTML — just scroll to top, no async load needed
         break;
@@ -1722,61 +1733,76 @@ class StenoApp {
   }
 
   renderHome() {
+    this.renderCategoryPills();
     this.renderHomeCards();
     this.renderDailyTargetSummary();
+  }
+
+  _applySummaryToDOM(res) {
+    if (!res) return;
+    const goal = res.today_goal || {};
+    const stats = res.stats || {};
+    const realPoints = stats.points !== undefined && stats.points !== null ? stats.points : 0;
+
+    const countEl = document.getElementById('todayTargetCompletedCount');
+    const minEl = document.getElementById('todayTargetMinutes');
+    const speedEl = document.getElementById('todayTargetSpeed');
+    const fillEl = document.getElementById('todayTargetProgressFill');
+
+    if (countEl) countEl.textContent = `${goal.completed_dictations || 0} / ${goal.target_dictations || 3}`;
+    if (minEl) minEl.textContent = `${goal.completed_minutes || 0} / ${goal.target_minutes || 15} min`;
+    if (speedEl) speedEl.textContent = `${goal.target_speed || 40} WPM`;
+    if (fillEl) fillEl.style.width = `${goal.percent_completed || 0}%`;
+
+    const avgWpmEl = document.getElementById('homeQuickAvgWpm');
+    const avgAccEl = document.getElementById('homeQuickAvgAcc');
+    const totalPracEl = document.getElementById('homeQuickTotalPrac');
+    const pointsEl = document.getElementById('homeQuickPoints');
+
+    if (avgWpmEl) avgWpmEl.textContent = `${stats.avg_wpm || 0} WPM`;
+    if (avgAccEl) avgAccEl.textContent = `${stats.avg_accuracy || 0}%`;
+    if (totalPracEl) totalPracEl.textContent = `${stats.total_practices || 0}`;
+    if (pointsEl) pointsEl.textContent = `${realPoints} Pts`;
+
+    const hStreak = document.getElementById('hStatStreak');
+    const hStreakSub = document.getElementById('hStatStreakSub');
+    const hGoal = document.getElementById('hStatGoal');
+    const hGoalSub = document.getElementById('hStatGoalSub');
+    const hAvgWpm = document.getElementById('hStatAvgWpm');
+    const hAcc = document.getElementById('hStatAccuracy');
+    const hPractices = document.getElementById('hStatPractices');
+    const hPoints = document.getElementById('hStatPoints');
+    const hBestWpm = document.getElementById('hStatBestWpm');
+    const hTotalTime = document.getElementById('hStatTotalTime');
+
+    if (hStreak) hStreak.textContent = `${stats.streak_days || 0} दिन`;
+    if (hStreakSub) hStreakSub.textContent = `अधिकतम ${stats.longest_streak || 0} दिन स्ट्रीक`;
+    if (hGoal) hGoal.textContent = `${goal.completed_dictations || 0} / ${goal.target_dictations || 3}`;
+    if (hGoalSub) hGoalSub.textContent = `${goal.percent_completed || 0}% लक्ष्य पूर्ण`;
+    if (hAvgWpm) hAvgWpm.textContent = `${stats.avg_wpm !== undefined ? stats.avg_wpm : 0} WPM`;
+    if (hAcc) hAcc.textContent = `${stats.avg_accuracy !== undefined ? stats.avg_accuracy : 0}%`;
+    if (hPractices) hPractices.textContent = `${stats.total_practices || 0} सत्र`;
+    if (hPoints) hPoints.textContent = `${realPoints} Pts`;
+    if (hBestWpm) hBestWpm.textContent = `${stats.best_wpm !== undefined ? stats.best_wpm : 0} WPM`;
+    if (hTotalTime) hTotalTime.textContent = `${stats.total_time_formatted || '0 mins'}`;
   }
 
   async renderDailyTargetSummary() {
     if (!this.user) return;
     try {
+      const cached = localStorage.getItem('stenomaster_cached_summary');
+      if (cached) {
+        this._applySummaryToDOM(JSON.parse(cached));
+      }
+    } catch(e) {}
+    try {
       const res = await this.apiCall('/api/progress/summary');
-      const goal = res.today_goal || {};
-      const stats = res.stats || {};
-      const realPoints = stats.points !== undefined && stats.points !== null ? stats.points : 0;
-
-      // Legacy Elements Support
-      const countEl = document.getElementById('todayTargetCompletedCount');
-      const minEl = document.getElementById('todayTargetMinutes');
-      const speedEl = document.getElementById('todayTargetSpeed');
-      const fillEl = document.getElementById('todayTargetProgressFill');
-
-      if (countEl) countEl.textContent = `${goal.completed_dictations || 0} / ${goal.target_dictations || 3}`;
-      if (minEl) minEl.textContent = `${goal.completed_minutes || 0} / ${goal.target_minutes || 15} min`;
-      if (speedEl) speedEl.textContent = `${goal.target_speed || 40} WPM`;
-      if (fillEl) fillEl.style.width = `${goal.percent_completed || 0}%`;
-
-      const avgWpmEl = document.getElementById('homeQuickAvgWpm');
-      const avgAccEl = document.getElementById('homeQuickAvgAcc');
-      const totalPracEl = document.getElementById('homeQuickTotalPrac');
-      const pointsEl = document.getElementById('homeQuickPoints');
-
-      if (avgWpmEl) avgWpmEl.textContent = `${stats.avg_wpm || 0} WPM`;
-      if (avgAccEl) avgAccEl.textContent = `${stats.avg_accuracy || 0}%`;
-      if (totalPracEl) totalPracEl.textContent = `${stats.total_practices || 0}`;
-      if (pointsEl) pointsEl.textContent = `${realPoints} Pts`;
-
-      // Phase 3: 8 Compact Horizontal Landscape Cards (Authentic Data)
-      const hStreak = document.getElementById('hStatStreak');
-      const hStreakSub = document.getElementById('hStatStreakSub');
-      const hGoal = document.getElementById('hStatGoal');
-      const hGoalSub = document.getElementById('hStatGoalSub');
-      const hAvgWpm = document.getElementById('hStatAvgWpm');
-      const hAcc = document.getElementById('hStatAccuracy');
-      const hPractices = document.getElementById('hStatPractices');
-      const hPoints = document.getElementById('hStatPoints');
-      const hBestWpm = document.getElementById('hStatBestWpm');
-      const hTotalTime = document.getElementById('hStatTotalTime');
-
-      if (hStreak) hStreak.textContent = `${stats.streak_days || 0} दिन`;
-      if (hStreakSub) hStreakSub.textContent = `अधिकतम ${stats.longest_streak || 0} दिन स्ट्रीक`;
-      if (hGoal) hGoal.textContent = `${goal.completed_dictations || 0} / ${goal.target_dictations || 3}`;
-      if (hGoalSub) hGoalSub.textContent = `${goal.percent_completed || 0}% लक्ष्य पूर्ण`;
-      if (hAvgWpm) hAvgWpm.textContent = `${stats.avg_wpm !== undefined ? stats.avg_wpm : 0} WPM`;
-      if (hAcc) hAcc.textContent = `${stats.avg_accuracy !== undefined ? stats.avg_accuracy : 0}%`;
-      if (hPractices) hPractices.textContent = `${stats.total_practices || 0} सत्र`;
-      if (hPoints) hPoints.textContent = `${realPoints} Pts`;
-      if (hBestWpm) hBestWpm.textContent = `${stats.best_wpm !== undefined ? stats.best_wpm : 0} WPM`;
-      if (hTotalTime) hTotalTime.textContent = `${stats.total_time_formatted || '0 mins'}`;
+      if (res) {
+        this._applySummaryToDOM(res);
+        try {
+          localStorage.setItem('stenomaster_cached_summary', JSON.stringify(res));
+        } catch(e) {}
+      }
     } catch (err) {
       console.warn('Could not fetch daily target summary');
     }
@@ -1786,7 +1812,11 @@ class StenoApp {
     const grid = document.getElementById('homeClassCardsGrid');
     if (!grid) return;
 
-    if (this.passages.length === 0) {
+    if (!this.passages || this.passages.length === 0) {
+      if (!this.allPassages || this.allPassages.length === 0) {
+        this.renderPassagesSkeleton();
+        return;
+      }
       grid.innerHTML = '<div style="grid-column: 1/-1; text-align:center; padding: 40px; color:var(--text-muted);">कोई क्लास नहीं मिली।</div>';
       return;
     }
