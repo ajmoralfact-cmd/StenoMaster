@@ -1333,51 +1333,98 @@ body {
 .wpm-chips-row {
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: 6px;
   flex-wrap: wrap;
-  padding-top: 2px;
+  padding-top: 4px;
 }
 
 .wpm-chip {
-  padding: 4px 8px;
-  border-radius: 6px;
+  padding: 6px 11px;
+  border-radius: 8px;
   background: var(--bg-surface);
-  border: 1px solid var(--border-subtle);
-  font-size: 0.76rem;
+  border: 1.5px solid var(--border-subtle);
+  font-size: 0.82rem;
   font-weight: 600;
   color: var(--text-secondary);
   cursor: pointer;
   transition: all 0.15s ease;
   display: inline-flex;
-  align-items: center;
+  align-items: baseline;
   gap: 4px;
+  user-select: none;
+}
+
+.wpm-chip .chip-num {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: var(--text-main);
+  letter-spacing: -0.2px;
+}
+
+.wpm-chip .chip-unit {
+  font-size: 0.68rem;
+  font-weight: 600;
+  opacity: 0.75;
 }
 
 .wpm-chip:hover {
   background: var(--primary-subtle);
   border-color: var(--primary-border);
   color: var(--primary);
+  transform: translateY(-1px);
+}
+
+.wpm-chip:hover .chip-num {
+  color: var(--primary);
 }
 
 .wpm-chip.active {
-  background: var(--primary);
+  background: #2563eb;
   color: #fff;
-  border-color: var(--primary);
-  font-weight: 700;
-  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.25);
+  border-color: #1d4ed8;
+  box-shadow: 0 3px 8px rgba(37, 99, 235, 0.35);
+  transform: translateY(-1px);
+}
+
+.wpm-chip.active .chip-num,
+.wpm-chip.active .chip-unit {
+  color: #fff;
+  opacity: 1;
 }
 
 .wpm-chip .badge-sub {
-  font-size: 0.65rem;
-  opacity: 0.9;
-  background: rgba(0,0,0,0.08);
-  padding: 1px 4px;
+  font-size: 0.66rem;
+  font-weight: 700;
+  background: var(--bg-subtle);
+  color: var(--text-secondary);
+  padding: 1px 5px;
   border-radius: 4px;
+  margin-left: 2px;
 }
 
 .wpm-chip.active .badge-sub {
-  background: rgba(255,255,255,0.25);
+  background: rgba(255, 255, 255, 0.28);
   color: #fff;
+}
+
+.wpm-chip .badge-sub.gold {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.wpm-chip.active .badge-sub.gold {
+  background: #fef08a;
+  color: #854d0e;
+}
+
+.wpm-chip .badge-sub.red {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.wpm-chip.active .badge-sub.red {
+  background: #fecaca;
+  color: #7f1d1d;
 }
 
 .audio-volume-bar {

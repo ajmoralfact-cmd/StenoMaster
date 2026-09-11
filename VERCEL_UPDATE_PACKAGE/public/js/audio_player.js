@@ -62,8 +62,27 @@ class StenoAudioPlayer {
 
     this.audioElement.addEventListener('loadedmetadata', () => {
       this.duration = this.audioElement.duration || this.duration;
+      if (this.playbackSpeed) {
+        this.audioElement.playbackRate = this.playbackSpeed;
+      }
       if (this.onTimeUpdateCallback) {
         this.onTimeUpdateCallback(this.currentTime, this.duration);
+      }
+    });
+
+    this.audioElement.addEventListener('canplay', () => {
+      if (this.playbackSpeed) {
+        this.audioElement.playbackRate = this.playbackSpeed;
+        this.audioElement.defaultPlaybackRate = this.playbackSpeed;
+        try { this.audioElement.preservesPitch = true; } catch (e) {}
+      }
+    });
+
+    this.audioElement.addEventListener('play', () => {
+      if (this.playbackSpeed) {
+        this.audioElement.playbackRate = this.playbackSpeed;
+        this.audioElement.defaultPlaybackRate = this.playbackSpeed;
+        try { this.audioElement.preservesPitch = true; } catch (e) {}
       }
     });
 
@@ -518,10 +537,20 @@ class StenoAudioPlayer {
     const slider = document.getElementById('wpmRangeSlider');
 
     const wpm = this.currentWpm || 80;
-    const rate = (this.playbackSpeed || 1.0).toFixed(2);
+    const base = this.baseTargetWpm || 80;
+    const rate = this.playbackSpeed || (wpm / base);
+    const rateStr = rate.toFixed(2);
 
     if (wpmValEl) wpmValEl.textContent = `${wpm} WPM`;
-    if (multEl) multEl.textContent = `(${rate}x)`;
+    if (multEl) {
+      if (wpm === base) {
+        multEl.textContent = `(${rateStr}x • मूल 80 WPM)`;
+      } else if (wpm < base) {
+        multEl.textContent = `(${rateStr}x • धीमी गति)`;
+      } else {
+        multEl.textContent = `(${rateStr}x • तीव्र गति)`;
+      }
+    }
     if (slider) slider.value = wpm;
 
     // Update active preset chip
