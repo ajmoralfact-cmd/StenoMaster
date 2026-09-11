@@ -184,6 +184,7 @@ def run_postgres_migrations(conn):
                 "ALTER TABLE users ADD COLUMN IF NOT EXISTS subscription_plan TEXT",
                 "ALTER TABLE users ADD COLUMN IF NOT EXISTS subscription_start TEXT",
                 "ALTER TABLE users ADD COLUMN IF NOT EXISTS subscription_end TEXT",
+                "ALTER TABLE users ADD COLUMN IF NOT EXISTS google_id TEXT",
                 "ALTER TABLE sessions ADD COLUMN IF NOT EXISTS ip_address TEXT",
                 "ALTER TABLE sessions ADD COLUMN IF NOT EXISTS user_agent TEXT",
                 "ALTER TABLE sessions ADD COLUMN IF NOT EXISTS device_name TEXT",
@@ -293,7 +294,10 @@ def manual_run_migrations() -> Dict[str, Any]:
                     "ALTER TABLE users ADD COLUMN IF NOT EXISTS subscription_status TEXT DEFAULT 'free'",
                     "ALTER TABLE users ADD COLUMN IF NOT EXISTS subscription_plan TEXT",
                     "ALTER TABLE users ADD COLUMN IF NOT EXISTS subscription_start TEXT",
-                    "ALTER TABLE users ADD COLUMN IF NOT EXISTS subscription_end TEXT"
+                    "ALTER TABLE users ADD COLUMN IF NOT EXISTS subscription_end TEXT",
+                    "ALTER TABLE users ADD COLUMN IF NOT EXISTS google_id TEXT",
+                    "INSERT INTO admin_settings (key, value, updated_at) VALUES ('google_auth_enabled', '1', NOW()) ON CONFLICT (key) DO NOTHING",
+                    "INSERT INTO admin_settings (key, value, updated_at) VALUES ('google_client_id', '', NOW()) ON CONFLICT (key) DO NOTHING"
                 ]
                 for stmt in pg_stmts:
                     try:
@@ -708,6 +712,8 @@ def init_db():
         c.execute("ALTER TABLE users ADD COLUMN subscription_end TEXT")
     if 'is_free_access' not in u_cols:
         c.execute("ALTER TABLE users ADD COLUMN is_free_access INTEGER DEFAULT 0")
+    if 'google_id' not in u_cols:
+        c.execute("ALTER TABLE users ADD COLUMN google_id TEXT")
 
     c.execute("PRAGMA table_info(passages)")
     p_cols = {col['name'] for col in c.fetchall()}
@@ -797,7 +803,9 @@ def seed_initial_data():
         ('cashfree_env', 'SANDBOX'),
         ('reward_points_practice', '10'),
         ('reward_points_daily_goal', '20'),
-        ('reward_points_streak_7', '50')
+        ('reward_points_streak_7', '50'),
+        ('google_client_id', ''),
+        ('google_auth_enabled', '1')
     ]
     for k, v in default_settings:
         c.execute("INSERT INTO admin_settings (key, value, updated_at) VALUES (?, ?, ?) ON CONFLICT (key) DO NOTHING", (k, v, now_iso))
@@ -1267,6 +1275,105 @@ def create_student_registration(
         res["phone"] = clean_phone
 
     return res
+
+
+def authenticate_or_register_google_user(
+    google_id: str,
+    email: str,
+    full_name: str,
+    avatar_url: str = "",
+    target_exam: str = "SSC Stenographer"
+) -> Dict[str, Any]:
+    """Authenticates existing user with Google or automatically registers a new student."""
+    clean_email = (email or '').lower().strip()
+    clean_name = (full_name or '').strip() or "Google Student"
+    clean_google_id = (google_id or '').strip()
+
+    if not clean_email or '@' not in clean_email:
+        return {"success": False, "error": "Invalid email from Google account"}
+
+    conn = get_db()
+    c = conn.cursor()
+
+    # 1. Check if user already exists by email or google_id
+    if clean_google_id:
+        c.execute("""
+            SELECT u.id, u.username, u.email, u.role, u.is_active, u.student_code, u.google_id
+            FROM users u
+            WHERE LOWER(u.email) = ? OR (u.google_id = ? AND u.google_id IS NOT NULL AND u.google_id != '')
+        """, (clean_email, clean_google_id))
+    else:
+        c.execute("""
+            SELECT u.id, u.username, u.email, u.role, u.is_active, u.student_code, u.google_id
+            FROM users u
+            WHERE LOWER(u.email) = ?
+        """, (clean_email,))
+
+    user_row = c.fetchone()
+    is_new = False
+
+    if user_row:
+        user_id = user_row['id']
+        # Link google_id if missing
+        if clean_google_id and not user_row['google_id']:
+            c.execute("UPDATE users SET google_id = ? WHERE id = ?", (clean_google_id, user_id))
+            conn.commit()
+        # Update avatar if missing or default
+        if avatar_url:
+            c.execute("SELECT avatar FROM profiles WHERE user_id = ?", (user_id,))
+            p = c.fetchone()
+            if not p or not p['avatar'] or p['avatar'] in ('user-default', 'default'):
+                c.execute("UPDATE profiles SET avatar = ? WHERE user_id = ?", (avatar_url, user_id))
+                conn.commit()
+    else:
+        # Create new student account
+        is_new = True
+        base_user = "".join(ch for ch in clean_name.lower() if ch.isalnum()) or "student"
+        username = base_user
+        idx = 1
+        while True:
+            c.execute("SELECT id FROM users WHERE LOWER(username) = ?", (username.lower(),))
+            if not c.fetchone():
+                break
+            idx += 1
+            username = f"{base_user}{idx}"
+
+        random_pwd = secrets.token_urlsafe(16)
+        pwd_hash = hash_password(random_pwd)
+        user_ref = f"SM{secrets.token_hex(3).upper()}"
+        now_iso = datetime.now().isoformat()
+        year = datetime.now().year
+
+        c.execute("""
+            INSERT INTO users (username, email, password_hash, role, referral_code, subscription_status, created_at, google_id)
+            VALUES (?, ?, ?, 'student', ?, 'free', ?, ?)
+        """, (username, clean_email, pwd_hash, user_ref, now_iso, clean_google_id or None))
+
+        user_id = c.lastrowid
+        if not user_id:
+            c.execute("SELECT id FROM users WHERE LOWER(email) = ?", (clean_email,))
+            u_row = c.fetchone()
+            user_id = u_row['id'] if u_row else 1
+
+        student_code = f"STM-{year}-{user_id:06d}"
+        c.execute("UPDATE users SET student_code = ? WHERE id = ?", (student_code, user_id))
+
+        # Profiles - starts with points = 0, target_exam, and Google avatar
+        c.execute("""
+            INSERT INTO profiles (user_id, display_name, avatar, target_exam, points, streak_days)
+            VALUES (?, ?, ?, ?, 0, 0)
+        """, (user_id, clean_name, avatar_url or 'user-default', target_exam))
+
+        # User settings
+        c.execute("INSERT INTO user_settings (user_id) VALUES (?)", (user_id,))
+        conn.commit()
+
+    conn.close()
+    return {
+        "success": True,
+        "user_id": user_id,
+        "is_new": is_new
+    }
 
 
 def authenticate_user(email_or_username: str, password: str) -> Optional[Dict[str, Any]]:
@@ -2451,7 +2558,12 @@ def get_admin_settings() -> Dict[str, str]:
     c.execute("SELECT key, value FROM admin_settings")
     rows = c.fetchall()
     conn.close()
-    return {r['key']: r['value'] for r in rows}
+    settings = {r['key']: r['value'] for r in rows}
+    if 'google_auth_enabled' not in settings:
+        settings['google_auth_enabled'] = '1'
+    if 'google_client_id' not in settings:
+        settings['google_client_id'] = ''
+    return settings
 
 
 def update_admin_settings(settings: Dict[str, str]):

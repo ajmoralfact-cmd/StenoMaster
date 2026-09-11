@@ -18,12 +18,14 @@ if hasattr(sys.stderr, 'reconfigure'):
 import http.server
 import socketserver
 import urllib.parse
+import urllib.request
 import json
 import os
 import mimetypes
 import socket
 import re
 from datetime import datetime
+from typing import Optional, Dict, Any, List
 
 import db
 import hindi_converter
@@ -177,6 +179,34 @@ class StenoMasterHandler(http.server.SimpleHTTPRequestHandler):
             })
         else:
             self._send_json(401, {"error": "Authentication required", "code": "UNAUTHORIZED"})
+
+    def _verify_google_id_token(self, credential: str) -> Optional[dict]:
+        """Verifies Google ID token against Google's public tokeninfo endpoint."""
+        if not credential:
+            return None
+        try:
+            url = f"https://oauth2.googleapis.com/tokeninfo?id_token={urllib.parse.quote(credential)}"
+            req = urllib.request.Request(url, headers={"User-Agent": "StenoMaster-Auth/1.0"})
+            with urllib.request.urlopen(req, timeout=10) as resp:
+                if resp.status != 200:
+                    return None
+                data = json.loads(resp.read().decode('utf-8'))
+
+            iss = data.get('iss', '')
+            if iss not in ('accounts.google.com', 'https://accounts.google.com'):
+                return None
+            if not data.get('email'):
+                return None
+
+            # Verify audience if client_id configured in admin settings
+            settings = db.get_admin_settings()
+            expected_aud = (settings.get('google_client_id') or '').strip()
+            if expected_aud and data.get('aud') != expected_aud:
+                return None
+
+            return data
+        except Exception:
+            return None
 
     def _read_json_body(self):
         if hasattr(self, '_cached_json_body'):
@@ -653,6 +683,48 @@ class StenoMasterHandler(http.server.SimpleHTTPRequestHandler):
             self._send_json(201, {
                 "token": token,
                 "user": user_obj,
+                "login_ip": client_ip,
+                "login_device": device_name
+            })
+            return
+
+        if path == '/api/auth/google':
+            data = self._read_json_body()
+            credential = (data.get('credential') or '').strip()
+            if not credential:
+                self._send_json(400, {"error": "Google credential token required"})
+                return
+
+            google_info = self._verify_google_id_token(credential)
+            if not google_info or not google_info.get('email'):
+                self._send_json(400, {"error": "Google प्रमाणीकरण विफल रहा अथवा अमान्य टोकन। (Invalid Google Token)"})
+                return
+
+            client_ip = self._get_client_ip()
+            user_agent = self.headers.get('User-Agent', '')
+            device_name = self._parse_device_name(user_agent)
+
+            result = db.authenticate_or_register_google_user(
+                google_id=google_info.get('sub', ''),
+                email=google_info.get('email', ''),
+                full_name=google_info.get('name', ''),
+                avatar_url=google_info.get('picture', '')
+            )
+            if not result.get("success"):
+                self._send_json(400, result)
+                return
+
+            token = db.create_session(
+                result["user_id"],
+                ip_address=client_ip,
+                user_agent=user_agent,
+                device_name=device_name
+            )
+            user_obj = db.verify_session(token)
+            self._send_json(200, {
+                "token": token,
+                "user": user_obj,
+                "is_new": result.get("is_new", False),
                 "login_ip": client_ip,
                 "login_device": device_name
             })
@@ -1153,6 +1225,8 @@ class StenoMasterHandler(http.server.SimpleHTTPRequestHandler):
                 cf_app_id = data.get('cashfree_app_id')
                 cf_secret = data.get('cashfree_secret_key')
                 cf_env = data.get('cashfree_env')
+                google_client_id = data.get('google_client_id')
+                google_auth_enabled = data.get('google_auth_enabled')
 
                 updates = {}
                 if plan_name: updates['subscription_plan_name'] = str(plan_name).strip()
@@ -1166,10 +1240,12 @@ class StenoMasterHandler(http.server.SimpleHTTPRequestHandler):
                 if cf_app_id is not None: updates['cashfree_app_id'] = str(cf_app_id).strip()
                 if cf_secret is not None: updates['cashfree_secret_key'] = str(cf_secret).strip()
                 if cf_env is not None: updates['cashfree_env'] = str(cf_env).strip().upper()
+                if google_client_id is not None: updates['google_client_id'] = str(google_client_id).strip()
+                if google_auth_enabled is not None: updates['google_auth_enabled'] = '1' if str(google_auth_enabled).lower() in ('1', 'true') else '0'
 
                 if updates:
                     db.update_admin_settings(updates)
-                self._send_json(200, {"success": True, "message": "सदस्यता एवं Cashfree सेटिंग्स सफलतापूर्वक सुरक्षित की गईं!"})
+                self._send_json(200, {"success": True, "message": "सदस्यता, Google एवं Cashfree सेटिंग्स सफलतापूर्वक सुरक्षित की गईं!"})
                 return
 
             # Phase 3: Admin Upload Payment QR Code

@@ -434,6 +434,7 @@ class StenoApp {
 
     this.switchAuthTab(tab);
     this.loadSavedCredentials();
+    this.initGoogleAuth();
 
     const stuErr = document.getElementById('stuAuthError');
     const adminErr = document.getElementById('adminAuthError');
@@ -533,6 +534,104 @@ class StenoApp {
 
   oneClickAdminLogin() {
     this.handleAdminLogin();
+  }
+
+  async initGoogleAuth() {
+    try {
+      if (this._googleAuthInitialized) return;
+      const res = await this.apiCall('/api/settings');
+      const settings = res.settings || {};
+      this.googleClientId = (settings.google_client_id || '').trim();
+      this.googleAuthEnabled = settings.google_auth_enabled !== '0';
+
+      const sec = document.getElementById('googleAuthSection');
+      if (sec && !this.googleAuthEnabled) {
+        sec.style.display = 'none';
+        return;
+      }
+
+      const tryRender = () => {
+        if (this.googleClientId && window.google && window.google.accounts && window.google.accounts.id) {
+          window.google.accounts.id.initialize({
+            client_id: this.googleClientId,
+            callback: (response) => this.handleGoogleAuthResponse(response),
+            auto_select: false
+          });
+
+          const container = document.getElementById('googleSignInButtonContainer');
+          if (container) {
+            container.innerHTML = '';
+            window.google.accounts.id.renderButton(container, {
+              type: 'standard',
+              theme: 'outline',
+              size: 'large',
+              text: 'continue_with',
+              shape: 'rectangular',
+              logo_alignment: 'left',
+              width: 320
+            });
+          }
+          this._googleAuthInitialized = true;
+        }
+      };
+
+      if (window.google && window.google.accounts) {
+        tryRender();
+      } else {
+        let attempts = 0;
+        const checkTimer = setInterval(() => {
+          attempts++;
+          if ((window.google && window.google.accounts) || attempts > 15) {
+            clearInterval(checkTimer);
+            if (window.google && window.google.accounts) tryRender();
+          }
+        }, 200);
+      }
+    } catch (e) {
+      console.warn('Google Auth init check:', e);
+    }
+  }
+
+  triggerGoogleAuth() {
+    if (this.googleClientId && window.google && window.google.accounts && window.google.accounts.id) {
+      window.google.accounts.id.prompt();
+    } else {
+      this.showToast('Google Client ID अभी एडमिन द्वारा सेट नहीं की गई है। कृपया नीचे दिए गए फ़ॉर्म से लॉगिन करें।', 'info');
+    }
+  }
+
+  async handleGoogleAuthResponse(googleResp) {
+    if (!googleResp || !googleResp.credential) {
+      this.showToast('Google प्रमाणीकरण रद्द कर दिया गया।', 'warning');
+      return;
+    }
+
+    try {
+      this.showToast('Google से सत्यापन हो रहा है... ⏳', 'info');
+      const res = await this.apiCall('/api/auth/google', 'POST', {
+        credential: googleResp.credential
+      });
+
+      this.token = res.token;
+      this.user = res.user;
+      localStorage.setItem('stenomaster_token', this.token);
+      localStorage.setItem('stenomaster_user', JSON.stringify(this.user));
+
+      this.closeModal('loginModal');
+      this.hideAuthGateway();
+      this.updateUserUI();
+      await this.loadCategories();
+      await this.loadPassages();
+
+      const welcomeMsg = res.is_new 
+        ? `स्वागतम्, ${this.user.display_name || this.user.username}! आपका नया छात्र खाता (ID: ${this.user.student_code || ''}) बन गया है 🎉` 
+        : `स्वागतम्, ${this.user.display_name || this.user.username}! Google से लॉगिन सफल! 👋`;
+      this.showToast(welcomeMsg, 'success');
+
+      this.restoreRouteOnLoad('home');
+    } catch (err) {
+      this.showToast(err.message || 'Google लॉगिन विफल रहा।', 'error');
+    }
   }
 
   switchAuthTab(tab) {

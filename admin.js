@@ -1458,6 +1458,8 @@ class StenoAdmin {
       const cfAppIdInput = document.getElementById('adminCashfreeAppIdInput');
       const cfSecretInput = document.getElementById('adminCashfreeSecretInput');
       const cfEnvSelect = document.getElementById('adminCashfreeEnvSelect');
+      const googleClientIdInput = document.getElementById('adminGoogleClientIdInput');
+      const googleAuthEnabled = document.getElementById('adminGoogleAuthEnabled');
 
       if (planNameInput && settings.subscription_plan_name) planNameInput.value = settings.subscription_plan_name;
       if (planPriceInput && settings.subscription_plan_price) planPriceInput.value = settings.subscription_plan_price;
@@ -1470,6 +1472,10 @@ class StenoAdmin {
       if (cfAppIdInput && settings.cashfree_app_id) cfAppIdInput.value = settings.cashfree_app_id;
       if (cfSecretInput && settings.cashfree_secret_key) cfSecretInput.value = settings.cashfree_secret_key;
       if (cfEnvSelect && settings.cashfree_env) cfEnvSelect.value = settings.cashfree_env;
+      if (googleClientIdInput && settings.google_client_id !== undefined) googleClientIdInput.value = settings.google_client_id || '';
+      if (googleAuthEnabled && settings.google_auth_enabled !== undefined) {
+        googleAuthEnabled.checked = (settings.google_auth_enabled === '1' || settings.google_auth_enabled === true || settings.google_auth_enabled === 'true');
+      }
     } catch (err) {
       console.error('Failed to load subscription settings:', err);
     }
@@ -1487,6 +1493,8 @@ class StenoAdmin {
     const cashfree_app_id = document.getElementById('adminCashfreeAppIdInput')?.value.trim();
     const cashfree_secret_key = document.getElementById('adminCashfreeSecretInput')?.value.trim();
     const cashfree_env = document.getElementById('adminCashfreeEnvSelect')?.value || 'SANDBOX';
+    const google_client_id = document.getElementById('adminGoogleClientIdInput')?.value.trim();
+    const google_auth_enabled = document.getElementById('adminGoogleAuthEnabled')?.checked ? '1' : '0';
 
     try {
       await stenoApp.apiCall('/api/admin/subscription/settings', 'POST', {
@@ -1499,9 +1507,11 @@ class StenoAdmin {
         subscription_upi_id,
         cashfree_app_id,
         cashfree_secret_key,
-        cashfree_env
+        cashfree_env,
+        google_client_id,
+        google_auth_enabled
       });
-      stenoApp.showToast('सदस्यता सेटिंग्स सफलतापूर्वक सहेजी गईं! ✅', 'success');
+      stenoApp.showToast('सदस्यता एवं Google सेटिंग्स सफलतापूर्वक सहेजी गईं! ✅', 'success');
       await this.loadSubscriptionSettings();
     } catch (err) {
       stenoApp.showToast('सेटिंग्स सहेजने में त्रुटि: ' + err.message, 'error');
