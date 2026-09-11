@@ -4143,3 +4143,17 @@ body {
   from { opacity: 0.5; }
   to { opacity: 1; }
 }
+
+/* ==========================================================================
+   Google Translate & Browser Translator Protection
+   Preserves official passage, student typing, and word matching tokens in Hindi
+   ========================================================================== */
+.notranslate,
+[translate="no"],
+.token-stream-box,
+.eval-token,
+.result-passage-text-content,
+.typing-textarea {
+  /* Ensure browser translators honor notranslate container boundaries */
+  -webkit-transform: translateZ(0);
+}

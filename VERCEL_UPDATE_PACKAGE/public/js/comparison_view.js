@@ -18,7 +18,8 @@ class StenoComparisonView {
 
   initPopover() {
     this.popoverEl = document.createElement('div');
-    this.popoverEl.className = 'token-popover';
+    this.popoverEl.className = 'token-popover notranslate';
+    this.popoverEl.setAttribute('translate', 'no');
     document.body.appendChild(this.popoverEl);
 
     document.addEventListener('click', (e) => {
@@ -248,7 +249,7 @@ class StenoComparisonView {
           <div class="legend-item"><span class="legend-dot dot-extra"></span> ➕ अतिरिक्त (Extra)</div>
         </div>
 
-        <div class="token-stream-box" id="tokenStreamBox">
+        <div class="token-stream-box notranslate" id="tokenStreamBox" translate="no">
           ${this.renderTokenStream(report.aligned_tokens || [])}
         </div>
       </div>
@@ -271,7 +272,7 @@ class StenoComparisonView {
         </div>
 
         <div style="overflow-x: auto;">
-          <table class="data-table" id="errorTable">
+          <table class="data-table notranslate" id="errorTable" translate="no">
             <thead>
               <tr>
                 <th style="width: 60px;">#</th>
@@ -281,7 +282,7 @@ class StenoComparisonView {
                 <th>मार्गदर्शन (Detail)</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody class="notranslate" translate="no">
               ${this.renderErrorTableRows(report.error_table || [], 'all')}
             </tbody>
           </table>
@@ -355,7 +356,7 @@ class StenoComparisonView {
       const isTokenKruti = !/[\u0900-\u097F]/.test(displayText) && /[a-zA-Z]/.test(displayText);
       const fontClass = isTokenKruti ? ' font-krutidev' : ' font-mangal';
 
-      return `<span class="eval-token ${cssClass}${fontClass}" data-idx="${idx}">${displayText}</span>`;
+      return `<span class="eval-token ${cssClass}${fontClass} notranslate" translate="no" data-idx="${idx}">${displayText}</span>`;
     }).join(' ');
   }
 
@@ -387,16 +388,16 @@ class StenoComparisonView {
     let offDisplay = token.official || '— (अनावश्यक)';
 
     if (token.student && !/[\u0900-\u097F]/.test(token.student) && typeof krutiDevToUnicodeJS === 'function') {
-      stuDisplay = `<span class="font-krutidev">${token.student}</span> (${krutiDevToUnicodeJS(token.student)})`;
+      stuDisplay = `<span class="font-krutidev notranslate" translate="no">${token.student}</span> (<span class="notranslate" translate="no">${krutiDevToUnicodeJS(token.student)}</span>)`;
     }
     if (token.official && !/[\u0900-\u097F]/.test(token.official) && typeof krutiDevToUnicodeJS === 'function') {
-      offDisplay = `<span class="font-krutidev">${token.official}</span> (${krutiDevToUnicodeJS(token.official)})`;
+      offDisplay = `<span class="font-krutidev notranslate" translate="no">${token.official}</span> (<span class="notranslate" translate="no">${krutiDevToUnicodeJS(token.official)}</span>)`;
     }
 
     this.popoverEl.innerHTML = `
       <div class="popover-header">${statusLabels[token.status] || token.status}</div>
-      <div class="popover-field"><strong>आपका टंकण:</strong> ${stuDisplay}</div>
-      <div class="popover-field"><strong>अपेक्षित शब्द:</strong> ${offDisplay}</div>
+      <div class="popover-field notranslate" translate="no"><strong>आपका टंकण:</strong> <span class="notranslate" translate="no">${stuDisplay}</span></div>
+      <div class="popover-field notranslate" translate="no"><strong>अपेक्षित शब्द:</strong> <span class="notranslate" translate="no">${offDisplay}</span></div>
       <div class="popover-field"><strong>त्रुटि का प्रकार:</strong> ${token.error_type}</div>
       <div class="popover-field" style="margin-top:8px; font-size:0.82rem; color:var(--text-secondary); line-height:1.4">
         ${token.detail || 'मानक रूप से मिलान किया गया।'}
@@ -444,17 +445,17 @@ class StenoComparisonView {
       const isCorrectKruti = e.correct_text && !/[\u0900-\u097F]/.test(e.correct_text) && /[a-zA-Z]/.test(e.correct_text);
 
       if (isYourKruti && typeof krutiDevToUnicodeJS === 'function') {
-        yourDisplay = `<span class="font-krutidev">${e.your_text}</span> <span style="font-family:var(--font-hindi); font-size:0.85rem; color:var(--text-muted)">(${krutiDevToUnicodeJS(e.your_text)})</span>`;
+        yourDisplay = `<span class="font-krutidev notranslate" translate="no">${e.your_text}</span> <span class="notranslate" translate="no" style="font-family:var(--font-hindi); font-size:0.85rem; color:var(--text-muted)">(${krutiDevToUnicodeJS(e.your_text)})</span>`;
       }
       if (isCorrectKruti && typeof krutiDevToUnicodeJS === 'function') {
-        correctDisplay = `<span class="font-krutidev">${e.correct_text}</span> <span style="font-family:var(--font-hindi); font-size:0.85rem; color:var(--text-muted)">(${krutiDevToUnicodeJS(e.correct_text)})</span>`;
+        correctDisplay = `<span class="font-krutidev notranslate" translate="no">${e.correct_text}</span> <span class="notranslate" translate="no" style="font-family:var(--font-hindi); font-size:0.85rem; color:var(--text-muted)">(${krutiDevToUnicodeJS(e.correct_text)})</span>`;
       }
 
       return `
         <tr>
           <td><strong>${e.id}</strong></td>
-          <td style="color:var(--accent-red); font-size:1.05rem;">${yourDisplay}</td>
-          <td style="color:var(--accent-green); font-size:1.05rem; font-weight:600;">${correctDisplay}</td>
+          <td class="notranslate" translate="no" style="color:var(--accent-red); font-size:1.05rem;">${yourDisplay}</td>
+          <td class="notranslate" translate="no" style="color:var(--accent-green); font-size:1.05rem; font-weight:600;">${correctDisplay}</td>
           <td><span class="badge" style="background:var(--bg-subtle); color:var(--text-secondary)">${e.error_type}</span></td>
           <td style="font-size:0.85rem; color:var(--text-secondary)">${e.detail}</td>
         </tr>
@@ -572,12 +573,12 @@ class StenoComparisonView {
     const hasDual = !!(mangalText && krutiText);
 
     return `
-      <div class="result-master-passage-card">
+      <div class="result-master-passage-card notranslate" translate="no">
         <div class="result-master-header">
           <div>
             <div style="display:flex; align-items:center; gap:8px;">
               <span style="font-size:1.3rem;">📖</span>
-              <h3 style="font-size:1.12rem; font-weight:700; margin:0; color:var(--text-main);">
+              <h3 style="font-size:1.12rem; font-weight:700; margin:0; color:var(--text-main);" class="notranslate" translate="no">
                 मास्टर संदर्भ आलेख (Official Uploaded Passage)
               </h3>
             </div>
@@ -587,7 +588,7 @@ class StenoComparisonView {
           </div>
 
           <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
-            <span class="badge" style="background:#e0f2fe; color:#0284c7; font-weight:600; font-size:0.78rem;">
+            <span class="badge notranslate" translate="no" style="background:#e0f2fe; color:#0284c7; font-weight:600; font-size:0.78rem;">
               📝 ${wordCount} शब्द • ${charCount} वर्ण
             </span>
 
@@ -614,24 +615,24 @@ class StenoComparisonView {
           </div>
         </div>
 
-        <div class="result-master-passage-grid" id="resultMasterPassageGrid">
+        <div class="result-master-passage-grid notranslate" id="resultMasterPassageGrid" translate="no">
           <!-- Official Reference Passage Box -->
-          <div class="result-passage-box-wrap" id="officialPassageWrap">
-            <div class="result-box-tag" style="color:#0284c7; background:#e0f2fe;">
+          <div class="result-passage-box-wrap notranslate" id="officialPassageWrap" translate="no">
+            <div class="result-box-tag notranslate" translate="no" style="color:#0284c7; background:#e0f2fe;">
               ✓ आधिकारिक मूल पाठ (Official Reference Text)
             </div>
-            <div class="result-passage-text-content font-mangal" id="masterOfficialTextDisplay">
+            <div class="result-passage-text-content font-mangal notranslate" id="masterOfficialTextDisplay" translate="no">
               ${this.escapeHtml(mangalText || krutiText)}
             </div>
           </div>
 
           <!-- Student's Typed Passage Box (Collapsible/Toggleable) -->
           ${studentText ? `
-            <div class="result-passage-box-wrap" id="studentPassageWrap" style="display:none;">
-              <div class="result-box-tag" style="color:#7c3aed; background:#f3e8ff;">
+            <div class="result-passage-box-wrap notranslate" id="studentPassageWrap" translate="no" style="display:none;">
+              <div class="result-box-tag notranslate" translate="no" style="color:#7c3aed; background:#f3e8ff;">
                 ⌨️ आपका टाइप किया हुआ पाठ (Your Raw Typing)
               </div>
-              <div class="result-passage-text-content font-mangal" id="studentRawTextDisplay">
+              <div class="result-passage-text-content font-mangal notranslate" id="studentRawTextDisplay" translate="no">
                 ${this.escapeHtml(studentText)}
               </div>
             </div>
