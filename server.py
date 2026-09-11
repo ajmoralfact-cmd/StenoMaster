@@ -957,11 +957,14 @@ class StenoMasterHandler(http.server.SimpleHTTPRequestHandler):
                     eval_official_text = eval_official_text or hindi_converter.kruti_dev_to_unicode(official_text_krutidev)
                 if typing_mode in ('krutidev', 'devlys'):
                     if re.search(r'[\u0900-\u097F]', raw_input):
-                        eval_student_text = hindi_converter.normalize_hindi_unicode(raw_input)
+                        eval_student_text = hindi_converter.normalize_devanagari_canonical(raw_input)
                     else:
                         eval_student_text = hindi_converter.kruti_dev_to_unicode(raw_input)
                 else:
                     eval_student_text = hindi_converter.convert_input_text(raw_input, typing_mode, language)
+
+                eval_official_text = hindi_converter.normalize_devanagari_canonical(eval_official_text)
+                eval_student_text = hindi_converter.normalize_devanagari_canonical(eval_student_text)
                 normalized_student_text = eval_student_text
             else:
                 eval_student_text = raw_input
