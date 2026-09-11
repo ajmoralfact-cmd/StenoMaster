@@ -1807,115 +1807,131 @@ def save_practice_attempt(
         time_taken, typing_mode, raw_input, normalized_input, report_json_str, now_iso
     ))
     attempt_id = c.lastrowid
+    conn.commit()
+    conn.close()
 
-    # Insert individual error rows for fast aggregation
-    for err in eval_result.get("error_table", []):
-        c.execute("""
-            INSERT INTO practice_errors (attempt_id, user_id, your_text, correct_text, error_type, category, detail)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
-        """, (attempt_id, user_id, err["your_text"], err["correct_text"], err["error_type"], err["category"], err["detail"]))
+    # Run non-blocking background worker for errors, points, streaks, achievements
+    def _bg_post_process():
+        try:
+            bg_conn = get_db()
+            bg_c = bg_conn.cursor()
 
-    # Increment passage attempt count
-    c.execute("UPDATE passages SET attempt_count = attempt_count + 1 WHERE id = ?", (passage_id,))
-
-    # Read point settings from admin_settings
-    c.execute("SELECT key, value FROM admin_settings WHERE key IN ('reward_points_practice', 'reward_points_daily_goal', 'reward_points_streak_7', 'daily_target_dictations')")
-    setting_map = {r['key']: r['value'] for r in c.fetchall()}
-    practice_pts = int(setting_map.get('reward_points_practice', 10))
-    daily_goal_pts = int(setting_map.get('reward_points_daily_goal', 20))
-    streak_7_pts = int(setting_map.get('reward_points_streak_7', 50))
-    target_dictations = int(setting_map.get('daily_target_dictations', 3))
-
-    # Update Streak & Profile
-    c.execute("SELECT streak_days, longest_streak, last_practice_date, points FROM profiles WHERE user_id = ?", (user_id,))
-    prof = c.fetchone()
-    cur_streak = 1
-    longest_streak = 1
-    if prof:
-        cur_streak = prof['streak_days'] or 0
-        longest_streak = prof['longest_streak'] or 0
-        last_date = prof['last_practice_date']
-
-        # Streak calculation
-        if last_date:
-            try:
-                if isinstance(last_date, str):
-                    last_dt = date.fromisoformat(last_date[:10])
-                elif isinstance(last_date, datetime):
-                    last_dt = last_date.date()
-                elif isinstance(last_date, date):
-                    last_dt = last_date
+            # 1. Batch insert practice_errors
+            error_items = eval_result.get("error_table", [])
+            if error_items:
+                err_rows = [
+                    (attempt_id, user_id, err.get("your_text", ""), err.get("correct_text", ""), err.get("error_type", ""), err.get("category", ""), err.get("detail", ""))
+                    for err in error_items[:100]
+                ]
+                if hasattr(bg_c, '_cur'):
+                    try:
+                        from psycopg2.extras import execute_values
+                        execute_values(bg_c._cur, """
+                            INSERT INTO practice_errors (attempt_id, user_id, your_text, correct_text, error_type, category, detail)
+                            VALUES %s
+                        """, err_rows)
+                    except Exception as pe_err:
+                        print(f"Postgres batch error insert warning: {pe_err}")
                 else:
-                    last_dt = date.today()
-                diff = (date.today() - last_dt).days
-                if diff == 0:
-                    # Same day practice, maintain streak
-                    pass
-                elif diff == 1:
-                    cur_streak += 1
+                    try:
+                        bg_c.executemany("""
+                            INSERT INTO practice_errors (attempt_id, user_id, your_text, correct_text, error_type, category, detail)
+                            VALUES (?, ?, ?, ?, ?, ?, ?)
+                        """, err_rows)
+                    except Exception as pe_err:
+                        print(f"SQLite batch error insert warning: {pe_err}")
+
+            # 2. Increment passage attempt count
+            bg_c.execute("UPDATE passages SET attempt_count = attempt_count + 1 WHERE id = ?", (passage_id,))
+
+            # 3. Read point settings from admin_settings
+            bg_c.execute("SELECT key, value FROM admin_settings WHERE key IN ('reward_points_practice', 'reward_points_daily_goal', 'reward_points_streak_7', 'daily_target_dictations')")
+            setting_map = {r['key']: r['value'] for r in bg_c.fetchall()}
+            practice_pts = int(setting_map.get('reward_points_practice', 10))
+            daily_goal_pts = int(setting_map.get('reward_points_daily_goal', 20))
+            streak_7_pts = int(setting_map.get('reward_points_streak_7', 50))
+            target_dictations = int(setting_map.get('daily_target_dictations', 3))
+
+            # 4. Update Streak & Profile
+            bg_c.execute("SELECT streak_days, longest_streak, last_practice_date, points FROM profiles WHERE user_id = ?", (user_id,))
+            prof = bg_c.fetchone()
+            cur_streak = 1
+            longest_streak = 1
+            if prof:
+                cur_streak = prof['streak_days'] or 0
+                longest_streak = prof['longest_streak'] or 0
+                last_date = prof['last_practice_date']
+
+                if last_date:
+                    try:
+                        if isinstance(last_date, str):
+                            last_dt = date.fromisoformat(last_date[:10])
+                        elif isinstance(last_date, datetime):
+                            last_dt = last_date.date()
+                        elif isinstance(last_date, date):
+                            last_dt = last_date
+                        else:
+                            last_dt = date.today()
+                        diff = (date.today() - last_dt).days
+                        if diff == 0:
+                            pass
+                        elif diff == 1:
+                            cur_streak += 1
+                        else:
+                            cur_streak = 1
+                    except Exception:
+                        cur_streak = 1
                 else:
                     cur_streak = 1
-            except Exception:
-                cur_streak = 1
-        else:
-            cur_streak = 1
 
-        if cur_streak > longest_streak:
-            longest_streak = cur_streak
+                if cur_streak > longest_streak:
+                    longest_streak = cur_streak
 
-    # Commit attempt immediately so student attempt is never lost
-    try:
-        conn.commit()
-    except Exception:
-        pass
-
-    # Safe Reward Ledger & Achievement processing (non-fatal)
-    try:
-        # 1. Practice Attempt Reward (Idempotent per attempt_id)
-        c.execute("""
-            INSERT INTO reward_transactions (user_id, points, type, reference_id, description, created_at)
-            VALUES (?, ?, 'practice', ?, ?, ?)
-            ON CONFLICT DO NOTHING
-        """, (user_id, practice_pts, f"attempt:{attempt_id}", f"डिक्टेशन अभ्यास #{attempt_id} पूर्ण", now_iso))
-
-        # 2. Daily Goal Reward
-        c.execute("SELECT COUNT(*) as count FROM practice_attempts WHERE user_id = ? AND date(created_at) = date(?)", (user_id, now_iso))
-        today_row = c.fetchone()
-        today_count = today_row['count'] if today_row else 0
-        if today_count >= target_dictations:
-            c.execute("""
+            # 5. Reward transactions & achievements
+            bg_c.execute("""
                 INSERT INTO reward_transactions (user_id, points, type, reference_id, description, created_at)
-                VALUES (?, ?, 'daily_goal', ?, ?, ?)
+                VALUES (?, ?, 'practice', ?, ?, ?)
                 ON CONFLICT DO NOTHING
-            """, (user_id, daily_goal_pts, f"goal:{today_str}", f"दैनिक लक्ष्य ({target_dictations} डिक्टेशन) पूर्ण", now_iso))
+            """, (user_id, practice_pts, f"attempt:{attempt_id}", f"डिक्टेशन अभ्यास #{attempt_id} पूर्ण", now_iso))
 
-        # 3. 7-Day Streak Milestone Reward
-        if cur_streak >= 7 and cur_streak % 7 == 0:
-            c.execute("""
-                INSERT INTO reward_transactions (user_id, points, type, reference_id, description, created_at)
-                VALUES (?, ?, 'streak_7', ?, ?, ?)
-                ON CONFLICT DO NOTHING
-            """, (user_id, streak_7_pts, f"streak_7:{today_str}", f"{cur_streak}-दिवसीय अभ्यास स्ट्रीक बोनस", now_iso))
+            bg_c.execute("SELECT COUNT(*) as count FROM practice_attempts WHERE user_id = ? AND date(created_at) = date(?)", (user_id, now_iso))
+            today_row = bg_c.fetchone()
+            today_count = today_row['count'] if today_row else 0
+            if today_count >= target_dictations:
+                bg_c.execute("""
+                    INSERT INTO reward_transactions (user_id, points, type, reference_id, description, created_at)
+                    VALUES (?, ?, 'daily_goal', ?, ?, ?)
+                    ON CONFLICT DO NOTHING
+                """, (user_id, daily_goal_pts, f"goal:{today_str}", f"दैनिक लक्ष्य ({target_dictations} डिक्टेशन) पूर्ण", now_iso))
 
-        # Recalculate total points strictly from immutable reward ledger
-        c.execute("SELECT COALESCE(SUM(points), 0) as total_pts FROM reward_transactions WHERE user_id = ?", (user_id,))
-        total_pts_row = c.fetchone()
-        total_ledger_pts = total_pts_row['total_pts'] if total_pts_row else 0
+            if cur_streak >= 7 and cur_streak % 7 == 0:
+                bg_c.execute("""
+                    INSERT INTO reward_transactions (user_id, points, type, reference_id, description, created_at)
+                    VALUES (?, ?, 'streak_7', ?, ?, ?)
+                    ON CONFLICT DO NOTHING
+                """, (user_id, streak_7_pts, f"streak_7:{today_str}", f"{cur_streak}-दिवसीय अभ्यास स्ट्रीक बोनस", now_iso))
 
-        c.execute("""
-            UPDATE profiles
-            SET streak_days = ?, longest_streak = ?, last_practice_date = ?, points = ?
-            WHERE user_id = ?
-        """, (cur_streak, longest_streak, today_str, total_ledger_pts, user_id))
+            bg_c.execute("SELECT COALESCE(SUM(points), 0) as total_pts FROM reward_transactions WHERE user_id = ?", (user_id,))
+            total_pts_row = bg_c.fetchone()
+            total_ledger_pts = total_pts_row['total_pts'] if total_pts_row else 0
 
-        # Check and unlock achievements
-        check_and_unlock_achievements(c, user_id, net_wpm, accuracy, cur_streak)
+            bg_c.execute("""
+                UPDATE profiles
+                SET streak_days = ?, longest_streak = ?, last_practice_date = ?, points = ?
+                WHERE user_id = ?
+            """, (cur_streak, longest_streak, today_str, total_ledger_pts, user_id))
 
-        conn.commit()
-    except Exception as reward_err:
-        print(f"Non-critical reward update error: {reward_err}")
+            check_and_unlock_achievements(bg_c, user_id, net_wpm, accuracy, cur_streak)
 
-    conn.close()
+            bg_conn.commit()
+            bg_conn.close()
+        except Exception as e:
+            print(f"Background attempt post-processing warning: {e}")
+
+    import threading
+    t = threading.Thread(target=_bg_post_process, daemon=True)
+    t.start()
+
     return attempt_id
 
 

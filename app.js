@@ -2039,7 +2039,7 @@ class StenoApp {
         selected_typing_system: this.selectedTypingSystem || (typingMode === 'krutidev' ? 'kruti_dev_010' : 'mangal_unicode'),
         exam_rule: this.currentExamRule || 'ssc_steno',
         time_taken_seconds: timeTaken
-      });
+      }, 30000);
 
       stenoTypingEngine.stopPractice();
       this.showToast('मूल्यांकन पूर्ण! 🎉', 'success');
@@ -2047,14 +2047,26 @@ class StenoApp {
       // Render Result Report Card
       const reportContainer = document.getElementById('resultReportContainer');
       if (window.stenoComparisonView && reportContainer) {
-        stenoComparisonView.renderResult(evalReport, reportContainer);
+        try {
+          stenoComparisonView.renderResult(evalReport, reportContainer);
+        } catch (renderErr) {
+          console.error('Error in renderResult:', renderErr);
+        }
       }
       this.navigate('result');
       if (!this.user) {
         this.showToast('स्कोर सुरक्षित रखने व इतिहास देखने हेतु लॉगिन करें।', 'info');
       }
     } catch (err) {
-      this.showToast('सबमिशन में त्रुटि: ' + err.message, 'error');
+      if (err.status === 403) {
+        this.showToast(err.message || 'यह अभ्यास केवल प्रो सदस्यों के लिए उपलब्ध है।', 'warning');
+        this.openModal('subscriptionModal');
+      } else if (err.status === 401) {
+        this.showToast('सत्र समाप्त हो गया है, कृपया पुनः लॉगिन करें।', 'warning');
+        this.openModal('loginModal');
+      } else {
+        this.showToast('सबमिशन में त्रुटि: ' + err.message, 'error');
+      }
     } finally {
       if (submitBtn) {
         submitBtn.disabled = false;
