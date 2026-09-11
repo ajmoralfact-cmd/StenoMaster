@@ -4,11 +4,12 @@ Manages SQLite schema, migrations, queries, and realistic seed data.
 """
 
 import sqlite3
+import math
 import os
 import json
 import hashlib
 import secrets
-from datetime import datetime, date, timedelta
+from datetime import datetime, date, timedelta, timezone
 from typing import List, Dict, Any, Optional
 
 DB_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'stenomaster.db')
@@ -1520,6 +1521,7 @@ def verify_session(token: str) -> Optional[Dict[str, Any]]:
         SELECT s.user_id, s.ip_address as session_ip, s.device_name as session_device,
                u.username, u.email, u.phone, u.student_code, u.role,
                u.subscription_status, u.subscription_plan, u.subscription_start, u.subscription_end,
+               COALESCE(u.is_free_access, 0) as is_free_access,
                p.display_name, p.avatar, p.target_exam, p.preferred_language, p.preferred_typing_mode,
                p.target_wpm, p.points, p.streak_days, p.show_on_leaderboard, u.referral_code
         FROM sessions s
@@ -1542,12 +1544,36 @@ def verify_session(token: str) -> Optional[Dict[str, Any]]:
     except Exception:
         pass
 
-    # Check subscription expiry
-    if res.get('subscription_status') == 'active' and res.get('subscription_end'):
-        if is_expired_datetime(res['subscription_end']):
-            c.execute("UPDATE users SET subscription_status = 'expired' WHERE id = ?", (res['user_id'],))
-            conn.commit()
-            res['subscription_status'] = 'expired'
+    # Check subscription expiry and compute dynamic days_left
+    res["is_free_access"] = bool(res.get("is_free_access", 0))
+    now_dt = datetime.now()
+    end_val = res.get('subscription_end')
+    if res.get('role') == 'admin':
+        res['subscription_days_left'] = 9999
+        res['is_premium'] = True
+    elif end_val:
+        dt = parse_db_datetime(end_val)
+        if dt:
+            now_adj = datetime.now(dt.tzinfo) if dt.tzinfo else now_dt
+            delta = dt - now_adj
+            if delta.total_seconds() > 0:
+                res['subscription_days_left'] = max(1, math.ceil(delta.total_seconds() / 86400.0))
+                res['is_premium'] = True
+            else:
+                res['subscription_days_left'] = 0
+                res['subscription_status'] = 'expired'
+                res['is_premium'] = False
+                c.execute("UPDATE users SET subscription_status = 'expired', is_free_access = 0 WHERE id = ?", (res['user_id'],))
+                conn.commit()
+        else:
+            res['subscription_days_left'] = 30
+            res['is_premium'] = True
+    elif res.get('subscription_status') == 'active':
+        res['subscription_days_left'] = 30
+        res['is_premium'] = True
+    else:
+        res['subscription_days_left'] = 0
+        res['is_premium'] = False
 
     conn.close()
     return res
@@ -2654,31 +2680,28 @@ def get_admin_users() -> List[Dict[str, Any]]:
         if r["role"] == "admin":
             r["effective_status"] = "admin"
             r["subscription_days_left"] = 9999
-        elif r["is_free_access"]:
-            r["effective_status"] = "free_access"
-            r["subscription_days_left"] = 9999
-        elif r.get("subscription_status") == "active":
+        else:
             end_val = r.get("subscription_end")
-            if not end_val:
-                r["effective_status"] = "active"
-                r["subscription_days_left"] = 9999
-            else:
+            if end_val:
                 dt = parse_db_datetime(end_val)
                 if dt:
                     now_adj = datetime.now(dt.tzinfo) if dt.tzinfo else now_dt
-                    if dt > now_adj:
-                        delta = dt - now_adj
+                    delta = dt - now_adj
+                    if delta.total_seconds() > 0:
                         r["effective_status"] = "active"
-                        r["subscription_days_left"] = max(1, delta.days + (1 if delta.seconds > 0 else 0))
+                        r["subscription_days_left"] = max(1, math.ceil(delta.total_seconds() / 86400.0))
                     else:
                         r["effective_status"] = "expired"
                         r["subscription_days_left"] = 0
                 else:
                     r["effective_status"] = "active"
                     r["subscription_days_left"] = 30
-        else:
-            r["effective_status"] = r.get("subscription_status") or "free"
-            r["subscription_days_left"] = 0
+            elif r.get("subscription_status") == "active":
+                r["effective_status"] = "active"
+                r["subscription_days_left"] = 30
+            else:
+                r["effective_status"] = r.get("subscription_status") or "free"
+                r["subscription_days_left"] = 0
 
     return rows
 
@@ -2701,21 +2724,26 @@ def admin_toggle_free_access(user_id: int, is_free: bool, admin_id: int = 1) -> 
         return {"success": False, "error": "उपयोगकर्ता नहीं मिला"}
 
     val = 1 if is_free else 0
+    now_dt = datetime.now(timezone.utc)
+    now_iso = now_dt.isoformat()
+    end_iso = (now_dt + timedelta(days=30)).isoformat()
     if val == 1:
         c.execute("""
             UPDATE users 
             SET is_free_access = 1, 
                 subscription_status = 'active',
-                subscription_plan = 'All Exercises Free (लाइफटाइम छूट)',
-                subscription_end = NULL
+                subscription_plan = 'StenoMaster Pro (30 दिन फ्री)',
+                subscription_start = COALESCE(subscription_start, ?),
+                subscription_end = ?
             WHERE id = ?
-        """, (user_id,))
+        """, (now_iso, end_iso, user_id))
     else:
         c.execute("""
             UPDATE users 
             SET is_free_access = 0, 
                 subscription_status = 'free',
-                subscription_plan = 'Free Tier'
+                subscription_plan = 'Free Tier',
+                subscription_end = NULL
             WHERE id = ?
         """, (user_id,))
     conn.commit()
@@ -3055,21 +3083,25 @@ def is_user_premium(user_id: int) -> bool:
     if not user:
         conn.close()
         return False
-    if user["role"] == "admin" or bool(user["is_free_access"]):
+    if user["role"] == "admin":
         conn.close()
         return True
-    if user["subscription_status"] == "active":
-        if not user["subscription_end"]:
-            conn.close()
-            return True
-        if is_expired_datetime(user["subscription_end"]):
-            c.execute("UPDATE users SET subscription_status = 'expired' WHERE id = ?", (user_id,))
+
+    end_val = user.get("subscription_end")
+    if end_val:
+        if is_expired_datetime(end_val):
+            c.execute("UPDATE users SET subscription_status = 'expired', is_free_access = 0 WHERE id = ?", (user_id,))
             conn.commit()
             conn.close()
             return False
         else:
             conn.close()
             return True
+
+    if user.get("subscription_status") == "active":
+        conn.close()
+        return True
+
     conn.close()
     return False
 
@@ -3099,33 +3131,38 @@ def get_user_subscription_info(user_id: int) -> Dict[str, Any]:
             "is_free_access": True
         }
 
-    if has_free_access:
-        return {
-            "is_premium": True,
-            "status": "active",
-            "plan": "All Exercises Free (लाइफटाइम फ्री एक्सेस)",
-            "days_left": 9999,
-            "end_date": None,
-            "is_free_access": True
-        }
-
-    if is_active and user["subscription_end"]:
-        dt = parse_db_datetime(user["subscription_end"])
+    end_val = user.get("subscription_end")
+    if end_val:
+        dt = parse_db_datetime(end_val)
         if dt:
             now = datetime.now(dt.tzinfo) if dt.tzinfo else datetime.now()
             delta = dt - now
-            days_left = max(1, delta.days + (1 if delta.seconds > 0 else 0))
+            if delta.total_seconds() > 0:
+                days_left = max(1, math.ceil(delta.total_seconds() / 86400.0))
+            else:
+                days_left = 0
+                is_active = False
         else:
-            days_left = 30
+            days_left = 30 if is_active else 0
+    elif is_active:
+        days_left = 30
+
+    plan_name = user.get("subscription_plan")
+    if not plan_name or "लाइफटाइम" in plan_name or plan_name == "Free Tier":
+        if has_free_access or is_active:
+            plan_name = "StenoMaster Pro (30 दिन फ्री)" if has_free_access else "StenoMaster Pro — 1 Month (₹100/माह)"
+        else:
+            plan_name = "Free Tier"
 
     return {
         "is_premium": is_active,
-        "status": "active" if is_active else user.get("subscription_status", "free"),
-        "plan": user.get("subscription_plan") or "StenoMaster Pro — 1 Month (₹100/माह)",
+        "status": "active" if is_active else ("expired" if end_val and days_left <= 0 else user.get("subscription_status", "free")),
+        "plan": plan_name,
         "start_date": user.get("subscription_start"),
         "end_date": user.get("subscription_end"),
         "days_left": days_left,
-        "is_free_access": False
+        "subscription_days_left": days_left,
+        "is_free_access": has_free_access
     }
 
 

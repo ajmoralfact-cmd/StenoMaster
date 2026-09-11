@@ -1210,9 +1210,9 @@ class StenoApp {
           areaBadge.innerHTML = '👨‍🎓 Student Area';
         }
 
-        const isPro = this.user.is_premium || this.user.subscription_status === 'active';
-        if (isPro) {
-          const daysLeft = this.user.subscription_days_left !== undefined ? this.user.subscription_days_left : 30;
+        const isPro = Boolean(this.user.is_premium || this.user.subscription_status === 'active');
+        const daysLeft = this.user.subscription_days_left !== undefined ? this.user.subscription_days_left : 0;
+        if (isPro && daysLeft > 0) {
           if (validityPill) {
             validityPill.style.display = 'inline-flex';
             validityPill.className = 'plan-validity-pill is-pro';
@@ -2468,11 +2468,11 @@ class StenoApp {
       }
 
       const isPro = Boolean(details.is_premium || details.subscription_status === 'active');
-      const daysLeft = details.subscription_days_left !== undefined ? details.subscription_days_left : 0;
+      const daysLeft = details.subscription_days_left !== undefined ? details.subscription_days_left : (details.days_left || 0);
 
       if (statusBadgeWrap) {
-        if (isPro) {
-          const expDate = details.subscription_end ? new Date(details.subscription_end).toLocaleDateString('hi-IN') : 'सक्रिय';
+        if (isPro && daysLeft > 0) {
+          const expDate = details.subscription_end ? new Date(details.subscription_end).toLocaleDateString('hi-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : 'सक्रिय';
           statusBadgeWrap.innerHTML = `
             <span class="badge badge-success" style="font-size:0.9rem; padding:8px 16px;">
               👑 Pro Active (वैधता: ${expDate} • ${daysLeft} दिन शेष)

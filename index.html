@@ -12,7 +12,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Mukta:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/css/style.css?v=6.5">
+  <link rel="stylesheet" href="/css/style.css?v=6.6">
   <!-- Google Identity Services SDK -->
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   <script>
@@ -32,7 +32,7 @@
   <!-- =====================================================================
        Phase 2: Authentication Gateway Screen (Role Selection Login Experience)
        ===================================================================== -->
-  <div class="auth-gateway-overlay" id="authGatewayView" style="display:none;">
+  <div class="auth-gateway-overlay" id="authGatewayView" style="display:none; align-items:center; gap:5px; padding:5px 12px; background:linear-gradient(135deg, #10b981, #059669); color:#fff; border:none; border-radius:20px; font-size:0.78rem; font-weight:700; cursor:pointer;">
     <div class="auth-card-container">
       <div class="auth-card">
         
@@ -135,7 +135,7 @@
                   </button>
                 </div>
 
-                <div id="stuAuthError" class="auth-inline-error" style="display:none;"></div>
+                <div id="stuAuthError" class="auth-inline-error" style="display:none; align-items:center; gap:5px; padding:5px 12px; background:linear-gradient(135deg, #10b981, #059669); color:#fff; border:none; border-radius:20px; font-size:0.78rem; font-weight:700; cursor:pointer;"></div>
                 <button type="submit" id="stuLoginSubmitBtn" class="btn-primary auth-submit-btn">
                   <span>लॉगिन करें (Login)</span> <span>→</span>
                 </button>
@@ -147,7 +147,7 @@
             </div>
 
             <!-- 2. Student Sign Up Sub-Form -->
-            <div id="studentSubSignupForm" style="display:none;">
+            <div id="studentSubSignupForm" style="display:none; align-items:center; gap:5px; padding:5px 12px; background:linear-gradient(135deg, #10b981, #059669); color:#fff; border:none; border-radius:20px; font-size:0.78rem; font-weight:700; cursor:pointer;">
               <form onsubmit="stenoApp.handleStudentSignup(event)">
                 <div class="form-group">
                   <label class="form-label">पूरा नाम (Full Name) *</label>
@@ -227,7 +227,7 @@
                   </div>
                 </div>
 
-                <div id="stuSignupError" class="auth-inline-error" style="display:none;"></div>
+                <div id="stuSignupError" class="auth-inline-error" style="display:none; align-items:center; gap:5px; padding:5px 12px; background:linear-gradient(135deg, #10b981, #059669); color:#fff; border:none; border-radius:20px; font-size:0.78rem; font-weight:700; cursor:pointer;"></div>
 
                 <button type="submit" id="stuSignupSubmitBtn" class="btn-primary auth-submit-btn">
                   <span>खाता बनाएं और अभ्यास शुरू करें (Create Account)</span> <span>→</span>
@@ -241,7 +241,7 @@
           </div>
 
           <!-- Admin Login Panel -->
-          <div class="auth-panel" id="adminLoginPanel" style="display:none;">
+          <div class="auth-panel" id="adminLoginPanel" style="display:none; align-items:center; gap:5px; padding:5px 12px; background:linear-gradient(135deg, #10b981, #059669); color:#fff; border:none; border-radius:20px; font-size:0.78rem; font-weight:700; cursor:pointer;">
             <div class="auth-panel-badge admin-badge">
               <span>🛡️</span> <span>प्रशासनिक नियंत्रण (Admin Security Console)</span>
             </div>
@@ -286,7 +286,7 @@
                 </button>
               </div>
 
-              <div id="adminAuthError" class="auth-inline-error" style="display:none;"></div>
+              <div id="adminAuthError" class="auth-inline-error" style="display:none; align-items:center; gap:5px; padding:5px 12px; background:linear-gradient(135deg, #10b981, #059669); color:#fff; border:none; border-radius:20px; font-size:0.78rem; font-weight:700; cursor:pointer;"></div>
               <button type="submit" id="adminLoginSubmitBtn" class="btn-primary auth-submit-btn admin-btn">
                 <span>🛡️ Secure Admin Login</span>
               </button>
@@ -345,13 +345,13 @@
             <span class="three-dots-icon">⋮</span>
           </button>
           <!-- Keep mobileMenuBtn ID for backward compatibility -->
-          <button class="mobile-menu-btn" id="mobileMenuBtn" onclick="stenoApp.toggleSidebar()" aria-label="Open Navigation" style="display:none;">☰</button>
+          <button class="mobile-menu-btn" id="mobileMenuBtn" onclick="stenoApp.toggleSidebar()" aria-label="Open Navigation" style="display:none; align-items:center; gap:5px; padding:5px 12px; background:linear-gradient(135deg, #10b981, #059669); color:#fff; border:none; border-radius:20px; font-size:0.78rem; font-weight:700; cursor:pointer;">☰</button>
 
           <!-- Brand Logo -->
           <a href="javascript:void(0)" class="header-brand-link" onclick="stenoApp.handleLogoClick()" title="StenoMaster">
             <img src="/assets/logo.png" alt="StenoMaster" class="header-brand-logo">
             <span class="header-brand-name">StenoMaster</span>
-            <span class="header-view-badge" id="activeViewBadge" style="display:none;">Dashboard</span>
+            <span class="header-view-badge" id="activeViewBadge" style="display:none; align-items:center; gap:5px; padding:5px 12px; background:linear-gradient(135deg, #10b981, #059669); color:#fff; border:none; border-radius:20px; font-size:0.78rem; font-weight:700; cursor:pointer;">Dashboard</span>
           </a>
         </div>
 
@@ -369,7 +369,7 @@
           </div>
 
           <!-- PWA 1-Click App Install Button -->
-          <button class="pwa-install-btn" id="pwaInstallBtn" onclick="stenoApp.installPwaApp()" style="display:none;" title="StenoMaster ऐप इंस्टॉल करें">
+          <button class="pwa-install-btn" id="pwaInstallBtn" onclick="stenoApp.installPwaApp()" style="display:none; align-items:center; gap:5px; padding:5px 12px; background:linear-gradient(135deg, #10b981, #059669); color:#fff; border:none; border-radius:20px; font-size:0.78rem; font-weight:700; cursor:pointer;" title="StenoMaster ऐप इंस्टॉल करें">
             <span>📲</span> <span class="hide-mobile">ऐप इंस्टॉल करें</span>
           </button>
 
@@ -1071,7 +1071,7 @@
           </div>
 
           <!-- Expiring Soon Warning Banner -->
-          <div id="subExpiringSoonBanner" class="expiring-soon-banner" style="display:none;">
+          <div id="subExpiringSoonBanner" class="expiring-soon-banner" style="display:none; align-items:center; gap:5px; padding:5px 12px; background:linear-gradient(135deg, #10b981, #059669); color:#fff; border:none; border-radius:20px; font-size:0.78rem; font-weight:700; cursor:pointer;">
             <div style="display:flex; align-items:center; gap:12px;">
               <span style="font-size:1.6rem;">⚠️</span>
               <div>
@@ -1166,7 +1166,7 @@
                 </span>
                 <span id="subPolicyRefund-icon">▼</span>
               </div>
-              <div class="sub-policy-content" id="subPolicyRefund" style="display:none;">
+              <div class="sub-policy-content" id="subPolicyRefund" style="display:none; align-items:center; gap:5px; padding:5px 12px; background:linear-gradient(135deg, #10b981, #059669); color:#fff; border:none; border-radius:20px; font-size:0.78rem; font-weight:700; cursor:pointer;">
                 <p><strong>1. 2 फ्री कक्षाओं का निःशुल्क ट्रायल:</strong> प्रत्येक छात्र बिना किसी भुगतान के पहली 2 डिक्टेशन कक्षाएं पूर्णतः फ्री अभ्यास कर सकते हैं। ऑडियो और मूल्यांकन संतुष्टि के बाद ही प्रो प्लान खरीदें।</p>
                 <p><strong>2. 7-दिवसीय मनी-बैक गारंटी:</strong> यदि सदस्यता के 7 दिनों के भीतर कोई वास्तविक तकनीकी समस्या (जैसे प्रो कक्षाएं अनलॉक न होना या दोहरा भुगतान कटना) आती है और हमारी तकनीकी टीम 48 घंटे में समाधान नहीं कर पाती, तो 100% रिफंड दिया जाएगा।</p>
                 <p><strong>3. रिफंड क्लेम एवं निपटान:</strong> रिफंड हेतु <a href="mailto:harshkhare879@gmail.com" style="color:var(--primary); font-weight:700;">harshkhare879@gmail.com</a> पर Student Code व Cashfree Order ID भेजें। स्वीकृत राशि <strong>5 से 7 कार्यदिवस (Working Days)</strong> में सीधे आपके मूल बैंक/UPI खाते में वापस जमा हो जाएगी।</p>
@@ -1184,7 +1184,7 @@
                 </span>
                 <span id="subPolicyTerms-icon">▼</span>
               </div>
-              <div class="sub-policy-content" id="subPolicyTerms" style="display:none;">
+              <div class="sub-policy-content" id="subPolicyTerms" style="display:none; align-items:center; gap:5px; padding:5px 12px; background:linear-gradient(135deg, #10b981, #059669); color:#fff; border:none; border-radius:20px; font-size:0.78rem; font-weight:700; cursor:pointer;">
                 <p><strong>1. सेवा का स्वरूप:</strong> StenoMaster एक निजी ऑनलाइन शैक्षणिक व आशुलिपि कौशल मूल्यांकन प्लेटफ़ॉर्म है।</p>
                 <p><strong>2. एकल डिवाइस नियम (Single-Device Access):</strong> एक समय में केवल एक ही कंप्यूटर या मोबाइल पर लॉगिन की अनुमति है। खाता विवरण किसी अन्य से साझा करना प्रतिबंधित है।</p>
                 <p><strong>3. तुरंत डिजिटल एक्सेस:</strong> Cashfree भुगतान की पुष्टि होते ही प्रो सदस्यता तुरंत अनलॉक कर दी जाती है।</p>
@@ -1204,7 +1204,7 @@
                 </span>
                 <span id="subPolicyPrivacy-icon">▼</span>
               </div>
-              <div class="sub-policy-content" id="subPolicyPrivacy" style="display:none;">
+              <div class="sub-policy-content" id="subPolicyPrivacy" style="display:none; align-items:center; gap:5px; padding:5px 12px; background:linear-gradient(135deg, #10b981, #059669); color:#fff; border:none; border-radius:20px; font-size:0.78rem; font-weight:700; cursor:pointer;">
                 <p><strong>1. शून्य कार्ड भंडारण (Zero Card Storage):</strong> StenoMaster आपके क्रेडिट/डेबिट कार्ड नंबर, CVV अथवा UPI पिन को कभी भी अपने सर्वर पर स्टोर नहीं करता। सभी ऑनलाइन लेन-देन Cashfree के 256-bit SSL एन्क्रिप्टेड गेटवे से सुरक्षित होते हैं।</p>
                 <p><strong>2. न्यूनतम डेटा:</strong> केवल आपका नाम, ईमेल, मोबाइल नंबर और अभ्यास रिपोर्ट सुरक्षित रखी जाती है।</p>
                 <p><strong>3. गैर-साझाकरण गारंटी:</strong> हम आपका व्यक्तिगत डेटा किसी भी तीसरे पक्ष या विज्ञापनदाताओं को कभी नहीं बेचते।</p>
@@ -1222,7 +1222,7 @@
                 </span>
                 <span id="subPolicyContact-icon">▼</span>
               </div>
-              <div class="sub-policy-content" id="subPolicyContact" style="display:none;">
+              <div class="sub-policy-content" id="subPolicyContact" style="display:none; align-items:center; gap:5px; padding:5px 12px; background:linear-gradient(135deg, #10b981, #059669); color:#fff; border:none; border-radius:20px; font-size:0.78rem; font-weight:700; cursor:pointer;">
                 <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:12px; margin-bottom:12px;">
                   <div style="background:var(--bg-subtle); padding:10px; border-radius:8px; border:1px solid var(--border-subtle);">
                     <div style="font-size:0.75rem; color:var(--text-muted); font-weight:700;">ईमेल सहायता</div>
@@ -1612,7 +1612,7 @@
         </div><!-- /#rules-upsssc -->
 
         <!-- SSC Steno Rules -->
-        <div id="rules-ssc" class="rules-section-panel" style="display:none;">
+        <div id="rules-ssc" class="rules-section-panel" style="display:none; align-items:center; gap:5px; padding:5px 12px; background:linear-gradient(135deg, #10b981, #059669); color:#fff; border:none; border-radius:20px; font-size:0.78rem; font-weight:700; cursor:pointer;">
 
           <div class="rules-alert rules-alert-blue">
             <strong>📌 स्रोत:</strong> कर्मचारी चयन आयोग (SSC) — Stenographer Grade 'C' & Grade 'D' Skill Test Evaluation Rules
@@ -2269,7 +2269,7 @@
   </div>
 
   <!-- Attractive Vibrant Steno Dictation Countdown Overlay (5 to 1) -->
-  <div id="stenoCountdownOverlay" class="countdown-overlay" style="display:none;">
+  <div id="stenoCountdownOverlay" class="countdown-overlay" style="display:none; align-items:center; gap:5px; padding:5px 12px; background:linear-gradient(135deg, #10b981, #059669); color:#fff; border:none; border-radius:20px; font-size:0.78rem; font-weight:700; cursor:pointer;">
     <div class="countdown-backdrop" onclick="stenoAudioPlayer.cancelCountdown()"></div>
     <div class="countdown-card" id="countdownCard">
       <div class="countdown-glow-ambient" id="countdownGlowAmbient"></div>
@@ -2298,7 +2298,7 @@
   <!-- ===================================================================
        SECURITY ALERT: CONCURRENT / MULTI-DEVICE LOGIN DETECTED MODAL
        =================================================================== -->
-  <div id="concurrentLoginModal" class="concurrent-modal-overlay" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="concurrentModalTitle">
+  <div id="concurrentLoginModal" class="concurrent-modal-overlay" style="display:none; align-items:center; gap:5px; padding:5px 12px; background:linear-gradient(135deg, #10b981, #059669); color:#fff; border:none; border-radius:20px; font-size:0.78rem; font-weight:700; cursor:pointer;" role="dialog" aria-modal="true" aria-labelledby="concurrentModalTitle">
     <div class="concurrent-backdrop"></div>
     <div class="concurrent-card">
       <div class="concurrent-header">
@@ -2351,10 +2351,10 @@
   <script defer src="https://sdk.cashfree.com/js/v3/cashfree.js"></script>
 
   <!-- Scripts -->
-  <script src="/js/charts.js?v=6.5"></script>
-  <script src="/js/audio_player.js?v=6.5"></script>
-  <script src="/js/typing_engine.js?v=6.5"></script>
-  <script src="/js/comparison_view.js?v=6.5"></script>
-  <script src="/js/app.js?v=6.5"></script>
+  <script src="/js/charts.js?v=6.6"></script>
+  <script src="/js/audio_player.js?v=6.6"></script>
+  <script src="/js/typing_engine.js?v=6.6"></script>
+  <script src="/js/comparison_view.js?v=6.6"></script>
+  <script src="/js/app.js?v=6.6"></script>
 </body>
 </html>

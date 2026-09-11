@@ -1165,13 +1165,13 @@ class StenoAdmin {
       let statusBadge = `<span class="sub-status-badge free">🆓 Free Tier</span>`;
       let daysBadge = `<span style="color:var(--text-muted);">—</span>`;
 
+      const days = u.subscription_days_left || 0;
       if (isFreeAccess) {
-        statusBadge = `<span class="sub-status-badge active-pro" style="background:#ecfdf5; color:#059669; border-color:#a7f3d0;">🎁 ऑल फ्री (All Free)</span>`;
-        daysBadge = `<span style="font-weight:700; color:#059669;">असीमित (फ्री)</span>`;
+        statusBadge = `<span class="sub-status-badge active-pro" style="background:#ecfdf5; color:#059669; border-color:#a7f3d0;">🎁 30D फ्री प्रो</span>`;
+        daysBadge = `<span style="font-weight:700; color:#059669;">${days > 0 ? `${days} दिन शेष` : 'समाप्त'}</span>`;
       } else if (isPro) {
-        const days = u.subscription_days_left;
         statusBadge = `<span class="sub-status-badge active-pro">👑 Active Pro</span>`;
-        daysBadge = `<span style="font-weight:700; color:#d97706;">${days >= 9999 ? 'असीमित' : `${days} दिन शेष`}</span>`;
+        daysBadge = `<span style="font-weight:700; color:#d97706;">${days >= 9999 ? 'असीमित' : (days > 0 ? `${days} दिन शेष` : 'समाप्त')}</span>`;
       } else if (isExpired) {
         statusBadge = `<span class="sub-status-badge expired">⏳ Expired</span>`;
         daysBadge = `<span style="color:#dc2626; font-size:0.8rem; font-weight:600;">समाप्त</span>`;
@@ -1179,28 +1179,26 @@ class StenoAdmin {
 
       const freeToggleCol = `
         <div style="display:flex; align-items:center; justify-content:center;">
-          <label style="display:inline-flex; align-items:center; gap:6px; cursor:pointer; background:${isFreeAccess ? 'rgba(16,185,129,0.14)' : 'var(--bg-subtle)'}; border:1.5px solid ${isFreeAccess ? '#10b981' : 'var(--border)'}; padding:4px 10px; border-radius:20px; transition:all 0.2s;" title="इस छात्र के लिए सभी 24+ एक्सरसाइज फ्री अनलॉक करें">
+          <label style="display:inline-flex; align-items:center; gap:6px; cursor:pointer; background:${isFreeAccess ? 'rgba(16,185,129,0.14)' : 'var(--bg-subtle)'}; border:1.5px solid ${isFreeAccess ? '#10b981' : 'var(--border)'}; padding:4px 10px; border-radius:20px; transition:all 0.2s;" title="इस छात्र को 30 दिन का प्रो प्लान फ्री दें">
             <input type="checkbox" ${isFreeAccess ? 'checked' : ''} 
                    onchange="stenoAdmin.toggleUserFreeAccess(${u.id}, this.checked, '${this.escapeHtml(u.display_name || u.username).replace(/'/g, "\\'")}')" 
                    style="width:16px; height:16px; cursor:pointer; accent-color:#059669;">
             <span style="font-size:0.78rem; font-weight:700; color:${isFreeAccess ? '#059669' : 'var(--text-secondary)'};">
-              ${isFreeAccess ? '✓ ऑल फ्री' : 'फ्री टिक करें'}
+              ${isFreeAccess ? '✓ 30D फ्री' : 'फ्री टिक करें'}
             </span>
           </label>
         </div>
       `;
 
       let endDateStr = '—';
-      if (isFreeAccess) {
-        endDateStr = 'लाइफटाइम (असीमित)';
-      } else if (u.subscription_end) {
+      if (u.subscription_end) {
         const d = new Date(u.subscription_end);
         if (!isNaN(d.getTime())) {
           endDateStr = d.toLocaleDateString('hi-IN', { day: 'numeric', month: 'short', year: 'numeric' });
         }
       }
 
-      const planName = isFreeAccess ? 'All Exercises Free (लाइफटाइम छूट)' : (u.subscription_plan || (isPro ? 'StenoMaster Pro' : 'Free Tier'));
+      const planName = u.subscription_plan || (isFreeAccess ? 'StenoMaster Pro (30 दिन फ्री)' : (isPro ? 'StenoMaster Pro' : 'Free Tier'));
 
       return `
         <tr>
@@ -1248,8 +1246,8 @@ class StenoAdmin {
       });
       if (res.success) {
         stenoApp.showToast(isChecked 
-          ? `🎉 ${userName} के लिए सभी एक्सरसाइज फ्री अनलॉक कर दी गईं!` 
-          : `ℹ️ ${userName} की फ्री एक्सेस स्थिति हटा दी गई।`, 'success');
+          ? `🎉 ${userName} को 30 दिन का प्रो प्लान फ्री दिया गया!` 
+          : `ℹ️ ${userName} की फ्री प्रो एक्सेस हटा दी गई।`, 'success');
         await this.loadSubscribers(this.currentSubFilter);
       } else {
         stenoApp.showToast(res.error || 'अपडेट विफल रहा', 'error');
