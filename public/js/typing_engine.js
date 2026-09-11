@@ -66,8 +66,6 @@ class StenoTypingEngine {
     this.timerEl = null;
     this.modeSelectorEl = null;
     this.draftStatusEl = null;
-    this.krutiPreviewWrap = null;
-    this.krutiPreviewText = null;
 
     this.initLeaveWarning();
   }
@@ -79,8 +77,6 @@ class StenoTypingEngine {
     this.timerEl = elements.timer;
     this.modeSelectorEl = elements.modeSelector;
     this.draftStatusEl = elements.draftStatus;
-    this.krutiPreviewWrap = document.getElementById('krutiPreviewContainer');
-    this.krutiPreviewText = document.getElementById('krutiUnicodePreviewText');
 
     if (this.modeSelectorEl) {
       this.modeSelectorEl.value = this.typingMode;
@@ -200,15 +196,11 @@ class StenoTypingEngine {
     if (this.typingMode === 'krutidev') {
       this.textarea.classList.add('font-krutidev');
       this.textarea.setAttribute('placeholder', 'कृति देव 010 में डिक्टेशन टाइप करना प्रारंभ करें... (Start typing in Kruti Dev 010)');
-      if (this.krutiPreviewWrap) {
-        this.krutiPreviewWrap.style.display = 'block';
-      }
+
     } else {
       this.textarea.classList.add('font-mangal');
       this.textarea.setAttribute('placeholder', 'डिक्टेशन सुनकर यहाँ टाइप करना प्रारंभ करें... (Start typing the dictated passage here)');
-      if (this.krutiPreviewWrap) {
-        this.krutiPreviewWrap.style.display = 'none';
-      }
+
     }
   }
 
@@ -263,9 +255,7 @@ class StenoTypingEngine {
 
     if (this.typingMode === 'krutidev') {
       const convertedUnicode = krutiDevToUnicodeJS(rawText);
-      if (this.krutiPreviewText) {
-        this.krutiPreviewText.textContent = convertedUnicode || '(यहाँ आपके टाइप किए गए कृति देव शब्दों का देवनागरी अनुवाद स्वतः दिखेगा...)';
-      }
+
       words = convertedUnicode.trim() ? convertedUnicode.trim().split(/\s+/).length : 0;
     } else {
       words = rawText.trim() ? rawText.trim().split(/\s+/).length : 0;
