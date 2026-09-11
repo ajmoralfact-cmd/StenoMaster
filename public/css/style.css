@@ -828,6 +828,7 @@ body {
 
 /* Category Filter Tabs */
 .category-filter-bar {
+  display: none !important;
   display: flex;
   gap: 8px;
   overflow-x: auto;

@@ -3,17 +3,17 @@
  * Zero-Refresh High-Performance Architecture with Active Cache Purge & Fast Navigation
  */
 
-const CACHE_NAME = 'stenomaster-v6.6';
+const CACHE_NAME = 'stenomaster-v6.7';
 const ASSETS_TO_PRECACHE = [
   '/',
   '/index.html',
-  '/css/style.css?v=6.6',
-  '/js/charts.js?v=6.6',
-  '/js/audio_player.js?v=6.6',
-  '/js/typing_engine.js?v=6.6',
-  '/js/comparison_view.js?v=6.6',
-  '/js/admin.js?v=6.6',
-  '/js/app.js?v=6.6',
+  '/css/style.css?v=6.7',
+  '/js/charts.js?v=6.7',
+  '/js/audio_player.js?v=6.7',
+  '/js/typing_engine.js?v=6.7',
+  '/js/comparison_view.js?v=6.7',
+  '/js/admin.js?v=6.7',
+  '/js/app.js?v=6.7',
   '/manifest.json',
   '/assets/logo.png'
 ];

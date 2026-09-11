@@ -1744,14 +1744,10 @@ class StenoApp {
   // -------------------------------------------------------------------------
   renderCategoryPills() {
     const container = document.getElementById('homeCategoryPills');
-    if (!container) return;
-
-    container.innerHTML = `
-      <button class="cat-pill ${this.selectedCategory === 'all' ? 'active' : ''}" onclick="stenoApp.filterCategory('all', this)">सभी श्रेणियां (All)</button>
-      ${this.categories.map(c => `
-        <button class="cat-pill ${this.selectedCategory === c.id.toString() ? 'active' : ''}" onclick="stenoApp.filterCategory('${c.id}', this)">${c.name}</button>
-      `).join('')}
-    `;
+    if (container) {
+      container.innerHTML = '';
+      container.style.display = 'none';
+    }
   }
 
   filterCategory(catId, btnEl) {
@@ -1843,16 +1839,14 @@ class StenoApp {
     const grid = document.getElementById('homeClassCardsGrid');
     if (!grid) return;
 
-    if (!this.passages || this.passages.length === 0) {
-      if (!this.allPassages || this.allPassages.length === 0) {
-        this.renderPassagesSkeleton();
-        return;
-      }
-      grid.innerHTML = '<div style="grid-column: 1/-1; text-align:center; padding: 40px; color:var(--text-muted);">कोई क्लास नहीं मिली।</div>';
+    // Show all classes together without any category filter split
+    const list = (this.allPassages && this.allPassages.length > 0) ? this.allPassages : (this.passages || []);
+    if (!list || list.length === 0) {
+      this.renderPassagesSkeleton();
       return;
     }
 
-    grid.innerHTML = this.passages.map(p => this.createPassageCardHTML(p)).join('');
+    grid.innerHTML = list.map(p => this.createPassageCardHTML(p)).join('');
   }
 
   renderClasses() {
