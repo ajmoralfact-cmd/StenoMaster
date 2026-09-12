@@ -1768,6 +1768,7 @@ class StenoApp {
 
   _applySummaryToDOM(res) {
     if (!res) return;
+    this.userSummary = res;
     const goal = res.today_goal || {};
     const stats = res.stats || {};
     const realPoints = stats.points !== undefined && stats.points !== null ? stats.points : 0;
@@ -3172,6 +3173,96 @@ class StenoApp {
       body.style.display = 'block';
       if (arrow) arrow.textContent = '▴';
     }
+  }
+
+  openRewardsModal() {
+    const summary = this.userSummary || {};
+    const stats = summary.stats || {};
+    const achievements = summary.achievements || [];
+    const points = stats.points !== undefined && stats.points !== null ? stats.points : 0;
+    const streak = stats.streak_days || 0;
+
+    // 1. Live Current Points
+    const ptsEl = document.getElementById('rewardModalCurrentPoints');
+    if (ptsEl) ptsEl.textContent = `${points} Pts`;
+
+    // 2. Live Current Streak
+    const stkEl = document.getElementById('rewardModalCurrentStreak');
+    if (stkEl) stkEl.textContent = `${streak} दिन`;
+
+    // 3. Player Level & Tier
+    const tierEl = document.getElementById('rewardModalPlayerTier');
+    if (tierEl) {
+      if (points >= 500) {
+        tierEl.textContent = '👑 Steno Master';
+        tierEl.style.background = 'linear-gradient(135deg, #f59e0b, #d97706)';
+      } else if (points >= 250) {
+        tierEl.textContent = '⚔️ Steno Warrior';
+        tierEl.style.background = 'linear-gradient(135deg, #8b5cf6, #ec4899)';
+      } else if (points >= 100) {
+        tierEl.textContent = '⭐ Steno Achiever';
+        tierEl.style.background = 'linear-gradient(135deg, #3b82f6, #06b6d4)';
+      } else {
+        tierEl.textContent = '🌱 Steno Cadet';
+        tierEl.style.background = 'linear-gradient(135deg, #10b981, #059669)';
+      }
+    }
+
+    // 4. Badges Evaluation
+    const totalPrac = stats.total_practices || 0;
+    const bestWpm = stats.best_wpm || 0;
+    const bestAcc = stats.best_accuracy || 0;
+
+    const unlockedKeys = new Set(achievements.map(a => a.badge_key));
+    if (totalPrac >= 1) unlockedKeys.add('first_practice');
+    if (totalPrac >= 10) unlockedKeys.add('practice_10');
+    if (totalPrac >= 50) unlockedKeys.add('practice_50');
+    if (bestAcc >= 90) unlockedKeys.add('accuracy_90');
+    if (bestAcc >= 95) unlockedKeys.add('accuracy_95');
+    if (bestWpm >= 40) unlockedKeys.add('speed_40');
+    if (bestWpm >= 50) unlockedKeys.add('speed_50');
+    if (streak >= 7) unlockedKeys.add('streak_7');
+
+    const allBadges = [
+      { key: 'first_practice', icon: '🧭', name: 'प्रथम डिक्टेशन (First Practice)', desc: 'पहली डिक्टेशन सफलतापूर्वक पूर्ण की।' },
+      { key: 'practice_10', icon: '🎯', name: '10 डिक्टेशन क्लब (10 Practices)', desc: '10 डिक्टेशन अभ्यास सफलतापूर्ण पूरे किए।' },
+      { key: 'practice_50', icon: '🛡️', name: 'स्टेनो योद्धा (50 Practices)', desc: '50 डिक्टेशन अभ्यास पूर्ण किए।' },
+      { key: 'accuracy_90', icon: '⭐', name: '90% सटीकता स्टार (90% Accuracy)', desc: 'डिक्टेशन में 90%+ शुद्धता प्राप्त की।' },
+      { key: 'accuracy_95', icon: '🎖️', name: '95% सटीकता मास्टर (95% Accuracy)', desc: '95%+ आधिकारिक परीक्षा स्तरीय शुद्धता।' },
+      { key: 'speed_40', icon: '⚡', name: '40 WPM गति पार (40 WPM Speed)', desc: '40 शब्द प्रति मिनट की स्टेनो गति पार की।' },
+      { key: 'speed_50', icon: '📈', name: '50 WPM गति पार (50 WPM Speed)', desc: '50 शब्द प्रति मिनट की उच्च गति दर्ज की।' },
+      { key: 'streak_7', icon: '🔥', name: '7-दिवसीय स्ट्रीक (7 Day Streak)', desc: 'लगातार 7 दिन नियमित अभ्यास किया।' }
+    ];
+
+    let unlockedCount = 0;
+    const grid = document.getElementById('rewardBadgesShowcaseGrid');
+    if (grid) {
+      grid.innerHTML = allBadges.map(b => {
+        const isUnlocked = unlockedKeys.has(b.key);
+        if (isUnlocked) unlockedCount++;
+        return `
+          <div class="badge-achievement-card ${isUnlocked ? 'unlocked' : ''}">
+            <div class="badge-icon-box">${b.icon}</div>
+            <div class="badge-info-box">
+              <div class="badge-title-row">
+                <span class="badge-name">${b.name}</span>
+                <span class="badge-status-tag ${isUnlocked ? 'tag-unlocked' : 'tag-locked'}">
+                  ${isUnlocked ? '✓ UNLOCKED' : '🔒 LOCKED'}
+                </span>
+              </div>
+              <div class="badge-desc">${b.desc}</div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    const countEl = document.getElementById('rewardModalBadgesCount');
+    if (countEl) countEl.textContent = `${unlockedCount} / ${allBadges.length}`;
+    const progEl = document.getElementById('rewardModalUnlockProgress');
+    if (progEl) progEl.textContent = `${unlockedCount} / ${allBadges.length} अनलॉक`;
+
+    this.openModal('rewardsModal');
   }
 
   togglePracticeKeyboard() {

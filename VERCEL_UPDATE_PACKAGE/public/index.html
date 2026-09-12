@@ -494,18 +494,20 @@
             <div class="h-stat-micro" id="hStatTotalWords">कुल 0 शब्द टाइप</div>
           </div>
 
-          <!-- 6. Rewards Card -->
-          <div class="h-stat-card">
+          <!-- 6. Rewards Card (Clickable to open Gamified Rewards & Badges Hub) -->
+          <div class="h-stat-card h-stat-rewards-card" onclick="stenoApp.openRewardsModal()" style="cursor:pointer;" title="क्लिक करके सभी रिवॉर्ड नियम व अनलॉक बैज देखें">
             <div class="h-stat-top">
-              <div class="h-stat-icon icon-star">🏆</div>
+              <div class="h-stat-icon icon-star" style="background:linear-gradient(135deg, rgba(245,158,11,0.2), rgba(234,179,8,0.35)); font-size:1.5rem;">🏆</div>
               <div class="h-stat-meta">
                 <div class="h-stat-label">रिवॉर्ड अंक (Rewards)</div>
-                <div class="h-stat-tag tag-star" id="hStatPointsTag">सत्यापित</div>
+                <div class="h-stat-tag tag-star" id="hStatPointsTag" style="background:rgba(245,158,11,0.18); color:#b45309; font-weight:800;">सत्यापित • नियम देखें ℹ️</div>
               </div>
             </div>
-            <div class="h-stat-val" id="hStatPoints">0 Pts</div>
-            <div class="h-stat-sub" id="hStatPointsSub">अभ्यास व शुद्धता से अर्जित</div>
-            <div class="h-stat-micro" id="hStatPointsTier">10 Pts प्रति डिक्टेशन</div>
+            <div class="h-stat-val" id="hStatPoints" style="color:#d97706;">0 Pts</div>
+            <div class="h-stat-sub" id="hStatPointsSub">सटीकता व नियमितता से अर्जित</div>
+            <div class="h-stat-micro" id="hStatPointsTier" style="color:var(--primary); font-weight:700; cursor:pointer;">
+              🎮 नियम व अनलॉक बैज देखें →
+            </div>
           </div>
 
           <!-- 7. Best Speed Card -->
@@ -2016,6 +2018,144 @@
       <div style="margin-top:16px; text-align:center; font-size:0.85rem;">
         नया खाता बनाना चाहते हैं?
         <a href="#" onclick="stenoApp.closeModal('loginModal'); stenoApp.openModal('registerModal');" style="color:var(--primary); font-weight:600;">पंजीकरण करें (Register)</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================================================================
+       GAMIFIED REWARDS & ACHIEVEMENTS MODAL
+       =================================================================== -->
+  <div class="modal-overlay" id="rewardsModal" style="display:none; align-items:center; justify-content:center; z-index:9999;">
+    <div class="rewards-game-modal">
+      <!-- Colorful Gaming Header Banner (जैसे गेम्स में होती है) -->
+      <div class="rewards-game-header">
+        <div class="rewards-header-top">
+          <div>
+            <div class="rewards-game-title">
+              <span>🏆</span>
+              <span>स्टेनो रिवॉर्ड्स एवं अचीवमेंट क्लब</span>
+            </div>
+            <p class="rewards-game-subtitle">डिक्टेशन अभ्यास करें, अपनी सटीकता व गति बढ़ाएं और एक्सक्लूसिव मेडल्स अनलॉक करें!</p>
+          </div>
+          <button type="button" class="rewards-game-close" onclick="stenoApp.closeModal('rewardsModal')" title="बंद करें">✕</button>
+        </div>
+
+        <!-- Gaming Stat Chips Row (Current Points, Badges, Streak, Tier) -->
+        <div class="rewards-stats-strip">
+          <div class="rewards-stat-pill">
+            <span class="rewards-stat-pill-label">कुल रिवॉर्ड अंक</span>
+            <span class="rewards-stat-pill-val rewards-pill-points" id="rewardModalCurrentPoints">0 Pts</span>
+          </div>
+          <div class="rewards-stat-pill">
+            <span class="rewards-stat-pill-label">अनलॉक बैज</span>
+            <span class="rewards-stat-pill-val rewards-pill-badges" id="rewardModalBadgesCount">0 / 8</span>
+          </div>
+          <div class="rewards-stat-pill">
+            <span class="rewards-stat-pill-label">दैनिक स्ट्रीक</span>
+            <span class="rewards-stat-pill-val rewards-pill-streak" id="rewardModalCurrentStreak">0 दिन</span>
+          </div>
+          <div class="rewards-stat-pill">
+            <span class="rewards-stat-pill-label">प्लेयर रैंक स्तर</span>
+            <span class="rewards-pill-tier" id="rewardModalPlayerTier">Steno Cadet</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Scrollable Modal Content (Rules Table & Badges Showcase) -->
+      <div class="rewards-modal-body">
+        <!-- 1. Rules Table Section -->
+        <div style="margin-bottom: 24px;">
+          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;">
+            <h4 style="margin:0; font-size:1.05rem; color:var(--text-main); display:flex; align-items:center; gap:8px;">
+              <span>📋</span> <span>रिवॉर्ड अंक अर्जन नियम (How to Earn Points)</span>
+            </h4>
+            <span style="font-size:0.75rem; color:var(--text-muted); font-weight:600;">ऑटो-वेरिफाइड लेजर</span>
+          </div>
+
+          <div class="rewards-table-wrapper">
+            <table class="rewards-rules-table">
+              <thead>
+                <tr>
+                  <th style="width: 36%;">गतिविधि (Activity)</th>
+                  <th style="width: 24%;">रिवॉर्ड अंक</th>
+                  <th style="width: 40%;">शर्त एवं नियम</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>
+                    <strong style="color:var(--text-main); display:flex; align-items:center; gap:6px;">
+                      <span>📝</span> प्रति डिक्टेशन अभ्यास
+                    </strong>
+                    <div style="font-size:0.72rem; color:var(--text-muted);">क्लास या सेल्फ प्रैक्टिस सबमिशन</div>
+                  </td>
+                  <td>
+                    <span class="pts-badge-green">+10 Points</span>
+                  </td>
+                  <td>सफलतापूर्वक पूर्ण व सबमिट किए गए प्रत्येक डिक्टेशन अभ्यास पर</td>
+                </tr>
+                <tr>
+                  <td>
+                    <strong style="color:var(--text-main); display:flex; align-items:center; gap:6px;">
+                      <span>🎯</span> दैनिक लक्ष्य बोनस
+                    </strong>
+                    <div style="font-size:0.72rem; color:var(--text-muted);">प्रतिदिन 3 डिक्टेशन पूर्ण</div>
+                  </td>
+                  <td>
+                    <span class="pts-badge-green" style="background:rgba(59,130,246,0.12); color:#2563eb; border-color:rgba(59,130,246,0.25);">+20 Points</span>
+                  </td>
+                  <td>एक ही दिन में निर्धारित लक्ष्य (3 डिक्टेशन) पूर्ण करने पर</td>
+                </tr>
+                <tr>
+                  <td>
+                    <strong style="color:var(--text-main); display:flex; align-items:center; gap:6px;">
+                      <span>🔥</span> 7-दिवसीय स्ट्रीक बोनस
+                    </strong>
+                    <div style="font-size:0.72rem; color:var(--text-muted);">लगातार बिना नागा अभ्यास</div>
+                  </td>
+                  <td>
+                    <span class="pts-badge-green" style="background:rgba(239,68,68,0.12); color:#dc2626; border-color:rgba(239,68,68,0.25);">+50 Points</span>
+                  </td>
+                  <td>हर 7 दिन लगातार अभ्यास बनाए रखने पर (हर 7, 14, 21 दिन)</td>
+                </tr>
+                <tr>
+                  <td>
+                    <strong style="color:var(--text-main); display:flex; align-items:center; gap:6px;">
+                      <span>🎁</span> मित्र रेफरल बोनस
+                    </strong>
+                    <div style="font-size:0.72rem; color:var(--text-muted);">रेफरल कोड से नए छात्र जोड़ें</div>
+                  </td>
+                  <td>
+                    <span class="pts-badge-green" style="background:rgba(245,158,11,0.14); color:#b45309; border-color:rgba(245,158,11,0.3);">+50 Points</span>
+                  </td>
+                  <td>आपके कोड से नए छात्र का रजिस्ट्रेशन व प्रथम अभ्यास होने पर</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- 2. Badges & Medals Section -->
+        <div>
+          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;">
+            <h4 style="margin:0; font-size:1.05rem; color:var(--text-main); display:flex; align-items:center; gap:8px;">
+              <span>🎖️</span> <span>अनलॉक होने वाले मेडल्स व बैज (Achievements Showcase)</span>
+            </h4>
+            <span style="font-size:0.75rem; color:var(--primary); font-weight:700;" id="rewardModalUnlockProgress">0 / 8 अनलॉक</span>
+          </div>
+
+          <div class="rewards-badges-grid" id="rewardBadgesShowcaseGrid">
+            <!-- Dynamic Badge Cards will be rendered by JS -->
+          </div>
+        </div>
+
+        <!-- 3. Gamification Note -->
+        <div style="margin-top:20px; padding:12px 16px; background:rgba(99,102,241,0.06); border:1px solid rgba(99,102,241,0.18); border-radius:12px; display:flex; align-items:center; gap:12px;">
+          <span style="font-size:1.4rem;">👑</span>
+          <div style="font-size:0.78rem; color:var(--text-secondary); line-height:1.4;">
+            <strong>लीडरबोर्ड रैंकिंग प्रभाव:</strong> आपके कुल रिवॉर्ड अंक आपकी <strong>ऑल-इंडिया रैंकिंग</strong> और प्रो प्रतिष्ठा तय करते हैं। नियमित अभ्यास जारी रखें और शीर्ष 10 में स्थान बनाएं!
+          </div>
+        </div>
       </div>
     </div>
   </div>
