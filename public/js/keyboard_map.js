@@ -1,6 +1,8 @@
 /**
  * StenoMaster - Visual Interactive Keyboard Layout Map
  * Provides visual on-screen typing guide for Kruti Dev 010, Remington Gail, and Inscript.
+ * Exactly matches standard Hindi keyboard layout (Reference: Apple Magic Keyboard layout).
+ * Shift characters displayed on TOP, Normal characters displayed on BOTTOM.
  */
 
 class StenoKeyboardMap {
@@ -10,24 +12,27 @@ class StenoKeyboardMap {
     this.searchQuery = '';
 
     this.rows = [
+      // ROW 1 - Numbers Row
       [
-        { code: 'Backquote', key: '`', shiftKey: '~', kdNorm: '़', kdShift: '्', remNorm: '़', remShift: '्', insNorm: 'ो', insShift: 'ौ', finger: 1 },
+        { code: 'Backquote', key: '`', shiftKey: '~', kdNorm: '़', kdShift: '‘', remNorm: '़', remShift: '‘', insNorm: 'ो', insShift: 'ौ', finger: 1 },
         { code: 'Digit1', key: '1', shiftKey: '!', kdNorm: '१', kdShift: '!', remNorm: '१', remShift: '!', insNorm: '१', insShift: 'ऍ', finger: 1 },
-        { code: 'Digit2', key: '2', shiftKey: '@', kdNorm: '२', kdShift: 'ॅ', remNorm: '२', remShift: 'ॅ', insNorm: '२', insShift: 'र्', finger: 2 },
-        { code: 'Digit3', key: '3', shiftKey: '#', kdNorm: '३', kdShift: '्र', remNorm: '३', remShift: '्र', insNorm: '३', insShift: '्र', finger: 3 },
-        { code: 'Digit4', key: '4', shiftKey: '$', kdNorm: '४', kdShift: 'र्', remNorm: '४', remShift: 'र्', insNorm: '४', insShift: 'र्', finger: 4 },
-        { code: 'Digit5', key: '5', shiftKey: '%', kdNorm: '५', kdShift: 'ज्ञ', remNorm: '५', remShift: 'ज्ञ', insNorm: '५', insShift: 'ज्ञ', finger: 4 },
-        { code: 'Digit6', key: '6', shiftKey: '^', kdNorm: '६', kdShift: 'त्र', remNorm: '६', remShift: 'त्र', insNorm: '६', insShift: 'त्र', finger: 5 },
-        { code: 'Digit7', key: '7', shiftKey: '&', kdNorm: '७', kdShift: 'क्ष', remNorm: '७', remShift: 'क्ष', insNorm: '७', insShift: 'क्ष', finger: 5 },
-        { code: 'Digit8', key: '8', shiftKey: '*', kdNorm: '८', kdShift: 'श्र', remNorm: '८', remShift: 'श्र', insNorm: '८', insShift: 'श्र', finger: 6 },
-        { code: 'Digit9', key: '9', shiftKey: '(', kdNorm: '९', kdShift: '(', remNorm: '९', remShift: '(', insNorm: '९', insShift: '(', finger: 7 },
-        { code: 'Digit0', key: '0', shiftKey: ')', kdNorm: '०', kdShift: ')', remNorm: '०', remShift: ')', insNorm: '०', insShift: ')', finger: 8 },
-        { code: 'Minus', key: '-', shiftKey: '_', kdNorm: '-', kdShift: 'ः', remNorm: '-', remShift: 'ः', insNorm: '-', insShift: 'ः', finger: 8 },
-        { code: 'Equal', key: '=', shiftKey: '+', kdNorm: 'ृ', kdShift: 'ऋ', remNorm: 'ृ', remShift: 'ऋ', insNorm: 'ृ', insShift: 'ऋ', finger: 8 },
-        { code: 'Backspace', key: 'Backspace', label: 'Backspace ⌫', width: 'wide-backspace', isSpecial: true, finger: 8 }
+        { code: 'Digit2', key: '2', shiftKey: '@', kdNorm: '२', kdShift: '/', remNorm: '२', remShift: '/', insNorm: '२', insShift: 'र्', finger: 2 },
+        { code: 'Digit3', key: '3', shiftKey: '#', kdNorm: '३', kdShift: 'रु', remNorm: '३', remShift: 'रु', insNorm: '३', insShift: '्र', finger: 3 },
+        { code: 'Digit4', key: '4', shiftKey: '$', kdNorm: '४', kdShift: '+', remNorm: '४', remShift: '+', insNorm: '४', insShift: 'र्', finger: 4 },
+        { code: 'Digit5', key: '5', shiftKey: '%', kdNorm: '५', kdShift: ':', remNorm: '५', remShift: ':', insNorm: '५', insShift: 'ज्ञ', finger: 4 },
+        { code: 'Digit6', key: '6', shiftKey: '^', kdNorm: '६', kdShift: '‘', remNorm: '६', remShift: '‘', insNorm: '६', insShift: 'त्र', finger: 5 },
+        { code: 'Digit7', key: '7', shiftKey: '&', kdNorm: '७', kdShift: '–', remNorm: '७', remShift: '–', insNorm: '७', insShift: 'क्ष', finger: 5 },
+        { code: 'Digit8', key: '8', shiftKey: '*', kdNorm: '८', kdShift: '’', remNorm: '८', remShift: '’', insNorm: '८', insShift: 'श्र', finger: 6 },
+        { code: 'Digit9', key: '9', shiftKey: '(', kdNorm: '९', kdShift: ';', remNorm: '९', remShift: ';', insNorm: '९', insShift: '(', finger: 7 },
+        { code: 'Digit0', key: '0', shiftKey: ')', kdNorm: '०', kdShift: 'द्ध', remNorm: '०', remShift: 'द्ध', insNorm: '०', insShift: ')', finger: 8 },
+        { code: 'Minus', key: '-', shiftKey: '_', kdNorm: '.', kdShift: 'ऋ', remNorm: '.', remShift: 'ऋ', insNorm: '-', insShift: 'ः', finger: 8 },
+        { code: 'Equal', key: '=', shiftKey: '+', kdNorm: 'ृ', kdShift: 'त्र', remNorm: 'ृ', remShift: 'त्र', insNorm: 'ृ', insShift: 'ऋ', finger: 8 },
+        { code: 'Backspace', key: 'Backspace', label: 'delete ⌫', width: 'wide-backspace', isSpecial: true, finger: 8 }
       ],
+
+      // ROW 2 - QWERTY Row
       [
-        { code: 'Tab', key: 'Tab', label: 'Tab ⇥', width: 'wide-tab', isSpecial: true, finger: 1 },
+        { code: 'Tab', key: 'Tab', label: 'tab ⇥', width: 'wide-tab', isSpecial: true, finger: 1 },
         { code: 'KeyQ', key: 'q', shiftKey: 'Q', kdNorm: 'ु', kdShift: 'फ', remNorm: 'ु', remShift: 'फ', insNorm: 'ौ', insShift: 'औ', finger: 1 },
         { code: 'KeyW', key: 'w', shiftKey: 'W', kdNorm: 'ू', kdShift: 'ॅ', remNorm: 'ू', remShift: 'ॅ', insNorm: 'ै', insShift: 'ऐ', finger: 2 },
         { code: 'KeyE', key: 'e', shiftKey: 'E', kdNorm: 'म', kdShift: 'म्', remNorm: 'म', remShift: 'म्', insNorm: 'ा', insShift: 'आ', finger: 3 },
@@ -38,13 +43,15 @@ class StenoKeyboardMap {
         { code: 'KeyI', key: 'i', shiftKey: 'I', kdNorm: 'प', kdShift: 'प्', remNorm: 'प', remShift: 'प्', insNorm: 'ग', insShift: 'घ', finger: 6 },
         { code: 'KeyO', key: 'o', shiftKey: 'O', kdNorm: 'व', kdShift: 'व्', remNorm: 'व', remShift: 'व्', insNorm: 'द', insShift: 'ध', finger: 7 },
         { code: 'KeyP', key: 'p', shiftKey: 'P', kdNorm: 'च', kdShift: 'च्', remNorm: 'च', remShift: 'च्', insNorm: 'ज', insShift: 'झ', finger: 8 },
-        { code: 'BracketLeft', key: '[', shiftKey: '{', kdNorm: 'ख', kdShift: 'ख्', remNorm: 'ख', remShift: 'ख्', insNorm: 'ड', insShift: 'ढ', finger: 8 },
-        { code: 'BracketRight', key: ']', shiftKey: '}', kdNorm: ',', kdShift: 'द्व', remNorm: '़', remShift: 'ञ', insNorm: '़', insShift: 'ञ', finger: 8 },
-        { code: 'Backslash', key: '\\', shiftKey: '|', kdNorm: '?', kdShift: '।', remNorm: '?', remShift: '।', insNorm: 'ॉ', insShift: 'ऑ', width: 'wide-pipe', finger: 8 }
+        { code: 'BracketLeft', key: '[', shiftKey: '{', kdNorm: 'ख', kdShift: 'क्ष', remNorm: 'ख', remShift: 'क्ष', insNorm: 'ड', insShift: 'ढ', finger: 8 },
+        { code: 'BracketRight', key: ']', shiftKey: '}', kdNorm: ',', kdShift: 'द्व', remNorm: ',', remShift: 'द्व', insNorm: '़', insShift: 'ञ', finger: 8 },
+        { code: 'Backslash', key: '\\', shiftKey: '|', kdNorm: '?', kdShift: 'द्य', remNorm: '?', remShift: 'द्य', insNorm: 'ॉ', insShift: 'ऑ', width: 'wide-pipe', finger: 8 }
       ],
+
+      // ROW 3 - Home Row (ASDF...)
       [
-        { code: 'CapsLock', key: 'Caps', label: 'Caps ⇪', width: 'wide-caps', isSpecial: true, finger: 1 },
-        { code: 'KeyA', key: 'a', shiftKey: 'A', kdNorm: 'ं', kdShift: 'ाे', remNorm: 'ं', remShift: 'ाे', insNorm: 'ो', insShift: 'ओ', finger: 1, isHome: true },
+        { code: 'CapsLock', key: 'Caps', label: 'caps lock ⇪', width: 'wide-caps', isSpecial: true, finger: 1 },
+        { code: 'KeyA', key: 'a', shiftKey: 'A', kdNorm: 'ं', kdShift: '।', remNorm: 'ं', remShift: '।', insNorm: 'ो', insShift: 'ओ', finger: 1, isHome: true },
         { code: 'KeyS', key: 's', shiftKey: 'S', kdNorm: 'े', kdShift: 'ै', remNorm: 'े', remShift: 'ै', insNorm: 'े', insShift: 'ए', finger: 2, isHome: true },
         { code: 'KeyD', key: 'd', shiftKey: 'D', kdNorm: 'क', kdShift: 'क्', remNorm: 'क', remShift: 'क्', insNorm: '्', insShift: 'अ', finger: 3, isHome: true },
         { code: 'KeyF', key: 'f', shiftKey: 'F', kdNorm: 'ि', kdShift: 'थ्', remNorm: 'ि', remShift: 'थ्', insNorm: 'ि', insShift: 'इ', finger: 4, isHome: true, hasBump: true },
@@ -53,24 +60,28 @@ class StenoKeyboardMap {
         { code: 'KeyJ', key: 'j', shiftKey: 'J', kdNorm: 'र', kdShift: 'श्र', remNorm: 'र', remShift: 'श्र', insNorm: 'र', insShift: 'ऱ', finger: 5, isHome: true, hasBump: true },
         { code: 'KeyK', key: 'k', shiftKey: 'K', kdNorm: 'ा', kdShift: 'ज्ञ', remNorm: 'ा', remShift: 'ज्ञ', insNorm: 'क', insShift: 'ख', finger: 6, isHome: true },
         { code: 'KeyL', key: 'l', shiftKey: 'L', kdNorm: 'स', kdShift: 'स्', remNorm: 'स', remShift: 'स्', insNorm: 'त', insShift: 'थ', finger: 7, isHome: true },
-        { code: 'Semicolon', key: ';', shiftKey: ':', kdNorm: 'य', kdShift: 'य्', remNorm: 'य', remShift: 'य्', insNorm: 'च', insShift: 'छ', finger: 8, isHome: true },
-        { code: 'Quote', key: "'", shiftKey: '"', kdNorm: 'श', kdShift: 'श्', remNorm: 'श', remShift: 'श्', insNorm: 'ट', insShift: 'ठ', finger: 8 },
-        { code: 'Enter', key: 'Enter', label: 'Enter ↵', width: 'wide-enter', isSpecial: true, finger: 8 }
+        { code: 'Semicolon', key: ';', shiftKey: ':', kdNorm: 'य', kdShift: 'रू', remNorm: 'य', remShift: 'रू', insNorm: 'च', insShift: 'छ', finger: 8, isHome: true },
+        { code: 'Quote', key: "'", shiftKey: '"', kdNorm: 'श', kdShift: 'ष्', remNorm: 'श', remShift: 'ष्', insNorm: 'ट', insShift: 'ठ', finger: 8 },
+        { code: 'Enter', key: 'Enter', label: 'return ↵', width: 'wide-enter', isSpecial: true, finger: 8 }
       ],
+
+      // ROW 4 - Bottom Row (ZXCV...)
       [
-        { code: 'ShiftLeft', key: 'Shift', label: 'Shift ⇧', width: 'wide-shift-l', isSpecial: true, finger: 1 },
-        { code: 'KeyZ', key: 'z', shiftKey: 'Z', kdNorm: '्र', kdShift: 'र्', remNorm: '्र', remShift: 'र्', insNorm: 'े', insShift: 'ँ', finger: 1 },
+        { code: 'ShiftLeft', key: 'Shift', label: 'shift ⇧', width: 'wide-shift-l', isSpecial: true, finger: 1 },
+        { code: 'KeyZ', key: 'z', shiftKey: 'Z', kdNorm: '्र', kdShift: '’', remNorm: '्र', remShift: '’', insNorm: 'े', insShift: 'ँ', finger: 1 },
         { code: 'KeyX', key: 'x', shiftKey: 'X', kdNorm: 'ग', kdShift: 'ग्', remNorm: 'ग', remShift: 'ग्', insNorm: 'ं', insShift: 'ण', finger: 2 },
         { code: 'KeyC', key: 'c', shiftKey: 'C', kdNorm: 'ब', kdShift: 'ब्', remNorm: 'ब', remShift: 'ब्', insNorm: 'म', insShift: 'श', finger: 3 },
         { code: 'KeyV', key: 'v', shiftKey: 'V', kdNorm: 'अ', kdShift: 'ट', remNorm: 'अ', remShift: 'ट', insNorm: 'न', insShift: 'ष', finger: 4 },
         { code: 'KeyB', key: 'b', shiftKey: 'B', kdNorm: 'इ', kdShift: 'ठ', remNorm: 'इ', remShift: 'ठ', insNorm: 'व', insShift: 'स', finger: 4 },
-        { code: 'KeyN', key: 'n', shiftKey: 'N', kdNorm: 'द', kdShift: 'ड', remNorm: 'द', remShift: 'ड', insNorm: 'ल', insShift: 'ळ', finger: 5 },
-        { code: 'KeyM', key: 'm', shiftKey: 'M', kdNorm: 'उ', kdShift: 'ढ', remNorm: 'उ', remShift: 'ढ', insNorm: 'स', insShift: 'श', finger: 5 },
-        { code: 'Comma', key: ',', shiftKey: '<', kdNorm: 'ए', kdShift: '़', remNorm: 'ए', remShift: '़', insNorm: ',', insShift: 'ष', finger: 6 },
-        { code: 'Period', key: '.', shiftKey: '>', kdNorm: 'ण्', kdShift: 'ध्', remNorm: 'ण्', remShift: 'ध्', insNorm: '.', insShift: '।', finger: 7 },
-        { code: 'Slash', key: '/', shiftKey: '?', kdNorm: 'ध्', kdShift: '?', remNorm: 'ध्', remShift: '?', insNorm: 'य', insShift: '?', finger: 8 },
-        { code: 'ShiftRight', key: 'Shift', label: 'Shift ⇧', width: 'wide-shift-r', isSpecial: true, finger: 8 }
+        { code: 'KeyN', key: 'n', shiftKey: 'N', kdNorm: 'द', kdShift: 'छ', remNorm: 'द', remShift: 'छ', insNorm: 'ल', insShift: 'ळ', finger: 5 },
+        { code: 'KeyM', key: 'm', shiftKey: 'M', kdNorm: 'उ', kdShift: 'ड', remNorm: 'उ', remShift: 'ड', insNorm: 'स', insShift: 'श', finger: 5 },
+        { code: 'Comma', key: ',', shiftKey: '<', kdNorm: 'ए', kdShift: 'ढ', remNorm: 'ए', remShift: 'ढ', insNorm: ',', insShift: 'ष', finger: 6 },
+        { code: 'Period', key: '.', shiftKey: '>', kdNorm: 'ण्', kdShift: 'झ', remNorm: 'ण्', remShift: 'झ', insNorm: '.', insShift: '।', finger: 7 },
+        { code: 'Slash', key: '/', shiftKey: '?', kdNorm: 'ध्', kdShift: 'ध', remNorm: 'ध्', remShift: 'ध', insNorm: 'य', insShift: '?', finger: 8 },
+        { code: 'ShiftRight', key: 'Shift', label: 'shift ⇧', width: 'wide-shift-r', isSpecial: true, finger: 8 }
       ],
+
+      // ROW 5 - Space Bar Row
       [
         { code: 'Space', key: 'Space', label: 'स्पेस बार (Space Bar)', width: 'wide-space', isSpecial: true, finger: 0 }
       ]
@@ -130,37 +141,39 @@ class StenoKeyboardMap {
       return `<div class="v-key v-key-special ${k.width || ''}" data-code="${k.code}"><span class="v-key-label">${k.label || k.key}</span></div>`;
     }
 
-    let hindiChar = '';
-    let shiftHindi = '';
+    let hindiNorm = '';
+    let hindiShift = '';
     if (this.currentLayout === 'krutidev') {
-      hindiChar = k.kdNorm || '';
-      shiftHindi = k.kdShift || '';
+      hindiNorm = k.kdNorm || '';
+      hindiShift = k.kdShift || '';
     } else if (this.currentLayout === 'remington') {
-      hindiChar = k.remNorm || '';
-      shiftHindi = k.remShift || '';
+      hindiNorm = k.remNorm || '';
+      hindiShift = k.remShift || '';
     } else {
-      hindiChar = k.insNorm || '';
-      shiftHindi = k.insShift || '';
+      hindiNorm = k.insNorm || '';
+      hindiShift = k.insShift || '';
     }
 
-    const displayedHindi = this.isShift ? shiftHindi : hindiChar;
-    const subHindi = this.isShift ? hindiChar : shiftHindi;
     const isMatched = this.searchQuery && (
-      (displayedHindi && displayedHindi.includes(this.searchQuery)) ||
-      (subHindi && subHindi.includes(this.searchQuery)) ||
+      (hindiNorm && hindiNorm.includes(this.searchQuery)) ||
+      (hindiShift && hindiShift.includes(this.searchQuery)) ||
       (k.key && k.key.toLowerCase() === this.searchQuery) ||
       (k.shiftKey && k.shiftKey.toLowerCase() === this.searchQuery)
     );
 
+    const engChar = k.key.length === 1 ? k.key.toUpperCase() : k.key;
+
     return `
-      <div class="v-key finger-${k.finger} ${k.isHome ? 'v-key-home' : ''} ${isMatched ? 'v-key-matched' : ''}" 
+      <div class="v-key finger-${k.finger} ${k.isHome ? 'v-key-home' : ''} ${isMatched ? 'v-key-matched' : ''} ${this.isShift ? 'v-shift-on' : ''}" 
            data-code="${k.code}"
-           onclick="stenoKeyboardMap.showKeyDetails('${k.key}', '${k.shiftKey}', '${hindiChar}', '${shiftHindi}')"
-           title="English: ${k.key}/${k.shiftKey} | सामान्य: ${hindiChar} | शिफ्ट: ${shiftHindi}">
-        <span class="v-eng-key">${this.isShift ? k.shiftKey : k.key}</span>
-        <span class="v-hindi-char ${this.isShift ? 'is-shifted' : ''}">${displayedHindi || '—'}</span>
-        <span class="v-sub-hindi">${subHindi || ''}</span>
-        ${k.hasBump ? '<span class="v-key-bump"></span>' : ''}
+           onclick="stenoKeyboardMap.showKeyDetails('${k.key}', '${k.shiftKey}', '${hindiNorm}', '${hindiShift}')"
+           title="Key: ${engChar} | सामान्य: ${hindiNorm || '—'} | शिफ्ट: ${hindiShift || '—'}">
+        <span class="v-eng-key">${engChar}</span>
+        <div class="v-chars-stack">
+          <span class="v-shift-char ${this.isShift ? 'v-active' : ''}">${hindiShift || '&nbsp;'}</span>
+          <span class="v-norm-char ${!this.isShift ? 'v-active' : ''}">${hindiNorm || '&nbsp;'}</span>
+        </div>
+        ${k.hasBump ? '<span class="v-key-bump" title="Home Key Guideline"></span>' : ''}
       </div>
     `;
   }
@@ -247,13 +260,13 @@ class StenoKeyboardMap {
       modal.id = 'keyboardMapModal';
       modal.className = 'modal';
       modal.innerHTML = `
-        <div class="modal-content keyboard-modal-content" style="max-width: 960px; width: 95vw; padding: 20px; max-height: 90vh; overflow-y: auto;">
+        <div class="modal-content keyboard-modal-content" style="max-width: 980px; width: 95vw; padding: 20px; max-height: 90vh; overflow-y: auto;">
           <div class="modal-header" style="border-bottom: 1px solid var(--border); padding-bottom: 12px; margin-bottom: 14px; display:flex; justify-content:space-between; align-items:center;">
             <div style="display:flex; align-items:center; gap:8px;">
               <span style="font-size:1.4rem;">⌨️</span>
               <div>
                 <h3 style="margin:0; font-size:1.15rem; color:var(--text-main);">इंटरैक्टिव कीबोर्ड मानचित्र (Visual Keyboard Map)</h3>
-                <p style="margin:0; font-size:0.75rem; color:var(--text-muted);">शुरुआती छात्रों के लिए त्वरित संदर्भ गाइड</p>
+                <p style="margin:0; font-size:0.75rem; color:var(--text-muted);">शुरुआती छात्रों के लिए त्वरित संदर्भ गाइड (ऊपर: Shift | नीचे: सामान्य)</p>
               </div>
             </div>
             <button class="modal-close-btn" onclick="stenoKeyboardMap.closeModal()" style="background:none; border:none; font-size:1.2rem; cursor:pointer;">✕</button>
@@ -269,7 +282,7 @@ class StenoKeyboardMap {
     const drawer = document.getElementById('practiceKeyboardDrawer');
     if (!drawer || drawer.style.display === 'none') return;
     drawer.innerHTML = `
-      <div class="v-keyboard-wrapper drawer-version" style="padding:10px 12px; background:var(--bg-surface-alt, #f8fafc); border-radius:12px;">
+      <div class="v-keyboard-wrapper drawer-version" style="padding:12px 14px; background:var(--bg-surface-alt, #f8fafc); border-radius:14px; box-shadow: 0 4px 15px rgba(0,0,0,0.06); border: 1px solid var(--border);">
         <div class="v-keyboard-header" style="margin-bottom:10px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
           <div class="v-layout-pills" style="display:flex; gap:6px;">
             <button type="button" class="v-tab-btn ${this.currentLayout === 'krutidev' ? 'active' : ''}" onclick="stenoKeyboardMap.setLayout('krutidev')">कृति देव 010</button>
@@ -277,10 +290,10 @@ class StenoKeyboardMap {
             <button type="button" class="v-tab-btn ${this.currentLayout === 'inscript' ? 'active' : ''}" onclick="stenoKeyboardMap.setLayout('inscript')">इनस्क्रिप्ट</button>
           </div>
           <div style="display:flex; gap:8px; align-items:center;">
-            <button type="button" class="v-shift-toggle ${this.isShift ? 'active' : ''}" onclick="stenoKeyboardMap.toggleShift()" style="padding:4px 10px; font-size:0.75rem;">
+            <button type="button" class="v-shift-toggle ${this.isShift ? 'active' : ''}" onclick="stenoKeyboardMap.toggleShift()" style="padding:4px 12px; font-size:0.8rem;">
               ⇧ Shift: ${this.isShift ? 'ON' : 'OFF'}
             </button>
-            <button type="button" class="btn-sm btn-secondary" onclick="stenoApp.togglePracticeKeyboard()" style="padding:4px 8px; font-size:0.75rem; border-radius:6px; cursor:pointer;" title="कीबोर्ड विजुअल छिपाएं">✕ बंद करें</button>
+            <button type="button" class="btn-sm btn-secondary" onclick="stenoApp.togglePracticeKeyboard()" style="padding:4px 10px; font-size:0.75rem; border-radius:6px; cursor:pointer;" title="कीबोर्ड विजुअल छिपाएं">✕ बंद करें</button>
           </div>
         </div>
         <div class="v-keyboard-board">
@@ -326,6 +339,16 @@ class StenoKeyboardMap {
             </div>
           `).join('')}
         </div>
+        <div class="v-finger-legend" style="margin-top:12px;">
+          <span class="legend-item"><span class="legend-dot finger-1"></span> बायां कनिष्ठा</span>
+          <span class="legend-item"><span class="legend-dot finger-2"></span> बायां अनामिका</span>
+          <span class="legend-item"><span class="legend-dot finger-3"></span> बायां मध्यमा</span>
+          <span class="legend-item"><span class="legend-dot finger-4"></span> बायां तर्जनी</span>
+          <span class="legend-item"><span class="legend-dot finger-5"></span> दायां तर्जनी</span>
+          <span class="legend-item"><span class="legend-dot finger-6"></span> दायां मध्यमा</span>
+          <span class="legend-item"><span class="legend-dot finger-7"></span> दायां अनामिका</span>
+          <span class="legend-item"><span class="legend-dot finger-8"></span> दायां कनिष्ठा</span>
+        </div>
       </div>
     `;
   }
@@ -344,7 +367,7 @@ class StenoKeyboardMap {
 
   showKeyDetails(engKey, shiftKey, normalHindi, shiftHindi) {
     if (window.stenoApp) {
-      stenoApp.showToast(`🔑 Key '${engKey.toUpperCase()}': सामान्य = [ ${normalHindi || '—'} ] • शिफ्ट = [ ${shiftHindi || '—'} ]`, 'info');
+      stenoApp.showToast(`🔑 Key '${(engKey || '').toUpperCase()}': सामान्य = [ ${normalHindi || '—'} ] • शिफ्ट = [ ${shiftHindi || '—'} ]`, 'info');
     }
   }
 
