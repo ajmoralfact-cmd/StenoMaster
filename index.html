@@ -689,19 +689,7 @@
         </div>
       </main>
 
-      <!-- ===================================================================
-           VIEW: KEYBOARD MAP (VISUAL INTERACTIVE GUIDE)
-           =================================================================== -->
-      <main class="page-view" id="view-keyboard-map">
-        <div class="section-header">
-          <div>
-            <h2 class="section-title">⌨️ इंटरैक्टिव कीबोर्ड मानचित्र (Visual Keyboard Map)</h2>
-            <p class="section-subtitle">कृति देव 010, रेमिंगटन गेल और इनस्क्रिप्ट के लिए उंगली अनुसार टाइपिंग चार्ट व ऑल्ट कोड्स।</p>
-          </div>
-        </div>
 
-        <div id="keyboardMapContainer"></div>
-      </main>
 
       <!-- ===================================================================
            VIEW: CLASSES / PRACTICE LIST
@@ -896,7 +884,7 @@
                   <button type="button" class="font-size-btn" data-size="lg" onclick="stenoTypingEngine.setFontSize('lg')">22</button>
                   <button type="button" class="font-size-btn" data-size="xl" onclick="stenoTypingEngine.setFontSize('xl')">A+</button>
                 </div>
-                <button type="button" class="btn-secondary" onclick="stenoKeyboardMap.openModal()" title="कीबोर्ड लेआउट गाइड खोलें">⌨️ कीबोर्ड लेआउट</button>
+                <button type="button" id="togglePracticeKeyboardBtn" class="btn-secondary" onclick="stenoApp.togglePracticeKeyboard()" style="padding:5px 10px; font-size:0.78rem; font-weight:700;" title="टाइपिंग करते समय कीबोर्ड विजुअल ऑन/ऑफ करें">⌨️ कीबोर्ड: OFF</button>
             <button type="button" id="toggleBackspaceBtn" class="btn-secondary" onclick="stenoTypingEngine.toggleBackspaceLock()" style="padding:5px 10px; font-size:0.78rem;">
                   🔓 Backspace: ON
                 </button>
@@ -917,6 +905,9 @@
             <textarea id="typingTextarea" class="typing-textarea font-mangal notranslate" translate="no"
                       spellcheck="false" autocomplete="off" autocorrect="off" autocapitalize="off"
                       placeholder="डिक्टेशन सुनकर यहाँ टाइप करना प्रारंभ करें... (Start typing the dictated passage here)"></textarea>
+
+            <!-- Practice Inline Visual Keyboard Drawer (Toggle ON/OFF while typing) -->
+            <div id="practiceKeyboardDrawer" style="display:none; margin:14px 0; background:var(--bg-surface); border:1px solid var(--border-subtle); border-radius:var(--radius-lg); padding:14px; box-shadow:0 4px 14px rgba(0,0,0,0.06);"></div>
 
             
 

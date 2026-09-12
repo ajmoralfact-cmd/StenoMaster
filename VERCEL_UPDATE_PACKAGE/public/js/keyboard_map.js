@@ -104,18 +104,25 @@ class StenoKeyboardMap {
     this.currentLayout = layout;
     this.renderView();
     this.renderModalKeyboard();
+    this.renderPracticeDrawer();
+    const ta = document.getElementById('typingTextarea');
+    if (ta && document.activeElement !== ta) ta.focus();
   }
 
   toggleShift() {
     this.isShift = !this.isShift;
     this.renderView();
     this.renderModalKeyboard();
+    this.renderPracticeDrawer();
+    const ta = document.getElementById('typingTextarea');
+    if (ta && document.activeElement !== ta) ta.focus();
   }
 
   onSearch(val) {
     this.searchQuery = (val || '').trim().toLowerCase();
     this.renderView();
     this.renderModalKeyboard();
+    this.renderPracticeDrawer();
   }
 
   renderKeyHTML(k) {
@@ -256,6 +263,45 @@ class StenoKeyboardMap {
       `;
       document.body.appendChild(modal);
     }
+  }
+
+  renderPracticeDrawer() {
+    const drawer = document.getElementById('practiceKeyboardDrawer');
+    if (!drawer || drawer.style.display === 'none') return;
+    drawer.innerHTML = `
+      <div class="v-keyboard-wrapper drawer-version" style="padding:10px 12px; background:var(--bg-surface-alt, #f8fafc); border-radius:12px;">
+        <div class="v-keyboard-header" style="margin-bottom:10px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+          <div class="v-layout-pills" style="display:flex; gap:6px;">
+            <button type="button" class="v-tab-btn ${this.currentLayout === 'krutidev' ? 'active' : ''}" onclick="stenoKeyboardMap.setLayout('krutidev')">कृति देव 010</button>
+            <button type="button" class="v-tab-btn ${this.currentLayout === 'remington' ? 'active' : ''}" onclick="stenoKeyboardMap.setLayout('remington')">मंगल रेमिंगटन</button>
+            <button type="button" class="v-tab-btn ${this.currentLayout === 'inscript' ? 'active' : ''}" onclick="stenoKeyboardMap.setLayout('inscript')">इनस्क्रिप्ट</button>
+          </div>
+          <div style="display:flex; gap:8px; align-items:center;">
+            <button type="button" class="v-shift-toggle ${this.isShift ? 'active' : ''}" onclick="stenoKeyboardMap.toggleShift()" style="padding:4px 10px; font-size:0.75rem;">
+              ⇧ Shift: ${this.isShift ? 'ON' : 'OFF'}
+            </button>
+            <button type="button" class="btn-sm btn-secondary" onclick="stenoApp.togglePracticeKeyboard()" style="padding:4px 8px; font-size:0.75rem; border-radius:6px; cursor:pointer;" title="कीबोर्ड विजुअल छिपाएं">✕ बंद करें</button>
+          </div>
+        </div>
+        <div class="v-keyboard-board">
+          ${this.rows.map(row => `
+            <div class="v-key-row">
+              ${row.map(k => this.renderKeyHTML(k)).join('')}
+            </div>
+          `).join('')}
+        </div>
+        <div class="v-finger-legend" style="margin-top:10px; padding-top:8px; border-top:1px dashed var(--border-subtle);">
+          <span class="legend-item"><span class="legend-dot finger-1"></span> बायां कनिष्ठा</span>
+          <span class="legend-item"><span class="legend-dot finger-2"></span> बायां अनामिका</span>
+          <span class="legend-item"><span class="legend-dot finger-3"></span> बायां मध्यमा</span>
+          <span class="legend-item"><span class="legend-dot finger-4"></span> बायां तर्जनी</span>
+          <span class="legend-item"><span class="legend-dot finger-5"></span> दायां तर्जनी</span>
+          <span class="legend-item"><span class="legend-dot finger-6"></span> दायां मध्यमा</span>
+          <span class="legend-item"><span class="legend-dot finger-7"></span> दायां अनामिका</span>
+          <span class="legend-item"><span class="legend-dot finger-8"></span> दायां कनिष्ठा</span>
+        </div>
+      </div>
+    `;
   }
 
   renderModalKeyboard() {

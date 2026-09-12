@@ -217,7 +217,7 @@ class StenoApp {
 
     // 4. Known valid student views
     const validViews = [
-      'home', 'classes', 'self-practice', 'keyboard-map', 'subscription', 'result', 'my-practice',
+      'home', 'classes', 'self-practice', 'subscription', 'result', 'my-practice',
       'progress', 'leaderboard', 'bookmarks', 'profile', 'refer',
       'notifications', 'settings', 'rules'
     ];
@@ -1341,7 +1341,6 @@ class StenoApp {
         { id: 'home', icon: '🏠', label: 'Dashboard', sub: 'डैशबोर्ड' },
         { id: 'classes', icon: '🎧', label: 'Practice Classes', sub: 'डिक्टेशन क्लास' },
         { id: 'self-practice', icon: '🎙️', label: 'Self Practice', sub: 'कस्टम डिक्टेशन' },
-        { id: 'keyboard-map', icon: '⌨️', label: 'Keyboard Map', sub: 'कीबोर्ड लेआउट' },
         { id: 'subscription', icon: '💳', label: 'Subscription', sub: 'सदस्यता एवं प्रो' },
         { id: 'my-practice', icon: '📜', label: 'Practice History', sub: 'अभ्यास इतिहास' },
         { id: 'progress', icon: '📊', label: 'Progress & Analytics', sub: 'प्रगति चार्ट' },
@@ -3172,6 +3171,44 @@ class StenoApp {
     } else {
       body.style.display = 'block';
       if (arrow) arrow.textContent = '▴';
+    }
+  }
+
+  togglePracticeKeyboard() {
+    const drawer = document.getElementById('practiceKeyboardDrawer');
+    const btn = document.getElementById('togglePracticeKeyboardBtn');
+    if (!drawer) return;
+    const isCurrentlyOpen = drawer.style.display !== 'none';
+    if (isCurrentlyOpen) {
+      drawer.style.display = 'none';
+      if (btn) {
+        btn.className = 'btn-secondary';
+        btn.innerHTML = '⌨️ कीबोर्ड: OFF';
+      }
+      this.showToast('कीबोर्ड विजुअल छिपाया गया', 'info');
+    } else {
+      drawer.style.display = 'block';
+      // Sync layout with current typing mode
+      const curMode = (window.stenoTypingEngine && window.stenoTypingEngine.typingMode) || 'mangal';
+      if (window.stenoKeyboardMap) {
+        if (curMode === 'krutidev') {
+          stenoKeyboardMap.currentLayout = 'krutidev';
+        } else if (curMode === 'inscript') {
+          stenoKeyboardMap.currentLayout = 'inscript';
+        } else {
+          stenoKeyboardMap.currentLayout = 'remington';
+        }
+        stenoKeyboardMap.renderPracticeDrawer();
+      }
+      if (btn) {
+        btn.className = 'btn-primary';
+        btn.innerHTML = '⌨️ कीबोर्ड: ON';
+      }
+      this.showToast('कीबोर्ड विजुअल सक्रिय! टाइपिंग करते समय देखें', 'success');
+    }
+    const ta = document.getElementById('typingTextarea');
+    if (ta && document.activeElement !== ta) {
+      ta.focus();
     }
   }
 
