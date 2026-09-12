@@ -217,7 +217,7 @@ class StenoApp {
 
     // 4. Known valid student views
     const validViews = [
-      'home', 'classes', 'subscription', 'result', 'my-practice',
+      'home', 'classes', 'self-practice', 'keyboard-map', 'subscription', 'result', 'my-practice',
       'progress', 'leaderboard', 'bookmarks', 'profile', 'refer',
       'notifications', 'settings', 'rules'
     ];
@@ -1340,6 +1340,8 @@ class StenoApp {
       const studentItems = [
         { id: 'home', icon: '🏠', label: 'Dashboard', sub: 'डैशबोर्ड' },
         { id: 'classes', icon: '🎧', label: 'Practice Classes', sub: 'डिक्टेशन क्लास' },
+        { id: 'self-practice', icon: '🎙️', label: 'Self Practice', sub: 'कस्टम डिक्टेशन' },
+        { id: 'keyboard-map', icon: '⌨️', label: 'Keyboard Map', sub: 'कीबोर्ड लेआउट' },
         { id: 'subscription', icon: '💳', label: 'Subscription', sub: 'सदस्यता एवं प्रो' },
         { id: 'my-practice', icon: '📜', label: 'Practice History', sub: 'अभ्यास इतिहास' },
         { id: 'progress', icon: '📊', label: 'Progress & Analytics', sub: 'प्रगति चार्ट' },
@@ -1968,7 +1970,13 @@ class StenoApp {
   // -------------------------------------------------------------------------
   // Practice Dictation Flow (Phase 8)
   // -------------------------------------------------------------------------
-  async openPractice(passageId, forcedSystem = null) {
+  async openPractice(passageId, forcedSystem = null, customPassage = null) {
+    if (customPassage) {
+      this.currentPassage = customPassage;
+      const selectedSystem = forcedSystem || (this.currentPassage.typing_system || 'mangal_unicode');
+      this.startPracticeWithSystem(selectedSystem);
+      return;
+    }
     try {
       const pId = parseInt(passageId, 10);
       const cardEl = document.querySelector(`.class-card[onclick*="openPractice(${passageId})"]`);
@@ -2163,6 +2171,8 @@ class StenoApp {
 
       const evalReport = await this.apiCall('/api/practice/submit', 'POST', {
         passage_id: this.currentPassage.id,
+        is_custom: Boolean(this.currentPassage.is_custom),
+        custom_official_text: this.currentPassage.is_custom ? (this.currentPassage.official_text || this.currentPassage.content) : null,
         typed_text: text,
         typing_mode: typingMode,
         selected_typing_system: this.selectedTypingSystem || (typingMode === 'krutidev' ? 'kruti_dev_010' : 'mangal_unicode'),
@@ -3029,6 +3039,130 @@ class StenoApp {
       .replace(/"/g, '&quot;')
       .replace(/'/g, '&#039;');
   }
+
+
+  // -------------------------------------------------------------------------
+  // Self Practice / Custom Audio & Text Handlers (v6.8)
+  // -------------------------------------------------------------------------
+  initSelfPractice() {
+    this.selfAudioMode = this.selfAudioMode || 'upload';
+    this.updateSelfTextStats();
+  }
+
+  switchSelfAudioMode(mode) {
+    this.selfAudioMode = mode;
+    const uploadBtn = document.getElementById('selfTabUploadBtn');
+    const silentBtn = document.getElementById('selfTabSilentBtn');
+    const ttsBtn = document.getElementById('selfTabTtsBtn');
+    const uploadZone = document.getElementById('selfAudioUploadZone');
+    const previewWrap = document.getElementById('selfAudioPreviewWrap');
+    const silentNote = document.getElementById('selfSilentNote');
+    const ttsNote = document.getElementById('selfTtsNote');
+
+    if (uploadBtn) uploadBtn.className = mode === 'upload' ? 'btn-sm btn-primary' : 'btn-sm btn-secondary';
+    if (silentBtn) silentBtn.className = mode === 'silent' ? 'btn-sm btn-primary' : 'btn-sm btn-secondary';
+    if (ttsBtn) ttsBtn.className = mode === 'tts' ? 'btn-sm btn-primary' : 'btn-sm btn-secondary';
+
+    if (uploadZone) uploadZone.style.display = mode === 'upload' ? 'block' : 'none';
+    if (previewWrap) previewWrap.style.display = (mode === 'upload' && this.selfAudioBlobUrl) ? 'block' : 'none';
+    if (silentNote) silentNote.style.display = mode === 'silent' ? 'block' : 'none';
+    if (ttsNote) ttsNote.style.display = mode === 'tts' ? 'block' : 'none';
+  }
+
+  handleSelfAudioFile(input) {
+    if (!input || !input.files || !input.files[0]) return;
+    const file = input.files[0];
+    this.selfAudioBlobUrl = URL.createObjectURL(file);
+    this.selfAudioFileName = file.name;
+
+    const nameEl = document.getElementById('selfAudioFileName');
+    if (nameEl) nameEl.textContent = `✓ ${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)`;
+
+    const preview = document.getElementById('selfAudioPreview');
+    const previewWrap = document.getElementById('selfAudioPreviewWrap');
+    if (preview && previewWrap) {
+      preview.src = this.selfAudioBlobUrl;
+      previewWrap.style.display = 'block';
+    }
+    this.showToast(`ऑडियो लोड हुआ: ${file.name}`, 'success');
+  }
+
+  updateSelfTextStats() {
+    const text = (document.getElementById('selfMasterText')?.value || '').trim();
+    const words = text ? text.split(/\s+/).length : 0;
+    const chars = text.length;
+
+    const wordEl = document.getElementById('selfWordCount');
+    const charEl = document.getElementById('selfCharCount');
+    const estEl = document.getElementById('selfEstTime');
+
+    if (wordEl) wordEl.textContent = words.toString();
+    if (charEl) charEl.textContent = chars.toString();
+    if (estEl) {
+      const minutes = (words / 80).toFixed(1);
+      estEl.textContent = `${minutes} मिनट`;
+    }
+  }
+
+  async pasteFromClipboardToSelf() {
+    try {
+      const text = await navigator.clipboard.readText();
+      const ta = document.getElementById('selfMasterText');
+      if (ta && text) {
+        ta.value = text;
+        this.updateSelfTextStats();
+        this.showToast('टेक्स्ट क्लिपबोर्ड से पेस्ट किया गया! 📋', 'success');
+      }
+    } catch (e) {
+      this.showToast('क्लिपबोर्ड से ऑटो-पेस्ट की अनुमति नहीं मिली। कृपया मैन्युअल पेस्ट करें (Ctrl+V)', 'info');
+    }
+  }
+
+  startCustomPractice() {
+    const masterText = (document.getElementById('selfMasterText')?.value || '').trim();
+    if (!masterText || masterText.split(/\s+/).length < 5) {
+      this.showToast('कृपया कम से कम 5-10 शब्दों का मूल डिक्टेशन आलेख (Master Passage) पेस्ट करें।', 'warning');
+      const ta = document.getElementById('selfMasterText');
+      if (ta) ta.focus();
+      return;
+    }
+
+    if (this.selfAudioMode === 'upload' && !this.selfAudioBlobUrl) {
+      this.showToast('कृपया एक ऑडियो फ़ाइल चुनें अथवा "केवल टाइपिंग (साइलेंट)" मोड चुनें।', 'warning');
+      return;
+    }
+
+    const words = masterText.split(/\s+/).length;
+    const targetSpeed = parseInt(document.getElementById('selfTargetSpeed')?.value || '80', 10);
+    const targetExam = document.getElementById('selfTargetExam')?.value || 'ssc_steno';
+    const fontMode = document.getElementById('selfFontMode')?.value || 'mangal_unicode';
+    const durationMinutes = parseInt(document.getElementById('selfDuration')?.value || '10', 10);
+
+    const customPassage = {
+      id: 999999,
+      is_custom: true,
+      title: 'कस्टम डिक्टेशन (Self Practice)',
+      category_name: 'Self Practice',
+      language: 'hindi',
+      difficulty: 'medium',
+      target_wpm: targetSpeed,
+      speed_wpm: targetSpeed,
+      duration_seconds: durationMinutes > 0 ? durationMinutes * 60 : Math.max(300, Math.round((words / targetSpeed) * 60)),
+      official_text: masterText,
+      official_mangal_text: masterText,
+      official_kruti_dev_text: masterText,
+      audio_url: this.selfAudioMode === 'upload' ? this.selfAudioBlobUrl : (this.selfAudioMode === 'tts' ? 'tts://custom' : null),
+      exam_rule: targetExam,
+      typing_system: fontMode,
+      is_free_tier: true,
+      is_premium: false
+    };
+
+    this.currentExamRule = targetExam;
+    this.openPractice(999999, fontMode, customPassage);
+    this.showToast(`सेल्फ प्रैक्टिस शुरू! (${fontMode === 'kruti_dev_010' ? 'कृति देव 010' : 'मंगल यूनिकोड'} | ${targetSpeed} WPM)`, 'success');
+  }
+
 }
 
 

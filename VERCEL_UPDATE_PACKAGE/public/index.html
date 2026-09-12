@@ -12,7 +12,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Mukta:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/css/style.css?v=6.7">
+  <link rel="stylesheet" href="/css/style.css?v=6.8">
   <!-- Google Identity Services SDK -->
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   <script>
@@ -503,6 +503,158 @@
         <div class="classes-grid" id="homeClassCardsGrid"></div>
       </main>
 
+      
+      <!-- ===================================================================
+           VIEW: SELF PRACTICE / CUSTOM AUDIO & TEXT
+           =================================================================== -->
+      <main class="page-view" id="view-self-practice">
+        <div class="section-header">
+          <div>
+            <h2 class="section-title">🎙️ सेल्फ प्रैक्टिस (Custom Dictation Practice)</h2>
+            <p class="section-subtitle">अपनी कोचिंग या ऑफलाइन का कोई भी ऑडियो व आलेख अपलोड करके असली परीक्षा जैसा अभ्यास करें।</p>
+          </div>
+        </div>
+
+        <div class="self-practice-grid">
+          <!-- Step 1: Audio Source -->
+          <div class="stat-card self-card">
+            <div class="self-card-header">
+              <span class="self-step-num">1</span>
+              <div>
+                <h4 style="margin:0; font-size:1rem; color:var(--text-main);">डिक्टेशन ऑडियो (Audio Source)</h4>
+                <p style="margin:0; font-size:0.75rem; color:var(--text-muted);">ऑडियो फ़ाइल अपलोड करें या बिना ऑडियो के केवल टाइमर पर टाइप करें</p>
+              </div>
+            </div>
+
+            <div class="self-audio-tabs" style="display:flex; gap:8px; margin:14px 0 12px 0;">
+              <button type="button" class="btn-sm btn-primary" id="selfTabUploadBtn" onclick="stenoApp.switchSelfAudioMode('upload')">📁 डिवाइस से ऑडियो</button>
+              <button type="button" class="btn-sm btn-secondary" id="selfTabSilentBtn" onclick="stenoApp.switchSelfAudioMode('silent')">⏱️ केवल टाइपिंग (साइलेंट)</button>
+              <button type="button" class="btn-sm btn-secondary" id="selfTabTtsBtn" onclick="stenoApp.switchSelfAudioMode('tts')">🗣️ टेक्स्ट-टू-स्पीच ऑटो</button>
+            </div>
+
+            <!-- Upload dropzone -->
+            <div id="selfAudioUploadZone" class="self-dropzone" onclick="document.getElementById('selfAudioFileInput').click()">
+              <input type="file" id="selfAudioFileInput" accept="audio/*" style="display:none;" onchange="stenoApp.handleSelfAudioFile(this)">
+              <div style="font-size:2rem; margin-bottom:6px;">🎵</div>
+              <div style="font-weight:700; color:var(--text-main); font-size:0.9rem;" id="selfAudioFileName">ऑडियो फ़ाइल चुनें (MP3, WAV, M4A)</div>
+              <div style="font-size:0.75rem; color:var(--text-muted); margin-top:2px;">या फ़ाइल को यहाँ ड्रैग एंड ड्रॉप करें</div>
+            </div>
+
+            <!-- Audio Player Preview -->
+            <div id="selfAudioPreviewWrap" style="display:none; margin-top:10px;">
+              <audio id="selfAudioPreview" controls style="width:100%; height:36px;"></audio>
+            </div>
+
+            <!-- Silent note -->
+            <div id="selfSilentNote" style="display:none; background:var(--bg-subtle); padding:12px; border-radius:8px; border:1px solid var(--border); font-size:0.82rem; color:var(--text-secondary);">
+              ℹ️ <strong>साइलेंट मोड:</strong> कोई ऑडियो नहीं चलेगा। आप अपनी स्टैनो नोटबुक से देखकर निर्धारित समय में सीधे टाइप कर सकेंगे।
+            </div>
+
+            <!-- TTS note -->
+            <div id="selfTtsNote" style="display:none; background:var(--bg-subtle); padding:12px; border-radius:8px; border:1px solid var(--border); font-size:0.82rem; color:var(--text-secondary);">
+              ℹ️ <strong>टेक्स्ट-टू-स्पीच:</strong> नीचे पेस्ट किए गए आलेख को कंप्यूटर की आवाज़ में डिक्टेट किया जाएगा।
+            </div>
+          </div>
+
+          <!-- Step 2: Master Passage Input -->
+          <div class="stat-card self-card">
+            <div class="self-card-header">
+              <span class="self-step-num">2</span>
+              <div>
+                <h4 style="margin:0; font-size:1rem; color:var(--text-main);">मूल डिक्टेशन आलेख (Master Passage)</h4>
+                <p style="margin:0; font-size:0.75rem; color:var(--text-muted);">इस आलेख से आपकी टाइपिंग का मिलान (Evaluation) किया जाएगा</p>
+              </div>
+            </div>
+
+            <div style="margin-top:14px;">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                <label style="font-size:0.82rem; font-weight:700; color:var(--text-secondary);">आलेख यहाँ पेस्ट करें (Paste Text):</label>
+                <div style="display:flex; gap:8px;">
+                  <button type="button" class="btn-sm btn-secondary" onclick="stenoApp.pasteFromClipboardToSelf()" style="padding:2px 8px; font-size:0.75rem;">📋 पेस्ट करें</button>
+                  <button type="button" class="btn-sm btn-secondary" onclick="document.getElementById('selfMasterText').value=''; stenoApp.updateSelfTextStats();" style="padding:2px 8px; font-size:0.75rem;">✕ साफ़ करें</button>
+                </div>
+              </div>
+              <textarea id="selfMasterText" class="form-input" rows="7" placeholder="यहाँ अपना हिंदी या अंग्रेजी का मूल आलेख पेस्ट करें जिसे सुनकर आपने शॉर्टहैंड लिखा है..." style="resize:vertical; font-size:0.92rem; line-height:1.6;" oninput="stenoApp.updateSelfTextStats()"></textarea>
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-top:6px; font-size:0.78rem; color:var(--text-muted);">
+                <span>कुल शब्द: <strong id="selfWordCount" style="color:var(--primary);">0</strong> | अक्षर: <strong id="selfCharCount">0</strong></span>
+                <span>अनुमानित समय (80 WPM पर): <strong id="selfEstTime">0 min</strong></span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 3: Exam Rules & Configuration Card -->
+        <div class="stat-card" style="margin-top:16px; padding:18px;">
+          <div class="self-card-header" style="margin-bottom:14px;">
+            <span class="self-step-num">3</span>
+            <div>
+              <h4 style="margin:0; font-size:1rem; color:var(--text-main);">परीक्षा मूल्यांकन व समय सेटिंग्स (Exam & Time Settings)</h4>
+              <p style="margin:0; font-size:0.75rem; color:var(--text-muted);">मूल्यांकन नियम और स्पीड चुनें</p>
+            </div>
+          </div>
+
+          <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:14px;">
+            <div>
+              <label class="form-label" style="font-size:0.8rem; font-weight:700;">लक्ष्य परीक्षा नियम</label>
+              <select id="selfTargetExam" class="form-select">
+                <option value="ssc_steno">SSC Stenographer (Grade C & D)</option>
+                <option value="upsssc">UPSSSC आशुलिपिक</option>
+                <option value="court_steno">High Court / District Court</option>
+              </select>
+            </div>
+            <div>
+              <label class="form-label" style="font-size:0.8rem; font-weight:700;">टाइपिंग फ़ॉन्ट</label>
+              <select id="selfFontMode" class="form-select">
+                <option value="mangal_unicode">मंगल यूनिकोड (Mangal Unicode)</option>
+                <option value="kruti_dev_010">कृति देव 010 (Kruti Dev 010)</option>
+              </select>
+            </div>
+            <div>
+              <label class="form-label" style="font-size:0.8rem; font-weight:700;">डिक्टेशन स्पीड (WPM)</label>
+              <select id="selfTargetSpeed" class="form-select">
+                <option value="80" selected>80 WPM (मानक)</option>
+                <option value="60">60 WPM (सरल)</option>
+                <option value="70">70 WPM</option>
+                <option value="90">90 WPM</option>
+                <option value="100">100 WPM (ग्रेड सी)</option>
+                <option value="110">110 WPM</option>
+                <option value="120">120 WPM (उच्च गति)</option>
+              </select>
+            </div>
+            <div>
+              <label class="form-label" style="font-size:0.8rem; font-weight:700;">टाइपिंग समय सीमा (Duration)</label>
+              <select id="selfDuration" class="form-select">
+                <option value="10" selected>10 मिनट (मानक परीक्षा)</option>
+                <option value="5">5 मिनट (त्वरित अभ्यास)</option>
+                <option value="15">15 मिनट</option>
+                <option value="20">20 मिनट</option>
+                <option value="0">असीमित (Untimed Practice)</option>
+              </select>
+            </div>
+          </div>
+
+          <div style="margin-top:20px; text-align:center;">
+            <button type="button" class="btn-primary" style="padding:12px 36px; font-size:1.05rem; font-weight:700; border-radius:30px; box-shadow:0 4px 14px rgba(2,132,199,0.35);" onclick="stenoApp.startCustomPractice()">
+              🎯 कस्टम अभ्यास शुरू करें (Start Practice) →
+            </button>
+          </div>
+        </div>
+      </main>
+
+      <!-- ===================================================================
+           VIEW: KEYBOARD MAP (VISUAL INTERACTIVE GUIDE)
+           =================================================================== -->
+      <main class="page-view" id="view-keyboard-map">
+        <div class="section-header">
+          <div>
+            <h2 class="section-title">⌨️ इंटरैक्टिव कीबोर्ड मानचित्र (Visual Keyboard Map)</h2>
+            <p class="section-subtitle">कृति देव 010, रेमिंगटन गेल और इनस्क्रिप्ट के लिए उंगली अनुसार टाइपिंग चार्ट व ऑल्ट कोड्स।</p>
+          </div>
+        </div>
+
+        <div id="keyboardMapContainer"></div>
+      </main>
+
       <!-- ===================================================================
            VIEW: CLASSES / PRACTICE LIST
            =================================================================== -->
@@ -696,7 +848,8 @@
                   <button type="button" class="font-size-btn" data-size="lg" onclick="stenoTypingEngine.setFontSize('lg')">22</button>
                   <button type="button" class="font-size-btn" data-size="xl" onclick="stenoTypingEngine.setFontSize('xl')">A+</button>
                 </div>
-                <button type="button" id="toggleBackspaceBtn" class="btn-secondary" onclick="stenoTypingEngine.toggleBackspaceLock()" style="padding:5px 10px; font-size:0.78rem;">
+                <button type="button" class="btn-secondary" onclick="stenoKeyboardMap.openModal()" title="कीबोर्ड लेआउट गाइड खोलें">⌨️ कीबोर्ड लेआउट</button>
+            <button type="button" id="toggleBackspaceBtn" class="btn-secondary" onclick="stenoTypingEngine.toggleBackspaceLock()" style="padding:5px 10px; font-size:0.78rem;">
                   🔓 Backspace: ON
                 </button>
                 <button type="button" class="btn-secondary" onclick="stenoApp.openModal('altCodesModal')" style="padding:5px 10px; font-size:0.78rem;" title="कृति देव स्पेशल कोड्स देखें">
@@ -2349,10 +2502,11 @@
   <script defer src="https://sdk.cashfree.com/js/v3/cashfree.js"></script>
 
   <!-- Scripts -->
-  <script src="/js/charts.js?v=6.7"></script>
-  <script src="/js/audio_player.js?v=6.7"></script>
-  <script src="/js/typing_engine.js?v=6.7"></script>
-  <script src="/js/comparison_view.js?v=6.7"></script>
-  <script src="/js/app.js?v=6.7"></script>
+  <script src="/js/charts.js?v=6.8"></script>
+  <script src="/js/audio_player.js?v=6.8"></script>
+  <script src="/js/keyboard_map.js?v=6.8"></script>
+  <script src="/js/typing_engine.js?v=6.8"></script>
+  <script src="/js/comparison_view.js?v=6.8"></script>
+  <script src="/js/app.js?v=6.8"></script>
 </body>
 </html>

@@ -4327,3 +4327,354 @@ html {
   transform: translateY(-1px);
   box-shadow: 0 4px 10px rgba(16, 185, 129, 0.45);
 }
+
+
+/* ==========================================================================
+   Self Practice & Visual Keyboard Map Components (v6.8)
+   ========================================================================== */
+
+/* Self Practice Layout */
+.self-practice-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 16px;
+}
+
+.self-card {
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+}
+
+.self-card-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.self-step-num {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--primary);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.85rem;
+  flex-shrink: 0;
+}
+
+.self-dropzone {
+  border: 2px dashed var(--border);
+  border-radius: 12px;
+  padding: 24px 16px;
+  text-align: center;
+  background: var(--bg-subtle);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.self-dropzone:hover {
+  border-color: var(--primary);
+  background: rgba(2, 132, 199, 0.05);
+}
+
+/* Visual Keyboard Map Styles */
+.v-keyboard-wrapper {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+}
+
+.v-keyboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.v-layout-pills {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.v-tab-btn {
+  padding: 6px 14px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  background: var(--bg-subtle);
+  color: var(--text-secondary);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.v-tab-btn.active {
+  background: var(--primary);
+  color: #fff;
+  border-color: var(--primary);
+  box-shadow: 0 2px 8px rgba(2, 132, 199, 0.3);
+}
+
+.v-keyboard-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.v-shift-toggle {
+  padding: 6px 14px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  background: var(--bg-subtle);
+  color: var(--text-main);
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.v-shift-toggle.active {
+  background: #f59e0b;
+  color: #fff;
+  border-color: #d97706;
+  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.35);
+}
+
+.v-search-box {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--bg-subtle);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 4px 12px;
+}
+
+.v-search-input {
+  border: none;
+  background: transparent;
+  outline: none;
+  font-size: 0.82rem;
+  color: var(--text-main);
+  width: 170px;
+}
+
+.v-clear-search {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+/* Keyboard Board & Keys */
+.v-keyboard-board {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: #1e293b;
+  padding: 14px;
+  border-radius: 12px;
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.5);
+  overflow-x: auto;
+}
+
+.v-key-row {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+}
+
+.v-key {
+  position: relative;
+  height: 48px;
+  min-width: 44px;
+  background: #334155;
+  color: #f8fafc;
+  border-radius: 6px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 3px 0 #0f172a, 0 4px 6px rgba(0, 0, 0, 0.3);
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.1s ease;
+  padding: 2px 4px;
+  flex: 1;
+}
+
+.v-key:hover {
+  background: #475569;
+  transform: translateY(1px);
+  box-shadow: 0 2px 0 #0f172a;
+}
+
+.v-key.v-key-home {
+  border-bottom: 2px solid #38bdf8;
+}
+
+.v-key-bump {
+  position: absolute;
+  bottom: 3px;
+  width: 10px;
+  height: 2px;
+  background: #94a3b8;
+  border-radius: 1px;
+}
+
+.v-key.v-key-matched {
+  background: linear-gradient(135deg, #f59e0b, #d97706) !important;
+  color: #fff !important;
+  box-shadow: 0 0 12px #f59e0b !important;
+  transform: scale(1.08);
+  z-index: 5;
+}
+
+.v-eng-key {
+  position: absolute;
+  top: 3px;
+  left: 5px;
+  font-size: 0.65rem;
+  color: #94a3b8;
+  font-family: monospace;
+}
+
+.v-hindi-char {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #38bdf8;
+  line-height: 1.1;
+  margin-top: 4px;
+}
+
+.v-hindi-char.is-shifted {
+  color: #f59e0b;
+}
+
+.v-sub-hindi {
+  font-size: 0.62rem;
+  color: #64748b;
+  line-height: 1;
+}
+
+/* Key Widths */
+.v-key.wide-backspace { min-width: 82px; flex: 1.8; }
+.v-key.wide-tab { min-width: 64px; flex: 1.4; }
+.v-key.wide-caps { min-width: 72px; flex: 1.6; }
+.v-key.wide-enter { min-width: 84px; flex: 1.9; background: #0284c7; }
+.v-key.wide-shift-l { min-width: 90px; flex: 2.1; }
+.v-key.wide-shift-r { min-width: 90px; flex: 2.1; }
+.v-key.wide-space { min-width: 280px; max-width: 480px; flex: 8; background: #1e293b; }
+.v-key.wide-pipe { min-width: 54px; flex: 1.2; }
+
+.v-key.v-key-special {
+  background: #1e293b;
+  color: #94a3b8;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+/* Finger Zone Colors */
+.v-key.finger-1 { border-top: 3px solid #ec4899; }
+.v-key.finger-2 { border-top: 3px solid #a855f7; }
+.v-key.finger-3 { border-top: 3px solid #3b82f6; }
+.v-key.finger-4 { border-top: 3px solid #10b981; }
+.v-key.finger-5 { border-top: 3px solid #10b981; }
+.v-key.finger-6 { border-top: 3px solid #3b82f6; }
+.v-key.finger-7 { border-top: 3px solid #a855f7; }
+.v-key.finger-8 { border-top: 3px solid #ec4899; }
+
+/* Finger Legend */
+.v-finger-legend {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 14px;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+
+.legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.legend-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+.legend-dot.finger-1, .legend-dot.finger-8 { background: #ec4899; }
+.legend-dot.finger-2, .legend-dot.finger-7 { background: #a855f7; }
+.legend-dot.finger-3, .legend-dot.finger-6 { background: #3b82f6; }
+.legend-dot.finger-4, .legend-dot.finger-5 { background: #10b981; }
+
+/* Alt Codes Grid */
+.alt-codes-container {
+  margin-top: 24px;
+  border-top: 1px solid var(--border);
+  padding-top: 16px;
+}
+
+.alt-codes-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.alt-code-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  background: var(--bg-subtle);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.alt-code-card:hover {
+  border-color: var(--primary);
+  background: rgba(2, 132, 199, 0.08);
+  transform: translateY(-1px);
+}
+
+.alt-char {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--primary);
+  min-width: 28px;
+  text-align: center;
+}
+
+.alt-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.alt-code-badge {
+  font-family: monospace;
+  font-weight: 700;
+  font-size: 0.8rem;
+  color: var(--text-main);
+}
+
+.alt-desc {
+  font-size: 0.68rem;
+  color: var(--text-muted);
+}

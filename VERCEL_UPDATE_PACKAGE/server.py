@@ -885,44 +885,73 @@ class StenoMasterHandler(http.server.SimpleHTTPRequestHandler):
             typing_mode = data.get('typing_mode', 'mangal')
             selected_typing_system = (data.get('selected_typing_system') or '').strip().lower()
             time_taken = int(data.get('time_taken_seconds', 60))
+            is_custom = bool(data.get('is_custom') or str(passage_id) == '999999')
 
-            if not passage_id or not raw_input.strip():
-                self._send_json(400, {"error": "Passage and typed text are required"})
+            if not raw_input.strip():
+                self._send_json(400, {"error": "Typed text is required"})
                 return
 
-            # Strict Access Check (First 2 free passages accessible without login, others require Pro)
             user_id = user['user_id'] if user else None
             is_admin = bool(user and user.get('role') == 'admin')
-            if not is_admin and not db.is_passage_accessible(user_id, passage_id):
-                if not user:
-                    self._send_auth_required()
-                else:
-                    self._send_json(403, {
-                        "error": "PRO_SUBSCRIPTION_REQUIRED",
-                        "is_locked": True,
-                        "message": "यह डिक्टेशन अभ्यास केवल प्रो सदस्यों के लिए उपलब्ध है। कृपया ₹100 का मासिक प्लान सक्रिय करें।"
-                    })
-                return
 
-            # Deduplication: Prevent duplicate attempts within 5s (logged in users)
-            if user:
-                recent = db.get_recent_duplicate_attempt(user['user_id'], passage_id, raw_input, max_age_seconds=5)
-                if recent:
-                    self._send_json(200, recent)
+            # Handle Custom Self-Practice Mode
+            if is_custom:
+                custom_text = (data.get('custom_official_text') or data.get('official_text') or '').strip()
+                if not custom_text:
+                    self._send_json(400, {"error": "Custom master passage text is required"})
+                    return
+                passage = {
+                    "id": 999999,
+                    "title": "कस्टम डिक्टेशन (Self Practice)",
+                    "difficulty": "medium",
+                    "typing_system": selected_typing_system or "mangal_unicode",
+                    "official_text": custom_text,
+                    "official_text_krutidev": custom_text,
+                    "language": "hindi",
+                    "steno_notes_url": "",
+                    "steno_notes_type": ""
+                }
+                official_text = custom_text
+                official_text_krutidev = custom_text
+                passage_system = selected_typing_system or 'mangal_unicode'
+                language = 'hindi'
+                passage_id = 1
+            else:
+                if not passage_id:
+                    self._send_json(400, {"error": "Passage and typed text are required"})
                     return
 
-            # Retrieve official text securely from DB (Security: never trust client reference text)
-            passage = db.get_passage_detail(passage_id, include_official=True, is_admin=True)
-            if not passage:
-                self._send_json(404, {"error": "Passage not found"})
-                return
+                # Strict Access Check (First 2 free passages accessible without login, others require Pro)
+                if not is_admin and not db.is_passage_accessible(user_id, passage_id):
+                    if not user:
+                        self._send_auth_required()
+                    else:
+                        self._send_json(403, {
+                            "error": "PRO_SUBSCRIPTION_REQUIRED",
+                            "is_locked": True,
+                            "message": "यह डिक्टेशन अभ्यास केवल प्रो सदस्यों के लिए उपलब्ध है। कृपया ₹100 का मासिक प्लान सक्रिय करें।"
+                        })
+                    return
 
-            # Students cannot practice on draft passages
-            if passage.get('status') != 'published' and not is_admin:
-                self._send_json(403, {"error": "This passage is in draft mode and not yet published."})
-                return
+                # Deduplication: Prevent duplicate attempts within 5s (logged in users)
+                if user:
+                    recent = db.get_recent_duplicate_attempt(user['user_id'], passage_id, raw_input, max_age_seconds=5)
+                    if recent:
+                        self._send_json(200, recent)
+                        return
 
-            official_text = passage.get('official_text', '')
+                # Retrieve official text securely from DB (Security: never trust client reference text)
+                passage = db.get_passage_detail(passage_id, include_official=True, is_admin=True)
+                if not passage:
+                    self._send_json(404, {"error": "Passage not found"})
+                    return
+
+                # Students cannot practice on draft passages
+                if passage.get('status') != 'published' and not is_admin:
+                    self._send_json(403, {"error": "This passage is in draft mode and not yet published."})
+                    return
+
+                official_text = passage.get('official_text', '')
             official_text_krutidev = passage.get('official_text_krutidev', '')
             language = passage.get('language', 'hindi')
             passage_system = passage.get('typing_system') or 'dual'
