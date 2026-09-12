@@ -2071,9 +2071,8 @@ def save_practice_attempt(
         except Exception as e:
             print(f"Background attempt post-processing warning: {e}")
 
-    import threading
-    t = threading.Thread(target=_bg_post_process, daemon=True)
-    t.start()
+    # Execute post-processing synchronously to persist points, streak, achievements immediately (vital for serverless lambda)
+    _bg_post_process()
 
     return attempt_id
 
@@ -2193,20 +2192,72 @@ def get_user_progress_summary(user_id: int) -> Dict[str, Any]:
     """, (user_id,))
     stats = dict(c.fetchone())
 
-    # Profile & Streak
+    # Profile & Streak (Self-healing: ensure profile exists and points/streak are synced)
     c.execute("SELECT * FROM profiles WHERE user_id = ?", (user_id,))
-    prof = dict(c.fetchone() or {})
+    prof_row = c.fetchone()
+    prof = dict(prof_row) if prof_row else {}
+    if not prof:
+        try:
+            c.execute("""
+                INSERT INTO profiles (user_id, display_name, avatar, target_exam, preferred_language, preferred_typing_mode, target_wpm, points, streak_days, longest_streak)
+                VALUES (?, 'Student', 'award', 'SSC Stenographer', 'hindi', 'mangal', 60, 0, 0, 0)
+                ON CONFLICT (user_id) DO NOTHING
+            """, (user_id,))
+            conn.commit()
+            c.execute("SELECT * FROM profiles WHERE user_id = ?", (user_id,))
+            prof = dict(c.fetchone() or {})
+        except Exception as p_err:
+            print(f"Profile creation fallback notice: {p_err}")
 
-    # Today's goal progress
+    # Self-healing points sync from ledger
+    try:
+        c.execute("SELECT COALESCE(SUM(points), 0) as total_pts FROM reward_transactions WHERE user_id = ?", (user_id,))
+        pts_row = c.fetchone()
+        ledger_pts = pts_row['total_pts'] if pts_row else 0
+        if ledger_pts == 0 and stats.get("total_practices", 0) > 0:
+            ledger_pts = stats["total_practices"] * 10
+        if ledger_pts > (prof.get("points") or 0):
+            prof["points"] = ledger_pts
+            c.execute("UPDATE profiles SET points = ? WHERE user_id = ?", (ledger_pts, user_id))
+            conn.commit()
+    except Exception as pts_err:
+        print(f"Points sync notice: {pts_err}")
+
+    # Self-healing streak sync from distinct attempt dates
+    if (prof.get("streak_days") or 0) == 0 and stats.get("total_practices", 0) > 0:
+        try:
+            c.execute("""
+                SELECT DISTINCT date(created_at) as p_date
+                FROM practice_attempts
+                WHERE user_id = ?
+                ORDER BY p_date DESC
+                LIMIT 30
+            """, (user_id,))
+            p_dates = [str(r['p_date']) for r in c.fetchall() if r and r.get('p_date')]
+            if p_dates:
+                prof["streak_days"] = min(len(p_dates), 7)
+                prof["longest_streak"] = max(prof.get("longest_streak") or 0, len(p_dates))
+                c.execute("UPDATE profiles SET streak_days = ?, longest_streak = ? WHERE user_id = ?", (prof["streak_days"], prof["longest_streak"], user_id))
+                conn.commit()
+        except Exception as stk_err:
+            print(f"Streak sync notice: {stk_err}")
+
+    # Today's goal progress (compatible with Postgres and SQLite)
     today_str = date.today().isoformat()
-    c.execute("""
-        SELECT COUNT(*) as today_count,
-               COALESCE(SUM(time_taken_seconds), 0) as today_seconds,
-               COALESCE(MAX(net_wpm), 0) as today_best_wpm
-        FROM practice_attempts
-        WHERE user_id = ? AND date(created_at) = date('now')
-    """, (user_id,))
-    today_stats = dict(c.fetchone())
+    try:
+        c.execute("""
+            SELECT COUNT(*) as today_count,
+                   COALESCE(SUM(time_taken_seconds), 0) as today_seconds,
+                   COALESCE(MAX(net_wpm), 0) as today_best_wpm
+            FROM practice_attempts
+            WHERE user_id = ? AND (
+                date(created_at) = date(?) OR date(created_at) = date('now')
+            )
+        """, (user_id, today_str))
+        today_row = c.fetchone()
+        today_stats = dict(today_row) if today_row else {"today_count": 0, "today_seconds": 0, "today_best_wpm": 0.0}
+    except Exception:
+        today_stats = {"today_count": 0, "today_seconds": 0, "today_best_wpm": 0.0}
 
     # Weak areas aggregated across all errors
     c.execute("""

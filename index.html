@@ -12,7 +12,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Mukta:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/css/style.css?v=6.8">
+  <link rel="stylesheet" href="/css/style.css?v=6.9">
   <!-- Google Identity Services SDK -->
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   <script>
@@ -404,88 +404,136 @@
            VIEW: HOME (DASHBOARD)
            =================================================================== -->
       <main class="page-view active" id="view-home">
-        <!-- Dashboard Section Title -->
-        <div class="section-header" style="margin-bottom: 20px;">
+        <!-- Dashboard Section Title & Real-Time Sync Bar -->
+        <div class="section-header" style="margin-bottom: 20px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
           <div>
             <h2 class="section-title">डैशबोर्ड (Dashboard)</h2>
             <p class="section-subtitle">आपकी दैनिक स्टेनो अभ्यास प्रगति, गति एवं सटीकता का संपूर्ण विवरण</p>
+          </div>
+          <div style="display:inline-flex; align-items:center; gap:8px;">
+            <span class="live-pulse-badge" id="liveSyncStatus"><span class="pulse-dot"></span> लाइव सिंक सक्रिय</span>
+            <button type="button" class="btn-sm btn-secondary" onclick="stenoApp.refreshDashboardLive(true)" title="लाइव आंकड़े रिफ्रेश करें" style="display:inline-flex; align-items:center; gap:6px; font-weight:700; font-size:0.78rem; padding:6px 12px; border-radius:8px; cursor:pointer;">
+              <span>🔄</span> <span>रिफ्रेश</span>
+            </button>
           </div>
         </div>
 
         <!-- Phase 3: Compact Horizontal Metrics Dashboard (2 rows of 4 landscape cards) -->
         <div class="horizontal-stats-grid" id="horizontalStatsGrid">
           <!-- Row 1 -->
+          <!-- 1. Streak Card -->
           <div class="h-stat-card">
-            <div class="h-stat-icon icon-flame">🔥</div>
-            <div class="h-stat-content">
-              <div class="h-stat-label">स्ट्रीक (Streak)</div>
-              <div class="h-stat-val" id="hStatStreak">0 दिन</div>
-              <div class="h-stat-sub" id="hStatStreakSub">दैनिक अभ्यास बनाए रखें</div>
+            <div class="h-stat-top">
+              <div class="h-stat-icon icon-flame">🔥</div>
+              <div class="h-stat-meta">
+                <div class="h-stat-label">स्ट्रीक (Streak)</div>
+                <div class="h-stat-tag tag-flame" id="hStatStreakTag">नियमितता</div>
+              </div>
+            </div>
+            <div class="h-stat-val" id="hStatStreak">0 दिन</div>
+            <div class="h-stat-sub" id="hStatStreakSub">आज 1 डिक्टेशन कर स्ट्रीक शुरू करें</div>
+            <div class="h-stat-micro" id="hStatStreakRecord">अधिकतम रिकॉर्ड: 0 दिन</div>
+          </div>
+
+          <!-- 2. Daily Goal Card -->
+          <div class="h-stat-card">
+            <div class="h-stat-top">
+              <div class="h-stat-icon icon-target">🎯</div>
+              <div class="h-stat-meta">
+                <div class="h-stat-label">दैनिक लक्ष्य (Daily Goal)</div>
+                <div class="h-stat-tag tag-target" id="hStatGoalTag">0% पूर्ण</div>
+              </div>
+            </div>
+            <div class="h-stat-val" id="hStatGoal">0 / 3 डिक्टेशन</div>
+            <div class="h-stat-sub" id="hStatGoalSub">आज 3 डिक्टेशन शेष हैं</div>
+            <div class="h-stat-bar-wrap">
+              <div class="h-stat-bar-fill fill-target" id="hStatGoalBar" style="width: 0%;"></div>
             </div>
           </div>
 
+          <!-- 3. Average Speed Card -->
           <div class="h-stat-card">
-            <div class="h-stat-icon icon-target">🎯</div>
-            <div class="h-stat-content">
-              <div class="h-stat-label">दैनिक लक्ष्य (Daily Goal)</div>
-              <div class="h-stat-val" id="hStatGoal">0 / 3</div>
-              <div class="h-stat-sub" id="hStatGoalSub">0% पूर्ण</div>
+            <div class="h-stat-top">
+              <div class="h-stat-icon icon-zap">⚡</div>
+              <div class="h-stat-meta">
+                <div class="h-stat-label">औसत गति (Avg WPM)</div>
+                <div class="h-stat-tag tag-zap" id="hStatAvgWpmTag">नेट स्पीड</div>
+              </div>
             </div>
+            <div class="h-stat-val" id="hStatAvgWpm">0.0 WPM</div>
+            <div class="h-stat-sub" id="hStatAvgWpmSub">नेट शुद्ध टंकण गति</div>
+            <div class="h-stat-micro" id="hStatAvgWpmTier">प्रारंभिक गति स्तर</div>
           </div>
 
+          <!-- 4. Accuracy Card -->
           <div class="h-stat-card">
-            <div class="h-stat-icon icon-zap">⚡</div>
-            <div class="h-stat-content">
-              <div class="h-stat-label">औसत गति (Avg WPM)</div>
-              <div class="h-stat-val" id="hStatAvgWpm">0.0 WPM</div>
-              <div class="h-stat-sub">नेट औसत गति</div>
+            <div class="h-stat-top">
+              <div class="h-stat-icon icon-check">💎</div>
+              <div class="h-stat-meta">
+                <div class="h-stat-label">सटीकता (Accuracy)</div>
+                <div class="h-stat-tag tag-check" id="hStatAccTag">शुद्धता स्तर</div>
+              </div>
             </div>
-          </div>
-
-          <div class="h-stat-card">
-            <div class="h-stat-icon icon-check">🎯</div>
-            <div class="h-stat-content">
-              <div class="h-stat-label">सटीकता (Accuracy)</div>
-              <div class="h-stat-val" id="hStatAccuracy">0.0%</div>
-              <div class="h-stat-sub">औसत शुद्धता</div>
-            </div>
+            <div class="h-stat-val" id="hStatAccuracy">0.0%</div>
+            <div class="h-stat-sub" id="hStatAccSub">औसत परीक्षा शुद्धता</div>
+            <div class="h-stat-micro" id="hStatAccTier">लक्ष्य: 95%+ (SSC Grade C)</div>
           </div>
 
           <!-- Row 2 -->
+          <!-- 5. Total Practices Card -->
           <div class="h-stat-card">
-            <div class="h-stat-icon icon-book">📝</div>
-            <div class="h-stat-content">
-              <div class="h-stat-label">कुल अभ्यास (Practices)</div>
-              <div class="h-stat-val" id="hStatPractices">0 सत्र</div>
-              <div class="h-stat-sub">पूर्ण डिक्टेशन</div>
+            <div class="h-stat-top">
+              <div class="h-stat-icon icon-book">📝</div>
+              <div class="h-stat-meta">
+                <div class="h-stat-label">कुल अभ्यास (Practices)</div>
+                <div class="h-stat-tag tag-book" id="hStatPracticesTag">सत्र पूर्ण</div>
+              </div>
             </div>
+            <div class="h-stat-val" id="hStatPractices">0 सत्र</div>
+            <div class="h-stat-sub" id="hStatPracticesSub">सफलतापूर्वक पूर्ण डिक्टेशन</div>
+            <div class="h-stat-micro" id="hStatTotalWords">कुल 0 शब्द टाइप</div>
           </div>
 
+          <!-- 6. Rewards Card -->
           <div class="h-stat-card">
-            <div class="h-stat-icon icon-star">🏆</div>
-            <div class="h-stat-content">
-              <div class="h-stat-label">रिवॉर्ड अंक (Rewards)</div>
-              <div class="h-stat-val" id="hStatPoints">0 Pts</div>
-              <div class="h-stat-sub">अर्जित अंक (सत्यापित)</div>
+            <div class="h-stat-top">
+              <div class="h-stat-icon icon-star">🏆</div>
+              <div class="h-stat-meta">
+                <div class="h-stat-label">रिवॉर्ड अंक (Rewards)</div>
+                <div class="h-stat-tag tag-star" id="hStatPointsTag">सत्यापित</div>
+              </div>
             </div>
+            <div class="h-stat-val" id="hStatPoints">0 Pts</div>
+            <div class="h-stat-sub" id="hStatPointsSub">अभ्यास व शुद्धता से अर्जित</div>
+            <div class="h-stat-micro" id="hStatPointsTier">10 Pts प्रति डिक्टेशन</div>
           </div>
 
+          <!-- 7. Best Speed Card -->
           <div class="h-stat-card">
-            <div class="h-stat-icon icon-rocket">🚀</div>
-            <div class="h-stat-content">
-              <div class="h-stat-label">सर्वश्रेष्ठ गति (Best WPM)</div>
-              <div class="h-stat-val" id="hStatBestWpm">0.0 WPM</div>
-              <div class="h-stat-sub">उच्चतम रिकॉर्ड</div>
+            <div class="h-stat-top">
+              <div class="h-stat-icon icon-rocket">🚀</div>
+              <div class="h-stat-meta">
+                <div class="h-stat-label">सर्वश्रेष्ठ गति (Best WPM)</div>
+                <div class="h-stat-tag tag-rocket" id="hStatBestWpmTag">ऑल-टाइम हाई</div>
+              </div>
             </div>
+            <div class="h-stat-val" id="hStatBestWpm">0.0 WPM</div>
+            <div class="h-stat-sub" id="hStatBestWpmSub">उच्चतम रिकॉर्ड गति</div>
+            <div class="h-stat-micro" id="hStatBestWpmTier">व्यक्तिगत सर्वश्रेष्ठ</div>
           </div>
 
+          <!-- 8. Total Time Card -->
           <div class="h-stat-card">
-            <div class="h-stat-icon icon-clock">⏱️</div>
-            <div class="h-stat-content">
-              <div class="h-stat-label">कुल समय (Total Time)</div>
-              <div class="h-stat-val" id="hStatTotalTime">0 mins</div>
-              <div class="h-stat-sub">अभ्यास में बिताया समय</div>
+            <div class="h-stat-top">
+              <div class="h-stat-icon icon-clock">⏱️</div>
+              <div class="h-stat-meta">
+                <div class="h-stat-label">कुल समय (Total Time)</div>
+                <div class="h-stat-tag tag-clock" id="hStatTotalTimeTag">समय निवेश</div>
+              </div>
             </div>
+            <div class="h-stat-val" id="hStatTotalTime">0 mins</div>
+            <div class="h-stat-sub" id="hStatTotalTimeSub">सक्रिय टाइपिंग अभ्यास</div>
+            <div class="h-stat-micro" id="hStatTotalTimeMicro">नियमितता बनाए रखें</div>
           </div>
         </div>
 
@@ -2502,11 +2550,11 @@
   <script defer src="https://sdk.cashfree.com/js/v3/cashfree.js"></script>
 
   <!-- Scripts -->
-  <script src="/js/charts.js?v=6.8"></script>
-  <script src="/js/audio_player.js?v=6.8"></script>
-  <script src="/js/keyboard_map.js?v=6.8"></script>
-  <script src="/js/typing_engine.js?v=6.8"></script>
-  <script src="/js/comparison_view.js?v=6.8"></script>
-  <script src="/js/app.js?v=6.8"></script>
+  <script src="/js/charts.js?v=6.9"></script>
+  <script src="/js/audio_player.js?v=6.9"></script>
+  <script src="/js/keyboard_map.js?v=6.9"></script>
+  <script src="/js/typing_engine.js?v=6.9"></script>
+  <script src="/js/comparison_view.js?v=6.9"></script>
+  <script src="/js/app.js?v=6.9"></script>
 </body>
 </html>

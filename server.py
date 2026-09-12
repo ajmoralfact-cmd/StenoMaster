@@ -1048,6 +1048,13 @@ class StenoMasterHandler(http.server.SimpleHTTPRequestHandler):
             eval_result["steno_notes_url"] = passage.get("steno_notes_url", "")
             eval_result["steno_notes_type"] = passage.get("steno_notes_type", "")
 
+            # Include live-updated progress summary in response for instantaneous dashboard update
+            if user:
+                try:
+                    eval_result["updated_summary"] = db.get_user_progress_summary(user['user_id'])
+                except Exception as sum_err:
+                    print(f"Updated summary inclusion notice: {sum_err}")
+
             self._send_json(200, eval_result)
             return
 

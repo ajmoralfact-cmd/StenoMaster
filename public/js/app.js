@@ -1772,7 +1772,10 @@ class StenoApp {
     const goal = res.today_goal || {};
     const stats = res.stats || {};
     const realPoints = stats.points !== undefined && stats.points !== null ? stats.points : 0;
+    const streakDays = stats.streak_days || 0;
+    const longestStreak = stats.longest_streak || streakDays;
 
+    // Mini target widgets
     const countEl = document.getElementById('todayTargetCompletedCount');
     const minEl = document.getElementById('todayTargetMinutes');
     const speedEl = document.getElementById('todayTargetSpeed');
@@ -1793,27 +1796,156 @@ class StenoApp {
     if (totalPracEl) totalPracEl.textContent = `${stats.total_practices || 0}`;
     if (pointsEl) pointsEl.textContent = `${realPoints} Pts`;
 
+    // -------------------------------------------------------------------------
+    // 8 Dashboard Metric Cards — Attractive, Actionable & Live-Updated
+    // -------------------------------------------------------------------------
+
+    // 1. Streak Card
     const hStreak = document.getElementById('hStatStreak');
     const hStreakSub = document.getElementById('hStatStreakSub');
+    const hStreakTag = document.getElementById('hStatStreakTag');
+    const hStreakRecord = document.getElementById('hStatStreakRecord');
+    if (hStreak) hStreak.textContent = `${streakDays} दिन`;
+    if (hStreakSub) {
+      hStreakSub.textContent = streakDays > 0 
+        ? '🔥 लगातार अभ्यास जारी है' 
+        : 'आज 1 डिक्टेशन कर स्ट्रीक शुरू करें';
+    }
+    if (hStreakTag) {
+      hStreakTag.textContent = streakDays > 0 ? `${streakDays} दिन स्ट्रीक` : 'दैनिक नियमितता';
+    }
+    if (hStreakRecord) {
+      hStreakRecord.textContent = `अधिकतम रिकॉर्ड: ${longestStreak} दिन`;
+    }
+
+    // 2. Daily Goal Card
     const hGoal = document.getElementById('hStatGoal');
     const hGoalSub = document.getElementById('hStatGoalSub');
-    const hAvgWpm = document.getElementById('hStatAvgWpm');
-    const hAcc = document.getElementById('hStatAccuracy');
-    const hPractices = document.getElementById('hStatPractices');
-    const hPoints = document.getElementById('hStatPoints');
-    const hBestWpm = document.getElementById('hStatBestWpm');
-    const hTotalTime = document.getElementById('hStatTotalTime');
+    const hGoalTag = document.getElementById('hStatGoalTag');
+    const hGoalBar = document.getElementById('hStatGoalBar');
+    const completedDict = goal.completed_dictations || 0;
+    const targetDict = goal.target_dictations || 3;
+    const pct = goal.percent_completed || Math.min(100, Math.round((completedDict / targetDict) * 100));
+    if (hGoal) hGoal.textContent = `${completedDict} / ${targetDict} डिक्टेशन`;
+    if (hGoalSub) {
+      if (completedDict >= targetDict) {
+        hGoalSub.textContent = '🎉 आज का लक्ष्य पूर्ण (+20 Pts बोनस)';
+      } else {
+        const left = targetDict - completedDict;
+        hGoalSub.textContent = `आज ${left} डिक्टेशन शेष हैं (${pct}% पूर्ण)`;
+      }
+    }
+    if (hGoalTag) {
+      hGoalTag.textContent = completedDict >= targetDict ? 'लक्ष्य सिद्ध ✓' : `${pct}% पूर्ण`;
+    }
+    if (hGoalBar) {
+      hGoalBar.style.width = `${pct}%`;
+    }
 
-    if (hStreak) hStreak.textContent = `${stats.streak_days || 0} दिन`;
-    if (hStreakSub) hStreakSub.textContent = `अधिकतम ${stats.longest_streak || 0} दिन स्ट्रीक`;
-    if (hGoal) hGoal.textContent = `${goal.completed_dictations || 0} / ${goal.target_dictations || 3}`;
-    if (hGoalSub) hGoalSub.textContent = `${goal.percent_completed || 0}% लक्ष्य पूर्ण`;
-    if (hAvgWpm) hAvgWpm.textContent = `${stats.avg_wpm !== undefined ? stats.avg_wpm : 0} WPM`;
-    if (hAcc) hAcc.textContent = `${stats.avg_accuracy !== undefined ? stats.avg_accuracy : 0}%`;
-    if (hPractices) hPractices.textContent = `${stats.total_practices || 0} सत्र`;
+    // 3. Average Speed Card
+    const hAvgWpm = document.getElementById('hStatAvgWpm');
+    const hAvgWpmSub = document.getElementById('hStatAvgWpmSub');
+    const hAvgWpmTag = document.getElementById('hStatAvgWpmTag');
+    const hAvgWpmTier = document.getElementById('hStatAvgWpmTier');
+    const avgWpm = stats.avg_wpm !== undefined ? Number(stats.avg_wpm) : 0;
+    if (hAvgWpm) hAvgWpm.textContent = `${avgWpm} WPM`;
+    if (hAvgWpmSub) hAvgWpmSub.textContent = 'नेट शुद्ध टंकण गति';
+    if (hAvgWpmTag) {
+      if (avgWpm >= 100) hAvgWpmTag.textContent = 'कोर्ट / ग्रेड C';
+      else if (avgWpm >= 80) hAvgWpmTag.textContent = 'SSC ग्रेड D';
+      else if (avgWpm >= 60) hAvgWpmTag.textContent = 'मध्यम स्तर';
+      else hAvgWpmTag.textContent = 'प्रारंभिक';
+    }
+    if (hAvgWpmTier) {
+      if (avgWpm >= 100) hAvgWpmTier.textContent = '🏆 परीक्षा तैयार: उत्कृष्ट उच्च गति';
+      else if (avgWpm >= 80) hAvgWpmTier.textContent = '🎯 SSC Grade D मानक गति पूर्ण';
+      else if (avgWpm >= 60) hAvgWpmTier.textContent = '⚡ मध्यम स्तर: 80 WPM का लक्ष्य रखें';
+      else hAvgWpmTier.textContent = '🌱 नियमित अभ्यास से गति 60+ ले जाएं';
+    }
+
+    // 4. Accuracy Card
+    const hAcc = document.getElementById('hStatAccuracy');
+    const hAccSub = document.getElementById('hStatAccSub');
+    const hAccTag = document.getElementById('hStatAccTag');
+    const hAccTier = document.getElementById('hStatAccTier');
+    const avgAcc = stats.avg_accuracy !== undefined ? Number(stats.avg_accuracy) : 0;
+    if (hAcc) hAcc.textContent = `${avgAcc}%`;
+    if (hAccSub) {
+      if (avgAcc >= 95) hAccSub.textContent = '💎 उत्कृष्ट शुद्धता (गलतियां < 5%)';
+      else if (avgAcc >= 90) hAccSub.textContent = '✅ मानक शुद्धता (गलतियां < 10%)';
+      else hAccSub.textContent = '⚠️ शुद्धता पर ध्यान दें (त्रुटियां कम करें)';
+    }
+    if (hAccTag) {
+      if (avgAcc >= 95) hAccTag.textContent = 'उत्कृष्ट 💎';
+      else if (avgAcc >= 90) hAccTag.textContent = 'मानक शुद्धता';
+      else hAccTag.textContent = 'सुधार अपेक्षित';
+    }
+    if (hAccTier) {
+      hAccTier.textContent = 'आधिकारिक परीक्षा लक्ष्य: 95%+';
+    }
+
+    // 5. Total Practices Card
+    const hPractices = document.getElementById('hStatPractices');
+    const hPracticesSub = document.getElementById('hStatPracticesSub');
+    const hPracticesTag = document.getElementById('hStatPracticesTag');
+    const hTotalWords = document.getElementById('hStatTotalWords');
+    const totalPrac = stats.total_practices || 0;
+    const totalWords = stats.total_words || 0;
+    if (hPractices) hPractices.textContent = `${totalPrac} सत्र`;
+    if (hPracticesSub) hPracticesSub.textContent = 'सफलतापूर्वक पूर्ण डिक्टेशन';
+    if (hPracticesTag) hPracticesTag.textContent = `${totalPrac} पूर्ण`;
+    if (hTotalWords) {
+      hTotalWords.textContent = `कुल ${Number(totalWords).toLocaleString('hi-IN')} शब्द टाइप`;
+    }
+
+    // 6. Reward Points Card
+    const hPoints = document.getElementById('hStatPoints');
+    const hPointsSub = document.getElementById('hStatPointsSub');
+    const hPointsTag = document.getElementById('hStatPointsTag');
+    const hPointsTier = document.getElementById('hStatPointsTier');
     if (hPoints) hPoints.textContent = `${realPoints} Pts`;
-    if (hBestWpm) hBestWpm.textContent = `${stats.best_wpm !== undefined ? stats.best_wpm : 0} WPM`;
+    if (hPointsSub) hPointsSub.textContent = 'सटीकता व नियमितता से अर्जित';
+    if (hPointsTag) hPointsTag.textContent = 'सत्यापित अंक';
+    if (hPointsTier) hPointsTier.textContent = '+10 Pts प्रति पूर्ण डिक्टेशन';
+
+    // 7. Best Speed Card
+    const hBestWpm = document.getElementById('hStatBestWpm');
+    const hBestWpmSub = document.getElementById('hStatBestWpmSub');
+    const hBestWpmTag = document.getElementById('hStatBestWpmTag');
+    const hBestWpmTier = document.getElementById('hStatBestWpmTier');
+    const bestWpm = stats.best_wpm !== undefined ? Number(stats.best_wpm) : 0;
+    if (hBestWpm) hBestWpm.textContent = `${bestWpm} WPM`;
+    if (hBestWpmSub) hBestWpmSub.textContent = 'उच्चतम रिकॉर्ड गति';
+    if (hBestWpmTag) hBestWpmTag.textContent = 'ऑल-टाइम हाई 🚀';
+    if (hBestWpmTier) hBestWpmTier.textContent = 'व्यक्तिगत सर्वश्रेष्ठ टंकण रिकॉर्ड';
+
+    // 8. Total Time Card
+    const hTotalTime = document.getElementById('hStatTotalTime');
+    const hTotalTimeSub = document.getElementById('hStatTotalTimeSub');
+    const hTotalTimeTag = document.getElementById('hStatTotalTimeTag');
+    const hTotalTimeMicro = document.getElementById('hStatTotalTimeMicro');
     if (hTotalTime) hTotalTime.textContent = `${stats.total_time_formatted || '0 mins'}`;
+    if (hTotalTimeSub) hTotalTimeSub.textContent = 'सक्रिय टाइपिंग अभ्यास';
+    if (hTotalTimeTag) hTotalTimeTag.textContent = 'समय निवेश';
+    if (hTotalTimeMicro) hTotalTimeMicro.textContent = 'दैनिक 15-30 मिनट अभ्यास रखें';
+  }
+
+  async refreshDashboardLive(showToast = false) {
+    if (!this.user) return;
+    try {
+      const res = await this.apiCall('/api/progress/summary');
+      if (res) {
+        this._applySummaryToDOM(res);
+        try {
+          localStorage.setItem('stenomaster_cached_summary', JSON.stringify(res));
+        } catch(e) {}
+        if (showToast) {
+          this.showToast('डैशबोर्ड आंकड़े लाइव अपडेट हुए! ✓', 'success');
+        }
+      }
+    } catch(err) {
+      console.warn('Live refresh error:', err);
+    }
   }
 
   async renderDailyTargetSummary() {
@@ -2182,6 +2314,19 @@ class StenoApp {
 
       stenoTypingEngine.stopPractice();
       this.showToast('मूल्यांकन पूर्ण! 🎉', 'success');
+
+      // Instant live real-time dashboard update
+      try {
+        localStorage.removeItem('stenomaster_cached_summary');
+        if (evalReport && evalReport.updated_summary) {
+          this._applySummaryToDOM(evalReport.updated_summary);
+          localStorage.setItem('stenomaster_cached_summary', JSON.stringify(evalReport.updated_summary));
+        } else {
+          this.renderDailyTargetSummary();
+        }
+      } catch (e) {
+        console.warn('Post-submit live summary error:', e);
+      }
 
       // Render Result Report Card
       const reportContainer = document.getElementById('resultReportContainer');
