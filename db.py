@@ -1175,21 +1175,52 @@ def create_user(username: str, email: str, password: str, display_name: str = No
 
         # Process referral code if provided
         if ref_code:
-            c.execute("SELECT id FROM users WHERE referral_code = ?", (ref_code.strip().upper(),))
+            c.execute("SELECT id, username FROM users WHERE referral_code = ?", (ref_code.strip().upper(),))
             referrer = c.fetchone()
-            if referrer and referrer['id'] != user_id:
-                referrer_id = referrer['id']
-                c.execute("""
-                    INSERT INTO referrals (referrer_user_id, referred_user_id, referral_code, reward_points, created_at)
-                    VALUES (?, ?, ?, 50, ?)
-                """, (referrer_id, user_id, ref_code.strip().upper(), now))
-                c.execute("UPDATE profiles SET points = points + 50 WHERE user_id = ?", (referrer_id,))
-                c.execute("""
-                    INSERT INTO reward_transactions (user_id, points, type, reference_id, description, created_at)
-                    VALUES (?, 50, 'referral_bonus', ?, 'Referral reward for inviting new student', ?)
-                """, (referrer_id, f"ref:{user_id}", now))
+            if referrer:
+                referrer_id = referrer['id'] if isinstance(referrer, dict) else referrer[0]
+                if referrer_id != user_id:
+                    # 1. Record referral with 100 points
+                    c.execute("""
+                        INSERT INTO referrals (referrer_user_id, referred_user_id, referral_code, reward_points, status, created_at)
+                        VALUES (?, ?, ?, 100, 'completed', ?)
+                    """, (referrer_id, user_id, ref_code.strip().upper(), now))
+
+                    # 2. Award 100 points to Referrer
+                    c.execute("UPDATE profiles SET points = points + 100 WHERE user_id = ?", (referrer_id,))
+                    c.execute("""
+                        INSERT INTO reward_transactions (user_id, points, type, reference_id, description, created_at)
+                        VALUES (?, 100, 'referral_bonus', ?, ?, ?)
+                    """, (referrer_id, f"ref:{user_id}", f"Referral reward for inviting new student: {username}", now))
+
+                    # 3. Award 50 welcome bonus points to New Student
+                    c.execute("UPDATE profiles SET points = points + 50 WHERE user_id = ?", (user_id,))
+                    c.execute("""
+                        INSERT INTO reward_transactions (user_id, points, type, reference_id, description, created_at)
+                        VALUES (?, 50, 'welcome_bonus', ?, ?, ?)
+                    """, (user_id, f"welcome:{referrer_id}", f"Welcome bonus for joining via referral code: {ref_code.strip().upper()}", now))
+
+                    # 4. In-App Notification for Referrer
+                    c.execute("""
+                        INSERT INTO notifications (user_id, title, message, type, is_read, created_at)
+                        VALUES (?, '🎉 100 रिवॉर्ड अंक मिले!', ?, 'reward', 0, ?)
+                    """, (referrer_id, f"बधाई हो! आपके रेफरल कोड से '{d_name}' ने StenoMaster जॉइन किया। आपके खाते में 100 अंक जोड़ दिए गए हैं!", now))
+
+                    # 5. In-App Notification for New Student
+                    c.execute("""
+                        INSERT INTO notifications (user_id, title, message, type, is_read, created_at)
+                        VALUES (?, '🎁 50 वेलकम बोनस अंक मिले!', ?, 'reward', 0, ?)
+                    """, (user_id, "StenoMaster में आपका स्वागत है! रेफरल कोड लागू होने पर आपको 50 वेलकम पॉइंट्स मिले हैं।", now))
 
         conn.commit()
+        return {
+            "success": True,
+            "user_id": user_id,
+            "username": username,
+            "student_code": student_code,
+            "referral_code": user_ref,
+            "email": email
+        }
     except Exception as e:
         conn.rollback()
         err_msg = str(e).lower()
@@ -1367,6 +1398,37 @@ def authenticate_or_register_google_user(
 
         # User settings
         c.execute("INSERT INTO user_settings (user_id) VALUES (?)", (user_id,))
+
+        # Process referral code if provided for new Google student
+        if referral_code:
+            c.execute("SELECT id, username FROM users WHERE referral_code = ?", (referral_code.strip().upper(),))
+            referrer = c.fetchone()
+            if referrer:
+                referrer_id = referrer['id'] if isinstance(referrer, dict) else referrer[0]
+                if referrer_id != user_id:
+                    c.execute("""
+                        INSERT INTO referrals (referrer_user_id, referred_user_id, referral_code, reward_points, status, created_at)
+                        VALUES (?, ?, ?, 100, 'completed', ?)
+                    """, (referrer_id, user_id, referral_code.strip().upper(), now_iso))
+                    c.execute("UPDATE profiles SET points = points + 100 WHERE user_id = ?", (referrer_id,))
+                    c.execute("""
+                        INSERT INTO reward_transactions (user_id, points, type, reference_id, description, created_at)
+                        VALUES (?, 100, 'referral_bonus', ?, ?, ?)
+                    """, (referrer_id, f"ref:{user_id}", f"Referral reward for inviting new Google student: {username}", now_iso))
+                    c.execute("UPDATE profiles SET points = points + 50 WHERE user_id = ?", (user_id,))
+                    c.execute("""
+                        INSERT INTO reward_transactions (user_id, points, type, reference_id, description, created_at)
+                        VALUES (?, 50, 'welcome_bonus', ?, ?, ?)
+                    """, (user_id, f"welcome:{referrer_id}", f"Welcome bonus for joining via referral code: {referral_code.strip().upper()}", now_iso))
+                    c.execute("""
+                        INSERT INTO notifications (user_id, title, message, type, is_read, created_at)
+                        VALUES (?, '🎉 100 रिवॉर्ड अंक मिले!', ?, 'reward', 0, ?)
+                    """, (referrer_id, f"बधाई हो! आपके रेफरल कोड से '{clean_name}' ने StenoMaster जॉइन किया। आपके खाते में 100 अंक जोड़ दिए गए हैं!", now_iso))
+                    c.execute("""
+                        INSERT INTO notifications (user_id, title, message, type, is_read, created_at)
+                        VALUES (?, '🎁 50 वेलकम बोनस अंक मिले!', ?, 'reward', 0, ?)
+                    """, (user_id, "StenoMaster में आपका स्वागत है! रेफरल कोड लागू होने पर आपको 50 वेलकम पॉइंट्स मिले हैं।", now_iso))
+
         conn.commit()
 
     conn.close()

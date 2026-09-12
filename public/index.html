@@ -12,7 +12,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Mukta:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/css/style.css?v=7.0">
+  <link rel="stylesheet" href="/css/style.css?v=7.1">
   <!-- Google Identity Services SDK -->
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   <script>
@@ -223,7 +223,8 @@
                   </div>
                   <div class="form-group">
                     <label class="form-label">रेफरल कोड (वैकल्पिक)</label>
-                    <input type="text" id="stuRegReferralCode" class="form-input" placeholder="उदा. STENO101">
+                    <input type="text" id="stuRegReferralCode" class="form-input" placeholder="उदा. STENO101" oninput="stenoApp.handleReferralInput(this.value)">
+                    <small id="stuRegReferralNotice" style="display:none; font-size:0.75rem; color:#10b981; font-weight:600; margin-top:4px;">✓ रेफरल कोड सक्रिय (+50 वेलकम बोनस अंक)</small>
                   </div>
                 </div>
 
@@ -1555,6 +1556,52 @@
             </div>
           </div>
         </div>
+
+        <!-- Referral Benefits & Quick Share Cards -->
+        <div style="margin-top: 24px; display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px;">
+          <div class="card" style="padding: 18px; border: 1px solid var(--border); border-radius: 12px; background: var(--card-bg);">
+            <div style="display:flex; align-items:center; gap: 10px; margin-bottom: 10px;">
+              <span style="font-size: 1.5rem;">🎁</span>
+              <h4 style="margin: 0; font-size: 1.05rem; color: var(--text-main);">रेफरल नियम (Referral Rules)</h4>
+            </div>
+            <ul style="margin: 0; padding-left: 20px; font-size: 0.85rem; color: var(--text-muted); line-height: 1.7;">
+              <li>अपने दोस्तों को अपना रेफरल लिंक या कोड शेयर करें।</li>
+              <li>जब आपका दोस्त जॉइन करता है, तो <strong>आपको तुरंत 100 रिवॉर्ड पॉइंट्स</strong> मिलते हैं।</li>
+              <li>आपके दोस्त को भी <strong>50 वेलकम बोनस पॉइंट्स</strong> तुरंत मिलते हैं।</li>
+              <li>अर्जित पॉइंट्स का उपयोग प्रो सब्सक्रिप्शन छूट और रिवॉर्ड अनलॉक करने में कर सकते हैं।</li>
+            </ul>
+          </div>
+
+          <div class="card" style="padding: 18px; border: 1px solid var(--border); border-radius: 12px; background: var(--card-bg);">
+            <div style="display:flex; align-items:center; gap: 10px; margin-bottom: 10px;">
+              <span style="font-size: 1.5rem;">🚀</span>
+              <h4 style="margin: 0; font-size: 1.05rem; color: var(--text-main);">तुरंत शेयर करें (Quick Share)</h4>
+            </div>
+            <p style="font-size: 0.83rem; color: var(--text-muted); margin-bottom: 14px;">एक क्लिक में WhatsApp या Telegram पर अपने साथियों को आमंत्रित करें:</p>
+            <div style="display:flex; gap: 10px; flex-wrap: wrap;">
+              <button type="button" class="btn-primary" onclick="stenoApp.shareOnWhatsApp()" style="background:#25D366; border-color:#25D366; color:#fff; display:inline-flex; align-items:center; gap:6px; padding:8px 14px; font-size:0.85rem; font-weight:600; border-radius:8px; cursor:pointer;">
+                <span>💬 WhatsApp पर भेजें</span>
+              </button>
+              <button type="button" class="btn-secondary" onclick="stenoApp.shareOnTelegram()" style="background:#0088cc; border-color:#0088cc; color:#fff; display:inline-flex; align-items:center; gap:6px; padding:8px 14px; font-size:0.85rem; font-weight:600; border-radius:8px; cursor:pointer;">
+                <span>✈️ Telegram पर भेजें</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Referral History Table -->
+        <div class="card" style="margin-top: 24px; padding: 20px; border: 1px solid var(--border); border-radius: 12px; background: var(--card-bg);">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 14px; flex-wrap: wrap; gap: 8px;">
+            <h3 style="margin: 0; font-size: 1.05rem; color: var(--text-main); display:flex; align-items:center; gap:8px;">
+              <span>📋</span> आपके द्वारा आमंत्रित छात्र (Referral History)
+            </h3>
+            <span class="badge badge-info" id="referralHistoryBadge" style="font-size:0.75rem;">0 सफल रेफरल</span>
+          </div>
+
+          <div id="referralHistoryContainer" style="overflow-x: auto;">
+            <!-- Rendered dynamically -->
+          </div>
+        </div>
       </main>
 
       <!-- ===================================================================
@@ -2681,11 +2728,11 @@
   <script defer src="https://sdk.cashfree.com/js/v3/cashfree.js"></script>
 
   <!-- Scripts -->
-  <script src="/js/charts.js?v=7.0"></script>
-  <script src="/js/audio_player.js?v=7.0"></script>
-  <script src="/js/keyboard_map.js?v=7.0"></script>
-  <script src="/js/typing_engine.js?v=7.0"></script>
-  <script src="/js/comparison_view.js?v=7.0"></script>
-  <script src="/js/app.js?v=7.0"></script>
+  <script src="/js/charts.js?v=7.1"></script>
+  <script src="/js/audio_player.js?v=7.1"></script>
+  <script src="/js/keyboard_map.js?v=7.1"></script>
+  <script src="/js/typing_engine.js?v=7.1"></script>
+  <script src="/js/comparison_view.js?v=7.1"></script>
+  <script src="/js/app.js?v=7.1"></script>
 </body>
 </html>

@@ -440,9 +440,10 @@ class StenoMasterHandler(http.server.SimpleHTTPRequestHandler):
             c = conn.cursor()
             c.execute("""
                 SELECT r.id, r.referral_code, r.reward_points, r.status, r.created_at,
-                       u.username as referred_username
+                       u.username as referred_username, p.display_name as referred_display_name
                 FROM referrals r
                 JOIN users u ON r.referred_user_id = u.id
+                LEFT JOIN profiles p ON p.user_id = u.id
                 WHERE r.referrer_user_id = ?
                 ORDER BY r.id DESC
             """, (user['user_id'],))
@@ -704,11 +705,13 @@ class StenoMasterHandler(http.server.SimpleHTTPRequestHandler):
             user_agent = self.headers.get('User-Agent', '')
             device_name = self._parse_device_name(user_agent)
 
+            ref_code = (data.get('referral_code') or '').strip()
             result = db.authenticate_or_register_google_user(
                 google_id=google_info.get('sub', ''),
                 email=google_info.get('email', ''),
                 full_name=google_info.get('name', ''),
-                avatar_url=google_info.get('picture', '')
+                avatar_url=google_info.get('picture', ''),
+                referral_code=ref_code
             )
             if not result.get("success"):
                 self._send_json(400, result)

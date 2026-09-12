@@ -269,6 +269,7 @@ class StenoApp {
     this.initPWA();
     this.initNavigation();
     this.initSessionHeartbeat();
+    this.captureReferralParam();
 
     // Cross-tab real-time sync when Admin edits or deletes passages
     window.addEventListener('storage', (e) => {
@@ -638,12 +639,14 @@ class StenoApp {
     try {
       this.showToast('Google से सत्यापन हो रहा है... ⏳', 'info');
       const res = await this.apiCall('/api/auth/google', 'POST', {
-        credential: googleResp.credential
+        credential: googleResp.credential,
+        referral_code: localStorage.getItem('stenomaster_pending_referral') || ''
       });
 
       this.token = res.token;
       this.user = res.user;
       localStorage.setItem('stenomaster_token', this.token);
+      localStorage.removeItem('stenomaster_pending_referral');
       localStorage.setItem('stenomaster_user', JSON.stringify(this.user));
 
       this.closeModal('loginModal');
@@ -710,6 +713,7 @@ class StenoApp {
       if (signupBtn) { signupBtn.style.background = 'var(--primary)'; signupBtn.style.color = '#fff'; }
       if (loginForm) loginForm.style.display = 'none';
       if (signupForm) signupForm.style.display = 'block';
+      this.applyPendingReferralUI(localStorage.getItem('stenomaster_pending_referral') || '');
     } else {
       if (loginBtn) { loginBtn.style.background = 'var(--primary)'; loginBtn.style.color = '#fff'; }
       if (signupBtn) { signupBtn.style.background = 'transparent'; signupBtn.style.color = 'var(--text-secondary)'; }
@@ -728,7 +732,7 @@ class StenoApp {
     const targetExam = document.getElementById('stuRegTargetExam')?.value;
     const prefLanguage = document.getElementById('stuRegPrefLanguage')?.value;
     const prefMode = document.getElementById('stuRegPrefMode')?.value;
-    const referralCode = document.getElementById('stuRegReferralCode')?.value.trim();
+    const referralCode = document.getElementById('stuRegReferralCode')?.value.trim() || localStorage.getItem('stenomaster_pending_referral') || '';
     const errBox = document.getElementById('stuSignupError');
     const submitBtn = document.getElementById('stuSignupSubmitBtn');
 
@@ -761,6 +765,7 @@ class StenoApp {
       this.token = res.token;
       this.user = res.user;
       localStorage.setItem('stenomaster_token', this.token);
+      localStorage.removeItem('stenomaster_pending_referral');
       localStorage.setItem('stenomaster_student_registry_updated', Date.now().toString());
       localStorage.setItem('stenomaster_users_version', Date.now().toString());
 
@@ -835,6 +840,7 @@ class StenoApp {
       this.token = res.token;
       this.user = res.user;
       localStorage.setItem('stenomaster_token', this.token);
+      localStorage.removeItem('stenomaster_pending_referral');
       localStorage.setItem('stenomaster_user', JSON.stringify(this.user));
 
       // Save Student Credentials for 1-Click Login if Remember Me is checked
@@ -894,6 +900,7 @@ class StenoApp {
       this.token = res.token;
       this.user = res.user;
       localStorage.setItem('stenomaster_token', this.token);
+      localStorage.removeItem('stenomaster_pending_referral');
       localStorage.setItem('stenomaster_user', JSON.stringify(this.user));
       this.closeModal('loginModal');
       this.hideAuthGateway();
@@ -947,6 +954,7 @@ class StenoApp {
       this.token = res.token;
       this.user = res.user;
       localStorage.setItem('stenomaster_token', this.token);
+      localStorage.removeItem('stenomaster_pending_referral');
       localStorage.setItem('stenomaster_user', JSON.stringify(this.user));
 
       // Save Admin Credentials for 1-Click Login if Remember Me is checked
@@ -1077,6 +1085,7 @@ class StenoApp {
       this.token = res.token;
       this.user = res.user;
       localStorage.setItem('stenomaster_token', this.token);
+      localStorage.removeItem('stenomaster_pending_referral');
       localStorage.setItem('stenomaster_user', JSON.stringify(this.user));
       localStorage.setItem('stenomaster_student_registry_updated', Date.now().toString());
       localStorage.setItem('stenomaster_users_version', Date.now().toString());
@@ -2991,6 +3000,54 @@ class StenoApp {
     }
   }
 
+  captureReferralParam() {
+    try {
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.has('ref')) {
+        const refCode = (urlParams.get('ref') || '').trim().toUpperCase();
+        if (refCode) {
+          localStorage.setItem('stenomaster_pending_referral', refCode);
+          console.log('[Referral] Auto-captured referral code:', refCode);
+          setTimeout(() => {
+            this.applyPendingReferralUI(refCode);
+            if (!this.token) {
+              this.switchStudentAuthMode('signup');
+              this.showToast(`🎉 रेफरल कोड '${refCode}' सक्रिय! पंजीकरण पर आपको 50 वेलकम बोनस अंक मिलेंगे।`, 'success', 6000);
+            }
+          }, 400);
+        }
+      } else {
+        const stored = localStorage.getItem('stenomaster_pending_referral');
+        if (stored) {
+          this.applyPendingReferralUI(stored);
+        }
+      }
+    } catch (e) {
+      console.warn('Failed to parse referral param:', e);
+    }
+  }
+
+  applyPendingReferralUI(refCode) {
+    if (!refCode) return;
+    const stuRefInput = document.getElementById('stuRegReferralCode');
+    if (stuRefInput) {
+      stuRefInput.value = refCode;
+      const notice = document.getElementById('stuRegReferralNotice');
+      if (notice) notice.style.display = 'block';
+    }
+    const regRefInput = document.getElementById('regReferralCode');
+    if (regRefInput) {
+      regRefInput.value = refCode;
+    }
+  }
+
+  handleReferralInput(val) {
+    const notice = document.getElementById('stuRegReferralNotice');
+    if (notice) {
+      notice.style.display = (val && val.trim().length > 2) ? 'block' : 'none';
+    }
+  }
+
   async loadReferrals() {
     if (!this.user) {
       this.openModal('loginModal');
@@ -2998,14 +3055,94 @@ class StenoApp {
     }
     try {
       const res = await this.apiCall('/api/referrals/stats');
-      document.getElementById('referralCodeDisplay').textContent = res.referral_code || 'SMSTENO';
-      document.getElementById('referralShareLink').textContent = `${window.location.origin}/?ref=${res.referral_code}`;
-      document.getElementById('referralTotalCount').textContent = res.total_referrals || 0;
-      document.getElementById('referralPointsEarned').textContent = `${res.points_earned || 0} Pts`;
-      document.getElementById('referralTotalBalance').textContent = `${res.total_points || 0} Pts`;
+      const refCode = res.referral_code || this.user.referral_code || 'SMSTENO';
+      const codeEl = document.getElementById('referralCodeDisplay');
+      if (codeEl) codeEl.textContent = refCode;
+      const linkEl = document.getElementById('referralShareLink');
+      if (linkEl) linkEl.textContent = `${window.location.origin}/?ref=${refCode}`;
+      const totalEl = document.getElementById('referralTotalCount');
+      if (totalEl) totalEl.textContent = res.total_referrals || 0;
+      const ptsEl = document.getElementById('referralPointsEarned');
+      if (ptsEl) ptsEl.textContent = `${res.points_earned || 0} Pts`;
+      const balEl = document.getElementById('referralTotalBalance');
+      if (balEl) balEl.textContent = `${res.total_points || 0} Pts`;
+
+      const badge = document.getElementById('referralHistoryBadge');
+      if (badge) badge.textContent = `${res.total_referrals || 0} सफल रेफरल`;
+
+      this.renderReferralHistory(res.history || []);
     } catch (err) {
       console.error('Failed to load referrals:', err);
     }
+  }
+
+  renderReferralHistory(history) {
+    const container = document.getElementById('referralHistoryContainer');
+    if (!container) return;
+
+    if (!history || history.length === 0) {
+      container.innerHTML = `
+        <div style="text-align: center; padding: 28px 16px; color: var(--text-muted);">
+          <div style="font-size: 2.2rem; margin-bottom: 8px;">👥</div>
+          <p style="font-weight: 600; margin-bottom: 4px; color: var(--text-main);">अभी तक कोई रेफरल नहीं हुआ है</p>
+          <p style="font-size: 0.85rem; max-width: 440px; margin: 0 auto; line-height:1.5;">
+            ऊपर दिए गए अपने रेफरल लिंक को दोस्तों के साथ साझा करें। जब भी कोई छात्र जुड़ेगा, आपको <strong>100 रिवॉर्ड अंक</strong> और उन्हें <strong>50 अंक</strong> तुरंत मिलेंगे!
+          </p>
+        </div>
+      `;
+      return;
+    }
+
+    container.innerHTML = `
+      <table class="data-table" style="width: 100%; border-collapse: collapse; font-size: 0.88rem; margin-top: 6px;">
+        <thead>
+          <tr style="border-bottom: 2px solid var(--border); text-align: left; color: var(--text-muted);">
+            <th style="padding: 10px 12px;">#</th>
+            <th style="padding: 10px 12px;">छात्र का नाम (Student)</th>
+            <th style="padding: 10px 12px;">शामिल होने की तिथि</th>
+            <th style="padding: 10px 12px;">अर्जित अंक</th>
+            <th style="padding: 10px 12px;">स्थिति</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${history.map((item, idx) => {
+            const dateStr = item.created_at ? new Date(item.created_at).toLocaleDateString('hi-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : 'हाल ही में';
+            const studentName = item.referred_display_name || item.referred_username || 'नया छात्र';
+            return `
+              <tr style="border-bottom: 1px solid var(--border-subtle);">
+                <td style="padding: 10px 12px; color: var(--text-muted);">${idx + 1}</td>
+                <td style="padding: 10px 12px; font-weight: 600; color: var(--text-main);">
+                  <span style="display:inline-flex; align-items:center; gap:6px;">
+                    <span>🎓</span> ${this.escapeHtml(studentName)}
+                  </span>
+                </td>
+                <td style="padding: 10px 12px; color: var(--text-muted);">${dateStr}</td>
+                <td style="padding: 10px 12px; font-weight: 700; color: #10b981;">+${item.reward_points || 100} Pts</td>
+                <td style="padding: 10px 12px;">
+                  <span class="badge badge-success" style="background:#dcfce7; color:#15803d; font-size:0.75rem; padding:3px 8px; border-radius:12px;">
+                    ✓ सफल (Credited)
+                  </span>
+                </td>
+              </tr>
+            `;
+          }).join('')}
+        </tbody>
+      </table>
+    `;
+  }
+
+  shareOnWhatsApp() {
+    const refCode = document.getElementById('referralCodeDisplay')?.textContent?.trim() || 'STENO101';
+    const link = `${window.location.origin}/?ref=${refCode}`;
+    const text = `🎯 StenoMaster पर स्टेनोग्राफी और टाइपिंग की तैयारी करें! मेरे रेफरल कोड *${refCode}* से जुड़ें और पाएं 50 वेलकम बोनस अंक:\n${link}`;
+    window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
+  }
+
+  shareOnTelegram() {
+    const refCode = document.getElementById('referralCodeDisplay')?.textContent?.trim() || 'STENO101';
+    const link = `${window.location.origin}/?ref=${refCode}`;
+    const text = `🎯 StenoMaster पर स्टेनोग्राफी और टाइपिंग की तैयारी करें! मेरे रेफरल कोड ${refCode} से जुड़ें और पाएं 50 वेलकम बोनस अंक!`;
+    window.open(`https://t.me/share/url?url=${encodeURIComponent(link)}&text=${encodeURIComponent(text)}`, '_blank');
   }
 
   copyReferralCode() {
