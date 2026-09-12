@@ -1569,9 +1569,6 @@ class StenoAdmin {
       .replace(/"/g, '&quot;')
       .replace(/'/g, '&#039;');
   }
-}
-
-window.stenoAdmin = new StenoAdmin();
 
 
 
@@ -1716,3 +1713,6 @@ window.stenoAdmin = new StenoAdmin();
   searchReferrals(query) {
     this.renderAdminReferralsTables(query);
   }
+}
+
+window.stenoAdmin = new StenoAdmin();

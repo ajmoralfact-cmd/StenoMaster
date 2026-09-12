@@ -245,6 +245,7 @@ class StenoApp {
     }
 
     if (path.startsWith('admin')) {
+      const isAdmin = Boolean(this.user && this.user.role === 'admin');
       if (isAdmin) {
         window.location.href = '/admin.html';
       }
@@ -304,7 +305,8 @@ class StenoApp {
 
     // If no active session token, show Auth Gateway directly
     const hash = window.location.hash || '';
-    const isTryingAdmin = hash.toLowerCase().includes('admin');
+    const search = window.location.search || '';
+    const isTryingAdmin = hash.toLowerCase().includes('admin') || search.toLowerCase().includes('admin');
     this.showAuthGateway(isTryingAdmin ? 'admin' : 'student');
   }
 
