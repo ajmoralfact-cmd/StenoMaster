@@ -2774,11 +2774,13 @@ def get_admin_users() -> List[Dict[str, Any]]:
     conn = get_db()
     c = conn.cursor()
     c.execute("""
-        SELECT u.id, u.username, u.email, u.phone, u.student_code, u.role, u.is_active, u.created_at,
+        SELECT u.id, u.username, u.email, u.phone, u.student_code, u.referral_code, u.role, u.is_active, u.created_at,
                u.subscription_status, u.subscription_plan, u.subscription_start, u.subscription_end,
                COALESCE(u.is_free_access, 0) as is_free_access,
                p.display_name, p.target_exam, p.preferred_language, p.target_wpm, p.points, p.streak_days,
-               (SELECT COUNT(*) FROM practice_attempts WHERE user_id = u.id) as attempts_count
+               (SELECT COUNT(*) FROM practice_attempts WHERE user_id = u.id) as attempts_count,
+               (SELECT COUNT(*) FROM referrals WHERE referrer_user_id = u.id) as referrals_count,
+               (SELECT COALESCE(SUM(reward_points), 0) FROM referrals WHERE referrer_user_id = u.id) as referral_points_earned
         FROM users u
         LEFT JOIN profiles p ON u.id = p.user_id
         WHERE u.role != 'admin'
@@ -3588,3 +3590,63 @@ def assemble_upload_chunks(upload_id: str, total_chunks: int, final_filename: st
 
 
 
+
+
+def get_admin_referrals() -> Dict[str, Any]:
+    """Returns comprehensive Refer & Earn data for Admin audit, including total metrics, audit logs, and top referrers."""
+    conn = get_db()
+    c = conn.cursor()
+
+    # 1. Detailed referrals list
+    c.execute("""
+        SELECT r.id, r.referral_code, r.reward_points, r.status, r.created_at,
+               u1.id as referrer_id, u1.username as referrer_username, u1.email as referrer_email, u1.student_code as referrer_student_code,
+               p1.display_name as referrer_display_name,
+               u2.id as referred_id, u2.username as referred_username, u2.email as referred_email, u2.student_code as referred_student_code,
+               p2.display_name as referred_display_name
+        FROM referrals r
+        JOIN users u1 ON r.referrer_user_id = u1.id
+        JOIN users u2 ON r.referred_user_id = u2.id
+        LEFT JOIN profiles p1 ON u1.id = p1.user_id
+        LEFT JOIN profiles p2 ON u2.id = p2.user_id
+        ORDER BY r.id DESC
+    """)
+    referral_rows = [dict(r) for r in c.fetchall()]
+
+    # Format datetime strings cleanly
+    for r in referral_rows:
+        if r.get("created_at") and hasattr(r["created_at"], "isoformat"):
+            r["created_at"] = r["created_at"].isoformat()
+
+    # 2. Summary stats
+    total_referrals = len(referral_rows)
+    total_points = sum(r.get("reward_points", 0) for r in referral_rows)
+    unique_referrers = len(set(r["referrer_id"] for r in referral_rows))
+
+    # 3. Top Referrers leaderboard
+    c.execute("""
+        SELECT u.id, u.username, u.email, u.student_code, u.referral_code,
+               p.display_name, p.points as current_balance,
+               COUNT(r.id) as total_referrals,
+               COALESCE(SUM(r.reward_points), 0) as total_earned
+        FROM referrals r
+        JOIN users u ON r.referrer_user_id = u.id
+        LEFT JOIN profiles p ON u.id = p.user_id
+        GROUP BY u.id, u.username, u.email, u.student_code, u.referral_code, p.display_name, p.points
+        ORDER BY total_referrals DESC, total_earned DESC
+        LIMIT 10
+    """)
+    top_referrers = [dict(r) for r in c.fetchall()]
+
+    conn.close()
+
+    return {
+        "summary": {
+            "total_referrals": total_referrals,
+            "total_points_distributed": total_points,
+            "unique_referrers": unique_referrers,
+            "top_referrer": top_referrers[0] if top_referrers else None
+        },
+        "referrals": referral_rows,
+        "top_referrers": top_referrers
+    }

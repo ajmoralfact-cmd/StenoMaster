@@ -93,6 +93,7 @@ class StenoAdmin {
       'adminOverviewPanel',
       'adminPassagesPanel',
       'adminSubscribersPanel',
+      'adminReferralsPanel',
       'adminPaymentsPanel',
       'adminPricingPanel',
       'adminScoringPanel',
@@ -112,6 +113,7 @@ class StenoAdmin {
       'overview': 'adminOverviewPanel',
       'passages': 'adminPassagesPanel',
       'subscribers': 'adminSubscribersPanel',
+      'referrals': 'adminReferralsPanel',
       'payments': 'adminPaymentsPanel',
       'pricing': 'adminPricingPanel',
       'scoring': 'adminScoringPanel',
@@ -1205,6 +1207,10 @@ class StenoAdmin {
           <td>
             <div style="font-weight:700; color:var(--text-main);">${this.escapeHtml(u.display_name || u.username)}</div>
             <div style="font-size:0.75rem; color:var(--primary); font-weight:700;">${this.escapeHtml(u.student_code || `#${u.id}`)}</div>
+            <div style="display:flex; gap:6px; align-items:center; margin-top:3px; flex-wrap:wrap;">
+              ${u.referral_code ? `<span class="badge" style="background:rgba(2,132,199,0.1); color:#0284c7; font-size:0.7rem; font-weight:700;" title="छात्र का रेफरल कोड">🔑 ${this.escapeHtml(u.referral_code)}</span>` : ''}
+              ${u.referrals_count > 0 ? `<span class="badge" style="background:rgba(16,185,129,0.12); color:#059669; font-size:0.7rem; font-weight:700;" title="सफल रेफरल्स">👥 ${u.referrals_count} रेफरल (+${u.referral_points_earned || 0} Pts)</span>` : ''}
+            </div>
           </td>
           <td>
             <div style="font-size:0.82rem;">${this.escapeHtml(u.email)}</div>
@@ -1567,3 +1573,146 @@ class StenoAdmin {
 
 window.stenoAdmin = new StenoAdmin();
 
+
+
+  // -------------------------------------------------------------------------
+  // Referrals & Rewards Audit Panel
+  // -------------------------------------------------------------------------
+  async loadReferralsAudit() {
+    const topTbody = document.getElementById('adminTopReferrersTableBody');
+    const allTbody = document.getElementById('adminReferralsTableBody');
+    if (topTbody) topTbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:20px; color:var(--text-muted);"><div class="spinner-small" style="display:inline-block; margin-right:8px;"></div>रेफरल डेटा लोड हो रहा है...</td></tr>';
+    if (allTbody) allTbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:20px; color:var(--text-muted);"><div class="spinner-small" style="display:inline-block; margin-right:8px;"></div>रेफरल ऑडिट लॉग लोड हो रहा है...</td></tr>';
+
+    try {
+      const res = await stenoApp.apiCall(`/api/admin/referrals?_t=${Date.now()}`);
+      this.adminReferralsData = res || { summary: {}, referrals: [], top_referrers: [] };
+
+      // Update Summary Cards
+      const summary = this.adminReferralsData.summary || {};
+      const totRefEl = document.getElementById('adminTotalReferralsCount');
+      if (totRefEl) totRefEl.textContent = summary.total_referrals || 0;
+
+      const totPtsEl = document.getElementById('adminTotalReferralPoints');
+      if (totPtsEl) totPtsEl.textContent = `${summary.total_points_distributed || 0} Pts`;
+
+      const uniqEl = document.getElementById('adminUniqueReferrersCount');
+      if (uniqEl) uniqEl.textContent = summary.unique_referrers || 0;
+
+      const topRef = summary.top_referrer;
+      const topNameEl = document.getElementById('adminTopReferrerName');
+      const topStatsEl = document.getElementById('adminTopReferrerStats');
+      if (topRef) {
+        if (topNameEl) topNameEl.textContent = topRef.display_name || topRef.username || '—';
+        if (topStatsEl) topStatsEl.textContent = `${topRef.total_referrals || 0} रेफरल • ${topRef.total_earned || 0} Pts`;
+      } else {
+        if (topNameEl) topNameEl.textContent = 'कोई नहीं';
+        if (topStatsEl) topStatsEl.textContent = '0 रेफरल';
+      }
+
+      const topBadge = document.getElementById('adminTopReferrersBadge');
+      if (topBadge) topBadge.textContent = `${(this.adminReferralsData.top_referrers || []).length} छात्र`;
+
+      this.renderAdminReferralsTables();
+    } catch (err) {
+      console.error('Failed to load admin referrals:', err);
+      if (topTbody) topTbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:20px; color:var(--accent-red);">त्रुटि: ${this.escapeHtml(err.message)}</td></tr>`;
+      if (allTbody) allTbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:20px; color:var(--accent-red);">त्रुटि: ${this.escapeHtml(err.message)}</td></tr>`;
+    }
+  }
+
+  renderAdminReferralsTables(searchQuery = '') {
+    const topTbody = document.getElementById('adminTopReferrersTableBody');
+    const allTbody = document.getElementById('adminReferralsTableBody');
+    if (!this.adminReferralsData) return;
+
+    const topList = this.adminReferralsData.top_referrers || [];
+    const allList = this.adminReferralsData.referrals || [];
+
+    // Render Top Referrers Table
+    if (topTbody) {
+      if (topList.length === 0) {
+        topTbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:24px; color:var(--text-muted);">अभी तक किसी छात्र ने रेफरल नहीं किया है।</td></tr>';
+      } else {
+        topTbody.innerHTML = topList.map((st, idx) => {
+          const medal = idx === 0 ? '🥇' : (idx === 1 ? '🥈' : (idx === 2 ? '🥉' : `#${idx+1}`));
+          return `
+            <tr style="border-bottom: 1px solid var(--border-subtle);">
+              <td style="padding:10px 12px; font-weight:700;">${medal}</td>
+              <td style="padding:10px 12px;">
+                <div style="font-weight:700; color:var(--text-main);">${this.escapeHtml(st.display_name || st.username)}</div>
+                <div style="font-size:0.75rem; color:var(--text-muted);">${this.escapeHtml(st.student_code || '')} • ${this.escapeHtml(st.email || '')}</div>
+              </td>
+              <td style="padding:10px 12px;">
+                <code style="background:var(--bg-subtle); padding:2px 6px; border-radius:4px; font-weight:700; color:var(--primary);">${this.escapeHtml(st.referral_code || '—')}</code>
+              </td>
+              <td style="padding:10px 12px; font-weight:700; color:#059669;">
+                👥 ${st.total_referrals} छात्र
+              </td>
+              <td style="padding:10px 12px; font-weight:700; color:#10b981;">
+                +${st.total_earned} Pts
+              </td>
+              <td style="padding:10px 12px; font-weight:600; color:var(--text-secondary);">
+                💰 ${st.current_balance || 0} Pts
+              </td>
+            </tr>
+          `;
+        }).join('');
+      }
+    }
+
+    // Filter & Render All Referrals Audit Log Table
+    if (allTbody) {
+      const q = (searchQuery || document.getElementById('adminReferralSearchInput')?.value || '').trim().toLowerCase();
+      let filtered = allList;
+      if (q) {
+        filtered = allList.filter(r => {
+          const rName = (r.referrer_display_name || r.referrer_username || '').toLowerCase();
+          const rEmail = (r.referrer_email || '').toLowerCase();
+          const rCode = (r.referral_code || '').toLowerCase();
+          const fName = (r.referred_display_name || r.referred_username || '').toLowerCase();
+          const fEmail = (r.referred_email || '').toLowerCase();
+          return rName.includes(q) || rEmail.includes(q) || rCode.includes(q) || fName.includes(q) || fEmail.includes(q);
+        });
+      }
+
+      if (filtered.length === 0) {
+        allTbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:24px; color:var(--text-muted);">कोई रेफरल रिकॉर्ड नहीं मिला।</td></tr>';
+      } else {
+        allTbody.innerHTML = filtered.map((r, idx) => {
+          const dateStr = r.created_at ? new Date(r.created_at).toLocaleString('hi-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '—';
+          return `
+            <tr style="border-bottom: 1px solid var(--border-subtle);">
+              <td style="padding:10px 12px; color:var(--text-muted);">${idx + 1}</td>
+              <td style="padding:10px 12px;">
+                <div style="font-weight:700; color:var(--text-main);">${this.escapeHtml(r.referrer_display_name || r.referrer_username || 'छात्र')}</div>
+                <div style="font-size:0.75rem; color:var(--text-muted);">${this.escapeHtml(r.referrer_student_code || '')} • ${this.escapeHtml(r.referrer_email || '')}</div>
+              </td>
+              <td style="padding:10px 12px;">
+                <code style="background:var(--bg-subtle); padding:2px 6px; border-radius:4px; font-weight:700; color:var(--primary);">${this.escapeHtml(r.referral_code || '')}</code>
+              </td>
+              <td style="padding:10px 12px;">
+                <div style="font-weight:700; color:#0284c7;">🎓 ${this.escapeHtml(r.referred_display_name || r.referred_username || 'नया छात्र')}</div>
+                <div style="font-size:0.75rem; color:var(--text-muted);">${this.escapeHtml(r.referred_student_code || '')} • ${this.escapeHtml(r.referred_email || '')}</div>
+              </td>
+              <td style="padding:10px 12px; font-weight:700; color:#10b981;">
+                +${r.reward_points || 100} Pts
+              </td>
+              <td style="padding:10px 12px; font-size:0.8rem; color:var(--text-secondary);">
+                ${dateStr}
+              </td>
+              <td style="padding:10px 12px;">
+                <span class="badge badge-success" style="background:#dcfce7; color:#15803d; font-size:0.75rem; padding:3px 8px; border-radius:12px;">
+                  ✓ क्रेडिटेड (${r.status || 'completed'})
+                </span>
+              </td>
+            </tr>
+          `;
+        }).join('');
+      }
+    }
+  }
+
+  searchReferrals(query) {
+    this.renderAdminReferralsTables(query);
+  }

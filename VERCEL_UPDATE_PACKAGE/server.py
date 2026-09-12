@@ -558,6 +558,11 @@ class StenoMasterHandler(http.server.SimpleHTTPRequestHandler):
                 self._send_json(200, {"transactions": txs})
                 return
 
+            if path == '/api/admin/referrals':
+                referrals_data = db.get_admin_referrals()
+                self._send_json(200, referrals_data)
+                return
+
             self._send_json(404, {"error": "Admin endpoint not found"})
             return
 
