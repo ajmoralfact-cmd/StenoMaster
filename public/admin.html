@@ -419,6 +419,123 @@
               </div>
             </div>
 
+            <!-- TAB: REFERRALS & REWARDS AUDIT PANEL -->
+            <div class="admin-sub-panel" id="adminReferralsPanel" style="display:none;">
+              <div class="admin-overview-hero" style="margin-bottom: 20px;">
+                <div>
+                  <h2 style="font-size:1.3rem; font-weight:800; margin-bottom:4px; color:var(--text-main);">रेफरल एवं रिवॉर्ड्स प्रबंधन (Refer & Earn Audit)</h2>
+                  <p style="font-size:0.85rem; color:var(--text-muted); margin:0;">छात्रों द्वारा किए गए रेफरल्स, बांटे गए रिवॉर्ड अंक एवं शीर्ष रेफरर छात्रों का पूरा विवरण</p>
+                </div>
+                <div style="display:flex; gap:8px;">
+                  <button type="button" class="btn-secondary" onclick="stenoAdmin.loadReferralsAudit()" style="font-size:0.84rem; padding:8px 14px;">
+                    🔄 रीफ़्रेश डेटा
+                  </button>
+                </div>
+              </div>
+
+              <!-- Key Metrics Grid -->
+              <div class="stats-summary-grid" style="margin-bottom: 24px;">
+                <div class="stat-card">
+                  <div class="stat-icon-wrap stat-icon-blue">👥</div>
+                  <div>
+                    <div class="stat-info-title">कुल सफल रेफरल्स</div>
+                    <div class="stat-info-num" id="adminTotalReferralsCount">0</div>
+                    <div style="font-size:0.75rem; color:var(--text-muted); margin-top:3px;">सफलतापूर्वक पंजीकृत छात्र</div>
+                  </div>
+                </div>
+
+                <div class="stat-card">
+                  <div class="stat-icon-wrap stat-icon-green">⭐</div>
+                  <div>
+                    <div class="stat-info-title">बांटे गए कुल अंक</div>
+                    <div class="stat-info-num" id="adminTotalReferralPoints">0 Pts</div>
+                    <div style="font-size:0.75rem; color:var(--text-muted); margin-top:3px;">रेफरल रिवॉर्ड्स द्वारा अर्जित</div>
+                  </div>
+                </div>
+
+                <div class="stat-card">
+                  <div class="stat-icon-wrap stat-icon-purple">🎯</div>
+                  <div>
+                    <div class="stat-info-title">सक्रिय रेफरर छात्र</div>
+                    <div class="stat-info-num" id="adminUniqueReferrersCount">0</div>
+                    <div style="font-size:0.75rem; color:var(--text-muted); margin-top:3px;">छात्र जिन्होंने दोस्तों को जोड़ा</div>
+                  </div>
+                </div>
+
+                <div class="stat-card">
+                  <div class="stat-icon-wrap stat-icon-amber">👑</div>
+                  <div>
+                    <div class="stat-info-title">शीर्ष रेफरर (Top Student)</div>
+                    <div class="stat-info-num" style="font-size:1.05rem;" id="adminTopReferrerName">—</div>
+                    <div style="font-size:0.75rem; color:var(--text-muted); margin-top:3px;" id="adminTopReferrerStats">0 रेफरल</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Top 10 Referrers & Complete Log Grid -->
+              <div style="display:flex; flex-direction:column; gap: 24px;">
+                <!-- Top Referrers Card -->
+                <div class="card" style="padding: 20px; border: 1px solid var(--border); border-radius: 12px; background: var(--card-bg);">
+                  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 14px; flex-wrap: wrap; gap: 8px;">
+                    <h3 style="margin: 0; font-size: 1.05rem; color: var(--text-main); display:flex; align-items:center; gap:8px;">
+                      <span>🏆</span> शीर्ष रेफरर छात्र (Top Referrers Leaderboard)
+                    </h3>
+                    <span class="badge badge-info" id="adminTopReferrersBadge" style="font-size:0.75rem;">0 छात्र</span>
+                  </div>
+                  <div style="overflow-x:auto;">
+                    <table class="data-table" style="width: 100%; border-collapse: collapse; font-size: 0.88rem;">
+                      <thead>
+                        <tr style="border-bottom: 2px solid var(--border); text-align: left; color: var(--text-muted);">
+                          <th style="padding: 10px 12px;">रैंक</th>
+                          <th style="padding: 10px 12px;">छात्र का विवरण</th>
+                          <th style="padding: 10px 12px;">रेफरल कोड</th>
+                          <th style="padding: 10px 12px;">सफल रेफरल</th>
+                          <th style="padding: 10px 12px;">अर्जित अंक</th>
+                          <th style="padding: 10px 12px;">वर्तमान बैलेंस</th>
+                        </tr>
+                      </thead>
+                      <tbody id="adminTopReferrersTableBody">
+                        <tr><td colspan="6" style="text-align:center; padding:20px; color:var(--text-muted);">लोड हो रहा है...</td></tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                <!-- Complete Audit Log of Referrals -->
+                <div class="card" style="padding: 20px; border: 1px solid var(--border); border-radius: 12px; background: var(--card-bg);">
+                  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 14px; flex-wrap: wrap; gap: 8px;">
+                    <div>
+                      <h3 style="margin: 0; font-size: 1.05rem; color: var(--text-main); display:flex; align-items:center; gap:8px;">
+                        <span>📜</span> पूर्ण रेफरल ऑडिट लॉग (All Referrals Audit Log)
+                      </h3>
+                      <p style="margin:0; font-size:0.75rem; color:var(--text-muted);">प्रत्येक रेफरल का विस्तृत इतिहास और दोनों पक्षों का विवरण</p>
+                    </div>
+                    <div style="display:flex; gap:8px; align-items:center;">
+                      <input type="text" id="adminReferralSearchInput" class="form-input" placeholder="🔍 नाम, ईमेल या कोड खोजें..." oninput="stenoAdmin.searchReferrals(this.value)" style="padding:6px 12px; font-size:0.82rem; width:240px;">
+                    </div>
+                  </div>
+                  <div style="overflow-x:auto;">
+                    <table class="data-table" style="width: 100%; border-collapse: collapse; font-size: 0.88rem;">
+                      <thead>
+                        <tr style="border-bottom: 2px solid var(--border); text-align: left; color: var(--text-muted);">
+                          <th style="padding: 10px 12px;">#</th>
+                          <th style="padding: 10px 12px;">रेफरर छात्र (Referrer)</th>
+                          <th style="padding: 10px 12px;">रेफरल कोड</th>
+                          <th style="padding: 10px 12px;">नया छात्र (Referred Friend)</th>
+                          <th style="padding: 10px 12px;">रिवॉर्ड अंक</th>
+                          <th style="padding: 10px 12px;">तारीख व समय</th>
+                          <th style="padding: 10px 12px;">स्थिति</th>
+                        </tr>
+                      </thead>
+                      <tbody id="adminReferralsTableBody">
+                        <tr><td colspan="7" style="text-align:center; padding:20px; color:var(--text-muted);">लोड हो रहा है...</td></tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             <!-- TAB 4: PAYMENTS & UTR VERIFICATIONS PANEL -->
             <div class="admin-sub-panel" id="adminPaymentsPanel">
               <div class="chart-card" id="adminPaymentsSection" style="margin-bottom: 28px;">
