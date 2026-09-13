@@ -1649,9 +1649,16 @@ class StenoApp {
   // Data Loading
   // -------------------------------------------------------------------------
   async loadCategories() {
+    // 0ms Instant Hydration from memory/localStorage
+    if (this.categories && this.categories.length > 0) {
+      this.renderCategoryPills();
+    }
     try {
       const res = await this.apiCall('/api/categories');
       this.categories = res.categories || [];
+      try {
+        localStorage.setItem('stenomaster_cached_categories', JSON.stringify(this.categories));
+      } catch (e) {}
       this.renderCategoryPills();
     } catch (err) {
       console.error('Failed to load categories:', err);
