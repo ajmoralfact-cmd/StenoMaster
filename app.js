@@ -369,9 +369,20 @@ class StenoApp {
   initPWA() {
     this.deferredPwaPrompt = null;
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/service-worker.js')
+      navigator.serviceWorker.register('/service-worker.js?v=7.5')
         .then((reg) => {
           reg.update().catch(() => {});
+          reg.addEventListener('updatefound', () => {
+            const newWorker = reg.installing;
+            if (newWorker) {
+              newWorker.addEventListener('statechange', () => {
+                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                  // Auto reload to apply newest deployed version
+                  window.location.reload();
+                }
+              });
+            }
+          });
         })
         .catch(err => console.warn('ServiceWorker error:', err));
     }

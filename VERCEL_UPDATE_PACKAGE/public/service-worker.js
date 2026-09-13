@@ -1,43 +1,42 @@
 /**
- * StenoMaster Service Worker — v7.4
- * Instant 15ms Cache-First App Shell Architecture with Background Stale-While-Revalidate
+ * StenoMaster Service Worker — v7.5
+ * Network-First Architecture with Offline Cache Fallback
+ * Ensures changes are visible immediately without manual hard refresh or incognito
  */
 
-const CACHE_NAME = 'stenomaster-v7.4-shell';
+const CACHE_NAME = 'stenomaster-v7.5-shell';
 const ASSETS_TO_PRECACHE = [
   '/',
   '/index.html',
-  '/css/style.css?v=7.4',
-  '/js/audio_player.js?v=7.4',
-  '/js/keyboard_map.js?v=7.4',
-  '/js/typing_engine.js?v=7.4',
-  '/js/app.js?v=7.4',
+  '/css/style.css?v=7.5',
+  '/js/audio_player.js?v=7.5',
+  '/js/keyboard_map.js?v=7.5',
+  '/js/typing_engine.js?v=7.5',
+  '/js/app.js?v=7.5',
   '/manifest.json',
   '/assets/logo.png',
   '/assets/fonts/Mangal.ttf',
   '/assets/fonts/Kruti_Dev_010.ttf'
 ];
 
-// Install: Pre-cache app shell assets immediately
+// Install: Pre-cache assets and immediately activate without waiting
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(ASSETS_TO_PRECACHE).catch((err) => {
-        console.warn('Pre-cache non-fatal warning:', err);
-      });
+      return cache.addAll(ASSETS_TO_PRECACHE).catch(() => {});
     })
   );
   self.skipWaiting();
 });
 
-// Activate: Purge older caches instantly and claim active clients
+// Activate: Immediately delete all obsolete caches and take control
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((keys) => {
       return Promise.all(
         keys.map((key) => {
           if (key !== CACHE_NAME) {
-            console.log('[SW v7.4] Purging obsolete cache:', key);
+            console.log('[SW v7.5] Purging obsolete cache:', key);
             return caches.delete(key);
           }
         })
@@ -46,7 +45,7 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-// Fetch: Smart Hybrid Routing (Cache-First Shell + Network-Only APIs)
+// Fetch: Network-First with Cache Fallback for instant updates
 self.addEventListener('fetch', (event) => {
   const req = event.request;
   const url = req.url;
@@ -57,38 +56,25 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // 2. Navigation Requests (Opening website URL / clicking links):
-  // Cache-First with Background Stale-While-Revalidate (Instant 15ms page load on 2G/offline)
-  if (req.mode === 'navigate' || req.headers.get('accept')?.includes('text/html')) {
-    event.respondWith(
-      caches.match('/index.html').then((cachedHtml) => {
-        const fetchPromise = fetch(req).then((networkHtml) => {
-          if (networkHtml && networkHtml.status === 200) {
-            const copy = networkHtml.clone();
-            caches.open(CACHE_NAME).then((cache) => cache.put('/index.html', copy));
-          }
-          return networkHtml;
-        }).catch(() => null);
-
-        // Serve local cached shell immediately if available (under 15ms)
-        return cachedHtml || fetchPromise;
-      })
-    );
-    return;
-  }
-
-  // 3. Static Assets (.css, .js, fonts, images): Cache-First + Stale-While-Revalidate
+  // 2. Navigation & Static Assets (.html, .js, .css): Network-First
+  // Tries live network first for latest updates; falls back to cache if offline
   event.respondWith(
-    caches.match(req).then((cachedResponse) => {
-      const fetchPromise = fetch(req).then((networkResponse) => {
-        if (networkResponse && networkResponse.status === 200 && networkResponse.type === 'basic') {
-          const resToCache = networkResponse.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(req, resToCache));
+    fetch(req)
+      .then((networkResponse) => {
+        if (networkResponse && networkResponse.status === 200) {
+          const copy = networkResponse.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(req, copy));
         }
         return networkResponse;
-      }).catch(() => null);
-
-      return cachedResponse || fetchPromise;
-    })
+      })
+      .catch(() => {
+        return caches.match(req).then((cached) => {
+          if (cached) return cached;
+          if (req.mode === 'navigate' || req.headers.get('accept')?.includes('text/html')) {
+            return caches.match('/index.html');
+          }
+          return null;
+        });
+      })
   );
 });
