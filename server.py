@@ -30,6 +30,7 @@ from typing import Optional, Dict, Any, List
 import db
 import hindi_converter
 import evaluation
+import ai_voice_service
 from cashfree_service import CashfreeService
 
 PORT = 8085
@@ -1205,6 +1206,53 @@ class StenoMasterHandler(http.server.SimpleHTTPRequestHandler):
                         imported_count += 1
                 self._send_json(200, {"imported_count": imported_count})
                 return
+
+            if path == '/api/admin/generate-ai-audio':
+                if not user or user.get('role') != 'admin':
+                    self._send_json(403, {"error": "प्रशासनिक अनुमति आवश्यक है (Admin role required)"})
+                    return
+                data = self._read_json_body()
+                text = (data.get('text') or '').strip()
+                speed_wpm = int(data.get('speed_wpm') or 80)
+                title = (data.get('title') or 'dictation').strip()
+                pause_mode = data.get('pause_mode', 'exam')
+
+                if not text:
+                    self._send_json(400, {"error": "हिंदी आलेख टेक्स्ट आवश्यक है"})
+                    return
+
+                try:
+                    mp3_bytes, word_count, est_duration = ai_voice_service.generate_hindi_speech_mp3(
+                        text, target_wpm=speed_wpm, pause_mode=pause_mode
+                    )
+                    clean_slug = re.sub(r'[^a-zA-Z0-9_-]', '_', title)[:30].strip('_')
+                    if not clean_slug:
+                        clean_slug = "dictation"
+                    ts = int(datetime.now().timestamp())
+                    filename = f"audio_ai_{ts}_{speed_wpm}wpm_{clean_slug}.mp3"
+                    save_path = os.path.join(UPLOADS_DIR, filename)
+                    try:
+                        with open(save_path, 'wb') as f:
+                            f.write(mp3_bytes)
+                    except Exception:
+                        pass
+
+                    # Save to persistent database (SQLite / Supabase)
+                    db.save_uploaded_file(filename, 'audio/mpeg', mp3_bytes)
+                    audio_url = f"/uploads/{filename}"
+
+                    self._send_json(200, {
+                        "success": True,
+                        "audio_url": audio_url,
+                        "filename": filename,
+                        "duration_seconds": est_duration,
+                        "word_count": word_count,
+                        "target_wpm": speed_wpm
+                    })
+                    return
+                except Exception as e:
+                    self._send_json(500, {"error": f"AI वॉइस जनरेशन में त्रुटि: {str(e)}"})
+                    return
 
             if path == '/api/admin/audio-upload':
                 self._handle_audio_upload()

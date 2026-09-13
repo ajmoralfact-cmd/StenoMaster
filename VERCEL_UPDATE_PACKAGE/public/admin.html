@@ -294,6 +294,14 @@
                   <span class="admin-tab-sub">लोगो व दैनिक WPM लक्ष्य</span>
                 </div>
               </button>
+
+              <button type="button" class="admin-nav-tab" data-admin-tab="aivoice" onclick="stenoAdmin.switchTab('aivoice')">
+                <span class="admin-tab-icon">🤖</span>
+                <div class="admin-tab-info">
+                  <span class="admin-tab-title">AI डिक्टेशन स्टूडियो</span>
+                  <span class="admin-tab-sub">टेक्स्ट से 80/100 WPM ऑडियो</span>
+                </div>
+              </button>
             </nav>
           </aside>
 
@@ -779,6 +787,104 @@
               </div>
             </div>
 
+                      <!-- TAB 9: AI VOICE DICTATION GENERATOR STUDIO -->
+            <div class="admin-sub-panel" id="adminAivoicePanel" style="display:none;">
+              <div class="admin-overview-hero" style="margin-bottom: 20px; background: linear-gradient(135deg, rgba(79, 70, 229, 0.08), rgba(168, 85, 247, 0.08)); border-color: rgba(99, 102, 241, 0.25);">
+                <div>
+                  <h2 style="font-size:1.35rem; font-weight:800; margin-bottom:4px; color:var(--text-main); display:flex; align-items:center; gap:8px;">
+                    <span>🤖 AI वॉइस डिक्टेशन स्टूडियो (Text to Hindi Speech)</span>
+                    <span class="badge" style="background:#4f46e5; color:#fff; font-size:0.75rem; padding:3px 8px; border-radius:12px;">Super Tool</span>
+                  </h2>
+                  <p style="font-size:0.86rem; color:var(--text-muted); margin:0;">
+                    बिना किसी माइक या रिकॉर्डिंग के किसी भी हिंदी आलेख से सीधे 60, 80, 100, 120, 140 WPM की प्राकृतिक ऑडियो डिक्टेशन तैयार करें
+                  </p>
+                </div>
+              </div>
+
+              <div class="chart-card" style="margin-bottom: 24px;">
+                <!-- 1. Meta Settings (Title & Category) -->
+                <div style="display:grid; grid-template-columns: 2fr 1fr; gap: 14px; margin-bottom: 16px;">
+                  <div class="form-group" style="margin:0;">
+                    <label class="form-label" style="font-weight:700;">आलेख शीर्षक (Dictation Title):</label>
+                    <input type="text" id="aiStudioTitleInput" class="form-input" placeholder="उदा. रामधारी गुप्ता खंड 1 — अभ्यास 28">
+                  </div>
+                  <div class="form-group" style="margin:0;">
+                    <label class="form-label" style="font-weight:700;">श्रेणी (Category):</label>
+                    <select id="aiStudioCategorySelect" class="form-select">
+                      <!-- Populated via stenoAdmin.populateCategoryDropdown() -->
+                    </select>
+                  </div>
+                </div>
+
+                <!-- 2. Speed Selector Pills -->
+                <div class="form-group" style="margin-bottom: 16px;">
+                  <label class="form-label" style="font-weight:700; display:flex; justify-content:space-between; align-items:center;">
+                    <span>🎯 लक्ष्य गति (Target Dictation Speed):</span>
+                    <span id="aiStudioSpeedBadge" style="font-size:0.78rem; font-weight:700; color:#4f46e5; background:rgba(79,70,229,0.1); padding:2px 8px; border-radius:8px;">80 WPM (मानक SSC / UPSSSC)</span>
+                  </label>
+                  <div class="sub-filter-pills" id="aiStudioSpeedPills" style="margin-top:6px; flex-wrap:wrap;">
+                    <button type="button" class="sub-filter-pill" onclick="stenoAdmin.setAiStudioSpeed(60, this)">🟢 60 WPM (शुरुआती)</button>
+                    <button type="button" class="sub-filter-pill active" onclick="stenoAdmin.setAiStudioSpeed(80, this)">🔵 80 WPM (SSC 'D' / UPSSSC / कोर्ट)</button>
+                    <button type="button" class="sub-filter-pill" onclick="stenoAdmin.setAiStudioSpeed(100, this)">🟣 100 WPM (SSC 'C' / हाई कोर्ट)</button>
+                    <button type="button" class="sub-filter-pill" onclick="stenoAdmin.setAiStudioSpeed(120, this)">⚡ 120 WPM (संसदीय रिपोर्टर)</button>
+                    <button type="button" class="sub-filter-pill" onclick="stenoAdmin.setAiStudioSpeed(140, this)">🔥 140 WPM (सुपर स्पीड)</button>
+                  </div>
+                  <input type="hidden" id="aiStudioSpeedVal" value="80">
+                </div>
+
+                <!-- 3. Hindi Text Area -->
+                <div class="form-group" style="margin-bottom: 16px;">
+                  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                    <label class="form-label" style="font-weight:700; margin:0;">
+                      📝 हिंदी आलेख सामग्री (Hindi Passage Text):
+                    </label>
+                    <div style="display:flex; gap:12px; font-size:0.8rem; color:var(--text-muted); font-weight:600;">
+                      <span id="aiStudioWordCount">कुल शब्द: 0</span>
+                      <span>•</span>
+                      <span id="aiStudioEstTime">⏱️ अनुमानित समय: 00:00</span>
+                    </div>
+                  </div>
+                  <textarea id="aiStudioTextInput" class="form-input" rows="8" placeholder="यहाँ कोई भी हिंदी आलेख, संपादकीय या रामधारी गुप्ता का अभ्यास पेस्ट करें..." style="font-family:'Noto Sans Devanagari', sans-serif; font-size:1.02rem; line-height:1.7;" oninput="stenoAdmin.updateAiStudioStats()"></textarea>
+                </div>
+
+                <!-- 4. Action Buttons -->
+                <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom: 20px;">
+                  <button type="button" class="btn-secondary" onclick="stenoAdmin.previewAiSpeechLive()" style="display:flex; align-items:center; gap:6px;">
+                    <span>🔊</span> <span>लाइव आवाज़ सुनें (Quick Voice Test)</span>
+                  </button>
+                  <button type="button" class="btn-primary" id="btnAiStudioGenerate" onclick="stenoAdmin.generateAiStudioAudio()" style="background:#4f46e5; border-color:#4f46e5; display:flex; align-items:center; gap:6px; font-weight:700;">
+                    <span>⚡</span> <span>AI ऑडियो डिक्टेशन तैयार करें (Generate MP3)</span>
+                  </button>
+                  <button type="button" class="btn-secondary" onclick="stenoAdmin.stopLiveSpeech()" style="display:flex; align-items:center; gap:6px;">
+                    <span>⏹️</span> <span>रोकें (Stop)</span>
+                  </button>
+                </div>
+
+                <!-- 5. Generated Result Player & 1-Click Passage Creation -->
+                <div id="aiStudioResultCard" style="display:none; padding:16px; background:linear-gradient(135deg, rgba(16,185,129,0.06), rgba(5,150,105,0.06)); border:1px solid rgba(16,185,129,0.3); border-radius:10px;">
+                  <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:12px;">
+                    <div>
+                      <div style="font-weight:700; font-size:0.95rem; color:#065f46; display:flex; align-items:center; gap:6px;">
+                        <span>🎉</span> <span>AI ऑडियो सफलतापूर्वक तैयार हो गया!</span>
+                      </div>
+                      <div id="aiStudioResultDetails" style="font-size:0.8rem; color:#047857; margin-top:2px;">
+                        गति: 80 WPM | शब्द: 0 | कुल समय: 00:00
+                      </div>
+                    </div>
+                    <div style="display:flex; gap:8px;">
+                      <a id="aiStudioDownloadBtn" href="#" download="steno_dictation.mp3" class="btn-secondary" style="font-size:0.82rem; padding:6px 12px; display:inline-flex; align-items:center; gap:5px;">
+                        <span>📥</span> <span>MP3 डाउनलोड</span>
+                      </a>
+                      <button type="button" class="btn-primary" onclick="stenoAdmin.createPassageFromAiStudio()" style="font-size:0.82rem; padding:6px 14px; background:#059669; border-color:#059669; display:inline-flex; align-items:center; gap:5px;">
+                        <span>📝</span> <span>सीधे नया आलेख बनाएं (1-Click Publish) →</span>
+                      </button>
+                    </div>
+                  </div>
+                  <audio id="aiStudioAudioPlayer" controls style="width:100%; height:40px; outline:none;"></audio>
+                </div>
+              </div>
+            </div>
+
           </div><!-- /.admin-workspace-content -->
 
         </div><!-- /.admin-workspace-layout -->
@@ -845,6 +951,26 @@
           <div class="form-group">
             <label class="form-label">अवधि (Seconds):</label>
             <input type="number" id="passageDurationInput" class="form-input" value="180">
+          </div>
+        </div>
+
+                <!-- AI Voice 1-Click Dictation Generator Banner -->
+        <div style="background: linear-gradient(135deg, rgba(79, 70, 229, 0.07), rgba(168, 85, 247, 0.07)); border: 1px dashed rgba(99, 102, 241, 0.4); border-radius: 8px; padding: 12px; margin-bottom: 14px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+            <div>
+              <div style="font-weight:700; font-size:0.88rem; color:#4338ca; display:flex; align-items:center; gap:6px;">
+                <span>🤖</span> <span>AI वॉइस ऑटो-डिक्टेशन (1-Click AI Audio)</span>
+              </div>
+              <p style="font-size:0.75rem; color:var(--text-muted); margin:2px 0 0 0;">नीचे लिखे संदर्भ आलेख से बिना रिकॉर्डिंग किए स्वतः प्राकृतिक हिंदी ऑडियो बनाएं</p>
+            </div>
+            <div style="display:flex; gap:6px; align-items:center;">
+              <button type="button" class="btn-primary" onclick="stenoAdmin.generateAudioForCurrentPassage(80)" style="font-size:0.78rem; padding:6px 11px; background:#4f46e5; border-color:#4f46e5;">
+                ⚡ 80 WPM ऑडियो
+              </button>
+              <button type="button" class="btn-primary" onclick="stenoAdmin.generateAudioForCurrentPassage(100)" style="font-size:0.78rem; padding:6px 11px; background:#7c3aed; border-color:#7c3aed;">
+                ⚡ 100 WPM ऑडियो
+              </button>
+            </div>
           </div>
         </div>
 

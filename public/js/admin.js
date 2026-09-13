@@ -117,7 +117,7 @@ class StenoAdmin {
       'payments': 'adminPaymentsPanel',
       'pricing': 'adminPricingPanel',
       'scoring': 'adminScoringPanel',
-      'branding': 'adminBrandingPanel'
+      'branding': 'adminBrandingPanel',\n      'aivoice': 'adminAivoicePanel'
     };
 
     const targetId = targetMap[tabId] || 'adminOverviewPanel';
@@ -142,7 +142,7 @@ class StenoAdmin {
       } else if (tabId === 'scoring') {
         this.loadScoringConfig();
       } else if (tabId === 'branding') {
-        this.loadSystemSettings();
+        this.loadSystemSettings();\n      } else if (tabId === 'aivoice') {\n        this.initAiVoiceStudio();
       } else if (tabId === 'overview') {
         this.loadOverview();
       }
@@ -1743,6 +1743,251 @@ class StenoAdmin {
   searchReferrals(query) {
     this.renderAdminReferralsTables(query);
   }
+
+  // =========================================================================
+  // AI VOICE DICTATION STUDIO METHODS
+  // =========================================================================
+  initAiVoiceStudio() {
+    this.populateAiStudioCategories();
+    this.updateAiStudioStats();
+  }
+
+  populateAiStudioCategories() {
+    const sel = document.getElementById('aiStudioCategorySelect');
+    if (!sel) return;
+    const cats = (window.stenoApp && window.stenoApp.categories) || [];
+    if (cats.length) {
+      sel.innerHTML = cats.map(c => `<option value="${c.id}">${this.escapeHtml(c.name)}</option>`).join('');
+    }
+  }
+
+  setAiStudioSpeed(wpm, btnEl) {
+    const hidden = document.getElementById('aiStudioSpeedVal');
+    if (hidden) hidden.value = wpm;
+
+    const pills = document.querySelectorAll('#aiStudioSpeedPills .sub-filter-pill');
+    pills.forEach(p => p.classList.remove('active'));
+    if (btnEl) btnEl.classList.add('active');
+
+    const badge = document.getElementById('aiStudioSpeedBadge');
+    if (badge) {
+      const descriptions = {
+        60: '60 WPM (शुरुआती अभ्यास)',
+        80: '80 WPM (मानक SSC / UPSSSC / कोर्ट)',
+        100: '100 WPM (SSC 'C' / हाई कोर्ट)',
+        120: '120 WPM (संसदीय रिपोर्टर)',
+        140: '140 WPM (सुपर स्पीड)'
+      };
+      badge.textContent = descriptions[wpm] || `${wpm} WPM`;
+    }
+
+    this.updateAiStudioStats();
+  }
+
+  updateAiStudioStats() {
+    const textInput = document.getElementById('aiStudioTextInput');
+    const wordCountEl = document.getElementById('aiStudioWordCount');
+    const estTimeEl = document.getElementById('aiStudioEstTime');
+    if (!textInput || !wordCountEl || !estTimeEl) return;
+
+    const text = textInput.value.trim();
+    const words = text ? text.split(/\s+/).length : 0;
+    const wpm = parseInt(document.getElementById('aiStudioSpeedVal')?.value || 80, 10);
+
+    const totalSeconds = words > 0 ? Math.max(10, Math.round((words / wpm) * 60)) : 0;
+    const mins = Math.floor(totalSeconds / 60);
+    const secs = totalSeconds % 60;
+    const timeStr = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+
+    wordCountEl.textContent = `कुल शब्द: ${words}`;
+    estTimeEl.textContent = `⏱️ अनुमानित समय: ${timeStr}`;
+  }
+
+  previewAiSpeechLive() {
+    if (!('speechSynthesis' in window)) {
+      stenoApp.showToast('आपके ब्राउज़र में स्पीच सिंथेसिस समर्थित नहीं है।', 'warning');
+      return;
+    }
+
+    const text = document.getElementById('aiStudioTextInput')?.value.trim();
+    if (!text) {
+      stenoApp.showToast('कृपया पहले हिंदी आलेख पेस्ट करें।', 'warning');
+      return;
+    }
+
+    window.speechSynthesis.cancel();
+
+    // Take first 1-2 sentences for preview
+    const sentences = text.split(/[।\n!?]/).filter(s => s.trim());
+    const sampleText = sentences.slice(0, 2).join('। ') + '।';
+
+    const wpm = parseInt(document.getElementById('aiStudioSpeedVal')?.value || 80, 10);
+    const rateMap = { 60: 0.65, 80: 0.82, 100: 0.98, 120: 1.15, 140: 1.3 };
+    const speechRate = rateMap[wpm] || 0.85;
+
+    const utterance = new SpeechSynthesisUtterance(sampleText);
+    utterance.lang = 'hi-IN';
+    utterance.rate = speechRate;
+
+    const voices = window.speechSynthesis.getVoices();
+    const hindiVoice = voices.find(v => v.lang.startsWith('hi') || v.name.toLowerCase().includes('hindi'));
+    if (hindiVoice) utterance.voice = hindiVoice;
+
+    stenoApp.showToast(`लाइव आवाज़ टेस्ट शुरू (${wpm} WPM)... 🔊`, 'info');
+    window.speechSynthesis.speak(utterance);
+  }
+
+  stopLiveSpeech() {
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+      stenoApp.showToast('लाइव आवाज़ रोकी गई।', 'info');
+    }
+  }
+
+  async generateAiStudioAudio() {
+    const text = document.getElementById('aiStudioTextInput')?.value.trim();
+    if (!text) {
+      stenoApp.showToast('कृपया हिंदी आलेख टेक्स्ट दर्ज करें।', 'error');
+      return;
+    }
+
+    const title = document.getElementById('aiStudioTitleInput')?.value.trim() || 'AI Dictation';
+    const wpm = parseInt(document.getElementById('aiStudioSpeedVal')?.value || 80, 10);
+    const btn = document.getElementById('btnAiStudioGenerate');
+    const origText = btn ? btn.innerHTML : '';
+
+    try {
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<span>⏳</span> <span>AI प्राकृतिक आवाज़ तैयार हो रही है...</span>';
+      }
+      stenoApp.showToast(`AI प्राकृतिक हिंदी ऑडियो जनरेट हो रहा है (${wpm} WPM)... 🎙️⚡`, 'info');
+
+      const res = await stenoApp.apiCall('/api/admin/generate-ai-audio', 'POST', {
+        text: text,
+        speed_wpm: wpm,
+        title: title,
+        pause_mode: 'exam'
+      });
+
+      if (res && res.success && res.audio_url) {
+        this.lastGeneratedAiAudio = {
+          audio_url: res.audio_url,
+          title: title,
+          text: text,
+          speed_wpm: wpm,
+          duration_seconds: res.duration_seconds,
+          word_count: res.word_count,
+          category_id: document.getElementById('aiStudioCategorySelect')?.value || 1
+        };
+
+        const resultCard = document.getElementById('aiStudioResultCard');
+        const detailsEl = document.getElementById('aiStudioResultDetails');
+        const player = document.getElementById('aiStudioAudioPlayer');
+        const downloadBtn = document.getElementById('aiStudioDownloadBtn');
+
+        const mins = Math.floor(res.duration_seconds / 60);
+        const secs = res.duration_seconds % 60;
+        const timeStr = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+
+        if (detailsEl) {
+          detailsEl.textContent = `गति: ${res.target_wpm} WPM | शब्द: ${res.word_count} | कुल अवधि: ${timeStr}`;
+        }
+        if (player) {
+          player.src = res.audio_url;
+          player.load();
+          player.play().catch(() => {});
+        }
+        if (downloadBtn) {
+          downloadBtn.href = res.audio_url;
+          downloadBtn.download = `${title.replace(/\s+/g, '_')}_${wpm}wpm.mp3`;
+        }
+        if (resultCard) {
+          resultCard.style.display = 'block';
+        }
+
+        stenoApp.showToast('AI ऑडियो डिक्टेशन 100% तैयार हो गया! 🎵🎉', 'success');
+      } else {
+        throw new Error(res?.error || 'ऑडियो जनरेशन असफल');
+      }
+    } catch (err) {
+      console.error('AI Voice Generation error:', err);
+      stenoApp.showToast('ऑडियो तैयार करने में त्रुटि: ' + err.message, 'error');
+    } finally {
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = origText;
+      }
+    }
+  }
+
+  createPassageFromAiStudio() {
+    if (!this.lastGeneratedAiAudio) {
+      stenoApp.showToast('कृपया पहले AI ऑडियो तैयार करें।', 'warning');
+      return;
+    }
+
+    const d = this.lastGeneratedAiAudio;
+    this.openNewPassageModal('dual');
+
+    document.getElementById('passageTitleInput').value = d.title || 'AI डिक्टेशन अभ्यास';
+    const catSel = document.getElementById('passageCategorySelect');
+    if (catSel && d.category_id) catSel.value = d.category_id;
+    document.getElementById('passageTargetWpmInput').value = d.speed_wpm || 80;
+    document.getElementById('passageDurationInput').value = d.duration_seconds || 180;
+    document.getElementById('passageAudioUrlInput').value = d.audio_url || '';
+    document.getElementById('passageOfficialTextInput').value = d.text || '';
+
+    this.renderAudioPreview(d.audio_url || '');
+
+    // Auto-convert to Kruti Dev so passage works for both fonts
+    this.convertMangalToKrutiModal();
+
+    stenoApp.showToast('आलेख विवरण व AI ऑडियो स्वतः लोड कर दिया गया! 📝⚡', 'success');
+  }
+
+  async generateAudioForCurrentPassage(wpm = 80) {
+    const mangalText = document.getElementById('passageOfficialTextInput')?.value.trim();
+    const krutiText = document.getElementById('passageOfficialKrutiInput')?.value.trim();
+    let textToUse = mangalText;
+
+    if (!textToUse && krutiText) {
+      await this.convertKrutiToMangalModal();
+      textToUse = document.getElementById('passageOfficialTextInput')?.value.trim();
+    }
+
+    if (!textToUse) {
+      stenoApp.showToast('कृपया पहले नीचे आलेख का आधिकारिक संदर्भ पाठ दर्ज करें।', 'warning');
+      return;
+    }
+
+    const title = document.getElementById('passageTitleInput')?.value.trim() || 'Passage Dictation';
+
+    stenoApp.showToast(`नीचे लिखे टेक्स्ट से ${wpm} WPM AI ऑडियो तैयार हो रहा है... 🎙️`, 'info');
+
+    try {
+      const res = await stenoApp.apiCall('/api/admin/generate-ai-audio', 'POST', {
+        text: textToUse,
+        speed_wpm: wpm,
+        title: title,
+        pause_mode: 'exam'
+      });
+
+      if (res && res.success && res.audio_url) {
+        document.getElementById('passageAudioUrlInput').value = res.audio_url;
+        document.getElementById('passageDurationInput').value = res.duration_seconds;
+        document.getElementById('passageTargetWpmInput').value = wpm;
+
+        this.renderAudioPreview(res.audio_url);
+        stenoApp.showToast(`AI डिक्टेशन ऑडियो (${wpm} WPM) सफलतापूर्वक तैयार और लोड हुआ! 🎵🎉`, 'success');
+      } else {
+        throw new Error(res?.error || 'ऑडियो जनरेशन असफल');
+      }
+    } catch (err) {
+      stenoApp.showToast('AI ऑडियो बनाने में त्रुटि: ' + err.message, 'error');
+    }
+  }
+
 }
 
 window.stenoAdmin = new StenoAdmin();
