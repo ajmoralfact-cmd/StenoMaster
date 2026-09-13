@@ -117,7 +117,8 @@ class StenoAdmin {
       'payments': 'adminPaymentsPanel',
       'pricing': 'adminPricingPanel',
       'scoring': 'adminScoringPanel',
-      'branding': 'adminBrandingPanel',\n      'aivoice': 'adminAivoicePanel'
+      'branding': 'adminBrandingPanel',
+      'aivoice': 'adminAivoicePanel'
     };
 
     const targetId = targetMap[tabId] || 'adminOverviewPanel';
@@ -142,7 +143,9 @@ class StenoAdmin {
       } else if (tabId === 'scoring') {
         this.loadScoringConfig();
       } else if (tabId === 'branding') {
-        this.loadSystemSettings();\n      } else if (tabId === 'aivoice') {\n        this.initAiVoiceStudio();
+        this.loadSystemSettings();
+      } else if (tabId === 'aivoice') {
+        this.initAiVoiceStudio();
       } else if (tabId === 'overview') {
         this.loadOverview();
       }
