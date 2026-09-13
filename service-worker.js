@@ -1,22 +1,21 @@
 /**
- * StenoMaster Service Worker — v6.0
- * Zero-Refresh High-Performance Architecture with Active Cache Purge & Fast Navigation
+ * StenoMaster Service Worker — v7.4
+ * Zero-Refresh High-Performance Architecture with Dynamic Module Cache
  */
 
-const CACHE_NAME = 'stenomaster-v7.2';
+const CACHE_NAME = 'stenomaster-v7.4';
 const ASSETS_TO_PRECACHE = [
   '/',
   '/index.html',
-  '/css/style.css?v=7.2',
-  '/js/charts.js?v=7.2',
-  '/js/audio_player.js?v=7.2',
-  '/js/typing_engine.js?v=7.2',
-  '/js/comparison_view.js?v=7.2',
-  '/js/keyboard_map.js?v=7.2',
-  '/js/admin.js?v=7.2',
-  '/js/app.js?v=7.2',
+  '/css/style.css?v=7.4',
+  '/js/audio_player.js?v=7.4',
+  '/js/keyboard_map.js?v=7.4',
+  '/js/typing_engine.js?v=7.4',
+  '/js/app.js?v=7.4',
   '/manifest.json',
-  '/assets/logo.png'
+  '/assets/logo.png',
+  '/assets/fonts/Mangal.ttf',
+  '/assets/fonts/Kruti_Dev_010.ttf'
 ];
 
 self.addEventListener('install', (event) => {
@@ -36,7 +35,7 @@ self.addEventListener('activate', (event) => {
       return Promise.all(
         keys.map((key) => {
           if (key !== CACHE_NAME) {
-            console.log('[SW v5.0] Purging obsolete cache:', key);
+            console.log('[SW] Purging obsolete cache:', key);
             return caches.delete(key);
           }
         })
@@ -56,57 +55,25 @@ self.addEventListener('fetch', (event) => {
   }
 
   // 2. Navigation (opening website link / page load):
-  // Fast network-first with instant fallback if network hangs, guaranteeing zero-refresh 1st load!
   if (req.mode === 'navigate' || req.headers.get('accept')?.includes('text/html')) {
     event.respondWith(
-      new Promise((resolve) => {
-        let responded = false;
-        const netTimeout = setTimeout(() => {
-          caches.match(req).then((cached) => {
-            if (!responded && cached) {
-              responded = true;
-              resolve(cached);
-            }
-          });
-        }, 2500);
-
-        fetch(req)
-          .then((networkResponse) => {
-            clearTimeout(netTimeout);
-            if (networkResponse && networkResponse.status === 200) {
-              const clone = networkResponse.clone();
-              caches.open(CACHE_NAME).then((cache) => cache.put(req, clone));
-            }
-            if (!responded) {
-              responded = true;
-              resolve(networkResponse);
-            }
-          })
-          .catch(() => {
-            clearTimeout(netTimeout);
-            if (!responded) {
-              caches.match(req).then((cached) => {
-                resolve(cached || caches.match('/index.html'));
-              });
-            }
-          });
-      })
+      fetch(req).catch(() => caches.match('/index.html'))
     );
     return;
   }
 
-  // 3. Static scripts, CSS, and images: Network-First with Cache Fallback
+  // 3. Static Assets: Stale-While-Revalidate (Instant cached response + background update)
   event.respondWith(
-    fetch(req)
-      .then((networkResponse) => {
-        if (networkResponse && networkResponse.status === 200) {
-          const clone = networkResponse.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(req, clone));
+    caches.match(req).then((cached) => {
+      const fetchPromise = fetch(req).then((networkRes) => {
+        if (networkRes && networkRes.status === 200 && networkRes.type === 'basic') {
+          const resToCache = networkRes.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(req, resToCache));
         }
-        return networkResponse;
-      })
-      .catch(() => {
-        return caches.match(req);
-      })
+        return networkRes;
+      }).catch(() => null);
+
+      return cached || fetchPromise;
+    })
   );
 });

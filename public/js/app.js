@@ -2277,7 +2277,42 @@ class StenoApp {
     }, 350);
   }
 
-  openCurrentPassageStenoNotes() {
+  // -------------------------------------------------------------------------
+  // Dynamic Script Loader (Lazy Loads charts & comparison view on-demand)
+  // -------------------------------------------------------------------------
+  async loadScript(src) {
+    if (document.querySelector(`script[src*="${src}"]`)) return true;
+    return new Promise((resolve, reject) => {
+      const script = document.createElement('script');
+      script.src = src;
+      script.async = true;
+      script.onload = () => resolve(true);
+      script.onerror = (err) => reject(err);
+      document.body.appendChild(script);
+    });
+  }
+
+  async ensureComparisonView() {
+    if (window.stenoComparisonView) return window.stenoComparisonView;
+    try {
+      await this.loadScript('/js/comparison_view.js?v=7.4');
+    } catch (e) {
+      console.warn('Failed to dynamic load comparison_view.js:', e);
+    }
+    return window.stenoComparisonView;
+  }
+
+  async ensureCharts() {
+    if (window.stenoCharts) return window.stenoCharts;
+    try {
+      await this.loadScript('/js/charts.js?v=7.4');
+    } catch (e) {
+      console.warn('Failed to dynamic load charts.js:', e);
+    }
+    return window.stenoCharts;
+  }
+
+  async openCurrentPassageStenoNotes() {
     if (!this.currentPassage || !this.currentPassage.steno_notes_url) {
       this.showToast('इस आलेख के लिए स्टेनो आउटलाइन संलग्न नहीं है।', 'info');
       return;
@@ -2342,7 +2377,8 @@ class StenoApp {
         console.warn('Post-submit live summary error:', e);
       }
 
-      // Render Result Report Card
+      // Render Result Report Card (Lazy-load comparison_view.js)
+      await this.ensureComparisonView();
       const reportContainer = document.getElementById('resultReportContainer');
       if (window.stenoComparisonView && reportContainer) {
         try {
@@ -2432,8 +2468,11 @@ class StenoApp {
         const report = res.attempt.report;
         report.passage_title = res.attempt.passage_title;
         report.language = res.attempt.language;
+        await this.ensureComparisonView();
         const reportContainer = document.getElementById('resultReportContainer');
-        stenoComparisonView.renderResult(report, reportContainer);
+        if (window.stenoComparisonView && reportContainer) {
+          stenoComparisonView.renderResult(report, reportContainer);
+        }
         this.navigate('result');
       }
     } catch (err) {
@@ -2471,7 +2510,9 @@ class StenoApp {
       document.getElementById('goalWpmGapText').textContent = gap > 0 ? `लक्ष्य से ${gap} WPM दूर (${gap} WPM to go)` : '🎉 लक्ष्य प्राप्त!';
       document.getElementById('goalWpmProgressBar').style.width = `${Math.min(100, Math.round((currentWpm / targetWpm) * 100))}%`;
 
-      // Draw Charts
+      // Draw Charts (Lazy-load charts.js on-demand)
+      await this.ensureCharts();
+
       const speedCanvas = document.getElementById('speedTrendChart');
       const accCanvas = document.getElementById('accTrendChart');
       const errorCanvas = document.getElementById('errorFreqChart');
@@ -2480,13 +2521,15 @@ class StenoApp {
       const speedPoints = trends.map((t, idx) => ({ val: t.net_wpm, label: `#${idx + 1}` }));
       const accPoints = trends.map((t, idx) => ({ val: t.accuracy, label: `#${idx + 1}` }));
 
-      stenoCharts.drawLineChart(speedCanvas, speedPoints, 'WPM', '#2563eb', 'rgba(37,99,235,0.12)');
-      stenoCharts.drawLineChart(accCanvas, accPoints, '%', '#10b981', 'rgba(16,185,129,0.12)');
+      if (window.stenoCharts) {
+        stenoCharts.drawLineChart(speedCanvas, speedPoints, 'WPM', '#2563eb', 'rgba(37,99,235,0.12)');
+        stenoCharts.drawLineChart(accCanvas, accPoints, '%', '#10b981', 'rgba(16,185,129,0.12)');
 
-      const errorFreq = res.error_frequency || [];
-      const errorCats = errorFreq.map(e => e.category);
-      const errorVals = errorFreq.map(e => e.count);
-      stenoCharts.drawBarChart(errorCanvas, errorCats, errorVals, '#f59e0b');
+        const errorFreq = res.error_frequency || [];
+        const errorCats = errorFreq.map(e => e.category);
+        const errorVals = errorFreq.map(e => e.count);
+        stenoCharts.drawBarChart(errorCanvas, errorCats, errorVals, '#f59e0b');
+      }
 
       // Achievements
       const achGrid = document.getElementById('progressAchievementsGrid');
