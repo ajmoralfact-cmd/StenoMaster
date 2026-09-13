@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Devanagari:wght@400;500;600;700;800&family=Rozha+One&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/css/style.css?v=8.0">
+  <link rel="stylesheet" href="/css/style.css?v=8.1">
 
   <!-- Smooth Admin Auth Guard (Shows In-Page Modal without broken redirect) -->
   <script>
@@ -1464,9 +1464,26 @@
         }
       }
 
-      escapeHtml(str) {
+            escapeHtml(str) {
         if (!str) return '';
-        return S<!-- Standalone In-Page Admin Login Modal (Never redirects away) -->
+        return String(str)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#039;');
+      }
+    }
+
+    window.stenoApp = new StenoAdminAppBridge();
+  </script>
+
+  <!-- Required Admin Scripts -->
+  <script src="/js/charts.js?v=8.1"></script>
+  <script src="/js/comparison_view.js?v=8.1"></script>
+  <script src="/js/admin.js?v=8.1"></script>
+
+  <!-- Standalone In-Page Admin Login Modal (Never redirects away) -->
   <div id="adminStandaloneAuthModal" class="modal-overlay" style="display:none; z-index:999999; background:rgba(15, 23, 42, 0.85); backdrop-filter:blur(8px);">
     <div class="modal-card" style="max-width:440px; border:2px solid #ef4444; box-shadow:0 20px 50px rgba(0,0,0,0.5); border-radius:16px; padding:28px;">
       <div style="text-align:center; margin-bottom:18px;">

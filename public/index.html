@@ -12,7 +12,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Mukta:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/css/style.css?v=8.0">
+  <link rel="stylesheet" href="/css/style.css?v=8.1">
   <!-- Google Identity Services SDK -->
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   <script>
@@ -94,7 +94,18 @@
             </div>
 
             <!-- 1. Student Login Sub-Form -->
+                        <!-- 1. Student Login Sub-Form -->
             <div id="studentSubLoginForm">
+              <!-- Quick 1-Click Demo Login Banner for Student -->
+              <div style="background:linear-gradient(135deg, rgba(2, 132, 199, 0.08), rgba(99, 102, 241, 0.08)); border:1.5px solid #0284c7; border-radius:12px; padding:11px 14px; margin-bottom:14px; display:flex; justify-content:space-between; align-items:center; gap:8px;">
+                <div>
+                  <div style="font-size:0.75rem; color:var(--text-muted);">डेमो छात्र खाता (Default Student):</div>
+                  <strong style="color:#0284c7; font-size:0.88rem;">student@stenomaster.com</strong>
+                </div>
+                <button type="button" class="btn-primary" onclick="stenoApp.oneClickDemoStudentLogin()" style="padding:6px 13px; font-size:0.82rem; font-weight:700; background:#0284c7; border-color:#0284c7; white-space:nowrap; flex-shrink:0;">
+                  ⚡ 1-क्लिक लॉगिन →
+                </button>
+              </div>
               <!-- Quick One-Click Login Card (Shown when credentials saved in localStorage) -->
               <div id="stuQuickLoginCard" style="display:none; background:linear-gradient(135deg, rgba(2, 132, 199, 0.08), rgba(99, 102, 241, 0.08)); border:1.5px solid #0284c7; border-radius:12px; padding:12px 14px; margin-bottom:14px;">
                 <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
@@ -423,6 +434,25 @@
             <span class="live-pulse-badge" id="liveSyncStatus"><span class="pulse-dot"></span> लाइव सिंक सक्रिय</span>
             <button type="button" class="btn-sm btn-secondary" onclick="stenoApp.refreshDashboardLive(true)" title="लाइव आंकड़े रिफ्रेश करें" style="display:inline-flex; align-items:center; gap:6px; font-weight:700; font-size:0.78rem; padding:6px 12px; border-radius:8px; cursor:pointer;">
               <span>🔄</span> <span>रिफ्रेश</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Modern Stylish Horizontal Active Plan Banner -->
+        <div id="dashboardActivePlanBanner" style="width:100%; border-radius:12px; padding:12px 20px; margin-bottom:20px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; box-shadow:0 2px 8px rgba(0,0,0,0.04); backdrop-filter:blur(6px); transition:all 0.3s ease;">
+          <div style="display:flex; align-items:center; gap:12px; flex:1; min-width:240px;">
+            <div id="planBannerIcon" style="font-size:1.6rem; line-height:1;">🟢</div>
+            <div>
+              <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                <span id="planBannerTag" style="font-size:0.72rem; font-weight:800; text-transform:uppercase; letter-spacing:0.5px; padding:2px 8px; border-radius:6px;">सक्रिय प्लान</span>
+                <strong id="planBannerTitle" style="font-size:1.02rem; font-weight:800;">StenoMaster Pro</strong>
+              </div>
+              <div id="planBannerSubtitle" style="font-size:0.82rem; margin-top:2px;">वैधता एवं शेष दिनों का विवरण</div>
+            </div>
+          </div>
+          <div id="planBannerAction" style="display:flex; align-items:center; gap:10px;">
+            <button type="button" id="planBannerActionBtn" class="btn-primary" onclick="stenoApp.navigate('subscription')" style="padding:8px 16px; font-size:0.84rem; font-weight:700; border-radius:8px; white-space:nowrap;">
+              👑 प्लान अपग्रेड / रिन्यू करें →
             </button>
           </div>
         </div>
@@ -3032,10 +3062,10 @@
   <script defer src="https://sdk.cashfree.com/js/v3/cashfree.js"></script>
 
   <!-- Core Lightweight Scripts (charts.js & comparison_view.js are lazy-loaded on demand for 50% faster startup) -->
-  <script src="/js/audio_player.js?v=8.0"></script>
-  <script src="/js/keyboard_map.js?v=8.0"></script>
-  <script src="/js/typing_engine.js?v=8.0"></script>
-  <script src="/js/app.js?v=8.0"></script>
+  <script src="/js/audio_player.js?v=8.1"></script>
+  <script src="/js/keyboard_map.js?v=8.1"></script>
+  <script src="/js/typing_engine.js?v=8.1"></script>
+  <script src="/js/app.js?v=8.1"></script>
   <!-- Strict Exam Hall Anti-Cheat Warning Modal -->
   <div class="modal-overlay" id="examHallWarningModal" style="z-index:99999;">
     <div class="modal-card" style="max-width: 480px; text-align:center; border:2px solid #ef4444; box-shadow:0 10px 40px rgba(239,68,68,0.3);">

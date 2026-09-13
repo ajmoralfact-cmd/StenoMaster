@@ -1,18 +1,18 @@
 /**
- * StenoMaster Service Worker — v8.0
+ * StenoMaster Service Worker — v8.1
  * Network-First Architecture with Offline Cache Fallback
  * Ensures changes are visible immediately without manual hard refresh or incognito
  */
 
-const CACHE_NAME = 'stenomaster-v8.0-shell';
+const CACHE_NAME = 'stenomaster-v8.1-shell';
 const ASSETS_TO_PRECACHE = [
   '/',
   '/index.html',
-  '/css/style.css?v=8.0',
-  '/js/audio_player.js?v=8.0',
-  '/js/keyboard_map.js?v=8.0',
-  '/js/typing_engine.js?v=8.0',
-  '/js/app.js?v=8.0',
+  '/css/style.css?v=8.1',
+  '/js/audio_player.js?v=8.1',
+  '/js/keyboard_map.js?v=8.1',
+  '/js/typing_engine.js?v=8.1',
+  '/js/app.js?v=8.1',
   '/manifest.json',
   '/assets/logo.png',
   '/assets/fonts/Mangal.ttf',
@@ -36,7 +36,7 @@ self.addEventListener('activate', (event) => {
       return Promise.all(
         keys.map((key) => {
           if (key !== CACHE_NAME) {
-            console.log('[SW v8.0] Purging obsolete cache:', key);
+            console.log('[SW v8.1] Purging obsolete cache:', key);
             return caches.delete(key);
           }
         })

@@ -1207,6 +1207,91 @@ class StenoApp {
     this.showAuthGateway('student', 'अन्य डिवाइस से लॉगआउट कर दिया गया है। पुनः लॉगिन करें।');
   }
 
+    async oneClickDemoStudentLogin() {
+    const emailInput = document.getElementById('stuAuthEmail');
+    const passInput = document.getElementById('stuAuthPassword');
+    if (emailInput) emailInput.value = 'student@stenomaster.com';
+    if (passInput) passInput.value = 'student123';
+    await this.handleStudentLogin();
+  }
+
+  renderActivePlanBanner() {
+    const banner = document.getElementById('dashboardActivePlanBanner');
+    if (!banner) return;
+
+    const icon = document.getElementById('planBannerIcon');
+    const tag = document.getElementById('planBannerTag');
+    const title = document.getElementById('planBannerTitle');
+    const subtitle = document.getElementById('planBannerSubtitle');
+    const actionBtn = document.getElementById('planBannerActionBtn');
+
+    const isPremium = Boolean(this.user && (this.user.is_premium || this.user.is_free_access || (this.user.subscription_days_left && this.user.subscription_days_left > 0)));
+    const planName = (this.user && this.user.subscription_plan) || 'StenoMaster Pro';
+    const daysLeft = (this.user && typeof this.user.subscription_days_left === 'number') ? this.user.subscription_days_left : 0;
+
+    // Pricing mapping
+    const planPriceMap = {
+      'StenoMaster Basic (30 Days)': '₹100 (1 माह / 30 दिन)',
+      'StenoMaster Standard (90 Days)': '₹250 (3 माह / 90 दिन)',
+      'StenoMaster Extended (180 Days)': '₹450 (6 माह / 180 दिन)',
+      'StenoMaster Annual Pro (365 Days)': '₹800 (1 वर्ष / 365 दिन)',
+      'StenoMaster Pro': '₹100 प्रति माह'
+    };
+    const priceText = planPriceMap[planName] || '₹100 मासिक प्लान';
+
+    if (isPremium && daysLeft > 0) {
+      // GREEN STYLISH HORIZONTAL BOX (ACTIVE PLAN)
+      banner.style.background = 'linear-gradient(90deg, rgba(16, 185, 129, 0.12), rgba(5, 150, 105, 0.06))';
+      banner.style.border = '1.5px solid rgba(16, 185, 129, 0.45)';
+      banner.style.color = '#065f46';
+
+      if (icon) icon.textContent = '🟢';
+      if (tag) {
+        tag.textContent = 'सक्रिय प्लान (ACTIVE PLAN)';
+        tag.style.background = '#10b981';
+        tag.style.color = '#ffffff';
+      }
+      if (title) {
+        title.innerHTML = `${this.escapeHtml(planName)} • <span style="color:#059669; font-weight:700;">${priceText}</span> सक्रिय है`;
+        title.style.color = '#065f46';
+      }
+      if (subtitle) {
+        subtitle.innerHTML = `⏳ <strong>${daysLeft} दिन शेष बचे हैं</strong> • असीमित डिक्टेशन, परीक्षा हॉल मोड एवं विस्तृत मूल्यांकन सक्रिय है।`;
+        subtitle.style.color = '#047857';
+      }
+      if (actionBtn) {
+        actionBtn.textContent = '👑 प्लान अपग्रेड / रिन्यू करें →';
+        actionBtn.style.background = '#10b981';
+        actionBtn.style.borderColor = '#10b981';
+      }
+    } else {
+      // RED STYLISH HORIZONTAL BOX (NO ACTIVE PLAN / EXPIRED)
+      banner.style.background = 'linear-gradient(90deg, rgba(239, 68, 68, 0.12), rgba(220, 38, 38, 0.06))';
+      banner.style.border = '1.5px solid rgba(239, 68, 68, 0.45)';
+      banner.style.color = '#991b1b';
+
+      if (icon) icon.textContent = '🔴';
+      if (tag) {
+        tag.textContent = 'कोई प्लान सक्रिय नहीं (NO ACTIVE PLAN)';
+        tag.style.background = '#ef4444';
+        tag.style.color = '#ffffff';
+      }
+      if (title) {
+        title.textContent = 'वर्तमान में आपका कोई सशुल्क प्लान सक्रिय नहीं है';
+        title.style.color = '#b91c1c';
+      }
+      if (subtitle) {
+        subtitle.innerHTML = '⚠️ आपकी वर्तमान योजना समाप्त है या आप सीमित फ्री मोड में हैं। असीमित डिक्टेशन अभ्यास एवं लाइव रैंकिंग के लिए तुरंत प्लान सक्रिय करें।';
+        subtitle.style.color = '#b91c1c';
+      }
+      if (actionBtn) {
+        actionBtn.textContent = '⚡ अभी प्लान चुनें (मात्र ₹100 से शुरू) →';
+        actionBtn.style.background = '#ef4444';
+        actionBtn.style.borderColor = '#ef4444';
+      }
+    }
+  }
+
   updateUserUI() {
     const greetingEl = document.getElementById('userGreetingText');
     const avatarEl = document.getElementById('headerUserAvatar');
@@ -1305,6 +1390,7 @@ class StenoApp {
     }
 
     this.renderSidebarNav();
+    this.renderActivePlanBanner();
   }
 
   // -------------------------------------------------------------------------
