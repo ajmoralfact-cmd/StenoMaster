@@ -2505,14 +2505,14 @@ class StenoApp {
     );
   }
 
-  async submitPractice() {
+  async submitPractice(autoSubmit = false) {
     const text = stenoTypingEngine.getText().trim();
-    if (!text) {
+    if (!text && !autoSubmit) {
       this.showToast('कृपया सबमिट करने से पहले कुछ टेक्स्ट टाइप करें।', 'error');
       return;
     }
 
-    if (!confirm('क्या आप अपना टंकण अभ्यास जमा करना चाहते हैं? (Submit practice for evaluation)')) {
+    if (!autoSubmit && !confirm('क्या आप अपना टंकण अभ्यास जमा करना चाहते हैं? (Submit practice for evaluation)')) {
       return;
     }
 
@@ -2538,7 +2538,8 @@ class StenoApp {
         typing_mode: typingMode,
         selected_typing_system: this.selectedTypingSystem || (typingMode === 'krutidev' ? 'kruti_dev_010' : 'mangal_unicode'),
         exam_rule: this.currentExamRule || 'ssc_steno',
-        time_taken_seconds: timeTaken
+        time_taken_seconds: timeTaken,
+        tab_switches: (window.stenoTypingEngine && window.stenoTypingEngine.tabSwitchCount) || 0
       }, 30000);
 
       stenoTypingEngine.stopPractice();

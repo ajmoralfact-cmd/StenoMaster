@@ -793,6 +793,9 @@
               <button type="button" id="practiceStenoNotesBtn" class="btn-sm" onclick="stenoApp.openCurrentPassageStenoNotes()" style="display:none; background:#e0e7ff; color:#4338ca; border:1px solid #c7d2fe; font-weight:700; font-size:0.75rem; border-radius:6px; cursor:pointer; padding:4px 10px;">
                 📝 स्टेनो आउटलाइन देखें
               </button>
+                            <button type="button" id="toggleExamModeBtn" class="btn-sm" onclick="stenoTypingEngine.toggleExamMode()" style="background:#fef2f2; color:#b91c1c; border:1px solid #fecaca; font-weight:700; font-size:0.75rem; border-radius:6px; cursor:pointer; padding:4px 10px;" title="सख्त परीक्षा हॉल मोड ऑन/ऑफ करें (फुल-स्क्रीन, एंटी-चीट व बीप)">
+                🔒 परीक्षा मोड: OFF
+              </button>
               <span class="badge" id="practiceLanguageBadge">HINDI</span>
               <span class="badge" id="practiceDifficultyBadge">MEDIUM</span>
               <span class="badge" id="practiceTargetWpm" style="background:var(--primary-subtle); color:var(--primary);">40 WPM</span>
@@ -883,6 +886,15 @@
               </div>
               <span class="audio-time-label" id="audioRemainingTime">00:00</span>
             </div>
+          </div>
+
+                    <!-- 1-Minute Alert & Security Notice Banner -->
+          <div id="practiceExamAlertBanner" style="display:none; margin-bottom:14px; padding:12px 16px; border-radius:10px; background:linear-gradient(135deg, rgba(239, 68, 68, 0.12), rgba(245, 158, 11, 0.12)); border:1.5px solid #ef4444; color:#b91c1c; font-weight:700; font-size:0.92rem; align-items:center; justify-content:space-between; animation:alertPulse 1.5s infinite;">
+            <div style="display:flex; align-items:center; gap:10px;">
+              <span style="font-size:1.4rem;">⚠️</span>
+              <span id="practiceExamAlertBannerText">चेतावनी: केवल 1 मिनट शेष है! अपनी आशुलिपि आउटलाइन से टंकण शीघ्र पूर्ण करें।</span>
+            </div>
+            <button type="button" class="btn-sm" onclick="this.parentElement.style.display='none'" style="background:none; border:none; color:#b91c1c; font-size:1rem; cursor:pointer;">✕</button>
           </div>
 
           <!-- Typing Editor Card -->
@@ -3019,5 +3031,27 @@
   <script src="/js/keyboard_map.js?v=7.5"></script>
   <script src="/js/typing_engine.js?v=7.5"></script>
   <script src="/js/app.js?v=7.5"></script>
+  <!-- Strict Exam Hall Anti-Cheat Warning Modal -->
+  <div class="modal-overlay" id="examHallWarningModal" style="z-index:99999;">
+    <div class="modal-card" style="max-width: 480px; text-align:center; border:2px solid #ef4444; box-shadow:0 10px 40px rgba(239,68,68,0.3);">
+      <div style="font-size:3rem; margin-bottom:10px;">🚨</div>
+      <h3 class="modal-title" style="color:#b91c1c; font-size:1.25rem; margin-bottom:6px;">परीक्षा हॉल सुरक्षा चेतावनी</h3>
+      <p id="examWarningModalSubtitle" style="font-weight:700; color:#dc2626; font-size:0.95rem; margin-bottom:12px;">
+        आपने परीक्षा विंडो से बाहर स्विच किया है!
+      </p>
+      <div id="examWarningStrikeBadge" style="display:inline-block; background:rgba(239,68,68,0.1); color:#b91c1c; font-weight:800; font-size:0.85rem; padding:4px 14px; border-radius:20px; border:1px solid rgba(239,68,68,0.3); margin-bottom:14px;">
+        चेतावनी स्ट्राइक: 1 / 3
+      </div>
+      <p style="font-size:0.82rem; color:var(--text-muted); line-height:1.5; margin-bottom:20px;">
+        SSC एवं UPSSSC आशुलिपिक परीक्षा नियमों के अनुसार टाइपिंग सत्र के दौरान टैब बदलना, विंडो मिनिमाइज करना या बाहर क्लिक करना सख्त वर्जित है।
+      </p>
+      <div style="display:flex; justify-content:center; gap:10px;">
+        <button type="button" class="btn-primary" onclick="stenoTypingEngine.resumeExamFullScreen()" style="background:#dc2626; border-color:#dc2626; padding:10px 24px; font-weight:700; font-size:0.9rem;">
+          📺 फुल-स्क्रीन करें और परीक्षा जारी रखें →
+        </button>
+      </div>
+    </div>
+  </div>
+
 </body>
 </html>

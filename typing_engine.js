@@ -8,7 +8,7 @@
  * - Timer & Live WPM tracking
  * - Accidental leave protection
  * - Font scaling (A- / A+)
- * - Exam restrictions (Backspace Lock & Anti-Paste)
+ * - Strict Exam Hall Mode (Full Screen lock, Tab switch anti-cheat, 1-Min Beep & Backspace Lock)
  */
 
 const KD_MAP = [
@@ -38,10 +38,8 @@ function krutiDevToUnicodeJS(text) {
   for (const [k, v] of KD_MAP) {
     res = res.split(k).join(v);
   }
-  // Chhoti 'i' matra (f) reorder: f[consonant] -> [consonant]ि
-  res = res.replace(/f([\u0915-\u0939](\u094D[\u0915-\u0939])*)/g, '$1ि');
+  res = res.replace(/f([\u0915-\u0939]([\u094D][\u0915-\u0939])*)/g, '$1ि');
   res = res.replace(/f/g, 'ि');
-  // Reph Z -> र्
   res = res.replace(/([क-ह](?:[\u093E-\u094C])?)Z/g, 'र्$1');
   return res;
 }
@@ -53,6 +51,14 @@ class StenoTypingEngine {
     this.typingMode = localStorage.getItem('stenomaster_typing_mode') || 'mangal';
     this.fontSizeLevel = localStorage.getItem('stenomaster_font_size') || 'md';
     this.backspaceLocked = localStorage.getItem('stenomaster_backspace_locked') === 'true';
+
+    // Strict Exam Hall Mode state
+    this.examModeEnabled = localStorage.getItem('stenomaster_exam_mode') === 'true';
+    this.tabSwitchCount = 0;
+    this.oneMinuteAlertFired = false;
+    this.isPracticeActive = false;
+    this.targetDurationSeconds = 300;
+    this._antiCheatInitialized = false;
 
     this.startTime = null;
     this.elapsedSeconds = 0;
@@ -102,11 +108,11 @@ class StenoTypingEngine {
         this.onTextInput();
       });
 
-      // Exam Mode: Backspace lock enforcement
+      // Exam Mode: Backspace lock enforcement (Optional Switch)
       this.textarea.addEventListener('keydown', (e) => {
-        if (this.backspaceLocked && e.key === 'Backspace') {
+        if (this.backspaceLocked && (e.key === 'Backspace' || e.key === 'Delete')) {
           e.preventDefault();
-          this.showDraftNotice('⚠️ परीक्षा मोड: बैकस्पेस लॉक है (Backspace Disabled)');
+          this.showDraftNotice('🚫 परीक्षा नियम: बैकस्पेस लॉक है (Backspace Disabled)');
         }
       });
 
@@ -121,6 +127,8 @@ class StenoTypingEngine {
     this.applyTypingModeStyles();
     this.applyFontSize();
     this.updateBackspaceUI();
+    this.updateExamModeUI();
+    this.initExamAntiCheat();
 
     // Auto-save interval every 5 seconds
     if (this.autoSaveTimer) clearInterval(this.autoSaveTimer);
@@ -134,7 +142,14 @@ class StenoTypingEngine {
     this.currentPassage = passage;
     this.hasSubmitted = false;
     this.isDirty = false;
+    this.isPracticeActive = true;
     this.elapsedSeconds = 0;
+    this.tabSwitchCount = 0;
+    this.oneMinuteAlertFired = false;
+    this.targetDurationSeconds = (passage && passage.duration_seconds) ? parseInt(passage.duration_seconds) : 300;
+
+    const banner = document.getElementById('practiceExamAlertBanner');
+    if (banner) banner.style.display = 'none';
 
     // Restore draft if present
     const savedDraft = localStorage.getItem(`stenomaster_draft_${passage.id}`);
@@ -148,15 +163,21 @@ class StenoTypingEngine {
     this.applyTypingModeStyles();
     this.updateLiveStats();
 
-    // Typing Timer starts only when the student actually types in the box
+    // Reset timer
     if (this.timerInterval) clearInterval(this.timerInterval);
     this.timerInterval = null;
     this.isTimerRunning = false;
     this.updateTimerDisplay();
 
-    // Remove active timer pulse indicator
     const timerPill = this.timerEl ? this.timerEl.closest('.stat-pill') : null;
-    if (timerPill) timerPill.classList.remove('timer-active');
+    if (timerPill) {
+      timerPill.classList.remove('timer-active', 'timer-one-minute-alert');
+    }
+
+    // Enter Full Screen if Exam Mode is active
+    if (this.examModeEnabled) {
+      setTimeout(() => this.enterFullScreen(), 300);
+    }
   }
 
   startTimerIfNeeded() {
@@ -169,12 +190,212 @@ class StenoTypingEngine {
       this.timerInterval = setInterval(() => {
         this.elapsedSeconds = Math.floor((Date.now() - this.startTime) / 1000);
         this.updateTimerDisplay();
+
+        // 1-Minute Alert & Time's Up Auto-submit
+        if (this.targetDurationSeconds > 0) {
+          const remaining = this.targetDurationSeconds - this.elapsedSeconds;
+          if (remaining === 60 && !this.oneMinuteAlertFired) {
+            this.oneMinuteAlertFired = true;
+            this.triggerOneMinuteAlert();
+          } else if (remaining <= 0 && !this.hasSubmitted) {
+            this.handleTimeUpAutoSubmit();
+          }
+        }
       }, 1000);
 
-      // Visual indicator that typing timer has officially started
       const timerPill = this.timerEl ? this.timerEl.closest('.stat-pill') : null;
       if (timerPill) timerPill.classList.add('timer-active');
     }
+  }
+
+  triggerOneMinuteAlert() {
+    this.playExamWarningBeep();
+    const banner = document.getElementById('practiceExamAlertBanner');
+    const textEl = document.getElementById('practiceExamAlertBannerText');
+    if (banner) {
+      if (textEl) textEl.textContent = '⚠️ अंतिम 1 मिनट शेष है! अपनी आशुलिपि आउटलाइन से टंकण शीघ्र पूर्ण करें।';
+      banner.style.display = 'flex';
+    }
+    const timerPill = this.timerEl ? this.timerEl.closest('.stat-pill') : null;
+    if (timerPill) timerPill.classList.add('timer-one-minute-alert');
+    if (window.stenoApp) {
+      stenoApp.showToast('⚠️ अंतिम 1 मिनट शेष है! (Final 1 Minute Alert)', 'warning');
+    }
+  }
+
+  handleTimeUpAutoSubmit() {
+    this.stopPractice();
+    if (window.stenoApp) {
+      stenoApp.showToast('⏱️ निर्धारित समय समाप्त! उत्तर स्वतः सबमिट किया जा रहा है...', 'info');
+      stenoApp.submitPractice(true);
+    }
+  }
+
+  playExamWarningBeep() {
+    try {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtx) return;
+      const ctx = new AudioCtx();
+      const now = ctx.currentTime;
+
+      // Authentic Exam Hall Double Chime (880Hz -> 660Hz)
+      const osc1 = ctx.createOscillator();
+      const gain1 = ctx.createGain();
+      osc1.type = 'sine';
+      osc1.frequency.setValueAtTime(880, now);
+      gain1.gain.setValueAtTime(0.35, now);
+      gain1.gain.exponentialRampToValueAtTime(0.01, now + 0.35);
+      osc1.connect(gain1);
+      gain1.connect(ctx.destination);
+      osc1.start(now);
+      osc1.stop(now + 0.35);
+
+      const osc2 = ctx.createOscillator();
+      const gain2 = ctx.createGain();
+      osc2.type = 'sine';
+      osc2.frequency.setValueAtTime(660, now + 0.25);
+      gain2.gain.setValueAtTime(0.35, now + 0.25);
+      gain2.gain.exponentialRampToValueAtTime(0.01, now + 0.7);
+      osc2.connect(gain2);
+      gain2.connect(ctx.destination);
+      osc2.start(now + 0.25);
+      osc2.stop(now + 0.7);
+    } catch (e) {
+      console.warn('Exam beep error:', e);
+    }
+  }
+
+  playTabViolationBeep() {
+    try {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtx) return;
+      const ctx = new AudioCtx();
+      const now = ctx.currentTime;
+
+      for (let i = 0; i < 3; i++) {
+        const t = now + (i * 0.15);
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(360, t);
+        gain.gain.setValueAtTime(0.3, t);
+        gain.gain.exponentialRampToValueAtTime(0.01, t + 0.1);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(t);
+        osc.stop(t + 0.1);
+      }
+    } catch (e) {}
+  }
+
+  toggleExamMode(forceState) {
+    this.examModeEnabled = (forceState !== undefined) ? forceState : !this.examModeEnabled;
+    localStorage.setItem('stenomaster_exam_mode', this.examModeEnabled);
+    this.updateExamModeUI();
+
+    if (this.examModeEnabled) {
+      this.enterFullScreen();
+      if (window.stenoApp) stenoApp.showToast('🔒 सख्त परीक्षा मोड सक्रिय (फुल-स्क्रीन, एंटी-चीट व बीप ऑन)', 'success');
+    } else {
+      this.exitFullScreen();
+      if (window.stenoApp) stenoApp.showToast('🔓 सामान्य अभ्यास मोड सक्रिय (फुल-स्क्रीन बंद)', 'info');
+    }
+  }
+
+  updateExamModeUI() {
+    const btn = document.getElementById('toggleExamModeBtn');
+    if (btn) {
+      if (this.examModeEnabled) {
+        btn.innerHTML = '🔒 परीक्षा मोड: ON';
+        btn.style.background = '#dc2626';
+        btn.style.color = '#ffffff';
+        btn.style.borderColor = '#b91c1c';
+        btn.title = 'सख्त परीक्षा मोड सक्रिय है (फुल-स्क्रीन, टैब सुरक्षा व 1-मिनट बीप)';
+      } else {
+        btn.innerHTML = '🔓 परीक्षा मोड: OFF';
+        btn.style.background = '#fef2f2';
+        btn.style.color = '#b91c1c';
+        btn.style.borderColor = '#fecaca';
+        btn.title = 'सख्त परीक्षा हॉल मोड ऑन/ऑफ करें (फुल-स्क्रीन, एंटी-चीट व बीप)';
+      }
+    }
+  }
+
+  enterFullScreen() {
+    try {
+      const el = document.documentElement;
+      if (!document.fullscreenElement) {
+        if (el.requestFullscreen) el.requestFullscreen().catch(() => {});
+        else if (el.mozRequestFullScreen) el.mozRequestFullScreen();
+        else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
+        else if (el.msRequestFullscreen) el.msRequestFullscreen();
+      }
+    } catch (e) {}
+  }
+
+  exitFullScreen() {
+    try {
+      if (document.fullscreenElement) {
+        if (document.exitFullscreen) document.exitFullscreen().catch(() => {});
+        else if (document.mozCancelFullScreen) document.mozCancelFullScreen();
+        else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+        else if (document.msExitFullscreen) document.msExitFullscreen();
+      }
+    } catch (e) {}
+  }
+
+  initExamAntiCheat() {
+    if (this._antiCheatInitialized) return;
+    this._antiCheatInitialized = true;
+
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) {
+        if (this.isPracticeActive && this.examModeEnabled && !this.hasSubmitted) {
+          this.tabSwitchCount++;
+          this.showTabViolationAlert();
+        }
+      }
+    });
+
+    document.addEventListener('fullscreenchange', () => {
+      if (!document.fullscreenElement && this.isPracticeActive && this.examModeEnabled && !this.hasSubmitted) {
+        this.showFullScreenExitAlert();
+      }
+    });
+  }
+
+  showTabViolationAlert() {
+    this.playTabViolationBeep();
+    const modal = document.getElementById('examHallWarningModal');
+    const badge = document.getElementById('examWarningStrikeBadge');
+    const sub = document.getElementById('examWarningModalSubtitle');
+
+    if (sub) sub.textContent = 'आपने परीक्षा विंडो से बाहर स्विच किया है!';
+    if (badge) badge.textContent = `चेतावनी स्ट्राइक: ${this.tabSwitchCount} / 3 बार विंडो छोड़ी गई`;
+
+    if (modal) modal.classList.add('active');
+    if (window.stenoApp) {
+      stenoApp.showToast(`🚨 चेतावनी (${this.tabSwitchCount}): परीक्षा के दौरान अन्य टैब खोलना वर्जित है!`, 'error');
+    }
+  }
+
+  showFullScreenExitAlert() {
+    this.playTabViolationBeep();
+    const modal = document.getElementById('examHallWarningModal');
+    const badge = document.getElementById('examWarningStrikeBadge');
+    const sub = document.getElementById('examWarningModalSubtitle');
+
+    if (sub) sub.textContent = 'फुल-स्क्रीन मोड बंद किया गया है!';
+    if (badge) badge.textContent = `चेतावनी: कृपया परीक्षा हॉल मोड में बने रहें`;
+
+    if (modal) modal.classList.add('active');
+  }
+
+  resumeExamFullScreen() {
+    const modal = document.getElementById('examHallWarningModal');
+    if (modal) modal.classList.remove('active');
+    this.enterFullScreen();
+    if (this.textarea) this.textarea.focus();
   }
 
   onTextInput() {
@@ -206,11 +427,9 @@ class StenoTypingEngine {
     if (this.typingMode === 'krutidev') {
       this.textarea.classList.add('font-krutidev');
       this.textarea.setAttribute('placeholder', 'कृति देव 010 में डिक्टेशन टाइप करना प्रारंभ करें... (Start typing in Kruti Dev 010)');
-
     } else {
       this.textarea.classList.add('font-mangal');
       this.textarea.setAttribute('placeholder', 'डिक्टेशन सुनकर यहाँ टाइप करना प्रारंभ करें... (Start typing the dictated passage here)');
-
     }
   }
 
@@ -225,7 +444,6 @@ class StenoTypingEngine {
     this.textarea.classList.remove('fs-sm', 'fs-md', 'fs-lg', 'fs-xl');
     this.textarea.classList.add(`fs-${this.fontSizeLevel}`);
 
-    // Update active state in toolbar buttons if present
     document.querySelectorAll('.font-size-btn').forEach(btn => {
       btn.classList.toggle('active', btn.dataset.size === this.fontSizeLevel);
     });
@@ -261,7 +479,6 @@ class StenoTypingEngine {
     const rawText = this.textarea.value;
 
     const chars = rawText.length;
-    // Ultra-fast word tokenization (Zero-lag 60 FPS even on large 1000+ word typing sessions)
     const trimmed = rawText.trim();
     const words = trimmed ? trimmed.split(/\s+/).length : 0;
 
@@ -271,9 +488,16 @@ class StenoTypingEngine {
 
   updateTimerDisplay() {
     if (!this.timerEl) return;
-    const mins = Math.floor(this.elapsedSeconds / 60);
-    const secs = this.elapsedSeconds % 60;
-    this.timerEl.textContent = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    if (this.targetDurationSeconds > 0) {
+      const remaining = Math.max(0, this.targetDurationSeconds - this.elapsedSeconds);
+      const mins = Math.floor(remaining / 60);
+      const secs = remaining % 60;
+      this.timerEl.textContent = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    } else {
+      const mins = Math.floor(this.elapsedSeconds / 60);
+      const secs = this.elapsedSeconds % 60;
+      this.timerEl.textContent = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    }
   }
 
   saveDraft() {
@@ -309,13 +533,23 @@ class StenoTypingEngine {
   }
 
   stopPractice() {
+    this.isPracticeActive = false;
     if (this.timerInterval) clearInterval(this.timerInterval);
     this.timerInterval = null;
     this.isTimerRunning = false;
     this.hasSubmitted = true;
     this.isDirty = false;
     const timerPill = this.timerEl ? this.timerEl.closest('.stat-pill') : null;
-    if (timerPill) timerPill.classList.remove('timer-active');
+    if (timerPill) {
+      timerPill.classList.remove('timer-active', 'timer-one-minute-alert');
+    }
+    const banner = document.getElementById('practiceExamAlertBanner');
+    if (banner) banner.style.display = 'none';
+    const warningModal = document.getElementById('examHallWarningModal');
+    if (warningModal) warningModal.classList.remove('active');
+
+    this.exitFullScreen();
+
     if (this.currentPassageId) {
       localStorage.removeItem(`stenomaster_draft_${this.currentPassageId}`);
     }

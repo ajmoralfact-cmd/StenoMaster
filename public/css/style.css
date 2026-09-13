@@ -6140,3 +6140,27 @@ body.dark-mode .ww-tip-row {
     min-width: 100%;
   }
 }
+
+/* ==========================================================================
+   Strict Exam Hall Mode Styles
+   ========================================================================== */
+@keyframes alertPulse {
+  0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+  70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+}
+
+.btn-exam-active {
+  background: #dc2626 !important;
+  color: #ffffff !important;
+  border-color: #b91c1c !important;
+  box-shadow: 0 0 8px rgba(220, 38, 38, 0.4);
+}
+
+.timer-one-minute-alert {
+  background: #fee2e2 !important;
+  color: #dc2626 !important;
+  border-color: #ef4444 !important;
+  font-weight: 800 !important;
+  animation: alertPulse 1.2s infinite !important;
+}
