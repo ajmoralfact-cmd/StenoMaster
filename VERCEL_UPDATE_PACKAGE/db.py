@@ -1109,27 +1109,97 @@ def seed_initial_data():
             "official_text": "In a democratic administrative framework, public servants are entrusted with the constitutional duty of upholding the rule of law with unyielding integrity and moral rectitude. Effective governance demands not merely procedural adherence, but a profound empathy for marginalized segments of society. Bureaucratic inertia must yield to proactive grievance redressal mechanisms facilitated by modern digital workflows. Transparency in governmental disbursements fosters public trust and fortifies institutional legitimacy. Stenographers and secretarial officers constitute the operational backbone of this administrative machinery.",
             "instructions": "Standard SSC Stenographer Grade C/D examination style test passage. 50 words per minute.",
             "tags": "SSC,Administration,Governance,Exam"
+        },
+# 16. Curated - Ramdhari Gupta Khand 1
+        {
+            "title": "रामधारी गुप्ता (खंड 1) — अभ्यास 1 (संसदीय कार्यप्रणाली एवं राष्ट्रीय नीतियां)",
+            "category_slug": "ssc-steno",
+            "language": "hindi",
+            "difficulty": "medium",
+            "target_wpm": 80,
+            "duration_seconds": 300,
+            "official_text": "सभापति महोदय, मैं इस महत्वपूर्ण विधेयक पर अपने विचार व्यक्त करने के लिए खड़ा हुआ हूं। हमारी सरकार का मुख्य ध्येय देश के अंतिम पायदान पर खड़े नागरिक तक विकास की किरणें पहुंचाना है। पिछले कुछ वर्षों में देश की आर्थिक स्थिति में जो गुणात्मक परिवर्तन आया है, वह किसी से छिपा नहीं है। औद्योगीकरण को बढ़ावा देने के साथ-साथ कृषि क्षेत्र के आधुनिकीकरण पर भी बल दिया गया है। जब तक हमारे ग्रामीण अंचल सशक्त नहीं होंगे, तब तक राष्ट्रीय प्रगति की कल्पना अधूरी रहेगी। इस सदन के सभी माननीय सदस्यों से मेरा विनम्र निवेदन है कि वे दलगत राजनीति से ऊपर उठकर इस लोक-कल्याणकारी विधेयक का सर्वसम्मति से समर्थन करें ताकि विकास के नए आयाम स्थापित हो सकें।",
+            "instructions": "रामधारी गुप्ता खंड 1 पर आधारित मानक 80 शब्द प्रति मिनट का आशुलिपि अभ्यास। शुद्ध वर्तनी के साथ टाइप करें।",
+            "tags": "रामधारी गुप्ता,खंड 1,संसद,80 WPM,SSC"
+        },
+        # 17. Curated - Ramdhari Gupta Khand 2
+        {
+            "title": "रामधारी गुप्ता (खंड 2) — अभ्यास 15 (पंचवर्षीय योजना एवं ग्रामीण विकास)",
+            "category_slug": "ssc-steno",
+            "language": "hindi",
+            "difficulty": "hard",
+            "target_wpm": 100,
+            "duration_seconds": 300,
+            "official_text": "उपाध्यक्ष महोदय, योजना आयोग द्वारा प्रस्तुत इस प्रारूप पर गंभीरतापूर्वक विचार करने की आवश्यकता है। हमारे देश में प्राकृतिक संसाधनों की कोई कमी नहीं है, आवश्यकता केवल उनके समुचित दोहन और न्यायसंगत वितरण की है। पंचवर्षीय योजनाओं के माध्यम से हमने आधारभूत ढांचे के निर्माण में महत्वपूर्ण उपलब्धियां हासिल की हैं, किंतु अभी भी क्षेत्रीय असंतुलन को दूर करने की दिशा में बहुत कुछ किया जाना शेष है। सिंचाई परियोजनाओं के विस्तार और विद्युत उत्पादन क्षमता में वृद्धि से हमारे किसानों को सीधा लाभ प्राप्त हुआ है। लघु एवं कुटीर उद्योगों को वित्तीय सहायता प्रदान करके ग्रामीण क्षेत्रों में रोजगार के नए अवसर सृजित किए जा रहे हैं। हमें आत्मनिर्भरता के पथ पर निरंतर अग्रसर रहना होगा।",
+            "instructions": "रामधारी गुप्ता खंड 2 आधारित 100 शब्द प्रति मिनट की गति का उच्चस्तरीय स्टेनो आलेख। ग्रेड 'सी' के लिए अत्यंत उपयोगी।",
+            "tags": "रामधारी गुप्ता,खंड 2,योजना,100 WPM,SSC Grade C"
+        },
+        # 18. Curated - Editorial
+        {
+            "title": "दैनिक संपादकीय — डिजिटल अर्थव्यवस्था, यूपीआई और आत्मनिर्भर भारत का संकल्प",
+            "category_slug": "editorial-passages",
+            "language": "hindi",
+            "difficulty": "medium",
+            "target_wpm": 80,
+            "duration_seconds": 300,
+            "official_text": "भारत में डिजिटल क्रांति ने जन-जीवन और वाणिज्यिक गतिविधियों को एक सर्वथा नवीन दिशा प्रदान की है। यूपीआई के माध्यम से होने वाले दैनिक वित्तीय लेन-देन ने भारत को वैश्विक पटल पर वित्तीय प्रौद्योगिकी का सिरमौर बना दिया है। रेहड़ी-पटरी वालों से लेकर बड़े व्यावसायिक प्रतिष्ठानों तक, डिजिटल भुगतान की सुगमता ने पारदर्शिता को अप्रत्याशित बढ़ावा दिया है। इसके साथ ही साइबर सुरक्षा के प्रति सतर्कता और नागरिकों में डिजिटल साक्षरता का प्रसार भी समय की मांग है। नवाचारों को प्रोत्साहित करने वाली नीतियां और घरेलू विनिर्माण को गति देने वाला आत्मनिर्भर भारत अभियान देश को पांच ट्रिलियन डॉलर की अर्थव्यवस्था बनाने की ओर अग्रसर कर रहा है।",
+            "instructions": "दैनिक राष्ट्रीय समाचार पत्रों (जागरण/जनसत्ता) के संपादकीय पर आधारित समसामयिक आलेख।",
+            "tags": "दैनिक संपादकीय,संपादकीय,डिजिटल,अर्थव्यवस्था,Editorial"
+        },
+        # 19. Curated - High Court Legal
+        {
+            "title": "इलाहाबाद उच्च न्यायालय विधिक आलेख — संविधान अनुच्छेद 21 एवं व्यक्तिगत स्वतंत्रता",
+            "category_slug": "court-steno",
+            "language": "hindi",
+            "difficulty": "hard",
+            "target_wpm": 80,
+            "duration_seconds": 300,
+            "official_text": "न्यायालय द्वारा पारित इस निर्णय में विधि के मूलभूत सिद्धांतों की विस्तृत व्याख्या की गई है। संविधान के अनुच्छेद इक्कीस के अंतर्गत प्रत्येक नागरिक को गरिमापूर्ण जीवन जीने और दैहिक स्वतंत्रता का अक्षुण्ण अधिकार प्राप्त है। जब तक किसी व्यक्ति के विरुद्ध कानून द्वारा स्थापित प्रक्रिया के अनुरूप अपराध सिद्ध न हो जाए, तब तक उसकी व्यक्तिगत स्वतंत्रता में राज्य द्वारा अनुचित हस्तक्षेप नहीं किया जा सकता। प्रस्तुत अपील में विचारण न्यायालय द्वारा साक्ष्यों के विश्लेषण में की गई विधिक त्रुटियों को नजरअंदाज नहीं किया जा सकता। संदेह का लाभ अभियुक्त को मिलना न्यायशास्त्र का आधारभूत नियम है। अतः प्रार्थी की जमानत याचिका स्वीकार करते हुए अधीनस्थ न्यायालय को उचित निर्देश जारी किए जाते हैं।",
+            "instructions": "हाईकोर्ट एवं जिला न्यायालय आशुलिपिक परीक्षाओं के लिए विधिक डिक्टेशन। कानूनी शब्दावली पर ध्यान दें।",
+            "tags": "विधिक डिक्टेशन,कोर्ट,हाईकोर्ट,न्यायालय,Legal,Court"
+        },
+        # 20. Curated - UPSSSC Steno
+        {
+            "title": "UPSSSC आशुलिपिक विशेष — ग्रामीण प्रशासन, पंचायती राज एवं जनकल्याण",
+            "category_slug": "upsssc-steno",
+            "language": "hindi",
+            "difficulty": "medium",
+            "target_wpm": 80,
+            "duration_seconds": 300,
+            "official_text": "उत्तर प्रदेश में पंचायती राज व्यवस्था को सशक्त बनाकर ग्रामीण स्वशासन को वास्तविक धरातल पर क्रियान्वित किया जा रहा है। ग्राम पंचायतों में जन-सुविधा केंद्रों की स्थापना और डिजिटल सेवाओं की उपलब्धता से ग्रामीणों को अपने राजस्व अभिलेखों और प्रमाण पत्रों के लिए शहरों की ओर नहीं दौड़ना पड़ता। कृषि कल्याण योजनाओं, ग्रामीण स्वच्छता अभियानों और प्रधानमंत्री आवास योजना का लाभ पारदर्शी तरीके से पात्र लाभार्थियों तक पहुंचाया जा रहा है। कनिष्ठ सहायकों और प्रशासनिक अधिकारियों का यह दायित्व है कि वे जनहित के कार्यों में पूर्ण तत्परता और ईमानदारी बरतें। जन-शिकायतों का त्वरित निस्तारण ही सुशासन की सच्ची पहचान है।",
+            "instructions": "UPSSSC आशुलिपिक परीक्षा के लिए विशेष गद्यांश। 80 WPM मानक गति।",
+            "tags": "UPSSSC,UPSSSC आशुलिपिक,पंचायती राज,प्रशासन,80 WPM"
+        },
+        # 21. Curated - Reporter 140 WPM
+        {
+            "title": "संसदीय रिपोर्टर विशेष (140 WPM) — लोकसभा वाद-विवाद एवं राष्ट्रीय सुरक्षा सत्र",
+            "category_slug": "ssc-steno",
+            "language": "hindi",
+            "difficulty": "hard",
+            "target_wpm": 140,
+            "duration_seconds": 300,
+            "official_text": "अध्यक्ष महोदय, मैं इस सदन का ध्यान सीमावर्ती क्षेत्रों में आधारभूत ढांचे के तीव्र विकास की ओर आकर्षित करना चाहता हूं। हमारी सीमाओं की सुरक्षा सर्वोपरि है और इस विषय पर संपूर्ण राष्ट्र एक स्वर में सेना के साथ खड़ा है। आधुनिक हथियारों, संचार प्रणालियों और हर मौसम में चालू रहने वाली सुरंगों के निर्माण से हमारी सैन्य तैयारियां अभूतपूर्व रूप से सुदृढ़ हुई हैं। रक्षा क्षेत्र में स्वदेशी अनुसंधान और रक्षा उपकरणों के निर्यात में भारत ने आत्मनिर्भरता की नई गाथा लिखी है। हमारे बहादुर सैनिकों का अदम्य साहस और त्याग देश के प्रत्येक नागरिक के लिए गौरव का विषय है। मैं रक्षा बजट में की गई वृद्धि का हृदय से स्वागत करते हुए सदन से इस प्रस्ताव को पारित करने का अनुरोध करता हूं।",
+            "instructions": "विधानसभा एवं संसदीय रिपोर्टर परीक्षा हेतु 140 WPM उच्च गति विशेष डिक्टेशन सत्र।",
+            "tags": "रिपोर्टर,140 WPM,160 WPM,संसद,उच्च गति,Reporter"
         }
     ]
 
     # Only seed sample passages on very first fresh setup when table is completely empty
-    c.execute("SELECT COUNT(*) FROM passages")
-    if c.fetchone()[0] == 0:
-        for p in passages_data:
-            cat_id = cat_map.get(p["category_slug"], 1)
-            c.execute("SELECT id FROM passages WHERE title = ?", (p["title"],))
-            existing = c.fetchone()
-            if not existing:
-                c.execute("""
-                    INSERT INTO passages (
-                        title, category_id, language, difficulty, official_text, instructions,
-                        target_wpm, duration_seconds, tags, status, created_at, updated_at
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'published', ?, ?)
-                """, (
-                    p["title"], cat_id, p["language"], p["difficulty"], p["official_text"],
-                    p["instructions"], p["target_wpm"], p["duration_seconds"], p["tags"],
-                    now_iso, now_iso
-                ))
+    for p in passages_data:
+        cat_id = cat_map.get(p["category_slug"], 1)
+        c.execute("SELECT id FROM passages WHERE title = ?", (p["title"],))
+        existing = c.fetchone()
+        if not existing:
+            c.execute("""
+                INSERT INTO passages (
+                    title, category_id, language, difficulty, official_text, instructions,
+                    target_wpm, duration_seconds, tags, status, created_at, updated_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'published', ?, ?)
+            """, (
+                p["title"], cat_id, p["language"], p["difficulty"], p["official_text"],
+                p["instructions"], p["target_wpm"], p["duration_seconds"], p["tags"],
+                now_iso, now_iso
+            ))
 
     conn.commit()
     conn.close()

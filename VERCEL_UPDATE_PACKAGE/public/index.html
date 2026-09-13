@@ -708,7 +708,37 @@
           </div>
         </div>
 
+        <!-- Curated Practice Library: Target Exams & Sources Filter Bar -->
+        <div class="classes-curated-filter-section">
+          <!-- Row 1: Target Exam Filters -->
+          <div class="curated-filter-row">
+            <span class="curated-filter-label">🏛️ लक्ष्य परीक्षा:</span>
+            <div class="curated-pills-scroll" id="classesExamPills">
+              <button type="button" class="curated-pill active" onclick="stenoApp.filterByExam('all', this)">🌟 सभी परीक्षाएं (All)</button>
+              <button type="button" class="curated-pill" onclick="stenoApp.filterByExam('ssc', this)">🎯 SSC स्टेनोग्राफर (ग्रेड C & D)</button>
+              <button type="button" class="curated-pill" onclick="stenoApp.filterByExam('upsssc', this)">🏛️ UPSSSC आशुलिपिक</button>
+              <button type="button" class="curated-pill pill-court" onclick="stenoApp.filterByExam('court', this)">⚖️ हाईकोर्ट (AHC / RHC / District)</button>
+              <button type="button" class="curated-pill pill-reporter" onclick="stenoApp.filterByExam('reporter', this)">⚡ 140–160 WPM रिपोर्टर स्पेशल</button>
+            </div>
+          </div>
+
+          <!-- Row 2: Books & Sources Filters -->
+          <div class="curated-filter-row">
+            <span class="curated-filter-label">📚 पुस्तकें व स्रोत:</span>
+            <div class="curated-pills-scroll" id="classesSourcePills">
+              <button type="button" class="curated-pill active" onclick="stenoApp.filterBySource('all', this)">📖 सभी स्रोत (All)</button>
+              <button type="button" class="curated-pill pill-khand" onclick="stenoApp.filterBySource('khand1', this)">📘 रामधारी गुप्ता (खंड 1)</button>
+              <button type="button" class="curated-pill pill-khand" onclick="stenoApp.filterBySource('khand2', this)">📙 रामधारी गुप्ता (खंड 2)</button>
+              <button type="button" class="curated-pill pill-editorial" onclick="stenoApp.filterBySource('editorial', this)">📰 दैनिक संपादकीय (Editorial)</button>
+              <button type="button" class="curated-pill pill-court" onclick="stenoApp.filterBySource('legal', this)">⚖️ विधिक / कोर्ट आलेख</button>
+              <button type="button" class="curated-pill" onclick="stenoApp.filterBySource('free', this)">🎁 100% फ्री कक्षाएं</button>
+              <button type="button" class="curated-pill" onclick="stenoApp.filterBySource('bookmarks', this)">⭐ बुकमार्क</button>
+            </div>
+          </div>
+        </div>
+
         <!-- Filter Bar -->
+        
         <div class="stat-card" style="margin-bottom: 24px; display: flex; flex-wrap: wrap; gap: 16px; align-items: center;">
           <!-- Search -->
           <div style="flex: 1; min-width: 220px;">

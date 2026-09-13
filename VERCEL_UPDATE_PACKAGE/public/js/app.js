@@ -1694,19 +1694,84 @@ class StenoApp {
     }
   }
 
+  filterByExam(examKey, btnEl) {
+    this.selectedExamFilter = examKey || 'all';
+    if (btnEl) {
+      document.querySelectorAll('#classesExamPills .curated-pill').forEach(b => b.classList.remove('active'));
+      btnEl.classList.add('active');
+    }
+    this.applyPassageFilters();
+  }
+
+  filterBySource(sourceKey, btnEl) {
+    this.selectedSourceFilter = sourceKey || 'all';
+    if (btnEl) {
+      document.querySelectorAll('#classesSourcePills .curated-pill').forEach(b => b.classList.remove('active'));
+      btnEl.classList.add('active');
+    }
+    this.applyPassageFilters();
+  }
+
   applyPassageFilters() {
     if (!this.allPassages) this.allPassages = [];
     let list = [...this.allPassages];
 
+    // 1. Language Filter
     if (this.selectedLanguage && this.selectedLanguage !== 'all') {
       list = list.filter(p => (p.language || '').toLowerCase() === this.selectedLanguage.toLowerCase());
     }
+
+    // 2. Difficulty Filter
     if (this.selectedDifficulty && this.selectedDifficulty !== 'all') {
       list = list.filter(p => (p.difficulty || '').toLowerCase() === this.selectedDifficulty.toLowerCase());
     }
+
+    // 3. Category Filter
     if (this.selectedCategory && this.selectedCategory !== 'all') {
       list = list.filter(p => String(p.category_id) === String(this.selectedCategory));
     }
+
+    // 4. Curated Target Exam Filter
+    if (this.selectedExamFilter && this.selectedExamFilter !== 'all') {
+      const ef = this.selectedExamFilter.toLowerCase();
+      list = list.filter(p => {
+        const text = `${p.title || ''} ${p.category_name || ''} ${p.tags || ''} ${p.instructions || ''}`.toLowerCase();
+        if (ef === 'ssc') {
+          return text.includes('ssc') || text.includes('ग्रेड') || text.includes('grade') || (p.target_wpm >= 80 && p.target_wpm <= 100);
+        } else if (ef === 'upsssc') {
+          return text.includes('upsssc') || text.includes('कनिष्ठ') || text.includes('अधीनस्थ') || text.includes('पंचायती');
+        } else if (ef === 'court') {
+          return text.includes('court') || text.includes('कोर्ट') || text.includes('हाईकोर्ट') || text.includes('विधिक') || text.includes('न्यायालय') || text.includes('legal');
+        } else if (ef === 'reporter') {
+          return text.includes('रिपोर्टर') || text.includes('विधानसभा') || text.includes('संसद') || (p.target_wpm && p.target_wpm >= 120);
+        }
+        return true;
+      });
+    }
+
+    // 5. Curated Source & Books Filter
+    if (this.selectedSourceFilter && this.selectedSourceFilter !== 'all') {
+      const sf = this.selectedSourceFilter.toLowerCase();
+      list = list.filter(p => {
+        const text = `${p.title || ''} ${p.category_name || ''} ${p.tags || ''}`.toLowerCase();
+        if (sf === 'khand1') {
+          return text.includes('खंड 1') || text.includes('खंड-1') || text.includes('rg1') || text.includes('रश्मिरथी') || text.includes('दिनकर');
+        } else if (sf === 'khand2') {
+          return text.includes('खंड 2') || text.includes('खंड-2') || text.includes('rg2');
+        } else if (sf === 'editorial') {
+          return text.includes('संपादकीय') || text.includes('दैनिक') || text.includes('जागरण') || text.includes('जनसत्ता') || text.includes('editorial');
+        } else if (sf === 'legal') {
+          return text.includes('विधिक') || text.includes('कोर्ट') || text.includes('कानून') || text.includes('न्यायालय') || text.includes('legal');
+        } else if (sf === 'free') {
+          return !!p.is_free_tier || p.id <= 2;
+        } else if (sf === 'bookmarks') {
+          return this.bookmarks && this.bookmarks.has(p.id);
+        }
+        return true;
+      });
+    }
+
+    // 6. Search Query
     if (this.searchQuery && this.searchQuery.trim()) {
       const q = this.searchQuery.trim().toLowerCase();
       list = list.filter(p =>
@@ -2106,6 +2171,10 @@ class StenoApp {
             <div class="class-badge-group">
               <span class="badge badge-${p.language}">${p.language === 'hindi' ? 'हिंदी' : 'English'}</span>
               <span class="badge badge-${p.difficulty}">${p.difficulty ? p.difficulty.toUpperCase() : 'MEDIUM'}</span>
+              ${(p.title && (p.title.includes('रामधारी गुप्ता') || (p.tags && p.tags.includes('रामधारी')))) ? '<span class="badge" style="background:#e0e7ff; color:#3730a3; font-weight:700;">📘 रामधारी गुप्ता</span>' : ''}
+              ${(p.title && (p.title.includes('संपादकीय') || (p.tags && p.tags.includes('संपादकीय')))) ? '<span class="badge" style="background:#ecfdf5; color:#065f46; font-weight:700;">📰 दैनिक संपादकीय</span>' : ''}
+              ${(p.title && (p.title.includes('विधिक') || p.title.includes('न्यायालय') || (p.tags && p.tags.includes('विधिक')))) ? '<span class="badge" style="background:#fef3c7; color:#92400e; font-weight:700;">⚖️ विधिक / कोर्ट</span>' : ''}
+              ${(p.target_wpm && p.target_wpm >= 120) ? '<span class="badge" style="background:#fce7f3; color:#9d174d; font-weight:700;">⚡ रिपोर्टर (140-160 WPM)</span>' : ''}
               <span class="badge" style="background:var(--bg-subtle); color:var(--text-secondary)">⏱ ${durStr}</span>
               <span class="badge" style="background:var(--bg-subtle); color:var(--text-secondary)" title="शब्द संख्या">📝 ${wordCount} शब्द</span>
               ${isFree ? '<span class="badge badge-free-tier">🎁 फ्री क्लास (Free)</span>' : ''}
