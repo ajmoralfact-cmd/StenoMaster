@@ -272,6 +272,18 @@ class StenoApp {
     this.initSessionHeartbeat();
     this.captureReferralParam();
 
+    // Check for Cashfree payment return redirect
+    try {
+      const urlParams = new URLSearchParams(window.location.search);
+      const returnOrderId = urlParams.get('order_id');
+      if (returnOrderId) {
+        window.history.replaceState({}, document.title, window.location.pathname);
+        setTimeout(() => {
+          this.verifyCashfreeOrder(returnOrderId);
+        }, 400);
+      }
+    } catch(e) {}
+
     // Cross-tab real-time sync when Admin edits or deletes passages
     window.addEventListener('storage', (e) => {
       if (e.key === 'stenomaster_passages_version' || e.key === 'stenomaster_cached_passages') {
@@ -2821,18 +2833,15 @@ class StenoApp {
       return;
     }
 
-    const currentSelectedId = this.selectedPlan ? this.selectedPlan.id : (this.subscriptionPlans.find(p => p.id === '3m')?.id || this.subscriptionPlans[0].id);
-
     container.innerHTML = this.subscriptionPlans.map(plan => {
-      const isSelected = plan.id === currentSelectedId;
       const isPopular = plan.id === '3m' || (plan.badge && plan.badge.includes('POPULAR'));
       const isBest = plan.id === '1y' || (plan.badge && plan.badge.includes('BEST'));
 
       let tagHtml = '';
       if (isPopular) {
-        tagHtml = '<div class="sub-plan-card-tag tag-popular">⭐ सर्वाधिक लोकप्रिय (POPULAR)</div>';
+        tagHtml = '<div class="sub-plan-card-tag tag-popular">⭐ लोकप्रिय (POPULAR)</div>';
       } else if (isBest) {
-        tagHtml = '<div class="sub-plan-card-tag tag-best">👑 सर्वश्रेष्ठ मूल्य (BEST VALUE)</div>';
+        tagHtml = '<div class="sub-plan-card-tag tag-best">👑 बेस्ट वैल्यू (BEST VALUE)</div>';
       } else if (plan.savings) {
         tagHtml = `<div class="sub-plan-card-tag">💰 ${this.escapeHtml(plan.savings)}</div>`;
       }
@@ -2842,7 +2851,7 @@ class StenoApp {
       const savingsPill = plan.savings ? `<div class="sub-plan-savings-pill">🎉 ${this.escapeHtml(plan.savings)}</div>` : '<div class="sub-plan-savings-pill" style="visibility:hidden;">—</div>';
 
       return `
-        <div class="sub-plan-card ${isSelected ? 'selected' : ''}" data-plan-id="${plan.id}" onclick="stenoApp.selectSubscriptionPlan('${plan.id}')">
+        <div class="sub-plan-card" data-plan-id="${plan.id}" onclick="stenoApp.initiateCashfreePayment('${plan.id}')">
           ${tagHtml}
           <div>
             <div class="sub-plan-title">${this.escapeHtml(durationTitle)}</div>
@@ -2853,12 +2862,32 @@ class StenoApp {
             </div>
             ${savingsPill}
           </div>
-          <button type="button" class="sub-select-btn">
-            ${isSelected ? '✓ चयनित प्लान (Selected)' : 'यह प्लान चुनें →'}
+          <button type="button" class="sub-buy-now-btn" onclick="event.stopPropagation(); stenoApp.initiateCashfreePayment('${plan.id}')">
+            <span>⚡ ₹${plan.price} में खरीदें</span>
+            <span>→</span>
           </button>
         </div>
       `;
     }).join('');
+  }
+
+  setQrPlan(planId, price) {
+    const plan = (this.subscriptionPlans || []).find(p => p.id === planId) || { id: planId, price: price, days: planId === '1y' ? 365 : planId === '6m' ? 180 : planId === '3m' ? 90 : 30, name: `StenoMaster Pro — ${planId}` };
+    this.selectedPlan = plan;
+
+    document.querySelectorAll('.qr-plan-chip').forEach(chip => {
+      chip.classList.toggle('active', chip.getAttribute('data-plan-id') === planId);
+    });
+
+    const qrPayAmountLabel = document.getElementById('qrPayAmountLabel');
+    const payAmountInput = document.getElementById('payAmountInput');
+    const payPlanNameInput = document.getElementById('payPlanNameInput');
+    const payPlanDaysInput = document.getElementById('payPlanDaysInput');
+
+    if (qrPayAmountLabel) qrPayAmountLabel.textContent = `₹${plan.price}`;
+    if (payAmountInput) payAmountInput.value = plan.price;
+    if (payPlanNameInput) payPlanNameInput.value = plan.name || `StenoMaster Pro — ${plan.days} दिन`;
+    if (payPlanDaysInput) payPlanDaysInput.value = plan.days;
   }
 
   selectSubscriptionPlan(planId) {
@@ -3016,27 +3045,39 @@ class StenoApp {
   // -------------------------------------------------------------------------
   // Cashfree Payment Gateway Integration (Instant Unlock)
   // -------------------------------------------------------------------------
-  async initiateCashfreePayment() {
+  async initiateCashfreePayment(planId = null) {
     if (!this.user) {
-      this.showAuthGateway('student', 'भुगतान करने के लिए कृपया पहले लॉगिन करें।');
+      this.showAuthGateway('student', 'सदस्यता खरीदने के लिए कृपया पहले लॉगिन करें।');
       return;
     }
 
-    const currentPlan = this.selectedPlan || { id: '1m', name: 'StenoMaster Pro — 1 Month', price: 100, days: 30 };
-    const btn = document.getElementById('btnCashfreeCheckout');
-    const originalContent = btn ? btn.innerHTML : '';
-    if (btn) {
-      btn.disabled = true;
-      btn.innerHTML = `<span>⏳ ₹${currentPlan.price} हेतु Cashfree पेमेंट सत्र बनाया जा रहा है...</span>`;
+    let currentPlan = null;
+    if (typeof planId === 'string') {
+      currentPlan = (this.subscriptionPlans || []).find(p => p.id === planId);
+    }
+    if (!currentPlan) {
+      currentPlan = this.selectedPlan || (this.subscriptionPlans && this.subscriptionPlans[0]) || { id: '1m', name: 'StenoMaster Pro — 1 Month', price: 100, days: 30 };
+    }
+    this.selectedPlan = currentPlan;
+
+    // Visual feedback on the specific plan card button
+    const cardEl = document.querySelector(`.sub-plan-card[data-plan-id="${currentPlan.id}"]`);
+    const btnEl = cardEl ? cardEl.querySelector('.sub-buy-now-btn') : null;
+    const originalContent = btnEl ? btnEl.innerHTML : '';
+    if (btnEl) {
+      btnEl.disabled = true;
+      btnEl.innerHTML = `<span>⏳ लोड हो रहा है...</span>`;
     }
 
     try {
-      this.showToast(`Cashfree सुरक्षित भुगतान सत्र (₹${currentPlan.price}) तैयार किया जा रहा है... 🔐`, 'info');
+      this.showToast(`Cashfree सुरक्षित भुगतान पेज (₹${currentPlan.price}) खोला जा रहा है... 🔐`, 'info');
+      const returnUrl = `${window.location.origin}/?order_id={order_id}&payment=cashfree`;
       const orderData = await this.apiCall('/api/payment/cashfree/create-order', 'POST', {
         plan_id: currentPlan.id,
         amount: currentPlan.price,
         plan_days: currentPlan.days,
-        plan_name: currentPlan.name
+        plan_name: currentPlan.name,
+        return_url: returnUrl
       });
 
       if (!orderData.success && !orderData.order_id) {
@@ -3056,15 +3097,14 @@ class StenoApp {
 
           cashfree.checkout({
             paymentSessionId: paymentSessionId,
-            redirectTarget: '_modal'
+            redirectTarget: '_self'
           }).then(async (result) => {
-            if (result.error) {
+            if (result && result.error) {
               this.showToast(`भुगतान: ${result.error.message || 'भुगतान रद्द किया गया'}`, 'warning');
             }
-            await this.verifyCashfreeOrder(orderId, currentPlan);
           });
         } catch (sdkErr) {
-          console.warn('Cashfree SDK modal launch failed, falling back to direct verification:', sdkErr);
+          console.warn('Cashfree SDK redirect failed, falling back to direct verify:', sdkErr);
           await this.verifyCashfreeOrder(orderId, currentPlan);
         }
       } else {
@@ -3075,9 +3115,9 @@ class StenoApp {
     } catch (err) {
       this.showToast('भुगतान आरंभ करने में त्रुटि: ' + (err.message || 'अज्ञात त्रुटि'), 'error');
     } finally {
-      if (btn) {
-        btn.disabled = false;
-        btn.innerHTML = originalContent;
+      if (btnEl) {
+        btnEl.disabled = false;
+        btnEl.innerHTML = originalContent;
       }
     }
   }

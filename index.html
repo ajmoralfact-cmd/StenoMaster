@@ -1280,59 +1280,41 @@
             </button>
           </div>
 
-          <!-- 4-Tier Subscription Plans Selector Grid -->
-          <div style="margin-bottom:14px;">
+          <!-- Key Features Grid (Crisp & Clean Benefits) -->
+          <div class="clean-checkout-features" style="margin-bottom:20px;">
+            <div class="clean-feature-item">
+              <span>⚡</span> <span><strong>सभी लॉक डिक्टेशन अनलॉक</strong> (100+ विधिक व परीक्षा आलेख)</span>
+            </div>
+            <div class="clean-feature-item">
+              <span>🎯</span> <span><strong>SSC व UPSSSC परीक्षा नियम</strong> अनुसार सटीक मूल्यांकन</span>
+            </div>
+            <div class="clean-feature-item">
+              <span>🎧</span> <span><strong>मंगल व कृति देव 010</strong> दोनों में ऑडियो (0.5x – 2.0x) गति</span>
+            </div>
+            <div class="clean-feature-item">
+              <span>🔒</span> <span><strong>सुरक्षित ऑनलाइन पेमेंट</strong> (Cashfree द्वारा स्वतः तत्काल सक्रियण)</span>
+            </div>
+          </div>
+
+          <!-- 4-Tier Subscription Plans (All 4 in 1 Line) -->
+          <div style="margin-bottom:12px;">
             <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px;">
-              <h3 style="font-size:1.12rem; font-weight:800; margin:0;">✨ 1. प्लान चुनें (Select Plan)</h3>
-              <span style="font-size:0.8rem; color:var(--primary); font-weight:600;">🎁 पहली 2 कक्षाएं प्रत्येक छात्र के लिए 100% फ्री हैं</span>
+              <h3 style="font-size:1.15rem; font-weight:800; margin:0; display:flex; align-items:center; gap:8px;">
+                <span>✨</span> <span>अपनी पसंद का प्लान चुनें और सीधे भुगतान करें:</span>
+              </h3>
+              <span style="font-size:0.82rem; color:var(--primary); font-weight:700;">🎁 पहली 2 कक्षाएं प्रत्येक छात्र के लिए 100% फ्री हैं</span>
             </div>
           </div>
           <div id="subPlansGrid" class="subscription-plans-grid">
             <!-- Populated dynamically via stenoApp.renderSubscriptionPlans() -->
           </div>
 
-          <!-- Unified Clean Checkout Card -->
-          <div class="clean-checkout-card">
-            <div class="clean-checkout-header">
-              <div>
-                <span class="badge badge-primary" id="subSelectedPlanBadge" style="font-size:0.75rem; text-transform:uppercase; letter-spacing:0.04em;">चयनित प्लान (Selected Plan)</span>
-                <h3 style="font-size:1.4rem; font-weight:800; margin-top:6px; margin-bottom:0;" id="subPlanTitleDisplay">StenoMaster Pro — 1 Month</h3>
-              </div>
-              <div style="text-align:right;">
-                <div style="font-size:2.2rem; font-weight:900; color:var(--primary); line-height:1;" id="subPlanPriceDisplay">₹100</div>
-                <span style="font-size:0.8rem; color:var(--text-muted); font-weight:600;" id="subPlanDaysDisplay">/ 30 दिन (30 Days)</span>
-              </div>
-            </div>
+          <div style="text-align:center; font-size:0.84rem; color:var(--text-muted); margin-top:-8px; margin-bottom:24px;">
+            🔒 <strong>100% सुरक्षित भुगतान:</strong> बॉक्स पर क्लिक करते ही Cashfree पेमेंट पेज खुलेगा (Google Pay, PhonePe, Paytm, Cards, Net Banking)
+          </div>
 
-            <!-- Key Features Grid (Crisp & Clean) -->
-            <div class="clean-checkout-features">
-              <div class="clean-feature-item">
-                <span>⚡</span> <span><strong>सभी लॉक डिक्टेशन अनलॉक</strong> (100+ विधिक व परीक्षा आलेख)</span>
-              </div>
-              <div class="clean-feature-item">
-                <span>🎯</span> <span><strong>SSC व UPSSSC परीक्षा नियम</strong> अनुसार सटीक मूल्यांकन</span>
-              </div>
-              <div class="clean-feature-item">
-                <span>🎧</span> <span><strong>मंगल व कृति देव 010</strong> दोनों में ऑडियो (0.5x – 2.0x) गति</span>
-              </div>
-              <div class="clean-feature-item">
-                <span>🔒</span> <span><strong>सुरक्षित ऑनलाइन पेमेंट</strong> (Cashfree द्वारा स्वतः तत्काल सक्रियण)</span>
-              </div>
-            </div>
-
-            <!-- Primary Payment Button (Option 1: Cashfree Online Checkout) -->
-            <div class="clean-checkout-cta">
-              <button type="button" class="clean-pay-btn" id="btnCashfreeCheckout" onclick="stenoApp.initiateCashfreePayment()">
-                <span id="btnCashfreeText">⚡ ₹100 का सुरक्षित भुगतान करें (Pay ₹100 via Cashfree)</span>
-                <span>→</span>
-              </button>
-              <div class="clean-pay-subtitle">
-                🔒 <strong>100% सुरक्षित भुगतान:</strong> Google Pay, PhonePe, Paytm, BHIM UPI, डेबिट/क्रेडिट कार्ड एवं नेट बैंकिंग
-              </div>
-            </div>
-
-            <!-- ===================================================================
-                 2. वैकल्पिक भुगतान: सीधे QR कोड स्कैन करें (Alternative QR & WhatsApp)
+          <!-- ===================================================================
+               2. वैकल्पिक भुगतान: सीधे QR कोड स्कैन करें (Alternative QR & WhatsApp)
                  =================================================================== -->
             <div style="margin-top:24px; padding-top:20px; border-top:2px dashed var(--border-subtle);" id="qrAccordionSection">
               <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px; margin-bottom:14px;">
@@ -1354,6 +1336,13 @@
                   <div style="flex:1; min-width:240px; font-size:0.9rem; color:var(--text-secondary); line-height:1.5;">
                     <div style="font-size:1.05rem; font-weight:700; color:var(--text-main);">
                       QR कोड स्कैन कर <strong style="color:var(--primary); font-size:1.3rem; font-weight:900;" id="qrPayAmountLabel">₹100</strong> भेजें
+                    </div>
+                    <!-- Plan selector chips for QR -->
+                    <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; margin-bottom:10px;">
+                      <button type="button" class="qr-plan-chip active" data-plan-id="1m" onclick="stenoApp.setQrPlan('1m', 100)">1 माह (₹100)</button>
+                      <button type="button" class="qr-plan-chip" data-plan-id="3m" onclick="stenoApp.setQrPlan('3m', 250)">3 माह (₹250)</button>
+                      <button type="button" class="qr-plan-chip" data-plan-id="6m" onclick="stenoApp.setQrPlan('6m', 450)">6 माह (₹450)</button>
+                      <button type="button" class="qr-plan-chip" data-plan-id="1y" onclick="stenoApp.setQrPlan('1y', 800)">1 वर्ष (₹800)</button>
                     </div>
                     <div style="margin-top:10px; display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
                       <span style="font-weight:700;">UPI ID:</span>
