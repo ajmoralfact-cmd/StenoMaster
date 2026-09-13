@@ -77,7 +77,7 @@ class StenoMasterHandler(http.server.SimpleHTTPRequestHandler):
     # -------------------------------------------------------------------------
     # Response Helpers
     # -------------------------------------------------------------------------
-    def _send_json(self, status_code: int, data: dict):
+    def _send_json(self, status_code: int, data: dict, cache_control: str = None):
         body = json.dumps(data, ensure_ascii=False, default=str).encode('utf-8')
         self.send_response(status_code)
         self.send_header('Content-Type', 'application/json; charset=utf-8')
@@ -85,7 +85,10 @@ class StenoMasterHandler(http.server.SimpleHTTPRequestHandler):
         self.send_header('Access-Control-Allow-Origin', '*')
         self.send_header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
         self.send_header('Access-Control-Allow-Headers', 'Content-Type, Authorization')
-        self.send_header('Cache-Control', 'no-store, no-cache, must-revalidate')
+        if cache_control:
+            self.send_header('Cache-Control', cache_control)
+        else:
+            self.send_header('Cache-Control', 'no-store, no-cache, must-revalidate')
         self.send_header('Connection', 'close')
         self.end_headers()
         self.wfile.write(body)
@@ -313,7 +316,7 @@ class StenoMasterHandler(http.server.SimpleHTTPRequestHandler):
 
         if path == '/api/categories':
             cats = db.get_categories()
-            self._send_json(200, {"categories": cats})
+            self._send_json(200, {"categories": cats}, cache_control='public, s-maxage=60, stale-while-revalidate=300')
             return
 
         if path == '/api/passages':
@@ -335,7 +338,8 @@ class StenoMasterHandler(http.server.SimpleHTTPRequestHandler):
                 user_id=user_id,
                 include_official_text=False  # Security: never expose to student
             )
-            self._send_json(200, {"passages": passages})
+            # Vercel Edge CDN Caching: 60s shared cache, 300s background stale-while-revalidate
+            self._send_json(200, {"passages": passages}, cache_control='public, s-maxage=60, stale-while-revalidate=300')
             return
 
         if path.startswith('/api/passages/'):
@@ -474,7 +478,7 @@ class StenoMasterHandler(http.server.SimpleHTTPRequestHandler):
 
         # Phase 3: Subscription Details & Plans
         if path == '/api/subscription/plans':
-            self._send_json(200, {"plans": db.get_subscription_plans()})
+            self._send_json(200, {"plans": db.get_subscription_plans()}, cache_control='public, s-maxage=120, stale-while-revalidate=600')
             return
 
         if path == '/api/subscription/details':
