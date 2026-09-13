@@ -2016,6 +2016,49 @@ class StenoApp {
     grid.innerHTML = this.passages.map(p => this.createPassageCardHTML(p)).join('');
   }
 
+  // -------------------------------------------------------------------------
+  // Hover / Touch Audio & Passage Pre-Buffering (Instant 0ms Dictation Launch)
+  // -------------------------------------------------------------------------
+  prefetchPassage(passageId) {
+    if (!passageId) return;
+    const pId = parseInt(passageId, 10);
+    if (!this._prefetchedIds) this._prefetchedIds = new Set();
+    if (this._prefetchedIds.has(pId)) return;
+    this._prefetchedIds.add(pId);
+
+    // 1. Prefetch Passage Metadata into memory cache
+    if (!this._passageDetailsCache) this._passageDetailsCache = new Map();
+    if (!this._passageDetailsCache.has(pId)) {
+      this.apiCall(`/api/passages/${pId}`).then(res => {
+        if (res && res.passage) {
+          this._passageDetailsCache.set(pId, res.passage);
+        }
+      }).catch(() => {});
+    }
+
+    // 2. Prefetch Audio Stream into browser memory buffer
+    const p = (this.allPassages || []).find(item => Number(item.id) === pId);
+    if (p && p.audio_url && !p.is_locked) {
+      try {
+        if (!this._audioPrefetchCache) this._audioPrefetchCache = new Map();
+        if (!this._audioPrefetchCache.has(pId)) {
+          const audioPre = new Audio();
+          audioPre.preload = 'auto';
+          audioPre.src = p.audio_url;
+          this._audioPrefetchCache.set(pId, audioPre);
+          
+          // Limit memory buffer to 6 recent items to avoid memory bloat
+          if (this._audioPrefetchCache.size > 6) {
+            const firstKey = this._audioPrefetchCache.keys().next().value;
+            const oldA = this._audioPrefetchCache.get(firstKey);
+            if (oldA) oldA.src = '';
+            this._audioPrefetchCache.delete(firstKey);
+          }
+        }
+      } catch (e) {}
+    }
+  }
+
   createPassageCardHTML(p) {
     const isBookmarked = this.bookmarks.has(p.id);
     const mins = Math.floor((p.duration_seconds || 180) / 60);
@@ -2027,7 +2070,7 @@ class StenoApp {
     const isFree = !!p.is_free_tier || hasFullAccess;
 
     return `
-      <div class="class-card ${isLocked ? 'locked-card' : ''}" onclick="${isLocked ? `stenoApp.handleLockedPassageClick(${p.id})` : `stenoApp.openPractice(${p.id})`}" style="cursor:pointer;">
+      <div class="class-card ${isLocked ? 'locked-card' : ''}" onmouseenter="stenoApp.prefetchPassage(${p.id})" ontouchstart="stenoApp.prefetchPassage(${p.id})" onclick="${isLocked ? `stenoApp.handleLockedPassageClick(${p.id})` : `stenoApp.openPractice(${p.id})`}" style="cursor:pointer;">
         <div>
           <div class="class-card-header">
             <div class="class-badge-group">
@@ -2080,7 +2123,7 @@ class StenoApp {
               <span>🔒 अनलॉक करें (₹100/माह) →</span>
             </button>
           ` : `
-            <button class="start-practice-btn" onclick="event.stopPropagation(); stenoApp.openPractice(${p.id})">
+            <button class="start-practice-btn" onmouseenter="stenoApp.prefetchPassage(${p.id})" onclick="event.stopPropagation(); stenoApp.openPractice(${p.id})">
               <span>${isFree ? '🎁 फ्री अभ्यास शुरू करें →' : (p.is_premium ? '👑 Pro Practice →' : 'Start Practice →')}</span>
             </button>
           `}
@@ -2139,23 +2182,29 @@ class StenoApp {
         cardEl.style.transform = 'scale(0.99)';
       }
 
-      const res = await this.apiCall(`/api/passages/${pId}`);
+      // Check prefetch cache for instant 0ms launch
+      let passage = this._passageDetailsCache ? this._passageDetailsCache.get(pId) : null;
+      if (!passage) {
+        const res = await this.apiCall(`/api/passages/${pId}`);
+        passage = res ? res.passage : null;
+      }
+
       if (cardEl) {
         cardEl.style.opacity = '1';
         cardEl.style.transform = 'none';
       }
 
-      if (!res || !res.passage) {
+      if (!passage) {
         this.showToast('यह आलेख अब उपलब्ध नहीं है। सूची अपडेट की जा रही है...', 'warning');
         await this.loadPassages(true);
         return;
       }
 
-      if (res.passage.is_locked) {
+      if (passage.is_locked) {
         this.handleLockedPassageClick(pId);
         return;
       }
-      this.currentPassage = res.passage;
+      this.currentPassage = passage;
 
       const hasFullAccess = !!(this.user && (this.user.role === 'admin' || this.user.subscription_status === 'active' || this.user.is_free_access));
       if (!this.currentPassage.is_free_tier && this.currentPassage.is_premium && !hasFullAccess) {

@@ -116,6 +116,7 @@ class StenoAudioPlayer {
     if (audioUrl && audioUrl.trim() !== '') {
       this.isSpeechSynthesis = false;
       this.audioElement.src = audioUrl;
+      this.audioElement.preload = 'auto';
       this.audioElement.playbackRate = this.playbackSpeed;
       this.audioElement.defaultPlaybackRate = this.playbackSpeed;
       try {
