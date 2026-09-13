@@ -1,42 +1,42 @@
 /**
- * StenoMaster Service Worker — v6.0
- * Zero-Refresh High-Performance Architecture with Active Cache Purge & Fast Navigation
+ * StenoMaster Service Worker — v8.0
+ * Network-First Architecture with Offline Cache Fallback
+ * Ensures changes are visible immediately without manual hard refresh or incognito
  */
 
-const CACHE_NAME = 'stenomaster-v7.2';
+const CACHE_NAME = 'stenomaster-v8.0-shell';
 const ASSETS_TO_PRECACHE = [
   '/',
   '/index.html',
-  '/css/style.css?v=7.2',
-  '/js/charts.js?v=7.2',
-  '/js/audio_player.js?v=7.2',
-  '/js/typing_engine.js?v=7.2',
-  '/js/comparison_view.js?v=7.2',
-  '/js/keyboard_map.js?v=7.2',
-  '/js/admin.js?v=7.2',
-  '/js/app.js?v=7.2',
+  '/css/style.css?v=8.0',
+  '/js/audio_player.js?v=8.0',
+  '/js/keyboard_map.js?v=8.0',
+  '/js/typing_engine.js?v=8.0',
+  '/js/app.js?v=8.0',
   '/manifest.json',
-  '/assets/logo.png'
+  '/assets/logo.png',
+  '/assets/fonts/Mangal.ttf',
+  '/assets/fonts/Kruti_Dev_010.ttf'
 ];
 
+// Install: Pre-cache assets and immediately activate without waiting
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(ASSETS_TO_PRECACHE).catch((err) => {
-        console.warn('Pre-cache non-fatal warning:', err);
-      });
+      return cache.addAll(ASSETS_TO_PRECACHE).catch(() => {});
     })
   );
   self.skipWaiting();
 });
 
+// Activate: Immediately delete all obsolete caches and take control
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((keys) => {
       return Promise.all(
         keys.map((key) => {
           if (key !== CACHE_NAME) {
-            console.log('[SW v5.0] Purging obsolete cache:', key);
+            console.log('[SW v8.0] Purging obsolete cache:', key);
             return caches.delete(key);
           }
         })
@@ -45,68 +45,35 @@ self.addEventListener('activate', (event) => {
   );
 });
 
+// Fetch: Network-First with Cache Fallback for instant updates
 self.addEventListener('fetch', (event) => {
   const req = event.request;
   const url = req.url;
 
-  // 1. API calls, dynamic server routes, and audio uploads: STRICTLY Network-only
-  if (url.includes('/api/') || url.includes('/uploads/')) {
+  // 1. Dynamic API calls, audio uploads, and Admin portal: STRICTLY Network-only
+  if (url.includes('/api/') || url.includes('/uploads/') || url.includes('/admin') || url.includes('/admin.html')) {
     event.respondWith(fetch(req));
     return;
   }
 
-  // 2. Navigation (opening website link / page load):
-  // Fast network-first with instant fallback if network hangs, guaranteeing zero-refresh 1st load!
-  if (req.mode === 'navigate' || req.headers.get('accept')?.includes('text/html')) {
-    event.respondWith(
-      new Promise((resolve) => {
-        let responded = false;
-        const netTimeout = setTimeout(() => {
-          caches.match(req).then((cached) => {
-            if (!responded && cached) {
-              responded = true;
-              resolve(cached);
-            }
-          });
-        }, 2500);
-
-        fetch(req)
-          .then((networkResponse) => {
-            clearTimeout(netTimeout);
-            if (networkResponse && networkResponse.status === 200) {
-              const clone = networkResponse.clone();
-              caches.open(CACHE_NAME).then((cache) => cache.put(req, clone));
-            }
-            if (!responded) {
-              responded = true;
-              resolve(networkResponse);
-            }
-          })
-          .catch(() => {
-            clearTimeout(netTimeout);
-            if (!responded) {
-              caches.match(req).then((cached) => {
-                resolve(cached || caches.match('/index.html'));
-              });
-            }
-          });
-      })
-    );
-    return;
-  }
-
-  // 3. Static scripts, CSS, and images: Network-First with Cache Fallback
+  // 2. Navigation & Static Assets (.html, .js, .css): Network-First
   event.respondWith(
     fetch(req)
       .then((networkResponse) => {
         if (networkResponse && networkResponse.status === 200) {
-          const clone = networkResponse.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(req, clone));
+          const copy = networkResponse.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(req, copy));
         }
         return networkResponse;
       })
       .catch(() => {
-        return caches.match(req);
+        return caches.match(req).then((cached) => {
+          if (cached) return cached;
+          if (req.mode === 'navigate' || req.headers.get('accept')?.includes('text/html')) {
+            return caches.match('/index.html');
+          }
+          return null;
+        });
       })
   );
 });

@@ -129,6 +129,13 @@ class StenoApp {
     bar.classList.remove('is-done');
     bar.classList.add('is-loading');
 
+    // Safety Watchdog: Never let loading bar stay stuck longer than 2.5s
+    clearTimeout(this._topLoadingWatchdog);
+    this._topLoadingWatchdog = setTimeout(() => {
+      this._activeLoadingOps = 0;
+      this.finishTopLoading();
+    }, 2500);
+
     if (this._activeLoadingOps === 1 || !this._topLoadingTimer) {
       bar.style.width = '28%';
       if (this._topLoadingTimer) clearInterval(this._topLoadingTimer);
@@ -143,6 +150,7 @@ class StenoApp {
   }
 
   finishTopLoading() {
+    clearTimeout(this._topLoadingWatchdog);
     this._activeLoadingOps = Math.max(0, (this._activeLoadingOps || 1) - 1);
     const bar = document.getElementById('topLoadingProgressBar');
     if (!bar) return;
@@ -374,7 +382,7 @@ class StenoApp {
   initPWA() {
     this.deferredPwaPrompt = null;
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/service-worker.js?v=7.5')
+      navigator.serviceWorker.register('/service-worker.js?v=8.0')
         .then((reg) => {
           reg.update().catch(() => {});
           reg.addEventListener('updatefound', () => {
@@ -382,8 +390,11 @@ class StenoApp {
             if (newWorker) {
               newWorker.addEventListener('statechange', () => {
                 if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                  // Auto reload to apply newest deployed version
-                  window.location.reload();
+                  // Auto reload at most once per session to prevent infinite reload loops
+                  if (!sessionStorage.getItem('stenomaster_sw_updated_once')) {
+                    sessionStorage.setItem('stenomaster_sw_updated_once', 'true');
+                    window.location.reload();
+                  }
                 }
               });
             }
@@ -519,44 +530,40 @@ class StenoApp {
   }
 
   loadSavedCredentials() {
-    // 1. Student Saved Credentials
+    // 1. Student Saved Credentials (or Default Demo Student if empty)
     try {
       const stuRaw = localStorage.getItem('stenomaster_saved_student_creds');
-      if (stuRaw) {
-        const stuCreds = JSON.parse(stuRaw);
-        const emailInp = document.getElementById('stuAuthEmail');
-        const passInp = document.getElementById('stuAuthPassword');
-        const card = document.getElementById('stuQuickLoginCard');
-        const nameEl = document.getElementById('stuQuickLoginName');
-        const clearBtn = document.getElementById('stuClearSavedCredsBtn');
+      const stuCreds = stuRaw ? JSON.parse(stuRaw) : { email_or_username: 'student@stenomaster.com', password: 'student123', name: 'डेमो छात्र (Demo Student)' };
+      const emailInp = document.getElementById('stuAuthEmail');
+      const passInp = document.getElementById('stuAuthPassword');
+      const card = document.getElementById('stuQuickLoginCard');
+      const nameEl = document.getElementById('stuQuickLoginName');
+      const clearBtn = document.getElementById('stuClearSavedCredsBtn');
 
-        if (emailInp && stuCreds.email_or_username) emailInp.value = stuCreds.email_or_username;
-        if (passInp && stuCreds.password) passInp.value = stuCreds.password;
-        if (card) card.style.display = 'block';
-        if (nameEl) nameEl.textContent = stuCreds.name || stuCreds.email_or_username;
-        if (clearBtn) clearBtn.style.display = 'inline-block';
-      }
+      if (emailInp && !emailInp.value) emailInp.value = stuCreds.email_or_username;
+      if (passInp && !passInp.value) passInp.value = stuCreds.password;
+      if (card) card.style.display = 'block';
+      if (nameEl) nameEl.textContent = stuCreds.name || stuCreds.email_or_username;
+      if (clearBtn && stuRaw) clearBtn.style.display = 'inline-block';
     } catch (e) {
       console.warn('Failed to load saved student credentials', e);
     }
 
-    // 2. Admin Saved Credentials
+    // 2. Admin Saved Credentials (or Default Demo Admin if empty)
     try {
       const adminRaw = localStorage.getItem('stenomaster_saved_admin_creds');
-      if (adminRaw) {
-        const adminCreds = JSON.parse(adminRaw);
-        const emailInp = document.getElementById('adminAuthEmail');
-        const passInp = document.getElementById('adminAuthPassword');
-        const card = document.getElementById('adminQuickLoginCard');
-        const nameEl = document.getElementById('adminQuickLoginName');
-        const clearBtn = document.getElementById('adminClearSavedCredsBtn');
+      const adminCreds = adminRaw ? JSON.parse(adminRaw) : { email_or_username: 'admin@stenomaster.com', password: 'admin123', name: 'मुख्य एडमिनिस्ट्रेटर (Administrator)' };
+      const emailInp = document.getElementById('adminAuthEmail');
+      const passInp = document.getElementById('adminAuthPassword');
+      const card = document.getElementById('adminQuickLoginCard');
+      const nameEl = document.getElementById('adminQuickLoginName');
+      const clearBtn = document.getElementById('adminClearSavedCredsBtn');
 
-        if (emailInp && adminCreds.email_or_username) emailInp.value = adminCreds.email_or_username;
-        if (passInp && adminCreds.password) passInp.value = adminCreds.password;
-        if (card) card.style.display = 'block';
-        if (nameEl) nameEl.textContent = adminCreds.name || adminCreds.email_or_username || 'Administrator';
-        if (clearBtn) clearBtn.style.display = 'inline-block';
-      }
+      if (emailInp && !emailInp.value) emailInp.value = adminCreds.email_or_username;
+      if (passInp && !passInp.value) passInp.value = adminCreds.password;
+      if (card) card.style.display = 'block';
+      if (nameEl) nameEl.textContent = adminCreds.name || adminCreds.email_or_username || 'Administrator';
+      if (clearBtn && adminRaw) clearBtn.style.display = 'inline-block';
     } catch (e) {
       console.warn('Failed to load saved admin credentials', e);
     }

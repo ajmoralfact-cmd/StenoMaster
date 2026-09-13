@@ -8,21 +8,18 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Devanagari:wght@400;500;600;700;800&family=Rozha+One&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/css/style.css?v=8.0">
 
-  <!-- Strict Admin Auth Guard (Synchronous - Prevents Flash of Admin Content) -->
+  <!-- Smooth Admin Auth Guard (Shows In-Page Modal without broken redirect) -->
   <script>
     (function() {
       try {
         const token = localStorage.getItem('stenomaster_token');
         const user = JSON.parse(localStorage.getItem('stenomaster_user') || 'null');
         if (!token || !user || user.role !== 'admin') {
-          sessionStorage.setItem('stenomaster_redirect_after_login', 'admin');
-          window.location.replace('/?auth=admin');
+          // Token missing, will show standalone modal smoothly on DOMContentLoaded
         }
-      } catch(e) {
-        window.location.replace('/?auth=admin');
-      }
+      } catch(e) {}
     })();
   </script>
 
@@ -1471,9 +1468,9 @@
   </script>
 
   <!-- Required Admin Scripts -->
-  <script src="/js/charts.js?v=7.5"></script>
-  <script src="/js/comparison_view.js?v=7.5"></script>
-  <script src="/js/admin.js?v=7.5"></script>
+  <script src="/js/charts.js?v=8.0"></script>
+  <script src="/js/comparison_view.js?v=8.0"></script>
+  <script src="/js/admin.js?v=8.0"></script>
 
   <!-- Auto Boot Admin Dashboard -->
   <script>
@@ -1485,5 +1482,120 @@
       }
     });
   </script>
+
+  <!-- Standalone In-Page Admin Login Modal (Prevents jarring redirect loop) -->
+  <div id="adminStandaloneAuthModal" class="modal-overlay" style="display:none; z-index:999999; background:rgba(15, 23, 42, 0.85); backdrop-filter:blur(8px);">
+    <div class="modal-card" style="max-width:440px; border:2px solid #ef4444; box-shadow:0 20px 50px rgba(0,0,0,0.5); border-radius:16px; padding:28px;">
+      <div style="text-align:center; margin-bottom:18px;">
+        <div style="font-size:2.8rem; margin-bottom:8px;">🛡️</div>
+        <h2 style="margin:0 0 6px 0; font-size:1.4rem; color:var(--text-main);">प्रशासनिक नियंत्रण (Admin Login)</h2>
+        <p style="margin:0; font-size:0.85rem; color:var(--text-muted);">एडमिन क्रेडेंशियल्स के साथ लॉगिन करें या 1-क्लिक बटन दबाएं</p>
+      </div>
+
+      <!-- Quick 1-Click Admin Login Banner -->
+      <div style="background:rgba(239,68,68,0.08); border:1.5px solid #ef4444; border-radius:12px; padding:12px 14px; margin-bottom:16px; display:flex; justify-content:space-between; align-items:center; gap:8px;">
+        <div>
+          <div style="font-size:0.75rem; color:var(--text-muted);">डिफ़ॉल्ट एडमिन खाता:</div>
+          <strong style="color:#ef4444; font-size:0.9rem;">admin@stenomaster.com</strong>
+        </div>
+        <button type="button" class="btn-primary" onclick="window.handleStandaloneAdmin1Click()" style="padding:8px 14px; font-size:0.82rem; font-weight:700; background:#ef4444; border-color:#ef4444; white-space:nowrap;">
+          ⚡ 1-क्लिक लॉगिन →
+        </button>
+      </div>
+
+      <form onsubmit="window.handleStandaloneAdminLogin(event)">
+        <div class="form-group" style="margin-bottom:12px;">
+          <label class="form-label" style="font-size:0.82rem;">एडमिन ईमेल (Admin Email)</label>
+          <input type="text" id="standaloneAdminEmail" class="form-input" value="admin@stenomaster.com" required autocomplete="username">
+        </div>
+        <div class="form-group" style="margin-bottom:16px;">
+          <label class="form-label" style="font-size:0.82rem;">पासवर्ड (Password)</label>
+          <input type="password" id="standaloneAdminPass" class="form-input" value="admin123" required autocomplete="current-password">
+        </div>
+        <div id="standaloneAdminErr" style="display:none; color:#ef4444; font-size:0.8rem; font-weight:600; margin-bottom:12px; padding:8px; border-radius:6px; background:#fef2f2;"></div>
+        <button type="submit" id="standaloneAdminSubmitBtn" class="btn-primary" style="width:100%; padding:10px; font-size:0.95rem; font-weight:700; background:#ef4444; border-color:#ef4444;">
+          🛡️ एडमिन लॉगिन करें →
+        </button>
+      </form>
+
+      <div style="text-align:center; margin-top:16px;">
+        <a href="/" style="font-size:0.82rem; color:var(--primary); text-decoration:none; font-weight:600;">👨‍🎓 मुख्य छात्र पोर्टल पर वापस जाएं</a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    window.checkAdminStandaloneAuth = function() {
+      try {
+        var token = localStorage.getItem('stenomaster_token');
+        var user = JSON.parse(localStorage.getItem('stenomaster_user') || 'null');
+        var modal = document.getElementById('adminStandaloneAuthModal');
+        if (!token || !user || user.role !== 'admin') {
+          if (modal) modal.style.display = 'flex';
+          return false;
+        } else {
+          if (modal) modal.style.display = 'none';
+          return true;
+        }
+      } catch(e) {
+        var modal = document.getElementById('adminStandaloneAuthModal');
+        if (modal) modal.style.display = 'flex';
+        return false;
+      }
+    };
+
+    window.handleStandaloneAdmin1Click = async function() {
+      document.getElementById('standaloneAdminEmail').value = 'admin@stenomaster.com';
+      document.getElementById('standaloneAdminPass').value = 'admin123';
+      await window.handleStandaloneAdminLogin();
+    };
+
+    window.handleStandaloneAdminLogin = async function(e) {
+      if (e) e.preventDefault();
+      var email = document.getElementById('standaloneAdminEmail').value.trim();
+      var pass = document.getElementById('standaloneAdminPass').value;
+      var errEl = document.getElementById('standaloneAdminErr');
+      var btn = document.getElementById('standaloneAdminSubmitBtn');
+      if (errEl) { errEl.style.display = 'none'; errEl.textContent = ''; }
+      if (btn) { btn.disabled = true; btn.textContent = 'सत्यापन हो रहा है...'; }
+
+      try {
+        var resp = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: email, password: pass })
+        });
+        var data = await resp.json();
+        if (!resp.ok) {
+          throw new Error(data.error || 'लॉगिन विफल रहा');
+        }
+        if (!data.user || data.user.role !== 'admin') {
+          throw new Error('इस खाते को एडमिन एक्सेस की अनुमति नहीं है।');
+        }
+
+        localStorage.setItem('stenomaster_token', data.token);
+        localStorage.setItem('stenomaster_user', JSON.stringify(data.user));
+        var modal = document.getElementById('adminStandaloneAuthModal');
+        if (modal) modal.style.display = 'none';
+
+        if (window.stenoAdmin) {
+          var initialTab = localStorage.getItem('stenomaster_last_admin_tab') || 'overview';
+          window.stenoAdmin.switchTab(initialTab);
+        } else {
+          window.location.reload();
+        }
+      } catch(err) {
+        if (errEl) { errEl.style.display = 'block'; errEl.textContent = err.message || 'लॉगिन विफल रहा'; }
+      } finally {
+        if (btn) { btn.disabled = false; btn.textContent = '🛡️ एडमिन लॉगिन करें →'; }
+      }
+    };
+
+    // Run auth check on load
+    document.addEventListener('DOMContentLoaded', function() {
+      window.checkAdminStandaloneAuth();
+    });
+  </script>
+
 </body>
 </html>

@@ -12,7 +12,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Mukta:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/css/style.css?v=7.5">
+  <link rel="stylesheet" href="/css/style.css?v=8.0">
   <!-- Google Identity Services SDK -->
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   <script>
@@ -3027,10 +3027,10 @@
   <script defer src="https://sdk.cashfree.com/js/v3/cashfree.js"></script>
 
   <!-- Core Lightweight Scripts (charts.js & comparison_view.js are lazy-loaded on demand for 50% faster startup) -->
-  <script src="/js/audio_player.js?v=7.5"></script>
-  <script src="/js/keyboard_map.js?v=7.5"></script>
-  <script src="/js/typing_engine.js?v=7.5"></script>
-  <script src="/js/app.js?v=7.5"></script>
+  <script src="/js/audio_player.js?v=8.0"></script>
+  <script src="/js/keyboard_map.js?v=8.0"></script>
+  <script src="/js/typing_engine.js?v=8.0"></script>
+  <script src="/js/app.js?v=8.0"></script>
   <!-- Strict Exam Hall Anti-Cheat Warning Modal -->
   <div class="modal-overlay" id="examHallWarningModal" style="z-index:99999;">
     <div class="modal-card" style="max-width: 480px; text-align:center; border:2px solid #ef4444; box-shadow:0 10px 40px rgba(239,68,68,0.3);">
@@ -3052,6 +3052,33 @@
       </div>
     </div>
   </div>
+
+
+  <!-- Safety Watchdog: Prevent Blank White Screen & Stuck Loading Bar -->
+  <script>
+    (function() {
+      setTimeout(function() {
+        try {
+          var bar = document.getElementById('topLoadingProgressBar');
+          if (bar) {
+            bar.classList.remove('is-loading');
+            bar.classList.add('is-done');
+          }
+          var gateway = document.getElementById('authGatewayView');
+          var appCont = document.getElementById('appContainer');
+          var token = localStorage.getItem('stenomaster_token');
+          if (!token) {
+            if (gateway) gateway.style.display = 'flex';
+            if (appCont) appCont.style.display = 'none';
+          } else {
+            if (appCont && appCont.style.display === 'none' && (!gateway || gateway.style.display === 'none')) {
+              appCont.style.display = 'flex';
+            }
+          }
+        } catch(e) {}
+      }, 1000);
+    })();
+  </script>
 
 </body>
 </html>
