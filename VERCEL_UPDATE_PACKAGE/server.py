@@ -67,11 +67,17 @@ class StenoMasterHandler(http.server.SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, directory=STATIC_DIR, **kwargs)
 
+    def send_header(self, keyword, value):
+        if keyword.lower() == 'cache-control':
+            self._cache_control_set = True
+        super().send_header(keyword, value)
+
     def end_headers(self):
         self.send_header('Access-Control-Allow-Origin', '*')
-        self.send_header('Cache-Control', 'no-cache, no-store, must-revalidate')
-        self.send_header('Pragma', 'no-cache')
-        self.send_header('Expires', '0')
+        if not getattr(self, '_cache_control_set', False):
+            self.send_header('Cache-Control', 'no-cache, no-store, must-revalidate')
+            self.send_header('Pragma', 'no-cache')
+            self.send_header('Expires', '0')
         super().end_headers()
 
     # -------------------------------------------------------------------------
