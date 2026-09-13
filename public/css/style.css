@@ -5640,3 +5640,397 @@ body.dark-mode .sub-active-bar.bar-inactive .sub-active-pill-inactive {
     justify-content: space-between;
   }
 }
+
+/* ==========================================================================
+   Official Exam Error Formula & Weak Words Bank Styles
+   ========================================================================== */
+.exam-verdict-banner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 20px;
+  border-radius: 14px;
+  font-size: 1.15rem;
+  font-weight: 800;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+}
+
+.exam-verdict-banner.banner-pass {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(5, 150, 105, 0.06) 100%);
+  border: 2px solid #10b981;
+  color: #065f46;
+}
+
+body.dark-mode .exam-verdict-banner.banner-pass {
+  color: #a7f3d0;
+  border-color: #34d399;
+}
+
+.exam-verdict-banner.banner-warn {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.15) 0%, rgba(217, 119, 6, 0.06) 100%);
+  border: 2px solid #f59e0b;
+  color: #92400e;
+}
+
+body.dark-mode .exam-verdict-banner.banner-warn {
+  color: #fde68a;
+  border-color: #fbbf24;
+}
+
+.exam-verdict-banner.banner-fail {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.15) 0%, rgba(220, 38, 38, 0.06) 100%);
+  border: 2px solid #ef4444;
+  color: #991b1b;
+}
+
+body.dark-mode .exam-verdict-banner.banner-fail {
+  color: #fca5a5;
+  border-color: #f87171;
+}
+
+/* Mistake Formula Card */
+.mistake-formula-card {
+  background: var(--bg-surface);
+  border: 1.5px solid var(--border-subtle);
+  border-radius: 16px;
+  padding: 22px;
+  margin-bottom: 24px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+}
+
+.formula-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 16px;
+  border-bottom: 1.5px solid var(--border-subtle);
+  padding-bottom: 14px;
+}
+
+.formula-title {
+  font-size: 1.22rem;
+  font-weight: 800;
+  color: var(--text-main);
+  margin: 0 0 4px 0;
+}
+
+.formula-subtitle {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.formula-final-badge {
+  background: var(--bg-subtle);
+  border: 1.5px solid var(--border-subtle);
+  padding: 8px 16px;
+  border-radius: 24px;
+  font-size: 0.95rem;
+  color: var(--text-main);
+}
+
+.formula-boxes-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.formula-box {
+  border-radius: 14px;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  transition: transform 0.2s;
+}
+
+.formula-box.box-full-mistake {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.09) 0%, rgba(220, 38, 38, 0.03) 100%);
+  border: 1.5px solid rgba(239, 68, 68, 0.35);
+}
+
+body.dark-mode .formula-box.box-full-mistake {
+  border-color: rgba(248, 113, 113, 0.4);
+}
+
+.formula-box.box-half-mistake {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.09) 0%, rgba(217, 119, 6, 0.03) 100%);
+  border: 1.5px solid rgba(245, 158, 11, 0.35);
+}
+
+body.dark-mode .formula-box.box-half-mistake {
+  border-color: rgba(251, 191, 36, 0.4);
+}
+
+.f-box-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.f-badge {
+  font-size: 0.78rem;
+  font-weight: 800;
+  padding: 3px 10px;
+  border-radius: 20px;
+  letter-spacing: 0.03em;
+}
+
+.f-badge-full {
+  background: rgba(239, 68, 68, 0.18);
+  color: #b91c1c;
+}
+
+body.dark-mode .f-badge-full {
+  color: #fca5a5;
+}
+
+.f-badge-half {
+  background: rgba(245, 158, 11, 0.18);
+  color: #b45309;
+}
+
+body.dark-mode .f-badge-half {
+  color: #fde68a;
+}
+
+.f-deduction {
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+}
+
+.f-total-count {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--text-main);
+  margin-bottom: 12px;
+}
+
+.f-calc {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.f-breakdown-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.45);
+  border-radius: 10px;
+  padding: 10px 14px;
+}
+
+body.dark-mode .f-breakdown-list {
+  background: rgba(0, 0, 0, 0.25);
+}
+
+.f-item {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.f-item strong {
+  color: var(--text-main);
+}
+
+.formula-equation-bar {
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  padding: 12px 18px;
+  font-size: 0.92rem;
+  text-align: center;
+}
+
+.eq-chip {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-weight: 700;
+}
+
+.eq-chip.eq-result {
+  background: #fee2e2;
+  color: #991b1b;
+  border-color: #fca5a5;
+}
+
+body.dark-mode .eq-chip.eq-result {
+  background: rgba(239, 68, 68, 0.25);
+  color: #fca5a5;
+}
+
+.eq-divider {
+  margin: 0 8px;
+  color: var(--border-strong);
+}
+
+/* Weak Words Bank Card */
+.weak-words-bank-card {
+  background: var(--bg-surface);
+  border: 1.5px solid rgba(99, 102, 241, 0.3);
+  border-radius: 16px;
+  padding: 22px;
+  margin-bottom: 24px;
+  box-shadow: 0 4px 20px rgba(99, 102, 241, 0.05);
+}
+
+.ww-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.ww-tag {
+  display: inline-block;
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: #4f46e5;
+  background: rgba(99, 102, 241, 0.12);
+  padding: 3px 10px;
+  border-radius: 20px;
+  margin-bottom: 6px;
+}
+
+body.dark-mode .ww-tag {
+  color: #a5b4fc;
+}
+
+.ww-title {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--text-main);
+  margin: 0 0 4px 0;
+}
+
+.ww-subtitle {
+  font-size: 0.86rem;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.btn-copy-weak-words {
+  background: #4f46e5;
+  color: #ffffff;
+  border: none;
+  padding: 9px 18px;
+  border-radius: 10px;
+  font-size: 0.88rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 2px 8px rgba(79, 70, 229, 0.3);
+  transition: all 0.2s;
+}
+
+.btn-copy-weak-words:hover {
+  background: #4338ca;
+  transform: translateY(-1px);
+}
+
+.weak-words-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 14px;
+}
+
+.weak-word-card {
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 10px;
+  transition: transform 0.2s, border-color 0.2s;
+}
+
+.weak-word-card:hover {
+  transform: translateY(-2px);
+  border-color: #818cf8;
+}
+
+.ww-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.ww-target-word {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--text-main);
+  font-family: var(--font-hindi);
+}
+
+.ww-error-chip {
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 12px;
+  background: rgba(239, 68, 68, 0.12);
+  color: #b91c1c;
+}
+
+body.dark-mode .ww-error-chip {
+  color: #fca5a5;
+}
+
+.ww-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ww-input-row {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.ww-student-val {
+  font-weight: 700;
+  color: var(--accent-red);
+  font-family: var(--font-hindi);
+}
+
+.ww-tip-row {
+  font-size: 0.8rem;
+  color: #4338ca;
+  background: rgba(99, 102, 241, 0.08);
+  padding: 6px 10px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  line-height: 1.35;
+}
+
+body.dark-mode .ww-tip-row {
+  color: #c7d2fe;
+  background: rgba(99, 102, 241, 0.18);
+}
+
+.ww-empty-box {
+  text-align: center;
+  padding: 30px;
+  font-size: 1rem;
+  color: var(--accent-green);
+  font-weight: 700;
+  background: var(--bg-subtle);
+  border-radius: 12px;
+}

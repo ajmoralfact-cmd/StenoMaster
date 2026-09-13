@@ -651,6 +651,56 @@ def analyze_weak_areas(error_counts: Dict[str, int], total_words: int, language:
     return weak_areas
 
 
+def extract_weak_words_bank(aligned_tokens: List[Dict[str, Any]], language: str = 'hindi') -> List[Dict[str, Any]]:
+    """
+    Extracts substantive complex words where student made an error,
+    providing targeted shorthand outline practice suggestions.
+    """
+    weak_words = []
+    seen = set()
+
+    for t in aligned_tokens:
+        status = t.get('status')
+        err_type = t.get('error_type', '')
+        off_word = (t.get('official') or '').strip().rstrip('.,!?।')
+        stu_word = (t.get('student') or '').strip().rstrip('.,!?।')
+
+        # Only process errors where an official target word existed
+        if status in ('wrong', 'missing') or err_type in ('matra', 'spelling', 'character'):
+            if not off_word:
+                continue
+            # Clean word to Devanagari characters
+            clean_off = re.sub(r'[^\w\u0900-\u097F]', '', off_word)
+            if len(clean_off) < 3:
+                continue
+            if clean_off in seen:
+                continue
+            seen.add(clean_off)
+
+            # Determine human-friendly error reason
+            reason = t.get('detail') or 'शब्द टंकण अशुद्धि'
+            if status == 'missing':
+                reason = 'डिक्टेशन में यह शब्द छूट गया'
+            elif err_type == 'matra':
+                reason = 'मात्रा अशुद्धि (ह्रस्व/दीर्घ स्वर)'
+            elif err_type in ('spelling', 'character'):
+                reason = 'वर्तनी / वर्ण भ्रम दोष'
+            elif status == 'wrong':
+                reason = 'गलत शब्द प्रतिस्थापन'
+
+            weak_words.append({
+                "word": clean_off,
+                "student_word": stu_word if stu_word else "— (छूट गया)",
+                "error_type": err_type if err_type else status,
+                "reason": reason,
+                "practice_tip": f"‘{clean_off}’ की स्टेनो आउटलाइन 5 बार बनाएं।"
+            })
+            if len(weak_words) >= 20:
+                break
+
+    return weak_words
+
+
 def evaluate_practice_attempt(
     official_text: str,
     student_text: str,
@@ -961,6 +1011,7 @@ def evaluate_practice_attempt(
         "error_table": error_table,
         "weak_areas": weak_areas,
         "suggestions": suggestions,
+        "weak_words_bank": extract_weak_words_bank(aligned_tokens, language),
         "official_text": official_text,
         "student_text": student_text,
         "normalized_student_text": norm_student

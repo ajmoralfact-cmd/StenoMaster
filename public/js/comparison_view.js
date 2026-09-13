@@ -45,8 +45,13 @@ class StenoComparisonView {
       const achievedErr = u.achieved_mistake_percent ?? m.mistake_percent ?? 0;
       const maxErr = u.max_mistake_percent ?? 5.0;
 
+      const upssscVerdictHtml = isQual 
+        ? `<div class="exam-verdict-banner banner-pass">🎉 UPSSSC सफल (QUALIFIED) — गति (${achievedWpm} WPM) व त्रुटियां (${achievedErr}%) दोनों आयोग के मानक अनुसार उत्तीर्ण!</div>`
+        : `<div class="exam-verdict-banner banner-fail">❌ UPSSSC असफल (NOT QUALIFIED) — ${u.status_reason || 'गति या त्रुटि मानक पूर्ण नहीं हुए।'}</div>`;
+
       return `
         <div class="chart-card" style="border: 2px solid ${isQual ? '#10b981' : '#ef4444'}; background: ${isQual ? 'rgba(16, 185, 129, 0.04)' : 'rgba(239, 68, 68, 0.04)'}; margin-bottom: 24px; padding: 22px; border-radius: var(--radius-lg);">
+          ${upssscVerdictHtml}
           <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:16px;">
             <div>
               <span class="badge" style="background:#7c3aed; color:#fff; font-size:0.8rem; font-weight:700; padding:4px 10px;">🏛️ UPSSSC SKILL TEST</span>
@@ -107,8 +112,20 @@ class StenoComparisonView {
     const dRes = s.grade_d_res || { cutoff: 10.0, is_qualified: false };
     const mistakePct = es.mistake_percent ?? m.mistake_percent ?? 0;
 
+    let sscVerdictHtml = '';
+    if (mistakePct <= 5.0) {
+      sscVerdictHtml = `<div class="exam-verdict-banner banner-pass">🏆 SSC योग्य (QUALIFIED) — ग्रेड 'C' (100 WPM) एवं ग्रेड 'D' (80 WPM) दोनों में सफल! (त्रुटि दर: ${mistakePct}%)</div>`;
+    } else if (mistakePct <= 7.0) {
+      sscVerdictHtml = `<div class="exam-verdict-banner banner-pass">✅ SSC योग्य (QUALIFIED) — ग्रेड 'D' सामान्य (UR) एवं ग्रेड 'C' आरक्षित वर्ग में सफल! (त्रुटि दर: ${mistakePct}%)</div>`;
+    } else if (mistakePct <= 10.0) {
+      sscVerdictHtml = `<div class="exam-verdict-banner banner-warn">⚠️ SSC योग्य (QUALIFIED) — ग्रेड 'D' आरक्षित वर्ग (OBC/SC/ST/EWS) में सफल! (त्रुटि दर: ${mistakePct}%)</div>`;
+    } else {
+      sscVerdictHtml = `<div class="exam-verdict-banner banner-fail">❌ SSC अयोग्य (NOT QUALIFIED) — त्रुटि दर 10% से अधिक (${mistakePct}%) होने के कारण अयोग्य।</div>`;
+    }
+
     return `
       <div class="chart-card" style="border: 2px solid #0284c7; background: rgba(2, 132, 199, 0.04); margin-bottom: 24px; padding: 22px; border-radius: var(--radius-lg);">
+        ${sscVerdictHtml}
         <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:16px;">
           <div>
             <span class="badge" style="background:#0284c7; color:#fff; font-size:0.8rem; font-weight:700; padding:4px 10px;">🎯 SSC STENOGRAPHER</span>
@@ -163,6 +180,183 @@ class StenoComparisonView {
     `;
   }
 
+  renderOfficialMistakeFormulaCard(report) {
+    const es = report.exam_summary || {};
+    const ec = report.error_counts || {};
+    const m = report.metrics || {};
+
+    const missingCount = ec.missing || 0;
+    const extraCount = ec.extra || 0;
+    const wrongCount = ec.wrong || 0;
+    const matraCount = ec.matra || 0;
+    const spellingCount = (ec.spelling || 0) + (ec.character || 0);
+    const punctCount = ec.punctuation || 0;
+
+    const fullMistakes = es.full_mistakes !== undefined ? es.full_mistakes : (missingCount + extraCount + wrongCount);
+    const halfMistakes = es.half_mistakes !== undefined ? es.half_mistakes : (matraCount + spellingCount + punctCount);
+    const totalEq = es.total_equivalent_mistakes !== undefined ? es.total_equivalent_mistakes : ((fullMistakes * 1.0) + (halfMistakes * 0.5)).toFixed(1);
+    const totalWords = m.total_words_official || es.total_official_words || 100;
+    const mistakePct = es.mistake_percent !== undefined ? es.mistake_percent : ((totalEq / totalWords) * 100).toFixed(2);
+
+    return `
+      <div class="mistake-formula-card">
+        <div class="formula-header">
+          <div>
+            <h3 class="formula-title">⚖️ आधिकारिक त्रुटि फॉर्मूला (SSC / UPSSSC Official Marking Scheme)</h3>
+            <p class="formula-subtitle">आयोग के आधिकारिक नियमों के अनुसार पूर्ण एवं आधी गलतियों का पारदर्शी पृथक्करण:</p>
+          </div>
+          <div class="formula-final-badge">
+            कुल समतुल्य गलतियां: <strong style="color:var(--accent-red); font-size:1.15rem;">${totalEq}</strong> (${mistakePct}%)
+          </div>
+        </div>
+
+        <div class="formula-boxes-grid">
+          <!-- Full Mistakes Box -->
+          <div class="formula-box box-full-mistake">
+            <div class="f-box-top">
+              <span class="f-badge f-badge-full">🔴 पूर्ण गलतियां (FULL MISTAKES)</span>
+              <span class="f-deduction">कटौती: <strong>1.0 अंक</strong> / शब्द</span>
+            </div>
+            <div class="f-total-count">${fullMistakes} <span class="f-calc">× 1.0 = <strong>${(fullMistakes * 1.0).toFixed(1)}</strong> गलती</span></div>
+            <div class="f-breakdown-list">
+              <div class="f-item"><span>⚠ छूटे हुए शब्द (Omissions):</span> <strong>${missingCount}</strong></div>
+              <div class="f-item"><span>➕ अतिरिक्त शब्द (Additions):</span> <strong>${extraCount}</strong></div>
+              <div class="f-item"><span>❌ गलत/बदले हुए शब्द (Substitutions):</span> <strong>${wrongCount}</strong></div>
+            </div>
+          </div>
+
+          <!-- Half Mistakes Box -->
+          <div class="formula-box box-half-mistake">
+            <div class="f-box-top">
+              <span class="f-badge f-badge-half">🟡 आधी गलतियां (HALF MISTAKES)</span>
+              <span class="f-deduction">कटौती: <strong>0.5 अंक</strong> / शब्द</span>
+            </div>
+            <div class="f-total-count">${halfMistakes} <span class="f-calc">× 0.5 = <strong>${(halfMistakes * 0.5).toFixed(1)}</strong> गलती</span></div>
+            <div class="f-breakdown-list">
+              <div class="f-item"><span>✎ मात्रा अशुद्धि (Matra Errors):</span> <strong>${matraCount}</strong></div>
+              <div class="f-item"><span>🔤 वर्तनी, वर्ण व हलन्त दोष (Spelling/Halant):</span> <strong>${spellingCount}</strong></div>
+              <div class="f-item"><span>। विराम चिह्न अशुद्धि (Punctuation):</span> <strong>${punctCount}</strong></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Formula Equation Bar -->
+        <div class="formula-equation-bar">
+          <div>
+            <strong>आधिकारिक फॉर्मूला:</strong> 
+            <span class="eq-chip">(${fullMistakes} Full × 1.0)</span> + 
+            <span class="eq-chip">(${halfMistakes} Half × 0.5)</span> = 
+            <span class="eq-chip eq-result">${totalEq} कुल दंड गलतियां</span>
+            <span class="eq-divider">|</span>
+            <span>आधिकारिक त्रुटि प्रतिशत = (${totalEq} ÷ ${totalWords}) × 100 = <strong style="color:var(--accent-red); font-size:1.05rem;">${mistakePct}%</strong></span>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  generateWeakWordsFromTokens(report) {
+    const tokens = report.aligned_tokens || [];
+    const list = [];
+    const seen = new Set();
+
+    for (const t of tokens) {
+      if ((t.status === 'wrong' || t.status === 'missing') || (t.error_type === 'matra' || t.error_type === 'spelling' || t.error_type === 'character')) {
+        const off = (t.official || '').trim().replace(/[.,!?।]/g, '');
+        const cleanOff = off.replace(/[^\u0900-\u097F]/g, '');
+        if (cleanOff.length >= 3 && !seen.has(cleanOff)) {
+          seen.add(cleanOff);
+          let reason = t.detail || 'शब्द टंकण अशुद्धि';
+          if (t.status === 'missing') reason = 'डिक्टेशन में यह शब्द छूट गया';
+          else if (t.error_type === 'matra') reason = 'मात्रा अशुद्धि (ह्रस्व/दीर्घ)';
+          else if (t.error_type === 'spelling') reason = 'वर्तनी दोष';
+          else if (t.status === 'wrong') reason = 'गलत शब्द प्रतिस्थापन';
+
+          list.push({
+            word: cleanOff,
+            student_word: t.student ? t.student : '— (छूट गया)',
+            error_type: t.error_type || t.status,
+            reason: reason,
+            practice_tip: `‘${cleanOff}’ की स्टेनो आउटलाइन 5 बार बनाएं।`
+          });
+          if (list.length >= 20) break;
+        }
+      }
+    }
+    return list;
+  }
+
+  renderPersonalWeakWordsBank(report) {
+    const words = (report.weak_words_bank && report.weak_words_bank.length > 0)
+      ? report.weak_words_bank
+      : this.generateWeakWordsFromTokens(report);
+
+    // Save to current report instance for copy action
+    this.currentWeakWords = words;
+
+    return `
+      <div class="weak-words-bank-card">
+        <div class="ww-header">
+          <div>
+            <span class="ww-tag">🎯 व्यक्तिगत सुधार बैंक</span>
+            <h3 class="ww-title">📝 कमजोर शब्दों का बैंक (Personal Weak Words Bank)</h3>
+            <p class="ww-subtitle">इस अभ्यास में जिन कठिन शब्दों में आपकी त्रुटि हुई, उनकी सूची — अपनी नोटबुक में इनकी स्टेनो आउटलाइन बनाकर अभ्यास करें:</p>
+          </div>
+          <div class="ww-actions">
+            ${words.length > 0 ? `
+              <button type="button" class="btn-copy-weak-words" onclick="stenoComparisonView.copyWeakWords()">
+                📋 सभी कठिन शब्द कॉपी करें
+              </button>
+            ` : ''}
+          </div>
+        </div>
+
+        ${words.length > 0 ? `
+          <div class="weak-words-grid">
+            ${words.map(w => `
+              <div class="weak-word-card">
+                <div class="ww-card-top">
+                  <span class="ww-target-word">${w.word}</span>
+                  <span class="ww-error-chip">${w.reason}</span>
+                </div>
+                <div class="ww-card-body">
+                  <div class="ww-input-row">
+                    <span>आपने लिखा:</span> <span class="ww-student-val">${w.student_word}</span>
+                  </div>
+                  <div class="ww-tip-row">
+                    <span>💡</span> <span>${w.practice_tip}</span>
+                  </div>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        ` : `
+          <div class="ww-empty-box">
+            <span>🎉</span> बहुत खूब! इस अभ्यास में किसी भी कठिन शब्द में कोई त्रुटि नहीं पाई गई। आपकी आउटलाइन और टंकण उत्तम है।
+          </div>
+        `}
+      </div>
+    `;
+  }
+
+  copyWeakWords() {
+    const list = this.currentWeakWords || [];
+    if (!list || list.length === 0) {
+      if (window.stenoApp) stenoApp.showToast('कॉपी करने के लिए कोई कमजोर शब्द नहीं हैं।', 'info');
+      return;
+    }
+    const text = list.map((w, i) => `${i + 1}. ${w.word} (कारण: ${w.reason})`).join('\n');
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(() => {
+        if (window.stenoApp) stenoApp.showToast(`📋 ${list.length} कठिन शब्द क्लिपबोर्ड पर कॉपी हो गए! अपनी नोटबुक में अभ्यास करें।`, 'success');
+      }).catch(() => {
+        if (window.stenoApp) stenoApp.showToast('कॉपी करने में समस्या हुई।', 'error');
+      });
+    } else {
+      if (window.stenoApp) stenoApp.showToast('क्लिपबोर्ड एक्सेस उपलब्ध नहीं है।', 'info');
+    }
+  }
+
   renderResult(report, container) {
     this.currentReport = report;
     const m = report.metrics || {};
@@ -183,6 +377,9 @@ class StenoComparisonView {
 
       <!-- Official Exam Qualification Card (SSC vs UPSSSC) -->
       ${this.renderExamQualificationCard(report)}
+
+      <!-- Official Mistake Formula Card (Full vs Half Mistakes) -->
+      ${this.renderOfficialMistakeFormulaCard(report)}
 
       <!-- Main Score Metrics Grid -->
       <div class="result-metrics-grid">
@@ -232,6 +429,9 @@ class StenoComparisonView {
 
       <!-- 2. Master Reference Passage Box (Official Uploaded Passage Text) -->
       ${this.renderMasterPassageSection(report)}
+
+      <!-- Personal Weak Words Bank -->
+      ${this.renderPersonalWeakWordsBank(report)}
 
       <!-- Aligned Stream Comparison Section -->
       <div class="comparison-section">
