@@ -2064,6 +2064,7 @@ class StenoApp {
     const mins = Math.floor((p.duration_seconds || 180) / 60);
     const secs = (p.duration_seconds || 180) % 60;
     const durStr = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    const wordCount = p.word_count || Math.max(1, Math.round((p.target_wpm || 80) * (p.duration_seconds || 180) / 60));
     const progressPercent = p.best_wpm ? Math.min(100, Math.round((p.best_wpm / p.target_wpm) * 100)) : 0;
     const hasFullAccess = !!(this.user && (this.user.role === 'admin' || this.user.subscription_status === 'active' || this.user.is_free_access));
     const isLocked = !hasFullAccess && !!p.is_locked;
@@ -2077,6 +2078,7 @@ class StenoApp {
               <span class="badge badge-${p.language}">${p.language === 'hindi' ? 'हिंदी' : 'English'}</span>
               <span class="badge badge-${p.difficulty}">${p.difficulty ? p.difficulty.toUpperCase() : 'MEDIUM'}</span>
               <span class="badge" style="background:var(--bg-subtle); color:var(--text-secondary)">⏱ ${durStr}</span>
+              <span class="badge" style="background:var(--bg-subtle); color:var(--text-secondary)" title="शब्द संख्या">📝 ${wordCount} शब्द</span>
               ${isFree ? '<span class="badge badge-free-tier">🎁 फ्री क्लास (Free)</span>' : ''}
               ${isLocked ? '<span class="badge badge-locked-tier">🔒 Pro Locked (₹100/माह)</span>' : ''}
               ${!isLocked && !isFree && p.is_premium ? '<span class="badge" style="background:#fef3c7; color:#b45309; font-weight:700; border:1px solid #fde68a;">👑 PRO</span>' : ''}

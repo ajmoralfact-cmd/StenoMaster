@@ -1806,19 +1806,30 @@ def get_passages(
     category_id: Optional[int] = None,
     search: Optional[str] = None,
     user_id: Optional[int] = None,
-    include_official_text: bool = False
+    include_official_text: bool = False,
+    summary: bool = False
 ) -> List[Dict[str, Any]]:
     conn = get_db()
-    query = """
-        SELECT p.id, p.title, p.category_id, p.language, p.difficulty, p.instructions,
-               p.target_wpm, p.duration_seconds, p.audio_url, p.steno_notes_url, p.steno_notes_type,
-               p.thumbnail, p.tags, p.status, p.is_premium,
-               p.typing_system,
-               p.view_count, p.attempt_count, p.created_at,
-               c.name as category_name, c.slug as category_slug
-    """
-    if include_official_text:
-        query += ", p.official_text, p.official_text_krutidev "
+    if summary:
+        query = """
+            SELECT p.id, p.title, p.category_id, p.language, p.difficulty,
+                   p.target_wpm, p.duration_seconds, p.audio_url,
+                   p.tags, p.status, p.is_premium,
+                   p.typing_system,
+                   p.official_text,
+                   c.name as category_name, c.slug as category_slug
+        """
+    else:
+        query = """
+            SELECT p.id, p.title, p.category_id, p.language, p.difficulty, p.instructions,
+                   p.target_wpm, p.duration_seconds, p.audio_url, p.steno_notes_url, p.steno_notes_type,
+                   p.thumbnail, p.tags, p.status, p.is_premium,
+                   p.typing_system,
+                   p.view_count, p.attempt_count, p.created_at,
+                   c.name as category_name, c.slug as category_slug
+        """
+        if include_official_text:
+            query += ", p.official_text, p.official_text_krutidev "
 
     if user_id:
         query += """,
@@ -1878,12 +1889,42 @@ def get_passages(
     result = []
     for r in rows:
         item = dict(r)
-        item['typing_system'] = item.get('typing_system') or 'dual'
-        item['official_mangal_text'] = item.get('official_text')
-        item['official_kruti_dev_text'] = item.get('official_text_krutidev')
-        item['is_free_tier'] = item['id'] in free_ids
-        item['is_locked'] = False if user_has_pro else (item['id'] not in free_ids)
-        result.append(item)
+        target_wpm = item.get('target_wpm') or 80
+        dur_sec = item.get('duration_seconds') or 300
+        off_text = item.get('official_text') or ''
+        word_count = len(off_text.split()) if off_text.strip() else max(1, int(round(target_wpm * dur_sec / 60)))
+
+        if summary:
+            clean_item = {
+                'id': item['id'],
+                'title': item['title'],
+                'category_id': item['category_id'],
+                'category_name': item.get('category_name') or '',
+                'category_slug': item.get('category_slug') or '',
+                'language': item['language'],
+                'difficulty': item['difficulty'],
+                'duration_seconds': dur_sec,
+                'target_wpm': target_wpm,
+                'word_count': word_count,
+                'audio_url': item.get('audio_url') or '',
+                'tags': item.get('tags') or '',
+                'is_premium': bool(item.get('is_premium')),
+                'typing_system': item.get('typing_system') or 'dual',
+                'is_free_tier': item['id'] in free_ids,
+                'is_locked': False if user_has_pro else (item['id'] not in free_ids),
+                'is_bookmarked': bool(item.get('is_bookmarked')),
+                'best_wpm': item.get('best_wpm'),
+                'best_accuracy': item.get('best_accuracy')
+            }
+            result.append(clean_item)
+        else:
+            item['typing_system'] = item.get('typing_system') or 'dual'
+            item['word_count'] = word_count
+            item['official_mangal_text'] = item.get('official_text')
+            item['official_kruti_dev_text'] = item.get('official_text_krutidev')
+            item['is_free_tier'] = item['id'] in free_ids
+            item['is_locked'] = False if user_has_pro else (item['id'] not in free_ids)
+            result.append(item)
     return result
 
 
@@ -1928,6 +1969,10 @@ def get_passage_detail(passage_id: int, user_id: Optional[int] = None, include_o
         c.execute("UPDATE passages SET view_count = view_count + 1 WHERE id = ?", (passage_id,))
         conn.commit()
         res_dict = dict(row)
+        target_wpm = res_dict.get('target_wpm') or 80
+        dur_sec = res_dict.get('duration_seconds') or 300
+        off_text = res_dict.get('official_text') or ''
+        res_dict['word_count'] = len(off_text.split()) if off_text.strip() else max(1, int(round(target_wpm * dur_sec / 60)))
         res_dict['typing_system'] = res_dict.get('typing_system') or 'dual'
         res_dict['official_mangal_text'] = res_dict.get('official_text')
         res_dict['official_kruti_dev_text'] = res_dict.get('official_text_krutidev')

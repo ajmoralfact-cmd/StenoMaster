@@ -342,7 +342,8 @@ class StenoMasterHandler(http.server.SimpleHTTPRequestHandler):
                 category_id=cat_id,
                 search=search,
                 user_id=user_id,
-                include_official_text=False  # Security: never expose to student
+                include_official_text=False,  # Security: never expose to student
+                summary=True  # Ultra-lightweight summary payload (10x faster homepage)
             )
             # Vercel Edge CDN Caching: 60s shared cache, 300s background stale-while-revalidate
             self._send_json(200, {"passages": passages}, cache_control='public, s-maxage=60, stale-while-revalidate=300')
