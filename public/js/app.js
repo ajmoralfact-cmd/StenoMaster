@@ -1412,6 +1412,15 @@ class StenoApp {
             </div>
           </a>
         `).join('')}
+        <div style="margin: 10px 4px 6px 4px; border-top: 1px dashed var(--border-subtle, #e2e8f0); padding-top: 8px;">
+          <a href="/admin.html" class="nav-item admin-switch-direct-link" style="border:1px solid rgba(239, 68, 68, 0.25); background:rgba(239, 68, 68, 0.05); border-radius:10px; padding:9px 12px; text-decoration:none;" title="प्रशासक पोर्टल खोलें">
+            <span class="nav-item-icon" style="font-size:1.15rem; color:#ef4444;">🛡️</span>
+            <div style="flex:1; min-width:0;">
+              <div style="font-weight:700; font-size:0.86rem; color:#ef4444;">एडमिन पोर्टल (Admin Portal)</div>
+              <div style="font-size:0.7rem; color:var(--text-muted);">प्रशासक लॉगिन एवं नियंत्रण →</div>
+            </div>
+          </a>
+        </div>
       `;
 
       studentItems.forEach(item => {

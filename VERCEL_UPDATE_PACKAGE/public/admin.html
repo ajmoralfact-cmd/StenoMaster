@@ -1373,8 +1373,13 @@
 
           if (!response.ok) {
             if (response.status === 401 || response.status === 403) {
-              this.showToast('सत्र समाप्त हो गया है। कृपया पुनः लॉगिन करें।', 'error');
-              setTimeout(() => this.logout(), 1200);
+              this.showToast('एडमिन प्रमाणीकरण आवश्यक है। कृपया लॉगिन करें।', 'warning');
+              if (typeof window.checkAdminStandaloneAuth === 'function') {
+                window.checkAdminStandaloneAuth(true);
+              }
+              const err = new Error(data.error || 'Admin authentication required');
+              err.status = response.status;
+              throw err;
             }
             const err = new Error(data.error || 'Server request failed');
             err.status = response.status;
@@ -1450,40 +1455,18 @@
       logout() {
         localStorage.removeItem('stenomaster_token');
         localStorage.removeItem('stenomaster_user');
-        window.location.replace('/');
+        this.token = '';
+        this.user = null;
+        if (typeof window.checkAdminStandaloneAuth === 'function') {
+          window.checkAdminStandaloneAuth(true);
+        } else {
+          window.location.reload();
+        }
       }
 
       escapeHtml(str) {
         if (!str) return '';
-        return String(str)
-          .replace(/&/g, '&amp;')
-          .replace(/</g, '&lt;')
-          .replace(/>/g, '&gt;')
-          .replace(/"/g, '&quot;')
-          .replace(/'/g, '&#039;');
-      }
-    }
-
-    window.stenoApp = new StenoAdminAppBridge();
-  </script>
-
-  <!-- Required Admin Scripts -->
-  <script src="/js/charts.js?v=8.0"></script>
-  <script src="/js/comparison_view.js?v=8.0"></script>
-  <script src="/js/admin.js?v=8.0"></script>
-
-  <!-- Auto Boot Admin Dashboard -->
-  <script>
-    document.addEventListener('DOMContentLoaded', async () => {
-      await window.stenoApp.loadCategories();
-      const initialTab = localStorage.getItem('stenomaster_last_admin_tab') || 'overview';
-      if (window.stenoAdmin) {
-        window.stenoAdmin.switchTab(initialTab);
-      }
-    });
-  </script>
-
-  <!-- Standalone In-Page Admin Login Modal (Prevents jarring redirect loop) -->
+        return S<!-- Standalone In-Page Admin Login Modal (Never redirects away) -->
   <div id="adminStandaloneAuthModal" class="modal-overlay" style="display:none; z-index:999999; background:rgba(15, 23, 42, 0.85); backdrop-filter:blur(8px);">
     <div class="modal-card" style="max-width:440px; border:2px solid #ef4444; box-shadow:0 20px 50px rgba(0,0,0,0.5); border-radius:16px; padding:28px;">
       <div style="text-align:center; margin-bottom:18px;">
@@ -1525,35 +1508,48 @@
   </div>
 
   <script>
-    window.checkAdminStandaloneAuth = function() {
+    window.checkAdminStandaloneAuth = function(forceShow) {
       try {
         var token = localStorage.getItem('stenomaster_token');
         var user = JSON.parse(localStorage.getItem('stenomaster_user') || 'null');
         var modal = document.getElementById('adminStandaloneAuthModal');
-        if (!token || !user || user.role !== 'admin') {
-          if (modal) modal.style.display = 'flex';
+        if (forceShow || !token || !user || user.role !== 'admin') {
+          if (modal) {
+            modal.style.display = 'flex';
+            modal.classList.add('active');
+          }
           return false;
         } else {
-          if (modal) modal.style.display = 'none';
+          if (modal) {
+            modal.style.display = 'none';
+            modal.classList.remove('active');
+          }
           return true;
         }
       } catch(e) {
         var modal = document.getElementById('adminStandaloneAuthModal');
-        if (modal) modal.style.display = 'flex';
+        if (modal) {
+          modal.style.display = 'flex';
+          modal.classList.add('active');
+        }
         return false;
       }
     };
 
     window.handleStandaloneAdmin1Click = async function() {
-      document.getElementById('standaloneAdminEmail').value = 'admin@stenomaster.com';
-      document.getElementById('standaloneAdminPass').value = 'admin123';
+      var emailEl = document.getElementById('standaloneAdminEmail');
+      var passEl = document.getElementById('standaloneAdminPass');
+      if (emailEl) emailEl.value = 'admin@stenomaster.com';
+      if (passEl) passEl.value = 'admin123';
       await window.handleStandaloneAdminLogin();
     };
 
     window.handleStandaloneAdminLogin = async function(e) {
       if (e) e.preventDefault();
-      var email = document.getElementById('standaloneAdminEmail').value.trim();
-      var pass = document.getElementById('standaloneAdminPass').value;
+      var emailEl = document.getElementById('standaloneAdminEmail');
+      var passEl = document.getElementById('standaloneAdminPass');
+      var email = emailEl ? emailEl.value.trim() : 'admin@stenomaster.com';
+      var pass = passEl ? passEl.value : 'admin123';
       var errEl = document.getElementById('standaloneAdminErr');
       var btn = document.getElementById('standaloneAdminSubmitBtn');
       if (errEl) { errEl.style.display = 'none'; errEl.textContent = ''; }
@@ -1563,7 +1559,7 @@
         var resp = await fetch('/api/auth/login', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email: email, password: pass })
+          body: JSON.stringify({ email_or_username: email, password: pass })
         });
         var data = await resp.json();
         if (!resp.ok) {
@@ -1575,8 +1571,18 @@
 
         localStorage.setItem('stenomaster_token', data.token);
         localStorage.setItem('stenomaster_user', JSON.stringify(data.user));
+
+        if (window.stenoApp) {
+          window.stenoApp.token = data.token;
+          window.stenoApp.user = data.user;
+          await window.stenoApp.loadCategories();
+        }
+
         var modal = document.getElementById('adminStandaloneAuthModal');
-        if (modal) modal.style.display = 'none';
+        if (modal) {
+          modal.style.display = 'none';
+          modal.classList.remove('active');
+        }
 
         if (window.stenoAdmin) {
           var initialTab = localStorage.getItem('stenomaster_last_admin_tab') || 'overview';
@@ -1591,9 +1597,28 @@
       }
     };
 
-    // Run auth check on load
-    document.addEventListener('DOMContentLoaded', function() {
-      window.checkAdminStandaloneAuth();
+    // Auto Boot Admin Dashboard: Only run after auth verification
+    document.addEventListener('DOMContentLoaded', async () => {
+      const isAuthed = typeof window.checkAdminStandaloneAuth === 'function'
+        ? window.checkAdminStandaloneAuth()
+        : false;
+
+      if (!isAuthed) {
+        console.log('[StenoMaster Admin] Standalone login modal is active.');
+        return;
+      }
+
+      try {
+        if (window.stenoApp) {
+          await window.stenoApp.loadCategories();
+        }
+        const initialTab = localStorage.getItem('stenomaster_last_admin_tab') || 'overview';
+        if (window.stenoAdmin) {
+          window.stenoAdmin.switchTab(initialTab);
+        }
+      } catch (err) {
+        console.error('[StenoMaster Admin] Boot error:', err);
+      }
     });
   </script>
 
