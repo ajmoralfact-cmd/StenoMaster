@@ -1522,7 +1522,7 @@ class StenoAdmin {
     }
   }
 
-  handleQrUpload(inputEl) {
+  async handleQrUpload(inputEl) {
     const file = inputEl.files[0];
     if (!file) return;
 
@@ -1534,23 +1534,53 @@ class StenoAdmin {
       return;
     }
 
-    const reader = new FileReader();
-    reader.onload = async (e) => {
-      const base64Data = e.target.result;
-      try {
-        stenoApp.showToast('QR कोड अपलोड किया जा रहा है... 📤', 'info');
-        const res = await stenoApp.apiCall('/api/admin/subscription/upload-qr', 'POST', {
-          filename: file.name,
-          data: base64Data
-        });
-        stenoApp.showToast('QR कोड सफलतापूर्वक अपडेट किया गया! 🎉', 'success');
-        const qrPreview = document.getElementById('adminQrPreviewImg');
-        if (qrPreview) qrPreview.src = `${res.qr_url}?t=${Date.now()}`;
-      } catch (err) {
-        stenoApp.showToast('QR कोड अपलोड में त्रुटि: ' + err.message, 'error');
-      }
-    };
-    reader.readAsDataURL(file);
+    try {
+      stenoApp.showToast('QR कोड प्रोसेस एवं अपलोड किया जा रहा है... 📤', 'info');
+
+      // Downscale large camera photos safely via canvas to keep payload small (<100KB) and fast
+      const base64Data = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const img = new Image();
+          img.onload = () => {
+            const maxDim = 800;
+            let w = img.width;
+            let h = img.height;
+            if (w > maxDim || h > maxDim) {
+              if (w > h) {
+                h = Math.round((h * maxDim) / w);
+                w = maxDim;
+              } else {
+                w = Math.round((w * maxDim) / h);
+                h = maxDim;
+              }
+            }
+            const canvas = document.createElement('canvas');
+            canvas.width = w;
+            canvas.height = h;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, w, h);
+            resolve(canvas.toDataURL('image/png'));
+          };
+          img.onerror = () => resolve(e.target.result);
+          img.src = e.target.result;
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+
+      const res = await stenoApp.apiCall('/api/admin/subscription/upload-qr', 'POST', {
+        filename: file.name,
+        data: base64Data
+      });
+
+      stenoApp.showToast('QR कोड सफलतापूर्वक अपडेट किया गया! 🎉', 'success');
+      const qrPreview = document.getElementById('adminQrPreviewImg');
+      if (qrPreview) qrPreview.src = `${res.qr_url}?t=${Date.now()}`;
+      inputEl.value = '';
+    } catch (err) {
+      stenoApp.showToast('QR कोड अपलोड में त्रुटि: ' + err.message, 'error');
+    }
   }
 
   scrollToSection(sectionId) {

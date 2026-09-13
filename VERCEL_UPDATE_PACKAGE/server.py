@@ -1464,23 +1464,50 @@ class StenoMasterHandler(http.server.SimpleHTTPRequestHandler):
             data = self._read_json_body()
             import base64
             filename = data.get('filename', f"qr_{int(datetime.now().timestamp())}.png")
-            ext = os.path.splitext(filename)[1].lower()
+            clean_basename, ext = os.path.splitext(os.path.basename(filename))
+            ext = ext.lower() if ext else '.png'
             if ext not in ('.png', '.jpg', '.jpeg', '.webp'):
                 self._send_json(400, {"error": "अनुमति प्राप्त फ़ाइल प्रकार: .png, .jpg, .jpeg, .webp"})
                 return
             b64_data = data.get('data', '')
             if ',' in b64_data:
                 b64_data = b64_data.split(',')[1]
-            raw_bytes = base64.b64decode(b64_data)
-            assets_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'public', 'assets')
-            os.makedirs(assets_dir, exist_ok=True)
-            clean_filename = f"qr_payment{ext}"
-            save_path = os.path.join(assets_dir, clean_filename)
-            with open(save_path, 'wb') as f:
-                f.write(raw_bytes)
-            qr_url = f"/assets/{clean_filename}"
+            try:
+                raw_bytes = base64.b64decode(b64_data)
+            except Exception as e:
+                self._send_json(400, {"error": f"Base64 decode failed: {str(e)}"})
+                return
+
+            clean_filename = f"qr_payment_{int(datetime.now().timestamp())}{ext}"
+            mime_type = 'image/png' if ext == '.png' else ('image/jpeg' if ext in ('.jpg', '.jpeg') else ('image/webp' if ext == '.webp' else 'image/png'))
+
+            # 1. Save to local disk if directory is writable (graceful on read-only serverless)
+            try:
+                os.makedirs(UPLOADS_DIR, exist_ok=True)
+                with open(os.path.join(UPLOADS_DIR, clean_filename), 'wb') as f:
+                    f.write(raw_bytes)
+            except Exception:
+                pass
+
+            try:
+                assets_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'public', 'assets')
+                os.makedirs(assets_dir, exist_ok=True)
+                with open(os.path.join(assets_dir, 'qr_payment.png'), 'wb') as f:
+                    f.write(raw_bytes)
+            except Exception:
+                pass
+
+            # 2. Save into persistent database (Supabase / SQLite) so ALL serverless instances can serve it
+            db.save_uploaded_file(clean_filename, mime_type, raw_bytes)
+            db.save_uploaded_file('qr_payment.png', mime_type, raw_bytes)
+
+            qr_url = f"/uploads/{clean_filename}"
             db.update_admin_settings({"subscription_qr_url": qr_url})
-            self._send_json(200, {"qr_url": qr_url, "filename": clean_filename, "message": "QR Code updated successfully"})
+            self._send_json(200, {
+                "qr_url": qr_url,
+                "filename": clean_filename,
+                "message": "QR Code updated successfully"
+            })
         else:
             self._send_json(400, {"error": "Please provide QR image payload in JSON base64 format"})
 
