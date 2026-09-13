@@ -34,7 +34,7 @@ class StenoAudioPlayer {
 
     this.isCountingDown = false;
     this.countdownTimer = null;
-    this.countdownSeconds = 5;
+    this.countdownSeconds = 3;
     this.audioCtx = null;
     this.countdownAudioMap = null;
 
@@ -248,7 +248,7 @@ class StenoAudioPlayer {
   startCountdown() {
     this.cancelCountdown();
     this.isCountingDown = true;
-    this.countdownSeconds = 5;
+    this.countdownSeconds = 3;
 
     // Immediately pre-unlock audio on user click to satisfy browser autoplay restriction
     if (this.audioElement && this.audioElement.src && !this.isSpeechSynthesis) {

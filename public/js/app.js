@@ -2184,49 +2184,75 @@ class StenoApp {
         cardEl.style.transform = 'scale(0.99)';
       }
 
-      // Check prefetch cache for instant 0ms launch
+      // 1. Instantaneous 0ms in-memory lookup from this.allPassages or cache
+      const inMem = (this.allPassages || []).find(p => Number(p.id) === pId);
       let passage = this._passageDetailsCache ? this._passageDetailsCache.get(pId) : null;
-      if (!passage) {
-        const res = await this.apiCall(`/api/passages/${pId}`);
-        passage = res ? res.passage : null;
+      if (!passage && inMem) {
+        passage = { ...inMem };
       }
 
-      if (cardEl) {
-        cardEl.style.opacity = '1';
-        cardEl.style.transform = 'none';
+      const hasFullAccess = !!(this.user && (this.user.role === 'admin' || this.user.subscription_status === 'active' || this.user.is_free_access));
+
+      // Check lock status before entering
+      if (passage && passage.is_locked && !hasFullAccess) {
+        this.handleLockedPassageClick(pId);
+        return;
       }
 
+      // 2. If available in memory (99.9% of times), launch practice room IN 0ms!
+      if (passage) {
+        this.currentPassage = passage;
+        const savedPref = forcedSystem || localStorage.getItem('stenomaster_preferred_font') || localStorage.getItem('stenomaster_typing_mode') || 'mangal_unicode';
+        const preferredSystem = (savedPref === 'kruti_dev_010' || savedPref === 'krutidev') ? 'kruti_dev_010' : 'mangal_unicode';
+        const sys = this.currentPassage.typing_system || 'dual';
+        const systemToStart = (sys === 'kruti_dev_010') ? 'kruti_dev_010' : (sys === 'mangal_unicode' ? 'mangal_unicode' : preferredSystem);
+
+        this.startPracticeWithSystem(systemToStart);
+
+        // Background hydration for instructions and steno notes (zero UI blocking)
+        if (!this._passageDetailsCache || !this._passageDetailsCache.has(pId)) {
+          this.apiCall(`/api/passages/${pId}`).then(res => {
+            if (res && res.passage) {
+              if (this._passageDetailsCache) this._passageDetailsCache.set(pId, res.passage);
+              if (this.currentPassage && Number(this.currentPassage.id) === pId) {
+                if (res.passage.instructions) {
+                  this.currentPassage.instructions = res.passage.instructions;
+                  const instrEl = document.getElementById('practiceInstructions');
+                  if (instrEl) instrEl.textContent = res.passage.instructions;
+                }
+                if (res.passage.steno_notes_url) {
+                  this.currentPassage.steno_notes_url = res.passage.steno_notes_url;
+                  this.currentPassage.steno_notes_type = res.passage.steno_notes_type;
+                  const stenoBtn = document.getElementById('practiceStenoNotesBtn');
+                  if (stenoBtn) {
+                    stenoBtn.style.display = 'inline-flex';
+                    stenoBtn.textContent = res.passage.steno_notes_type === 'pdf' ? '📄 स्टेनो PDF देखें' : '📝 स्टेनो आउटलाइन देखें';
+                  }
+                }
+              }
+            }
+          }).catch(() => {});
+        }
+        return;
+      }
+
+      // Fallback only if item not in memory
+      const res = await this.apiCall(`/api/passages/${pId}`);
+      passage = res ? res.passage : null;
       if (!passage) {
         this.showToast('यह आलेख अब उपलब्ध नहीं है। सूची अपडेट की जा रही है...', 'warning');
         await this.loadPassages(true);
         return;
       }
-
-      if (passage.is_locked) {
+      if (passage.is_locked && !hasFullAccess) {
         this.handleLockedPassageClick(pId);
         return;
       }
       this.currentPassage = passage;
-
-      const hasFullAccess = !!(this.user && (this.user.role === 'admin' || this.user.subscription_status === 'active' || this.user.is_free_access));
-      if (!this.currentPassage.is_free_tier && this.currentPassage.is_premium && !hasFullAccess) {
-        this.handleLockedPassageClick(pId);
-        return;
-      }
-
-      // Automatically use preferred font (never annoy student with repeated popup modal)
       const savedPref = forcedSystem || localStorage.getItem('stenomaster_preferred_font') || localStorage.getItem('stenomaster_typing_mode') || 'mangal_unicode';
       const preferredSystem = (savedPref === 'kruti_dev_010' || savedPref === 'krutidev') ? 'kruti_dev_010' : 'mangal_unicode';
-
       const sys = this.currentPassage.typing_system || 'dual';
-      if (sys === 'kruti_dev_010') {
-        this.startPracticeWithSystem('kruti_dev_010');
-      } else if (sys === 'mangal_unicode') {
-        this.startPracticeWithSystem('mangal_unicode');
-      } else {
-        // Dual mode: start immediately in student's preferred font!
-        this.startPracticeWithSystem(preferredSystem);
-      }
+      this.startPracticeWithSystem(sys === 'kruti_dev_010' ? 'kruti_dev_010' : (sys === 'mangal_unicode' ? 'mangal_unicode' : preferredSystem));
     } catch (err) {
       const cardEl = document.querySelector(`.class-card[onclick*="openPractice(${passageId})"]`);
       if (cardEl) {
@@ -2327,12 +2353,10 @@ class StenoApp {
       window.stenoAudioPlayer.updateWpmUI();
     }
 
-    // Auto-start dictation with countdown upon entering practice room
-    setTimeout(() => {
-      if (window.stenoAudioPlayer && !window.stenoAudioPlayer.isPlaying) {
-        window.stenoAudioPlayer.play();
-      }
-    }, 350);
+    // Dictation & timer start ONLY when student clicks the Play (▶️) button
+    if (window.stenoAudioPlayer) {
+      window.stenoAudioPlayer.pause();
+    }
   }
 
   // -------------------------------------------------------------------------
