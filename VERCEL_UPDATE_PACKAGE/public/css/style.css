@@ -5100,3 +5100,17 @@ html {
     grid-template-columns: 1fr;
   }
 }
+
+
+/* 60 FPS Hardware Acceleration & Zero Typing Latency */
+.typing-textarea {
+  contain: layout style;
+}
+
+.class-card,
+.rules-section-panel,
+.stat-card,
+.badge-card {
+  content-visibility: auto;
+  contain-intrinsic-size: 0 160px;
+}
