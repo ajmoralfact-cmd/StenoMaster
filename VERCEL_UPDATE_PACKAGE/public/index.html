@@ -12,7 +12,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Mukta:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/css/style.css?v=7.3">
+  <link rel="stylesheet" href="/css/style.css?v=7.4">
   <!-- Google Identity Services SDK -->
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   <script>
@@ -24,6 +24,9 @@
     html.no-auth-session #appContainer { display: none !important; }
     html.no-auth-session #authGatewayView { display: flex !important; }
   </style>
+  <!-- Font Preloads for Instant Hindi Typography -->
+  <link rel="preload" href="/assets/fonts/Mangal.ttf" as="font" type="font/ttf" crossorigin>
+  <link rel="preload" href="/assets/fonts/Kruti_Dev_010.ttf" as="font" type="font/ttf" crossorigin>
 </head>
 <body>
   <!-- Sleek Browser Native-Style Top Loading Progress Bar -->
@@ -38,7 +41,7 @@
         
         <!-- Logo & Branding -->
         <div class="auth-header">
-          <img src="/assets/logo.png" alt="StenoMaster Logo" class="auth-logo-img">
+          <img src="/assets/logo.png" alt="StenoMaster Logo" class="auth-logo-img" fetchpriority="high">
           <h1 class="auth-brand-title">StenoMaster</h1>
           <p class="auth-brand-tagline">Listen. Type. Improve. Master Steno.</p>
         </div>
@@ -2728,11 +2731,11 @@
   <script defer src="https://sdk.cashfree.com/js/v3/cashfree.js"></script>
 
   <!-- Scripts -->
-  <script src="/js/charts.js?v=7.3"></script>
-  <script src="/js/audio_player.js?v=7.3"></script>
-  <script src="/js/keyboard_map.js?v=7.3"></script>
-  <script src="/js/typing_engine.js?v=7.3"></script>
-  <script src="/js/comparison_view.js?v=7.3"></script>
-  <script src="/js/app.js?v=7.3"></script>
+  <script src="/js/charts.js?v=7.4"></script>
+  <script src="/js/audio_player.js?v=7.4"></script>
+  <script src="/js/keyboard_map.js?v=7.4"></script>
+  <script src="/js/typing_engine.js?v=7.4"></script>
+  <script src="/js/comparison_view.js?v=7.4"></script>
+  <script src="/js/app.js?v=7.4"></script>
 </body>
 </html>

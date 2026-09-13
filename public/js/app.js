@@ -1686,7 +1686,10 @@ class StenoApp {
 
   onSearchInput(val) {
     this.searchQuery = val || '';
-    this.applyPassageFilters();
+    if (this._searchDebounceTimer) clearTimeout(this._searchDebounceTimer);
+    this._searchDebounceTimer = setTimeout(() => {
+      this.applyPassageFilters();
+    }, 160);
   }
 
   onLanguageFilterChange(val) {
