@@ -1255,14 +1255,25 @@
       <main class="page-view" id="view-subscription">
         <div class="clean-sub-container">
 
-          <!-- Header with Title & Live Status -->
-          <div class="section-header" style="margin-bottom:20px;">
+                    <!-- Header with Title & Live Status -->
+          <div class="section-header" style="margin-bottom:12px;">
             <div>
               <h2 class="section-title">👑 StenoMaster Pro सदस्यता</h2>
               <p class="section-subtitle">अपनी परीक्षा (SSC, UPSSSC, High Court) अनुसार प्लान चुनें और सभी 100+ डिक्टेशन तुरंत अनलॉक करें</p>
             </div>
-            <div id="subCurrentStatusBadgeWrap">
-              <!-- Populated dynamically -->
+            <div id="subCurrentStatusBadgeWrap" style="display:none;"></div>
+          </div>
+
+          <!-- Active Plan Status Bar (Horizontal, Slim, Translucent) -->
+          <div id="subActivePlanBox" class="sub-active-bar bar-inactive">
+            <div class="sub-active-bar-inner">
+              <div class="sub-active-bar-left">
+                <span class="sub-active-lead">🔴 कोई प्लान एक्टिव नहीं है (No Active Plan)</span>
+                <span class="sub-active-desc">— असीमित डिक्टेशन अभ्यास व परीक्षा मोड के लिए नीचे से कोई भी प्लान चुनें।</span>
+              </div>
+              <div class="sub-active-bar-right">
+                <span class="sub-active-pill-inactive">अक्रिय (Inactive)</span>
+              </div>
             </div>
           </div>
 

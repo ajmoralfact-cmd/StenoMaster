@@ -2769,12 +2769,82 @@ class StenoApp {
   // -------------------------------------------------------------------------
   // Subscription & Pro Payment Handlers (Phase 3)
   // -------------------------------------------------------------------------
+  getActivePlanDisplay(details) {
+    const rawPlan = (details.subscription_plan || details.plan_name || '').toLowerCase();
+    const daysLeft = details.subscription_days_left !== undefined ? details.subscription_days_left : (details.days_left || 0);
+
+    if (rawPlan.includes('admin')) {
+      return { price: '₹0', name: 'एडमिन प्रो आजीवन प्लान', full: '₹0 (लाइफटाइम) — एडमिन प्रो प्लान' };
+    }
+    if (rawPlan.includes('800') || rawPlan.includes('1y') || rawPlan.includes('1 वर्ष') || rawPlan.includes('1 year') || daysLeft > 180) {
+      return { price: '₹800', name: '1 वर्ष (365 दिन) प्लान', full: '₹800 का 1 वर्ष (365 दिन) प्लान' };
+    }
+    if (rawPlan.includes('450') || rawPlan.includes('6m') || rawPlan.includes('6 माह') || rawPlan.includes('6 month') || daysLeft > 90) {
+      return { price: '₹450', name: '6 माह (180 दिन) प्लान', full: '₹450 का 6 माह (180 दिन) प्लान' };
+    }
+    if (rawPlan.includes('250') || rawPlan.includes('3m') || rawPlan.includes('3 माह') || rawPlan.includes('3 month') || daysLeft > 30) {
+      return { price: '₹250', name: '3 माह (90 दिन) प्लान', full: '₹250 का 3 माह (90 दिन) प्लान' };
+    }
+    if (rawPlan.includes('30 दिन फ्री') || details.is_free_access) {
+      return { price: '₹0', name: '30 दिन प्रो ट्रायल प्लान', full: '₹0 का 30 दिन प्रो ट्रायल प्लान' };
+    }
+    const priceStr = details.plan_price ? `₹${details.plan_price}` : '₹100';
+    return { price: priceStr, name: '1 माह (30 दिन) प्लान', full: `${priceStr} का 1 माह (30 दिन) प्लान` };
+  }
+
+  renderActivePlanBar(details) {
+    const barEl = document.getElementById('subActivePlanBox');
+    if (!barEl) return;
+
+    const isPro = Boolean(details.is_premium || details.subscription_status === 'active');
+    const daysLeft = details.subscription_days_left !== undefined ? details.subscription_days_left : (details.days_left || 0);
+
+    if (isPro && daysLeft > 0) {
+      const planInfo = this.getActivePlanDisplay(details);
+      const expDate = details.subscription_end
+        ? new Date(details.subscription_end).toLocaleDateString('hi-IN', { day: 'numeric', month: 'short', year: 'numeric' })
+        : 'सक्रिय';
+
+      barEl.className = 'sub-active-bar bar-active';
+      barEl.innerHTML = `
+        <div class="sub-active-bar-inner">
+          <div class="sub-active-bar-left">
+            <span class="sub-active-badge"><span class="sub-active-pulse-dot"></span> सक्रिय प्लान (Active Plan)</span>
+            <span class="sub-active-highlight">${planInfo.full} एक्टिव है</span>
+          </div>
+          <div class="sub-active-bar-right">
+            <span class="sub-active-days-chip">⏳ <strong>${daysLeft} दिन शेष</strong></span>
+            <span class="sub-active-exp-text">(वैधता: ${expDate} तक)</span>
+          </div>
+        </div>
+      `;
+    } else {
+      barEl.className = 'sub-active-bar bar-inactive';
+      barEl.innerHTML = `
+        <div class="sub-active-bar-inner">
+          <div class="sub-active-bar-left">
+            <span class="sub-active-lead">🔴 कोई प्लान एक्टिव नहीं है (No Active Plan)</span>
+            <span class="sub-active-desc">— असीमित डिक्टेशन अभ्यास व परीक्षा मोड के लिए नीचे से कोई भी प्लान चुनें।</span>
+          </div>
+          <div class="sub-active-bar-right">
+            <span class="sub-active-pill-inactive">अक्रिय (Inactive)</span>
+          </div>
+        </div>
+      `;
+    }
+  }
+
   async loadSubscription() {
     try {
+      if (this.user) {
+        this.renderActivePlanBar(this.user);
+      }
       const details = await this.apiCall('/api/subscription/details');
       this.subscriptionPlans = details.plans || [];
       const upiId = details.upi_id || 'stenomaster@upi';
       const statusBadgeWrap = document.getElementById('subCurrentStatusBadgeWrap');
+      if (statusBadgeWrap) { statusBadgeWrap.style.display = 'none'; statusBadgeWrap.innerHTML = ''; }
+      this.renderActivePlanBar(details);
       const expiringBanner = document.getElementById('subExpiringSoonBanner');
       const qrImgEl = document.getElementById('subActiveQrImg');
       const upiDisplayEl = document.getElementById('subUpiIdDisplay');

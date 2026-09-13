@@ -5446,3 +5446,197 @@ html {
   font-size: 1.3rem;
   flex-shrink: 0;
 }
+
+/* ==========================================================================
+   Active Plan Status Banner (Horizontal, Slim, Stylish Translucent)
+   ========================================================================== */
+.sub-active-bar {
+  width: 100%;
+  margin: 0 0 16px 0;
+  border-radius: 12px;
+  padding: 8px 16px;
+  box-sizing: border-box;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  display: block;
+}
+
+.sub-active-bar-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  width: 100%;
+}
+
+.sub-active-bar-left {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-size: 0.92rem;
+  line-height: 1.4;
+}
+
+.sub-active-bar-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.86rem;
+}
+
+/* Green Active State */
+.sub-active-bar.bar-active {
+  background: linear-gradient(90deg, rgba(16, 185, 129, 0.12) 0%, rgba(5, 150, 105, 0.06) 100%);
+  border: 1.5px solid rgba(16, 185, 129, 0.38);
+  box-shadow: 0 2px 12px rgba(16, 185, 129, 0.08);
+  color: #065f46;
+}
+
+body.dark-mode .sub-active-bar.bar-active {
+  background: linear-gradient(90deg, rgba(16, 185, 129, 0.18) 0%, rgba(5, 150, 105, 0.10) 100%);
+  border-color: rgba(52, 211, 153, 0.45);
+  color: #a7f3d0;
+  box-shadow: 0 2px 14px rgba(16, 185, 129, 0.15);
+}
+
+.sub-active-bar.bar-active .sub-active-badge {
+  background: rgba(16, 185, 129, 0.18);
+  color: #047857;
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  padding: 3px 10px;
+  border-radius: 20px;
+  border: 1px solid rgba(16, 185, 129, 0.35);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+body.dark-mode .sub-active-bar.bar-active .sub-active-badge {
+  background: rgba(16, 185, 129, 0.25);
+  color: #34d399;
+  border-color: rgba(52, 211, 153, 0.4);
+}
+
+.sub-active-bar.bar-active .sub-active-highlight {
+  font-weight: 700;
+  color: #065f46;
+}
+
+body.dark-mode .sub-active-bar.bar-active .sub-active-highlight {
+  color: #ecfdf5;
+}
+
+.sub-active-bar.bar-active .sub-active-days-chip {
+  background: #10b981;
+  color: #ffffff;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 8px;
+  font-size: 0.84rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  box-shadow: 0 2px 6px rgba(16, 185, 129, 0.3);
+}
+
+.sub-active-bar.bar-active .sub-active-exp-text {
+  font-size: 0.82rem;
+  color: #047857;
+  font-weight: 500;
+}
+
+body.dark-mode .sub-active-bar.bar-active .sub-active-exp-text {
+  color: #6ee7b7;
+}
+
+/* Red Inactive State */
+.sub-active-bar.bar-inactive {
+  background: linear-gradient(90deg, rgba(239, 68, 68, 0.10) 0%, rgba(220, 38, 38, 0.05) 100%);
+  border: 1.5px solid rgba(239, 68, 68, 0.35);
+  box-shadow: 0 2px 12px rgba(239, 68, 68, 0.08);
+  color: #991b1b;
+}
+
+body.dark-mode .sub-active-bar.bar-inactive {
+  background: linear-gradient(90deg, rgba(239, 68, 68, 0.18) 0%, rgba(220, 38, 38, 0.10) 100%);
+  border-color: rgba(248, 113, 113, 0.45);
+  color: #fca5a5;
+  box-shadow: 0 2px 14px rgba(239, 68, 68, 0.15);
+}
+
+.sub-active-bar.bar-inactive .sub-active-lead {
+  font-weight: 800;
+  color: #991b1b;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+body.dark-mode .sub-active-bar.bar-inactive .sub-active-lead {
+  color: #fee2e2;
+}
+
+.sub-active-bar.bar-inactive .sub-active-desc {
+  color: #b91c1c;
+  font-size: 0.85rem;
+}
+
+body.dark-mode .sub-active-bar.bar-inactive .sub-active-desc {
+  color: #fca5a5;
+}
+
+.sub-active-bar.bar-inactive .sub-active-pill-inactive {
+  background: rgba(239, 68, 68, 0.18);
+  color: #b91c1c;
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 20px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+body.dark-mode .sub-active-bar.bar-inactive .sub-active-pill-inactive {
+  background: rgba(239, 68, 68, 0.25);
+  color: #fca5a5;
+  border-color: rgba(248, 113, 113, 0.4);
+}
+
+/* Pulsing Green Dot */
+.sub-active-pulse-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+  background: #10b981;
+  box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+  animation: subPulseGreen 2s infinite;
+}
+
+@keyframes subPulseGreen {
+  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+  70% { transform: scale(1.05); box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+}
+
+@media (max-width: 640px) {
+  .sub-active-bar {
+    padding: 8px 12px;
+  }
+  .sub-active-bar-inner {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+  .sub-active-bar-left, .sub-active-bar-right {
+    width: 100%;
+    justify-content: space-between;
+  }
+}
