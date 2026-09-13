@@ -1290,7 +1290,68 @@
             </div>
           </div>
           <div id="subPlansGrid" class="subscription-plans-grid">
-            <!-- Populated dynamically via stenoApp.renderSubscriptionPlans() -->
+            <div class="sub-plan-card" data-plan-id="1m" onclick="stenoApp.initiateCashfreePayment('1m')">
+              <div>
+                <div class="sub-plan-title">1 माह (30 दिन)</div>
+                <div class="sub-plan-subtitle">बेसिक मासिक अभ्यास</div>
+                <div class="sub-plan-price-row">
+                  <span class="sub-plan-amount">₹100</span>
+                  <span class="sub-plan-period">/ 30 दिन</span>
+                </div>
+                <div class="sub-plan-savings-pill" style="visibility:hidden;">—</div>
+              </div>
+              <button type="button" class="sub-buy-now-btn" onclick="event.stopPropagation(); stenoApp.initiateCashfreePayment('1m')">
+                <span>⚡ ₹100 में खरीदें</span> <span>→</span>
+              </button>
+            </div>
+
+            <div class="sub-plan-card" data-plan-id="3m" onclick="stenoApp.initiateCashfreePayment('3m')">
+              <div class="sub-plan-card-tag tag-popular">⭐ लोकप्रिय (POPULAR)</div>
+              <div>
+                <div class="sub-plan-title">3 माह (90 दिन)</div>
+                <div class="sub-plan-subtitle">सबसे लोकप्रिय प्लान</div>
+                <div class="sub-plan-price-row">
+                  <span class="sub-plan-amount">₹250</span>
+                  <span class="sub-plan-period">/ 90 दिन</span>
+                </div>
+                <div class="sub-plan-savings-pill">🎉 ₹50 की बचत</div>
+              </div>
+              <button type="button" class="sub-buy-now-btn" onclick="event.stopPropagation(); stenoApp.initiateCashfreePayment('3m')">
+                <span>⚡ ₹250 में खरीदें</span> <span>→</span>
+              </button>
+            </div>
+
+            <div class="sub-plan-card" data-plan-id="6m" onclick="stenoApp.initiateCashfreePayment('6m')">
+              <div class="sub-plan-card-tag">💰 ₹150 की बचत</div>
+              <div>
+                <div class="sub-plan-title">6 माह (180 दिन)</div>
+                <div class="sub-plan-subtitle">सुपर सेवर प्लान</div>
+                <div class="sub-plan-price-row">
+                  <span class="sub-plan-amount">₹450</span>
+                  <span class="sub-plan-period">/ 180 दिन</span>
+                </div>
+                <div class="sub-plan-savings-pill">🎉 ₹150 की बचत</div>
+              </div>
+              <button type="button" class="sub-buy-now-btn" onclick="event.stopPropagation(); stenoApp.initiateCashfreePayment('6m')">
+                <span>⚡ ₹450 में खरीदें</span> <span>→</span>
+              </button>
+            </div>
+
+            <div class="sub-plan-card" data-plan-id="1y" onclick="stenoApp.initiateCashfreePayment('1y')">
+              <div class="sub-plan-card-tag tag-best">👑 बेस्ट वैल्यू (BEST VALUE)</div>
+              <div>
+                <div class="sub-plan-title">1 वर्ष (365 दिन)</div>
+                <div class="sub-plan-subtitle">सर्वश्रेष्ठ वार्षिक मूल्य</div>
+                <div class="sub-plan-price-row">
+                  <span class="sub-plan-amount">₹800</span>
+                  <span class="sub-plan-period">/ 365 दिन</span>
+                </div>
+                <div class="sub-plan-savings-pill">🎉 ₹400 की बचत</div>
+              </div>
+              <button type="button" class="sub-buy-now-btn" onclick="event.stopPropagation(); stenoApp.initiateCashfreePayment('1y')">
+                <span>⚡ ₹800 में खरीदें</span> <span>→</span>
+              </button>
+            </div>
           </div>
 
           <div style="text-align:center; font-size:0.84rem; color:var(--text-muted); margin-top:-8px; margin-bottom:24px;">
@@ -1313,7 +1374,7 @@
                 <!-- QR Code & UPI Details (Size Doubled to 175px x 175px for easy scanning) -->
                 <div style="display:flex; gap:22px; align-items:center; justify-content:center; flex-wrap:wrap;">
                   <div style="text-align:center;">
-                    <img src="/assets/qr_payment.png" id="subActiveQrImg" alt="UPI QR Code" style="width:175px; height:175px; object-fit:contain; background:#ffffff; padding:8px; border-radius:12px; border:2px solid var(--border); box-shadow:0 4px 16px rgba(0,0,0,0.1); display:block; margin:0 auto;">
+                    <img src="/assets/qr_payment.png" id="subActiveQrImg" onerror="this.src='/assets/qr_payment.png'" alt="UPI QR Code" style="width:175px; height:175px; object-fit:contain; background:#ffffff; padding:8px; border-radius:12px; border:2px solid var(--border); box-shadow:0 4px 16px rgba(0,0,0,0.1); display:block; margin:0 auto;">
                     <div style="font-size:0.75rem; color:var(--text-muted); margin-top:6px; font-weight:600;">Scan with PhonePe, GPay, Paytm, BHIM</div>
                   </div>
 

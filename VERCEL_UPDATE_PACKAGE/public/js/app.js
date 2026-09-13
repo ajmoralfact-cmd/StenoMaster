@@ -18,7 +18,12 @@ class StenoApp {
     this.selectedDifficulty = 'all';
     this.searchQuery = '';
     this.currentExamRule = 'ssc_steno';
-    this.subscriptionPlans = [];
+        this.subscriptionPlans = [
+      { id: '1m', days: 30, price: 100, title_hi: '1 माह (30 दिन)', subtitle_hi: 'बेसिक मासिक अभ्यास', name: 'StenoMaster Pro — 1 Month' },
+      { id: '3m', days: 90, price: 250, title_hi: '3 माह (90 दिन)', subtitle_hi: 'सबसे लोकप्रिय प्लान', savings: '₹50 की बचत', popular: true, name: 'StenoMaster Pro — 3 Months' },
+      { id: '6m', days: 180, price: 450, title_hi: '6 माह (180 दिन)', subtitle_hi: 'सुपर सेवर प्लान', savings: '₹150 की बचत', name: 'StenoMaster Pro — 6 Months' },
+      { id: '1y', days: 365, price: 800, title_hi: '1 वर्ष (365 दिन)', subtitle_hi: 'सर्वश्रेष्ठ वार्षिक मूल्य', savings: '₹400 की बचत', name: 'StenoMaster Pro — 1 Year' }
+    ];
     this.selectedPlan = null;
     this.allPassages = [];
     this.selectedTypingSystem = localStorage.getItem('stenomaster_preferred_font') || localStorage.getItem('stenomaster_typing_mode') || 'mangal_unicode';
