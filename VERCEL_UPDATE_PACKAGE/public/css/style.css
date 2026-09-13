@@ -5186,3 +5186,263 @@ html {
   border-color: var(--primary);
   box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3);
 }
+
+
+/* ==========================================================================
+   Founder & Mentor Profile Page Styles
+   ========================================================================== */
+.founder-container {
+  max-width: 960px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  padding-bottom: 30px;
+}
+
+.founder-hero-card {
+  background: var(--bg-surface);
+  border: 1.5px solid var(--border-subtle);
+  border-radius: 18px;
+  padding: 28px 24px;
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
+  position: relative;
+  overflow: hidden;
+}
+
+.founder-hero-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 5px;
+  background: linear-gradient(90deg, #2563eb, #d97706, #10b981);
+}
+
+.founder-photo-wrap {
+  flex-shrink: 0;
+  position: relative;
+  text-align: center;
+}
+
+.founder-photo {
+  width: 135px;
+  height: 135px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 4px solid var(--bg-surface);
+  box-shadow: 0 0 0 3px #d97706, 0 8px 20px rgba(0, 0, 0, 0.12);
+  background: var(--bg-subtle);
+  display: block;
+}
+
+.founder-verified-badge {
+  position: absolute;
+  bottom: 4px;
+  right: 8px;
+  background: #2563eb;
+  color: #fff;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  font-weight: 800;
+  border: 2px solid var(--bg-surface);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+}
+
+.founder-meta {
+  flex: 1;
+}
+
+.founder-badge-role {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: linear-gradient(135deg, rgba(217, 119, 6, 0.12), rgba(245, 158, 11, 0.12));
+  color: #b45309;
+  border: 1px solid rgba(217, 119, 6, 0.3);
+  font-size: 0.76rem;
+  font-weight: 800;
+  padding: 4px 12px;
+  border-radius: 20px;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.founder-name {
+  font-size: 1.8rem;
+  font-weight: 900;
+  color: var(--text-main);
+  margin: 0 0 4px 0;
+  line-height: 1.2;
+}
+
+.founder-title {
+  font-size: 0.94rem;
+  color: var(--text-secondary);
+  font-weight: 600;
+  margin-bottom: 14px;
+}
+
+.founder-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.founder-chip {
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-subtle);
+  padding: 5px 12px;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.founder-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.founder-card {
+  background: var(--bg-surface);
+  border: 1.5px solid var(--border-subtle);
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
+}
+
+.founder-card-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+  border-bottom: 1.5px solid var(--border-subtle);
+  padding-bottom: 12px;
+}
+
+.founder-card-title {
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: var(--text-main);
+  margin: 0;
+}
+
+.founder-text {
+  font-size: 0.94rem;
+  line-height: 1.75;
+  color: var(--text-secondary);
+  margin-bottom: 14px;
+}
+
+.founder-quote-box {
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.05), rgba(99, 102, 241, 0.05));
+  border-left: 4px solid var(--primary);
+  border-radius: 0 12px 12px 0;
+  padding: 16px 20px;
+  font-size: 0.96rem;
+  font-style: italic;
+  color: var(--text-main);
+  line-height: 1.7;
+  margin: 16px 0;
+}
+
+.founder-vision-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px;
+}
+
+@media (max-width: 768px) {
+  .founder-hero-card {
+    flex-direction: column;
+    text-align: center;
+    padding: 24px 16px;
+  }
+  .founder-photo {
+    width: 120px;
+    height: 120px;
+    margin: 0 auto;
+  }
+  .founder-chips {
+    justify-content: center;
+  }
+  .founder-actions {
+    justify-content: center;
+  }
+  .founder-vision-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.founder-vision-item {
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  padding: 16px;
+}
+
+.founder-vision-item h4 {
+  font-size: 0.96rem;
+  font-weight: 800;
+  color: var(--text-main);
+  margin: 0 0 6px 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.founder-vision-item p {
+  font-size: 0.86rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin: 0;
+}
+
+.founder-social-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+}
+
+.founder-social-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-radius: 12px;
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-subtle);
+  text-decoration: none;
+  color: var(--text-main);
+  transition: all 0.2s ease;
+}
+
+.founder-social-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--primary);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+}
+
+.founder-social-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.3rem;
+  flex-shrink: 0;
+}

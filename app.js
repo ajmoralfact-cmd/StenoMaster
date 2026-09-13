@@ -224,7 +224,7 @@ class StenoApp {
     const validViews = [
       'home', 'classes', 'self-practice', 'subscription', 'result', 'my-practice',
       'progress', 'leaderboard', 'bookmarks', 'profile', 'refer',
-      'notifications', 'settings', 'rules'
+      'notifications', 'settings', 'rules', 'founder'
     ];
 
     if (validViews.includes(path)) {
@@ -1386,6 +1386,7 @@ class StenoApp {
         { id: 'leaderboard', icon: '🏆', label: 'Leaderboard', sub: 'रैंकिंग बोर्ड' },
         { id: 'bookmarks', icon: '🔖', label: 'Bookmarks', sub: 'सहेजे गए आलेख' },
         { id: 'rules', icon: '📋', label: 'परीक्षा नियम', sub: 'UPSSSC & SSC Rules' },
+        { id: 'founder', icon: '👤', label: 'संस्थापक परिचय', sub: 'About Founder & Mentor' },
         { id: 'profile', icon: '👤', label: 'My Profile', sub: 'मेरी प्रोफ़ाइल' },
         { id: 'refer', icon: '🎁', label: 'Refer & Earn', sub: 'रेफरल एवं अंक' },
         { id: 'settings', icon: '⚙️', label: 'Settings', sub: 'प्राथमिकताएं' }
