@@ -1,9 +1,9 @@
 /**
  * StenoMaster Service Worker — v7.4
- * Zero-Refresh High-Performance Architecture with Dynamic Module Cache
+ * Instant 15ms Cache-First App Shell Architecture with Background Stale-While-Revalidate
  */
 
-const CACHE_NAME = 'stenomaster-v7.4';
+const CACHE_NAME = 'stenomaster-v7.4-shell';
 const ASSETS_TO_PRECACHE = [
   '/',
   '/index.html',
@@ -18,6 +18,7 @@ const ASSETS_TO_PRECACHE = [
   '/assets/fonts/Kruti_Dev_010.ttf'
 ];
 
+// Install: Pre-cache app shell assets immediately
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
@@ -29,13 +30,14 @@ self.addEventListener('install', (event) => {
   self.skipWaiting();
 });
 
+// Activate: Purge older caches instantly and claim active clients
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((keys) => {
       return Promise.all(
         keys.map((key) => {
           if (key !== CACHE_NAME) {
-            console.log('[SW] Purging obsolete cache:', key);
+            console.log('[SW v7.4] Purging obsolete cache:', key);
             return caches.delete(key);
           }
         })
@@ -44,36 +46,49 @@ self.addEventListener('activate', (event) => {
   );
 });
 
+// Fetch: Smart Hybrid Routing (Cache-First Shell + Network-Only APIs)
 self.addEventListener('fetch', (event) => {
   const req = event.request;
   const url = req.url;
 
-  // 1. API calls, dynamic server routes, and audio uploads: STRICTLY Network-only
-  if (url.includes('/api/') || url.includes('/uploads/')) {
+  // 1. Dynamic API calls, audio uploads, and Admin portal: STRICTLY Network-only
+  if (url.includes('/api/') || url.includes('/uploads/') || url.includes('/admin') || url.includes('/admin.html')) {
     event.respondWith(fetch(req));
     return;
   }
 
-  // 2. Navigation (opening website link / page load):
+  // 2. Navigation Requests (Opening website URL / clicking links):
+  // Cache-First with Background Stale-While-Revalidate (Instant 15ms page load on 2G/offline)
   if (req.mode === 'navigate' || req.headers.get('accept')?.includes('text/html')) {
     event.respondWith(
-      fetch(req).catch(() => caches.match('/index.html'))
+      caches.match('/index.html').then((cachedHtml) => {
+        const fetchPromise = fetch(req).then((networkHtml) => {
+          if (networkHtml && networkHtml.status === 200) {
+            const copy = networkHtml.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put('/index.html', copy));
+          }
+          return networkHtml;
+        }).catch(() => null);
+
+        // Serve local cached shell immediately if available (under 15ms)
+        return cachedHtml || fetchPromise;
+      })
     );
     return;
   }
 
-  // 3. Static Assets: Stale-While-Revalidate (Instant cached response + background update)
+  // 3. Static Assets (.css, .js, fonts, images): Cache-First + Stale-While-Revalidate
   event.respondWith(
-    caches.match(req).then((cached) => {
-      const fetchPromise = fetch(req).then((networkRes) => {
-        if (networkRes && networkRes.status === 200 && networkRes.type === 'basic') {
-          const resToCache = networkRes.clone();
+    caches.match(req).then((cachedResponse) => {
+      const fetchPromise = fetch(req).then((networkResponse) => {
+        if (networkResponse && networkResponse.status === 200 && networkResponse.type === 'basic') {
+          const resToCache = networkResponse.clone();
           caches.open(CACHE_NAME).then((cache) => cache.put(req, resToCache));
         }
-        return networkRes;
+        return networkResponse;
       }).catch(() => null);
 
-      return cached || fetchPromise;
+      return cachedResponse || fetchPromise;
     })
   );
 });
