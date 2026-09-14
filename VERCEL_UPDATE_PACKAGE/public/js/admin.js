@@ -1764,6 +1764,17 @@ class StenoAdmin {
     }
   }
 
+  setAiStudioVoice(voice, btnEl) {
+    const hidden = document.getElementById('aiStudioVoiceVal');
+    if (hidden) hidden.value = voice;
+
+    const pills = document.querySelectorAll('#aiStudioVoicePills .sub-filter-pill');
+    pills.forEach(p => p.classList.remove('active'));
+    if (btnEl) btnEl.classList.add('active');
+
+    stenoApp.showToast(`डिक्टेटर स्वर: ${voice === 'female' ? '👩 महिला (Swara)' : '👨 पुरुष (Madhur)'} चुना गया`, 'info');
+  }
+
   setAiStudioSpeed(wpm, btnEl) {
     const hidden = document.getElementById('aiStudioSpeedVal');
     if (hidden) hidden.value = wpm;
@@ -1856,6 +1867,8 @@ class StenoAdmin {
 
     const title = document.getElementById('aiStudioTitleInput')?.value.trim() || 'AI Dictation';
     const wpm = parseInt(document.getElementById('aiStudioSpeedVal')?.value || 80, 10);
+    const voice = document.getElementById('aiStudioVoiceVal')?.value || 'male';
+    const addIntro = document.getElementById('aiStudioIntroCheck') ? document.getElementById('aiStudioIntroCheck').checked : true;
     const btn = document.getElementById('btnAiStudioGenerate');
     const origText = btn ? btn.innerHTML : '';
 
@@ -1870,6 +1883,8 @@ class StenoAdmin {
         text: text,
         speed_wpm: wpm,
         title: title,
+        voice: voice,
+        add_intro: addIntro,
         pause_mode: 'exam'
       });
 
@@ -1894,7 +1909,9 @@ class StenoAdmin {
         const timeStr = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
 
         if (detailsEl) {
-          detailsEl.textContent = `गति: ${res.target_wpm} WPM | शब्द: ${res.word_count} | कुल अवधि: ${timeStr}`;
+          const vLabel = (res.voice === 'female' || voice === 'female') ? '👩 महिला (Swara)' : '👨 पुरुष (Madhur)';
+          const introLabel = (res.add_intro !== false && addIntro) ? ' | 🔔 5s इंट्रो' : '';
+          detailsEl.textContent = `गति: ${res.target_wpm} WPM | स्वर: ${vLabel} | शब्द: ${res.word_count} | कुल अवधि: ${timeStr}${introLabel}`;
         }
         if (player) {
           player.src = res.audio_url;
@@ -1966,13 +1983,19 @@ class StenoAdmin {
 
     const title = document.getElementById('passageTitleInput')?.value.trim() || 'Passage Dictation';
 
-    stenoApp.showToast(`नीचे लिखे टेक्स्ट से ${wpm} WPM AI ऑडियो तैयार हो रहा है... 🎙️`, 'info');
+    const voice = document.getElementById('modalAiVoiceSelect')?.value || 'male';
+    const addIntro = document.getElementById('modalAiIntroCheck') ? document.getElementById('modalAiIntroCheck').checked : true;
+    const vName = voice === 'female' ? 'महिला (Swara)' : 'पुरुष (Madhur)';
+
+    stenoApp.showToast(`नीचे लिखे टेक्स्ट से ${wpm} WPM (${vName}) AI ऑडियो तैयार हो रहा है... 🎙️`, 'info');
 
     try {
       const res = await stenoApp.apiCall('/api/admin/generate-ai-audio', 'POST', {
         text: textToUse,
         speed_wpm: wpm,
         title: title,
+        voice: voice,
+        add_intro: addIntro,
         pause_mode: 'exam'
       });
 

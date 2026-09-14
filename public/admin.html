@@ -813,6 +813,25 @@
                   </div>
                 </div>
 
+                <!-- Voice Selection & 5s Exam Intro Countdown -->
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 16px;">
+                  <div class="form-group" style="margin:0;">
+                    <label class="form-label" style="font-weight:700;">🎤 डिक्टेटर आवाज़ (Examiner Voice):</label>
+                    <div class="sub-filter-pills" id="aiStudioVoicePills" style="margin-top:6px;">
+                      <button type="button" class="sub-filter-pill active" id="voicePillMale" onclick="stenoAdmin.setAiStudioVoice('male', this)">👨 पुरुष (Madhur — परीक्षा हॉल)</button>
+                      <button type="button" class="sub-filter-pill" id="voicePillFemale" onclick="stenoAdmin.setAiStudioVoice('female', this)">👩 महिला (Swara — स्पष्ट)</button>
+                    </div>
+                    <input type="hidden" id="aiStudioVoiceVal" value="male">
+                  </div>
+                  <div class="form-group" style="margin:0;">
+                    <label class="form-label" style="font-weight:700;">🔔 5-सेकंड परीक्षा काउंटडाउन इंट्रो:</label>
+                    <label style="display:flex; align-items:center; gap:8px; margin-top:10px; font-size:0.85rem; font-weight:600; cursor:pointer; color:#334155;">
+                      <input type="checkbox" id="aiStudioIntroCheck" checked style="width:18px; height:18px; accent-color:#4f46e5;">
+                      <span>डिक्टेशन से पूर्व परीक्षा घोषणा व 5s काउंटडाउन जोड़ें</span>
+                    </label>
+                  </div>
+                </div>
+
                 <!-- 2. Speed Selector Pills -->
                 <div class="form-group" style="margin-bottom: 16px;">
                   <label class="form-label" style="font-weight:700; display:flex; justify-content:space-between; align-items:center;">
@@ -951,22 +970,38 @@
           </div>
         </div>
 
-                <!-- AI Voice 1-Click Dictation Generator Banner -->
-        <div style="background: linear-gradient(135deg, rgba(79, 70, 229, 0.07), rgba(168, 85, 247, 0.07)); border: 1px dashed rgba(99, 102, 241, 0.4); border-radius: 8px; padding: 12px; margin-bottom: 14px;">
-          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+                <!-- AI Voice Steno Dictation Generator Banner -->
+        <div style="background: linear-gradient(135deg, rgba(79, 70, 229, 0.07), rgba(168, 85, 247, 0.07)); border: 1px dashed rgba(99, 102, 241, 0.4); border-radius: 8px; padding: 14px; margin-bottom: 16px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:10px;">
             <div>
-              <div style="font-weight:700; font-size:0.88rem; color:#4338ca; display:flex; align-items:center; gap:6px;">
-                <span>🤖</span> <span>AI वॉइस ऑटो-डिक्टेशन (1-Click AI Audio)</span>
+              <div style="font-weight:700; font-size:0.92rem; color:#4338ca; display:flex; align-items:center; gap:6px;">
+                <span>🤖</span> <span>AI स्टेनो डिक्टेशन जेनरेटर (1-Click Steno Audio)</span>
               </div>
-              <p style="font-size:0.75rem; color:var(--text-muted); margin:2px 0 0 0;">नीचे लिखे संदर्भ आलेख से बिना रिकॉर्डिंग किए स्वतः प्राकृतिक हिंदी ऑडियो बनाएं</p>
+              <p style="font-size:0.75rem; color:var(--text-muted); margin:2px 0 0 0;">नीचे लिखे संदर्भ पाठ से रुक-रुक कर बोलने वाली प्रामाणिक परीक्षा लय में ऑडियो बनाएं</p>
             </div>
-            <div style="display:flex; gap:6px; align-items:center;">
-              <button type="button" class="btn-primary" onclick="stenoAdmin.generateAudioForCurrentPassage(80)" style="font-size:0.78rem; padding:6px 11px; background:#4f46e5; border-color:#4f46e5;">
-                ⚡ 80 WPM ऑडियो
-              </button>
-              <button type="button" class="btn-primary" onclick="stenoAdmin.generateAudioForCurrentPassage(100)" style="font-size:0.78rem; padding:6px 11px; background:#7c3aed; border-color:#7c3aed;">
-                ⚡ 100 WPM ऑडियो
-              </button>
+          </div>
+          <div style="display:grid; grid-template-columns: 1fr 1.3fr 0.9fr; gap:10px; align-items:center; background:#ffffff; padding:10px; border-radius:6px; border:1px solid #e2e8f0;">
+            <div>
+              <label style="font-size:0.75rem; font-weight:700; color:#475569; display:block; margin-bottom:4px;">स्वर (Voice):</label>
+              <select id="modalAiVoiceSelect" class="form-select" style="font-size:0.82rem; padding:5px 8px;">
+                <option value="male" selected>👨 पुरुष (Madhur)</option>
+                <option value="female">👩 महिला (Swara)</option>
+              </select>
+            </div>
+            <div>
+              <label style="font-size:0.75rem; font-weight:700; color:#475569; display:block; margin-bottom:4px;">गति चुनें (Click to Generate):</label>
+              <div style="display:flex; gap:4px; flex-wrap:wrap;">
+                <button type="button" class="btn-secondary" style="font-size:0.75rem; padding:4px 8px;" onclick="stenoAdmin.generateAudioForCurrentPassage(60)">60 WPM</button>
+                <button type="button" class="btn-primary" style="font-size:0.75rem; padding:4px 8px; font-weight:700; background:#4f46e5; border-color:#4f46e5;" onclick="stenoAdmin.generateAudioForCurrentPassage(80)">80 WPM</button>
+                <button type="button" class="btn-secondary" style="font-size:0.75rem; padding:4px 8px;" onclick="stenoAdmin.generateAudioForCurrentPassage(100)">100 WPM</button>
+                <button type="button" class="btn-secondary" style="font-size:0.75rem; padding:4px 8px;" onclick="stenoAdmin.generateAudioForCurrentPassage(120)">120 WPM</button>
+              </div>
+            </div>
+            <div>
+              <label style="display:flex; align-items:center; gap:6px; font-size:0.75rem; font-weight:600; color:#334155; margin-top:14px; cursor:pointer;">
+                <input type="checkbox" id="modalAiIntroCheck" checked style="accent-color:#4f46e5; width:15px; height:15px;">
+                <span>5s परीक्षा इंट्रो</span>
+              </label>
             </div>
           </div>
         </div>
@@ -1481,7 +1516,7 @@
   <!-- Required Admin Scripts -->
   <script src="/js/charts.js?v=8.1"></script>
   <script src="/js/comparison_view.js?v=8.1"></script>
-  <script src="/js/admin.js?v=8.1"></script>
+  <script src="/js/admin.js?v=8.2"></script>
 
   <!-- Standalone In-Page Admin Login Modal (Never redirects away) -->
   <div id="adminStandaloneAuthModal" class="modal-overlay" style="display:none; z-index:999999; background:rgba(15, 23, 42, 0.85); backdrop-filter:blur(8px);">

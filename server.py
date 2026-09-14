@@ -1215,6 +1215,8 @@ class StenoMasterHandler(http.server.SimpleHTTPRequestHandler):
                 text = (data.get('text') or '').strip()
                 speed_wpm = int(data.get('speed_wpm') or 80)
                 title = (data.get('title') or 'dictation').strip()
+                voice = (data.get('voice') or 'male').strip()
+                add_intro = bool(data.get('add_intro', True))
                 pause_mode = data.get('pause_mode', 'exam')
 
                 if not text:
@@ -1223,7 +1225,7 @@ class StenoMasterHandler(http.server.SimpleHTTPRequestHandler):
 
                 try:
                     mp3_bytes, word_count, est_duration = ai_voice_service.generate_hindi_speech_mp3(
-                        text, target_wpm=speed_wpm, pause_mode=pause_mode
+                        text, target_wpm=speed_wpm, voice=voice, add_intro=add_intro, pause_mode=pause_mode
                     )
                     clean_slug = re.sub(r'[^a-zA-Z0-9_-]', '_', title)[:30].strip('_')
                     if not clean_slug:
@@ -1247,7 +1249,9 @@ class StenoMasterHandler(http.server.SimpleHTTPRequestHandler):
                         "filename": filename,
                         "duration_seconds": est_duration,
                         "word_count": word_count,
-                        "target_wpm": speed_wpm
+                        "target_wpm": speed_wpm,
+                        "voice": voice,
+                        "add_intro": add_intro
                     })
                     return
                 except Exception as e:
