@@ -530,21 +530,25 @@ class StenoApp {
   }
 
   loadSavedCredentials() {
-    // 1. Student Saved Credentials (or Default Demo Student if empty)
+    // 1. Student Saved Credentials (Single Unified 1-Click Card)
     try {
       const stuRaw = localStorage.getItem('stenomaster_saved_student_creds');
-      const stuCreds = stuRaw ? JSON.parse(stuRaw) : { email_or_username: 'student@stenomaster.com', password: 'student123', name: 'डेमो छात्र (Demo Student)' };
+      const stuCreds = stuRaw ? JSON.parse(stuRaw) : { email_or_username: 'student@stenomaster.com', password: 'student123', name: 'student@stenomaster.com' };
       const emailInp = document.getElementById('stuAuthEmail');
       const passInp = document.getElementById('stuAuthPassword');
       const card = document.getElementById('stuQuickLoginCard');
+      const subTitleEl = document.getElementById('stuQuickLoginSubtitle');
       const nameEl = document.getElementById('stuQuickLoginName');
       const clearBtn = document.getElementById('stuClearSavedCredsBtn');
 
       if (emailInp && !emailInp.value) emailInp.value = stuCreds.email_or_username;
       if (passInp && !passInp.value) passInp.value = stuCreds.password;
       if (card) card.style.display = 'block';
+      if (subTitleEl) {
+        subTitleEl.textContent = stuRaw ? 'सहेजा गया छात्र खाता (Saved Account):' : 'डेमो छात्र खाता (Default Student):';
+      }
       if (nameEl) nameEl.textContent = stuCreds.name || stuCreds.email_or_username;
-      if (clearBtn && stuRaw) clearBtn.style.display = 'inline-block';
+      if (clearBtn) clearBtn.style.display = stuRaw ? 'inline-block' : 'none';
     } catch (e) {
       console.warn('Failed to load saved student credentials', e);
     }
@@ -574,12 +578,16 @@ class StenoApp {
     const emailInp = document.getElementById('stuAuthEmail');
     const passInp = document.getElementById('stuAuthPassword');
     const card = document.getElementById('stuQuickLoginCard');
+    const subTitleEl = document.getElementById('stuQuickLoginSubtitle');
+    const nameEl = document.getElementById('stuQuickLoginName');
     const clearBtn = document.getElementById('stuClearSavedCredsBtn');
-    if (emailInp) emailInp.value = '';
-    if (passInp) passInp.value = '';
-    if (card) card.style.display = 'none';
+    if (emailInp) emailInp.value = 'student@stenomaster.com';
+    if (passInp) passInp.value = 'student123';
+    if (card) card.style.display = 'block';
+    if (subTitleEl) subTitleEl.textContent = 'डेमो छात्र खाता (Default Student):';
+    if (nameEl) nameEl.textContent = 'student@stenomaster.com';
     if (clearBtn) clearBtn.style.display = 'none';
-    this.showToast('सहेजी गई छात्र लॉगिन जानकारी हटा दी गई।', 'info');
+    this.showToast('सहेजी गई छात्र लॉगिन जानकारी हटा दी गई। डेमो खाता सक्रिय है।', 'info');
   }
 
   clearSavedAdminCreds() {
@@ -596,6 +604,14 @@ class StenoApp {
   }
 
   oneClickStudentLogin() {
+    const emailInp = document.getElementById('stuAuthEmail');
+    const passInp = document.getElementById('stuAuthPassword');
+    if (!emailInp?.value || !passInp?.value) {
+      const stuRaw = localStorage.getItem('stenomaster_saved_student_creds');
+      const stuCreds = stuRaw ? JSON.parse(stuRaw) : { email_or_username: 'student@stenomaster.com', password: 'student123' };
+      if (emailInp) emailInp.value = stuCreds.email_or_username;
+      if (passInp) passInp.value = stuCreds.password;
+    }
     this.handleStudentLogin();
   }
 
