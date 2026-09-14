@@ -1054,120 +1054,181 @@
            VIEW: PROGRESS & ANALYTICS
            =================================================================== -->
       <main class="page-view" id="view-progress">
-        <div class="section-header">
+        <div class="section-header" style="margin-bottom: 20px;">
           <div>
-            <h2 class="section-title">प्रगति और दक्षता विश्लेषण (Performance Analytics)</h2>
-            <p class="section-subtitle">आपकी स्टेनो गति, सटीकता, कमजोर क्षेत्रों और स्ट्रीक की संपूर्ण समीक्षा</p>
+            <h2 class="section-title">📊 वास्तविक स्टेनो प्रगति व दक्षता विश्लेषण</h2>
+            <p class="section-subtitle">आपके द्वारा दिए गए डिक्टेशन टेस्टों का 100% प्रामाणिक व वास्तविक मूल्यांकन (SSC / UPSSSC Steno)</p>
           </div>
         </div>
 
-        <!-- Target WPM Goal Gap Card -->
-        <div class="daily-target-card" style="margin-bottom: 24px;">
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-            <div>
-              <h3>लक्ष्य गति ट्रैकर (Target WPM Goal)</h3>
-              <p style="opacity:0.9; font-size:0.85rem;" id="goalWpmGapText">लक्ष्य से 10 WPM दूर</p>
-            </div>
-            <div style="text-align:right;">
-              <span style="font-size:0.8rem; opacity:0.85;">वर्तमान: </span><strong id="goalCurrentWpmText">0 WPM</strong>
-              <span style="margin: 0 6px;">|</span>
-              <span style="font-size:0.8rem; opacity:0.85;">लक्ष्य: </span><strong id="goalTargetWpmText">50 WPM</strong>
-            </div>
-          </div>
-          <div class="target-progress-bar-wrap">
-            <div class="target-progress-fill" id="goalWpmProgressBar" style="width: 0%;"></div>
-          </div>
+        <!-- Empty State (When student has 0 tests) -->
+        <div id="progressEmptyState" style="display: none; text-align: center; padding: 60px 20px; background: var(--bg-surface); border: 1px dashed var(--border-subtle); border-radius: var(--radius-lg); margin-top: 20px;">
+          <div style="font-size: 3.2rem; margin-bottom: 16px;">📝</div>
+          <h3 style="font-size: 1.3rem; font-weight: 700; color: var(--text-main); margin-bottom: 8px;">कोई टेस्ट डेटा उपलब्ध नहीं है</h3>
+          <p style="color: var(--text-muted); max-width: 520px; margin: 0 auto 24px; font-size: 0.95rem; line-height: 1.6;">
+            आपने अभी तक कोई डिक्टेशन टेस्ट सबमिट नहीं किया है। अपना पहला टेस्ट देकर अपनी वास्तविक परीक्षा गति, गलती दर और आधिकारिक कटऑफ योग्यता देखें।
+          </p>
+          <button class="btn btn-primary" onclick="window.app.showView('view-classes')" style="padding: 12px 28px; font-size: 1rem; border-radius: var(--radius-md); font-weight: 600;">
+            🚀 पहला टेस्ट शुरू करें
+          </button>
         </div>
 
-        <!-- Overall Metrics -->
-        <div class="stats-summary-grid">
-          <div class="stat-card">
-            <div class="stat-icon-wrap stat-icon-blue">📊</div>
-            <div>
-              <div class="stat-info-title">कुल अभ्यास</div>
-              <div class="stat-info-num" id="progressTotalPractices">0</div>
-            </div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-icon-wrap stat-icon-green">⏳</div>
-            <div>
-              <div class="stat-info-title">कुल अभ्यास समय</div>
-              <div class="stat-info-num" id="progressTotalTime">0 mins</div>
-            </div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-icon-wrap stat-icon-amber">⚡</div>
-            <div>
-              <div class="stat-info-title">औसत गति (Avg WPM)</div>
-              <div class="stat-info-num" id="progressAvgWpm">0 WPM</div>
-            </div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-icon-wrap stat-icon-purple">🚀</div>
-            <div>
-              <div class="stat-info-title">सर्वश्रेष्ठ गति (Best WPM)</div>
-              <div class="stat-info-num" id="progressBestWpm">0 WPM</div>
-            </div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-icon-wrap stat-icon-green">🎯</div>
-            <div>
-              <div class="stat-info-title">औसत सटीकता (Avg Acc)</div>
-              <div class="stat-info-num" id="progressAvgAcc">0%</div>
-            </div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-icon-wrap stat-icon-blue">⌨️</div>
-            <div>
-              <div class="stat-info-title">कुल टाइप शब्द</div>
-              <div class="stat-info-num" id="progressTotalWords">0</div>
-            </div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-icon-wrap stat-icon-amber">🔥</div>
-            <div>
-              <div class="stat-info-title">वर्तमान स्ट्रीक</div>
-              <div class="stat-info-num" id="progressStreak">0 Days</div>
-            </div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-icon-wrap stat-icon-purple">⭐</div>
-            <div>
-              <div class="stat-info-title">अभ्यास पॉइंट्स</div>
-              <div class="stat-info-num" id="progressPoints">0</div>
-            </div>
-          </div>
-        </div>
+        <!-- Data Container (Shown when student has >= 1 tests) -->
+        <div id="progressDataContainer" style="display: none;">
 
-        <!-- Interactive Charts Grid -->
-        <div class="charts-grid">
-          <div class="chart-card">
-            <h4 class="chart-title">📈 गति प्रगति वक्र (Speed Over Time — WPM)</h4>
-            <div class="chart-canvas-wrap">
-              <canvas id="speedTrendChart"></canvas>
+          <!-- 1. 🏆 Qualification Status Banner -->
+          <div id="progressQualBanner" class="card" style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); color: #ffffff; border: 1px solid rgba(255,255,255,0.1); border-radius: var(--radius-lg); padding: 24px; margin-bottom: 24px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.15);">
+            <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 20px;">
+              <div style="flex: 1; min-width: 280px;">
+                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+                  <span style="font-size: 1.5rem;" id="qualIcon">🏆</span>
+                  <span style="text-transform: uppercase; letter-spacing: 1px; font-size: 0.75rem; font-weight: 700; color: #94a3b8;">SSC / UPSSSC परीक्षा पात्रता स्थिति</span>
+                </div>
+                <h3 id="qualTitle" style="font-size: 1.35rem; font-weight: 800; color: #ffffff; margin-bottom: 6px;">मूल्यांकन जारी...</h3>
+                <p id="qualDesc" style="font-size: 0.88rem; color: #cbd5e1; line-height: 1.5; margin: 0;">-</p>
+              </div>
+              <div style="display: flex; gap: 16px; flex-wrap: wrap; background: rgba(255,255,255,0.06); padding: 14px 20px; border-radius: var(--radius-md); border: 1px solid rgba(255,255,255,0.08);">
+                <div style="text-align: center; min-width: 80px;">
+                  <div style="font-size: 0.72rem; color: #94a3b8; text-transform: uppercase; font-weight: 600;">पास टेस्ट</div>
+                  <div id="qualPassCount" style="font-size: 1.4rem; font-weight: 800; color: #10b981; margin-top: 2px;">0</div>
+                </div>
+                <div style="width: 1px; background: rgba(255,255,255,0.1);"></div>
+                <div style="text-align: center; min-width: 80px;">
+                  <div style="font-size: 0.72rem; color: #94a3b8; text-transform: uppercase; font-weight: 600;">फेल टेस्ट</div>
+                  <div id="qualFailCount" style="font-size: 1.4rem; font-weight: 800; color: #ef4444; margin-top: 2px;">0</div>
+                </div>
+                <div style="width: 1px; background: rgba(255,255,255,0.1);"></div>
+                <div style="text-align: center; min-width: 80px;">
+                  <div style="font-size: 0.72rem; color: #94a3b8; text-transform: uppercase; font-weight: 600;">सफलता दर</div>
+                  <div id="qualPassRate" style="font-size: 1.4rem; font-weight: 800; color: #38bdf8; margin-top: 2px;">0%</div>
+                </div>
+              </div>
             </div>
           </div>
 
-          <div class="chart-card">
-            <h4 class="chart-title">🎯 सटीकता रुझान (Accuracy Over Time — %)</h4>
-            <div class="chart-canvas-wrap">
-              <canvas id="accTrendChart"></canvas>
+          <!-- 2. 📊 The Core 4 Real Metrics -->
+          <div class="stats-summary-grid" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 24px;">
+            <div class="stat-card" style="padding: 18px 20px;">
+              <div class="stat-icon-wrap stat-icon-blue" style="font-size: 1.4rem; width: 46px; height: 46px;">📝</div>
+              <div>
+                <div class="stat-info-title">कुल दिए गए टेस्ट</div>
+                <div class="stat-info-num" id="progressTotalPractices" style="font-size: 1.5rem;">0</div>
+                <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 3px;" id="progressTotalTime">0 mins अभ्यास</div>
+              </div>
+            </div>
+            <div class="stat-card" style="padding: 18px 20px;">
+              <div class="stat-icon-wrap stat-icon-amber" style="font-size: 1.4rem; width: 46px; height: 46px;">⚡</div>
+              <div>
+                <div class="stat-info-title">औसत शुद्ध गति (Avg Net WPM)</div>
+                <div class="stat-info-num" id="progressAvgWpm" style="font-size: 1.5rem; color: var(--primary);">0 WPM</div>
+                <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 3px;">शुद्ध परीक्षा गति</div>
+              </div>
+            </div>
+            <div class="stat-card" style="padding: 18px 20px;">
+              <div class="stat-icon-wrap stat-icon-green" style="font-size: 1.4rem; width: 46px; height: 46px;">🎯</div>
+              <div>
+                <div class="stat-info-title">औसत गलती दर (Avg Mistake %)</div>
+                <div class="stat-info-num" id="progressAvgMistake" style="font-size: 1.5rem;">0%</div>
+                <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 3px;" id="progressAvgAcc">सटीकता: 0%</div>
+              </div>
+            </div>
+            <div class="stat-card" style="padding: 18px 20px;">
+              <div class="stat-icon-wrap stat-icon-purple" style="font-size: 1.4rem; width: 46px; height: 46px;">🏆</div>
+              <div>
+                <div class="stat-info-title">सर्वश्रेष्ठ रिकॉर्ड (Best Record)</div>
+                <div class="stat-info-num" id="progressBestWpm" style="font-size: 1.5rem;">0 WPM</div>
+                <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 3px;" id="progressBestError">न्यूनतम गलती: 0%</div>
+              </div>
             </div>
           </div>
-        </div>
 
-        <div class="chart-card" style="margin-bottom: 28px;">
-          <h4 class="chart-title">⚠️ त्रुटि वितरण विश्लेषण (Error Distribution By Type)</h4>
-          <div class="chart-canvas-wrap">
-            <canvas id="errorFreqChart"></canvas>
+          <!-- 3. 📈 Single Clean Trend Chart (Speed vs Mistake %) -->
+          <div class="chart-card" style="margin-bottom: 24px; padding: 22px; background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: var(--radius-md);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 10px;">
+              <div>
+                <h4 class="chart-title" style="margin: 0; font-size: 1.05rem; font-weight: 700;">📈 गति एवं त्रुटि प्रगति वक्र (Speed & Mistake Trend — Last 10 Tests)</h4>
+                <p style="font-size: 0.8rem; color: var(--text-muted); margin: 4px 0 0 0;">प्रत्येक टेस्ट के साथ गति में वृद्धि और गलतियों में कमी की सीधी तुलना</p>
+              </div>
+              <div style="display: flex; gap: 16px; font-size: 0.82rem; font-weight: 600;">
+                <span style="display: flex; align-items: center; gap: 6px; color: #2563eb;"><span style="display: inline-block; width: 12px; height: 3px; background: #2563eb; border-radius: 2px;"></span> गति (Net WPM)</span>
+                <span style="display: flex; align-items: center; gap: 6px; color: #ef4444;"><span style="display: inline-block; width: 12px; height: 3px; background: #ef4444; border-radius: 2px;"></span> गलती दर (%)</span>
+              </div>
+            </div>
+            <div class="chart-canvas-wrap" style="height: 240px; position: relative;">
+              <canvas id="stenoDualTrendChart"></canvas>
+            </div>
           </div>
-        </div>
 
-        <!-- Achievement Badges -->
-        <div class="weak-areas-card">
-          <h3 style="font-size:1.15rem; font-weight:700">उपलब्धियां एवं सम्मान बैज (Earned Badges)</h3>
-          <p class="section-subtitle">माइलस्टोन पार करने पर प्राप्त किए गए विशेष बैज:</p>
-          <div class="achievements-grid" id="progressAchievementsGrid"></div>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px; margin-bottom: 24px;">
+            <!-- 4. ✍️ Real Weak Words Bank -->
+            <div class="card" style="padding: 20px; background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: var(--radius-md);">
+              <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px;">
+                <div>
+                  <h4 style="font-size: 1.05rem; font-weight: 700; margin: 0; display: flex; align-items: center; gap: 8px;">
+                    <span>✍️</span> कमजोर शब्द डायरी (Real Weak Words)
+                  </h4>
+                  <p style="font-size: 0.78rem; color: var(--text-muted); margin: 4px 0 0 0;">आपके पिछले टेस्टों में सबसे ज्यादा गलत हुए शब्द (आउटलाइन सुधारें)</p>
+                </div>
+              </div>
+              <div id="progressWeakWordsList">
+                <!-- Populated dynamically -->
+              </div>
+            </div>
+
+            <!-- 5. 🎯 Official SSC / UPSSSC Evaluation Guide -->
+            <div class="card" style="padding: 20px; background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: var(--radius-md);">
+              <h4 style="font-size: 1.05rem; font-weight: 700; margin: 0 0 14px 0; display: flex; align-items: center; gap: 8px;">
+                <span>📋</span> आधिकारिक मूल्यांकन मानक (Official Exam Standards)
+              </h4>
+              <div style="display: flex; flex-direction: column; gap: 12px; font-size: 0.85rem;">
+                <div style="background: rgba(16,185,129,0.08); border-left: 3px solid #10b981; padding: 10px 14px; border-radius: 0 var(--radius-sm) var(--radius-sm) 0;">
+                  <strong style="color: #065f46; display: block; margin-bottom: 2px;">SSC Grade 'C' (100 WPM):</strong>
+                  <span style="color: var(--text-main);">अधिकतम अनुमति गलतियां: <strong>5% (UR)</strong> | <strong>7% (आरक्षित वर्ग)</strong></span>
+                </div>
+                <div style="background: rgba(59,130,246,0.08); border-left: 3px solid #3b82f6; padding: 10px 14px; border-radius: 0 var(--radius-sm) var(--radius-sm) 0;">
+                  <strong style="color: #1e40af; display: block; margin-bottom: 2px;">SSC Grade 'D' (80 WPM):</strong>
+                  <span style="color: var(--text-main);">अधिकतम अनुमति गलतियां: <strong>7% (UR)</strong> | <strong>10% (आरक्षित वर्ग)</strong></span>
+                </div>
+                <div style="background: rgba(245,158,11,0.08); border-left: 3px solid #f59e0b; padding: 10px 14px; border-radius: 0 var(--radius-sm) var(--radius-sm) 0;">
+                  <strong style="color: #92400e; display: block; margin-bottom: 2px;">हाईकोर्ट व विधानसभा:</strong>
+                  <span style="color: var(--text-main);">गति: <strong>80-100 WPM</strong> | 95%+ शुद्धता अनिवार्य</span>
+                </div>
+                <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 4px; line-height: 1.5;">
+                  💡 <em>नोट: छूट शब्द (Full Mistake) और मात्रा/वर्तनी (Half Mistake) फॉर्मूले के अनुसार आपकी वास्तविक गलती दर ऊपर दिखाई जा रही है।</em>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 6. 📜 Recent Tests Scorecard History Table -->
+          <div class="card" style="padding: 20px; background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); margin-bottom: 24px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+              <div>
+                <h4 style="font-size: 1.05rem; font-weight: 700; margin: 0;">📜 हालिया टेस्ट स्कोरकार्ड (Recent Test Scorecards)</h4>
+                <p style="font-size: 0.8rem; color: var(--text-muted); margin: 4px 0 0 0;">अंतिम 10 टेस्टों का वास्तविक परीक्षा परिणाम व विस्तृत रिपोर्ट</p>
+              </div>
+            </div>
+            <div style="overflow-x: auto;">
+              <table class="data-table" style="width: 100%; border-collapse: collapse; font-size: 0.88rem;">
+                <thead>
+                  <tr style="border-bottom: 2px solid var(--border-subtle); text-align: left; color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase;">
+                    <th style="padding: 10px 12px;">#</th>
+                    <th style="padding: 10px 12px;">दिनांक</th>
+                    <th style="padding: 10px 12px;">डिक्टेशन आलेख</th>
+                    <th style="padding: 10px 12px; text-align: center;">गति (WPM)</th>
+                    <th style="padding: 10px 12px; text-align: center;">गलती दर</th>
+                    <th style="padding: 10px 12px; text-align: center;">सटीकता</th>
+                    <th style="padding: 10px 12px; text-align: center;">SSC परिणाम</th>
+                    <th style="padding: 10px 12px; text-align: right;">रिपोर्ट</th>
+                  </tr>
+                </thead>
+                <tbody id="progressRecentTestsBody">
+                  <!-- Populated dynamically -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
         </div>
       </main>
 

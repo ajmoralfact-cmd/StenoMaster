@@ -1619,6 +1619,13 @@ class StenoApp {
     this.renderSidebarNav();
   }
 
+  showView(viewId) {
+    if (typeof viewId === 'string' && viewId.startsWith('view-')) {
+      viewId = viewId.replace('view-', '');
+    }
+    return this.navigate(viewId);
+  }
+
   navigate(viewId, params = {}, updateHash = true) {
     // Role-based access control (RBAC) enforcement
     if (viewId === 'admin') {
@@ -2789,59 +2796,146 @@ class StenoApp {
     }
     try {
       const res = await this.apiCall('/api/progress/summary');
+      if (!res) return;
+
       const stats = res.stats || {};
-
-      document.getElementById('progressTotalPractices').textContent = stats.total_practices || 0;
-      document.getElementById('progressTotalTime').textContent = stats.total_time_formatted || '0 mins';
-      document.getElementById('progressAvgWpm').textContent = `${stats.avg_wpm || 0} WPM`;
-      document.getElementById('progressBestWpm').textContent = `${stats.best_wpm || 0} WPM`;
-      document.getElementById('progressAvgAcc').textContent = `${stats.avg_accuracy || 0}%`;
-      document.getElementById('progressTotalWords').textContent = stats.total_words || 0;
-      document.getElementById('progressStreak').textContent = `${stats.streak_days || 0} Days`;
-      document.getElementById('progressPoints').textContent = `${stats.points || 0}`;
-
-      // Goal Gap
-      const currentWpm = stats.best_wpm || 0;
-      const targetWpm = stats.target_wpm || 50;
-      const gap = Math.max(0, targetWpm - currentWpm);
-      document.getElementById('goalTargetWpmText').textContent = `${targetWpm} WPM`;
-      document.getElementById('goalCurrentWpmText').textContent = `${currentWpm} WPM`;
-      document.getElementById('goalWpmGapText').textContent = gap > 0 ? `लक्ष्य से ${gap} WPM दूर (${gap} WPM to go)` : '🎉 लक्ष्य प्राप्त!';
-      document.getElementById('goalWpmProgressBar').style.width = `${Math.min(100, Math.round((currentWpm / targetWpm) * 100))}%`;
-
-      // Draw Charts (Lazy-load charts.js on-demand)
-      await this.ensureCharts();
-
-      const speedCanvas = document.getElementById('speedTrendChart');
-      const accCanvas = document.getElementById('accTrendChart');
-      const errorCanvas = document.getElementById('errorFreqChart');
-
       const trends = res.trends || [];
-      const speedPoints = trends.map((t, idx) => ({ val: t.net_wpm, label: `#${idx + 1}` }));
-      const accPoints = trends.map((t, idx) => ({ val: t.accuracy, label: `#${idx + 1}` }));
+      const weakWords = res.weak_words || [];
+      const recentAttempts = res.recent_attempts || [];
 
-      if (window.stenoCharts) {
-        stenoCharts.drawLineChart(speedCanvas, speedPoints, 'WPM', '#2563eb', 'rgba(37,99,235,0.12)');
-        stenoCharts.drawLineChart(accCanvas, accPoints, '%', '#10b981', 'rgba(16,185,129,0.12)');
+      const emptyState = document.getElementById('progressEmptyState');
+      const dataContainer = document.getElementById('progressDataContainer');
 
-        const errorFreq = res.error_frequency || [];
-        const errorCats = errorFreq.map(e => e.category);
-        const errorVals = errorFreq.map(e => e.count);
-        stenoCharts.drawBarChart(errorCanvas, errorCats, errorVals, '#f59e0b');
+      if (!stats.total_practices || stats.total_practices === 0) {
+        if (emptyState) emptyState.style.display = 'block';
+        if (dataContainer) dataContainer.style.display = 'none';
+        return;
       }
 
-      // Achievements
-      const achGrid = document.getElementById('progressAchievementsGrid');
-      if (achGrid) {
-        const achs = res.achievements || [];
-        achGrid.innerHTML = achs.map(a => `
-          <div class="badge-card">
-            <div class="badge-icon-wrap">🏆</div>
-            <div class="badge-title">${a.title}</div>
-            <div class="badge-desc">${a.description}</div>
-            <div style="font-size:0.7rem; color:var(--text-muted); margin-top:6px;">Unlocked: ${new Date(a.unlocked_at).toLocaleDateString()}</div>
-          </div>
-        `).join('') || '<p style="color:var(--text-muted);">अभी कोई बैज अनलॉक नहीं हुआ। नियमित अभ्यास करें!</p>';
+      if (emptyState) emptyState.style.display = 'none';
+      if (dataContainer) dataContainer.style.display = 'block';
+
+      // 1. Qualification Status Banner
+      const qualIcon = document.getElementById('qualIcon');
+      const qualTitle = document.getElementById('qualTitle');
+      const qualDesc = document.getElementById('qualDesc');
+      const qualPassCount = document.getElementById('qualPassCount');
+      const qualFailCount = document.getElementById('qualFailCount');
+      const qualPassRate = document.getElementById('qualPassRate');
+
+      const passCount = stats.qualified_count || 0;
+      const failCount = stats.not_qualified_count || 0;
+      const passRate = stats.pass_percentage || 0;
+
+      if (qualPassCount) qualPassCount.textContent = passCount;
+      if (qualFailCount) qualFailCount.textContent = failCount;
+      if (qualPassRate) qualPassRate.textContent = `${passRate}%`;
+
+      const avgErr = stats.avg_error_rate !== undefined ? stats.avg_error_rate : (100 - (stats.avg_accuracy || 100));
+
+      if (avgErr <= 5.0) {
+        if (qualIcon) qualIcon.textContent = '🌟';
+        if (qualTitle) qualTitle.textContent = 'SSC Grade "C" एवं "D" दोनों में उत्तीर्ण (Qualified)';
+        if (qualDesc) qualDesc.textContent = `शानदार प्रदर्शन! आपकी औसत गलती दर केवल ${avgErr.toFixed(1)}% है। आप SSC Grade 'C' (≤5%) और Grade 'D' (≤7%) दोनों के आधिकारिक कटऑफ मानक को पूरा कर रहे हैं।`;
+      } else if (avgErr <= 7.0) {
+        if (qualIcon) qualIcon.textContent = '✅';
+        if (qualTitle) qualTitle.textContent = 'SSC Grade "D" में उत्तीर्ण (Qualified)';
+        if (qualDesc) qualDesc.textContent = `बहुत अच्छा! आपकी औसत गलती दर ${avgErr.toFixed(1)}% है, जो SSC Grade 'D' (≤7%) के लिए मान्य है। Grade 'C' के लिए गलतियों को 5% से नीचे लाएं।`;
+      } else {
+        if (qualIcon) qualIcon.textContent = '⚠️';
+        if (qualTitle) qualTitle.textContent = 'सुधार अपेक्षित (Improvement Required)';
+        if (qualDesc) qualDesc.textContent = `वर्तमान औसत गलती दर ${avgErr.toFixed(1)}% है। SSC/UPSSSC परीक्षा उत्तीर्ण करने के लिए गलतियों को 7% (Grade 'D') या 5% (Grade 'C') से कम करना आवश्यक है।`;
+      }
+
+      // 2. Core 4 Metrics
+      const elTotal = document.getElementById('progressTotalPractices');
+      const elTime = document.getElementById('progressTotalTime');
+      const elAvgWpm = document.getElementById('progressAvgWpm');
+      const elAvgMistake = document.getElementById('progressAvgMistake');
+      const elAvgAcc = document.getElementById('progressAvgAcc');
+      const elBestWpm = document.getElementById('progressBestWpm');
+      const elBestError = document.getElementById('progressBestError');
+
+      if (elTotal) elTotal.textContent = stats.total_practices;
+      if (elTime) elTime.textContent = `${stats.total_time_formatted || '0 mins'} अभ्यास`;
+      if (elAvgWpm) elAvgWpm.textContent = `${stats.avg_wpm || 0} WPM`;
+      if (elAvgMistake) elAvgMistake.textContent = `${avgErr.toFixed(1)}%`;
+      if (elAvgAcc) elAvgAcc.textContent = `सटीकता: ${stats.avg_accuracy || 0}%`;
+      if (elBestWpm) elBestWpm.textContent = `${stats.best_wpm || 0} WPM`;
+      const bestErr = stats.best_error_rate !== undefined ? stats.best_error_rate : (100 - (stats.best_accuracy || 100));
+      if (elBestError) elBestError.textContent = `न्यूनतम गलती: ${bestErr.toFixed(1)}%`;
+
+      // 3. Draw Dual Trend Chart (Lazy-load charts.js on-demand)
+      await this.ensureCharts();
+      const trendCanvas = document.getElementById('stenoDualTrendChart');
+      if (trendCanvas && window.stenoCharts && window.stenoCharts.drawDualTrendChart) {
+        const trendPoints = trends.map((t, idx) => ({
+          net_wpm: t.net_wpm || 0,
+          error_rate: t.error_rate !== undefined ? t.error_rate : (100 - (t.accuracy || 100)),
+          label: `T${idx + 1}`
+        }));
+        stenoCharts.drawDualTrendChart(trendCanvas, trendPoints);
+      }
+
+      // 4. Real Weak Words List
+      const weakWordsList = document.getElementById('progressWeakWordsList');
+      if (weakWordsList) {
+        if (weakWords.length === 0) {
+          weakWordsList.innerHTML = '<div style="color: var(--text-muted); font-size: 0.88rem; padding: 20px 0; text-align: center;">🎉 बहुत खूब! पिछले टेस्टों में कोई बार-बार होने वाली गलती दर्ज नहीं हुई।</div>';
+        } else {
+          weakWordsList.innerHTML = `
+            <div style="display: flex; flex-direction: column; gap: 8px;">
+              ${weakWords.map(w => {
+                const catLabel = w.category === 'missing' ? 'छूटा शब्द' : (w.category === 'spelling' ? 'वर्तनी' : (w.category === 'punctuation' ? 'विराम चिह्न' : 'त्रुटि'));
+                return `
+                  <div style="display: flex; justify-content: space-between; align-items: center; padding: 9px 12px; background: var(--bg-hover); border-radius: var(--radius-sm); border: 1px solid var(--border-subtle);">
+                    <div>
+                      <strong style="color: var(--text-main); font-size: 0.95rem;">${this.escapeHtml(w.target_word)}</strong>
+                      ${w.typed_word && w.typed_word !== '—' && w.typed_word !== '' ? `<span style="font-size: 0.8rem; color: #ef4444; margin-left: 8px; text-decoration: line-through;">${this.escapeHtml(w.typed_word)}</span>` : ''}
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                      <span style="font-size: 0.72rem; padding: 2px 8px; border-radius: 12px; background: rgba(239,68,68,0.1); color: #ef4444; font-weight: 600;">${catLabel}</span>
+                      <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 700;">${w.count} बार</span>
+                    </div>
+                  </div>
+                `;
+              }).join('')}
+            </div>
+          `;
+        }
+      }
+
+      // 5. Recent Tests Scorecard Table
+      const recentBody = document.getElementById('progressRecentTestsBody');
+      if (recentBody) {
+        if (recentAttempts.length === 0) {
+          recentBody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding: 24px; color: var(--text-muted);">कोई हालिया टेस्ट उपलब्ध नहीं है।</td></tr>';
+        } else {
+          recentBody.innerHTML = recentAttempts.map((a, idx) => {
+            const isQual = Boolean(a.is_qualified || (a.error_rate <= 7.0));
+            const badgeClass = isQual 
+              ? 'background: rgba(16,185,129,0.12); color: #059669; border: 1px solid rgba(16,185,129,0.25);'
+              : 'background: rgba(239,68,68,0.12); color: #dc2626; border: 1px solid rgba(239,68,68,0.25);';
+            const badgeText = isQual ? 'QUALIFIED ✓' : 'NOT QUALIFIED ✕';
+
+            return `
+              <tr style="border-bottom: 1px solid var(--border-subtle);">
+                <td style="padding: 12px 10px; color: var(--text-muted); font-weight: 600;">${idx + 1}</td>
+                <td style="padding: 12px 10px; font-size: 0.82rem; color: var(--text-muted);">${a.test_date || '-'}</td>
+                <td style="padding: 12px 10px; font-weight: 600; color: var(--text-main); max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${this.escapeHtml(a.title || 'डिक्टेशन')}</td>
+                <td style="padding: 12px 10px; text-align: center; font-weight: 700; color: var(--primary);">${a.net_wpm} WPM</td>
+                <td style="padding: 12px 10px; text-align: center; font-weight: 700; color: ${a.error_rate <= 7.0 ? '#10b981' : '#ef4444'};">${a.error_rate}%</td>
+                <td style="padding: 12px 10px; text-align: center; color: var(--text-muted);">${a.accuracy}%</td>
+                <td style="padding: 12px 10px; text-align: center;">
+                  <span style="display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.5px; ${badgeClass}">${badgeText}</span>
+                </td>
+                <td style="padding: 12px 10px; text-align: right;">
+                  <button class="btn btn-sm btn-outline" onclick="stenoApp.viewSavedAttemptReport(${a.id})" style="padding: 4px 10px; font-size: 0.78rem;">रिपोर्ट →</button>
+                </td>
+              </tr>
+            `;
+          }).join('');
+        }
       }
     } catch (err) {
       console.error('Failed to load progress:', err);
@@ -4022,4 +4116,4 @@ class StenoApp {
 
 
 window.stenoApp = new StenoApp();
-
+window.app = window.stenoApp;

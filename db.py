@@ -2351,7 +2351,7 @@ def get_user_progress_summary(user_id: int) -> Dict[str, Any]:
     conn = get_db()
     c = conn.cursor()
 
-    # Overall attempt stats
+    # Overall attempt stats (100% real database data)
     c.execute("""
         SELECT
             COUNT(*) as total_practices,
@@ -2362,8 +2362,11 @@ def get_user_progress_summary(user_id: int) -> Dict[str, Any]:
             COALESCE(MAX(net_wpm), 0) as best_net_wpm,
             COALESCE(AVG(accuracy), 0) as avg_accuracy,
             COALESCE(MAX(accuracy), 0) as best_accuracy,
+            COALESCE(AVG(COALESCE(error_rate, 100.0 - accuracy)), 0) as avg_error_rate,
+            COALESCE(MIN(COALESCE(error_rate, 100.0 - accuracy)), 0) as best_error_rate,
             COALESCE(SUM(total_words), 0) as total_words_typed,
-            COALESCE(SUM(total_errors), 0) as total_errors_count
+            COALESCE(SUM(total_errors), 0) as total_errors_count,
+            SUM(CASE WHEN COALESCE(error_rate, 100.0 - accuracy) <= 7.0 THEN 1 ELSE 0 END) as qualified_count
         FROM practice_attempts
         WHERE user_id = ?
     """, (user_id,))
@@ -2384,6 +2387,10 @@ def get_user_progress_summary(user_id: int) -> Dict[str, Any]:
             c.execute("SELECT * FROM profiles WHERE user_id = ?", (user_id,))
             prof = dict(c.fetchone() or {})
         except Exception as p_err:
+            try:
+                conn.rollback()
+            except Exception:
+                pass
             print(f"Profile creation fallback notice: {p_err}")
 
     # Self-healing points sync from ledger
@@ -2398,6 +2405,10 @@ def get_user_progress_summary(user_id: int) -> Dict[str, Any]:
             c.execute("UPDATE profiles SET points = ? WHERE user_id = ?", (ledger_pts, user_id))
             conn.commit()
     except Exception as pts_err:
+        try:
+            conn.rollback()
+        except Exception:
+            pass
         print(f"Points sync notice: {pts_err}")
 
     # Self-healing streak sync from distinct attempt dates
@@ -2417,6 +2428,10 @@ def get_user_progress_summary(user_id: int) -> Dict[str, Any]:
                 c.execute("UPDATE profiles SET streak_days = ?, longest_streak = ? WHERE user_id = ?", (prof["streak_days"], prof["longest_streak"], user_id))
                 conn.commit()
         except Exception as stk_err:
+            try:
+                conn.rollback()
+            except Exception:
+                pass
             print(f"Streak sync notice: {stk_err}")
 
     # Today's goal progress (compatible with Postgres and SQLite)
@@ -2434,6 +2449,10 @@ def get_user_progress_summary(user_id: int) -> Dict[str, Any]:
         today_row = c.fetchone()
         today_stats = dict(today_row) if today_row else {"today_count": 0, "today_seconds": 0, "today_best_wpm": 0.0}
     except Exception:
+        try:
+            conn.rollback()
+        except Exception:
+            pass
         today_stats = {"today_count": 0, "today_seconds": 0, "today_best_wpm": 0.0}
 
     # Weak areas aggregated across all errors
@@ -2446,15 +2465,74 @@ def get_user_progress_summary(user_id: int) -> Dict[str, Any]:
     """, (user_id,))
     error_freq = [dict(r) for r in c.fetchall()]
 
-    # Speed & accuracy progression over the last 15 attempts
+    # Speed & mistake progression over the last 10 attempts (chronological order)
     c.execute("""
-        SELECT id, net_wpm, gross_wpm, accuracy, date(created_at) as practice_date
-        FROM practice_attempts
-        WHERE user_id = ?
-        ORDER BY id ASC
-        LIMIT 20
+        SELECT 
+            a.id, 
+            a.net_wpm, 
+            a.gross_wpm, 
+            COALESCE(a.error_rate, 100.0 - a.accuracy) as error_rate,
+            a.accuracy,
+            a.created_at,
+            COALESCE(p.title, 'डिक्टेशन') as passage_title
+        FROM practice_attempts a
+        LEFT JOIN passages p ON a.passage_id = p.id
+        WHERE a.user_id = ?
+        ORDER BY a.id DESC
+        LIMIT 10
     """, (user_id,))
-    trend_history = [dict(r) for r in c.fetchall()]
+    recent_trend_rows = [dict(r) for r in c.fetchall()]
+    trend_history = []
+    for r in reversed(recent_trend_rows):
+        r['net_wpm'] = round(float(r['net_wpm'] or 0), 1)
+        r['gross_wpm'] = round(float(r['gross_wpm'] or 0), 1)
+        r['error_rate'] = round(float(r['error_rate'] or 0), 1)
+        r['accuracy'] = round(float(r['accuracy'] or 0), 1)
+        r['practice_date'] = str(r['created_at'])[:10] if r.get('created_at') else ''
+        trend_history.append(r)
+
+    # Weak words (real mistyped words from student's practice)
+    c.execute("""
+        SELECT 
+            TRIM(pe.correct_text) as target_word,
+            MAX(TRIM(pe.your_text)) as typed_word,
+            pe.category,
+            COUNT(*) as count
+        FROM practice_errors pe
+        WHERE pe.user_id = ? 
+          AND pe.category != 'punctuation'
+          AND LENGTH(TRIM(pe.correct_text)) > 0
+        GROUP BY TRIM(pe.correct_text), pe.category
+        ORDER BY count DESC
+        LIMIT 8
+    """, (user_id,))
+    weak_words = [dict(r) for r in c.fetchall()]
+
+    # Recent attempts (last 10, newest first)
+    c.execute("""
+        SELECT 
+            a.id, 
+            COALESCE(p.title, 'स्टेनो अभ्यास') as title, 
+            a.net_wpm, 
+            COALESCE(a.error_rate, 100.0 - a.accuracy) as error_rate, 
+            a.accuracy, 
+            a.time_taken_seconds,
+            a.created_at,
+            CASE WHEN COALESCE(a.error_rate, 100.0 - a.accuracy) <= 7.0 THEN 1 ELSE 0 END as is_qualified
+        FROM practice_attempts a
+        LEFT JOIN passages p ON a.passage_id = p.id
+        WHERE a.user_id = ?
+        ORDER BY a.id DESC
+        LIMIT 10
+    """, (user_id,))
+    recent_attempts_raw = [dict(r) for r in c.fetchall()]
+    recent_attempts = []
+    for r in recent_attempts_raw:
+        r['net_wpm'] = round(float(r['net_wpm'] or 0), 1)
+        r['error_rate'] = round(float(r['error_rate'] or 0), 1)
+        r['accuracy'] = round(float(r['accuracy'] or 0), 1)
+        r['test_date'] = str(r['created_at'])[:10] if r.get('created_at') else ''
+        recent_attempts.append(r)
 
     # Unlocked achievements
     c.execute("""
@@ -2470,15 +2548,26 @@ def get_user_progress_summary(user_id: int) -> Dict[str, Any]:
     total_secs = stats["total_seconds"]
     hours = total_secs // 3600
     minutes = (total_secs % 3600) // 60
+    total_p = stats["total_practices"]
+    qual_p = stats.get("qualified_count") or 0
+    not_qual_p = max(0, total_p - qual_p)
+    pass_pct = round((qual_p / total_p * 100.0), 1) if total_p > 0 else 0.0
 
     return {
         "stats": {
-            "total_practices": stats["total_practices"],
+            "total_practices": total_p,
             "total_time_formatted": f"{hours}h {minutes}m" if hours > 0 else f"{minutes} mins",
             "avg_wpm": round(stats["avg_net_wpm"], 1),
             "best_wpm": round(stats["best_net_wpm"], 1),
             "avg_accuracy": round(stats["avg_accuracy"], 1),
             "best_accuracy": round(stats["best_accuracy"], 1),
+            "avg_error_rate": round(stats["avg_error_rate"], 1),
+            "best_error_rate": round(stats["best_error_rate"], 1),
+            "qualified_count": qual_p,
+            "not_qualified_count": not_qual_p,
+            "pass_percentage": pass_pct,
+            "is_ssc_grade_d_qualified": (stats["avg_error_rate"] <= 7.0 and total_p > 0),
+            "is_ssc_grade_c_qualified": (stats["avg_error_rate"] <= 5.0 and total_p > 0),
             "total_words": stats["total_words_typed"],
             "total_errors": stats["total_errors_count"],
             "streak_days": prof.get("streak_days", 0),
@@ -2497,6 +2586,8 @@ def get_user_progress_summary(user_id: int) -> Dict[str, Any]:
         },
         "error_frequency": error_freq,
         "trends": trend_history,
+        "weak_words": weak_words,
+        "recent_attempts": recent_attempts,
         "achievements": achievements
     }
 
