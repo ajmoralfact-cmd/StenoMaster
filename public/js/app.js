@@ -1787,6 +1787,9 @@ class StenoApp {
       case 'rules':
         // Rules view is static HTML — just scroll to top, no async load needed
         break;
+      case 'self-practice':
+        this.initSelfPractice();
+        break;
       case 'admin':
         const targetAdminTab = (params && params.adminTab) || (window.stenoAdmin && window.stenoAdmin.activeTab) || localStorage.getItem('stenomaster_last_admin_tab') || 'overview';
         stenoAdmin.loadOverview();
@@ -3991,31 +3994,33 @@ class StenoApp {
 
 
   // -------------------------------------------------------------------------
-  // Self Practice / Custom Audio & Text Handlers (v6.8)
+  // Self Practice / Custom Audio & Text Handlers (v6.8 - ai 03 Steno Engine)
   // -------------------------------------------------------------------------
   initSelfPractice() {
-    this.selfAudioMode = this.selfAudioMode || 'upload';
+    this.selfAudioMode = this.selfAudioMode || 'ai';
+    this.switchSelfAudioMode(this.selfAudioMode);
     this.updateSelfTextStats();
   }
 
   switchSelfAudioMode(mode) {
     this.selfAudioMode = mode;
+    const aiBtn = document.getElementById('selfTabAiBtn');
     const uploadBtn = document.getElementById('selfTabUploadBtn');
     const silentBtn = document.getElementById('selfTabSilentBtn');
-    const ttsBtn = document.getElementById('selfTabTtsBtn');
-    const uploadZone = document.getElementById('selfAudioUploadZone');
-    const previewWrap = document.getElementById('selfAudioPreviewWrap');
-    const silentNote = document.getElementById('selfSilentNote');
-    const ttsNote = document.getElementById('selfTtsNote');
 
+    const aiZone = document.getElementById('selfAiVoiceZone');
+    const uploadZone = document.getElementById('selfAudioUploadZone');
+    const uploadPreviewWrap = document.getElementById('selfAudioPreviewWrap');
+    const silentNote = document.getElementById('selfSilentNote');
+
+    if (aiBtn) aiBtn.className = mode === 'ai' ? 'btn-sm btn-primary' : 'btn-sm btn-secondary';
     if (uploadBtn) uploadBtn.className = mode === 'upload' ? 'btn-sm btn-primary' : 'btn-sm btn-secondary';
     if (silentBtn) silentBtn.className = mode === 'silent' ? 'btn-sm btn-primary' : 'btn-sm btn-secondary';
-    if (ttsBtn) ttsBtn.className = mode === 'tts' ? 'btn-sm btn-primary' : 'btn-sm btn-secondary';
 
+    if (aiZone) aiZone.style.display = mode === 'ai' ? 'block' : 'none';
     if (uploadZone) uploadZone.style.display = mode === 'upload' ? 'block' : 'none';
-    if (previewWrap) previewWrap.style.display = (mode === 'upload' && this.selfAudioBlobUrl) ? 'block' : 'none';
+    if (uploadPreviewWrap) uploadPreviewWrap.style.display = (mode === 'upload' && this.selfAudioBlobUrl) ? 'block' : 'none';
     if (silentNote) silentNote.style.display = mode === 'silent' ? 'block' : 'none';
-    if (ttsNote) ttsNote.style.display = mode === 'tts' ? 'block' : 'none';
   }
 
   handleSelfAudioFile(input) {
@@ -4048,8 +4053,9 @@ class StenoApp {
     if (wordEl) wordEl.textContent = words.toString();
     if (charEl) charEl.textContent = chars.toString();
     if (estEl) {
-      const minutes = (words / 80).toFixed(1);
-      estEl.textContent = `${minutes} मिनट`;
+      const speed = parseInt(document.getElementById('selfTargetSpeed')?.value || '80', 10);
+      const minutes = (words / speed).toFixed(1);
+      estEl.textContent = `${minutes} मिनट (${speed} WPM)`;
     }
   }
 
@@ -4067,7 +4073,85 @@ class StenoApp {
     }
   }
 
-  startCustomPractice() {
+  async generateSelfAiAudio() {
+    const text = (document.getElementById('selfMasterText')?.value || '').trim();
+    if (!text || text.split(/\s+/).length < 5) {
+      this.showToast('कृपया पहले मूल डिक्टेशन आलेख (Master Passage) में कम से कम 5-10 शब्द लिखें या पेस्ट करें।', 'warning');
+      const ta = document.getElementById('selfMasterText');
+      if (ta) ta.focus();
+      return null;
+    }
+
+    const speed = parseInt(document.getElementById('selfTargetSpeed')?.value || '80', 10);
+    const voice = document.getElementById('selfAiVoiceSelect')?.value || 'male';
+    const pauseMode = document.getElementById('selfAiPauseMode')?.value || 'exam';
+    const addIntro = document.getElementById('selfAiIntroCheck')?.checked || false;
+
+    const btn = document.getElementById('selfAiGenerateBtn');
+    const btnIcon = document.getElementById('selfAiBtnIcon');
+    const btnText = document.getElementById('selfAiBtnText');
+
+    if (btn) btn.disabled = true;
+    if (btnIcon) btnIcon.textContent = '⏳';
+    if (btnText) btnText.textContent = 'AI स्टेनो ऑडियो तैयार हो रहा है...';
+
+    this.showToast('🎙️ AI स्टेनो ऑडियो तैयार हो रहा है (1-1 शब्द रुक-रुक कर और सटीक WPM टाइमिंग के साथ)...', 'info');
+
+    try {
+      const res = await fetch('/api/practice/generate-ai-audio', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(this.token ? { 'Authorization': `Bearer ${this.token}` } : {})
+        },
+        body: JSON.stringify({
+          text: text,
+          speed_wpm: speed,
+          voice: voice,
+          pause_mode: pauseMode,
+          add_intro: addIntro,
+          title: 'self_practice'
+        })
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || 'AI ऑडियो जनरेट करने में विफलता');
+      }
+
+      this.selfGeneratedAudioUrl = data.audio_url;
+      this.selfGeneratedDuration = data.duration_seconds;
+      this.selfGeneratedText = text;
+      this.selfGeneratedSpeed = speed;
+
+      const previewWrap = document.getElementById('selfAiPreviewWrap');
+      const audioPlayer = document.getElementById('selfAiAudioPlayer');
+      const metaEl = document.getElementById('selfAiAudioMeta');
+
+      if (previewWrap && audioPlayer) {
+        audioPlayer.src = data.audio_url;
+        if (metaEl) {
+          const m = Math.floor(data.duration_seconds / 60);
+          const s = data.duration_seconds % 60;
+          metaEl.textContent = `${data.word_count} शब्द • ${m}m ${s}s • ${speed} WPM (${voice === 'female' ? 'महिला' : 'पुरुष'})`;
+        }
+        previewWrap.style.display = 'block';
+      }
+
+      this.showToast(`✓ AI स्टेनो ऑडियो तैयार! (${speed} WPM - ai 03 स्टाइल)`, 'success');
+      return data.audio_url;
+    } catch (err) {
+      console.error('generateSelfAiAudio error:', err);
+      this.showToast(`ऑडियो जनरेशन त्रुटि: ${err.message}`, 'danger');
+      return null;
+    } finally {
+      if (btn) btn.disabled = false;
+      if (btnIcon) btnIcon.textContent = '⚡';
+      if (btnText) btnText.textContent = 'AI स्टेनो ऑडियो पुनः तैयार करें';
+    }
+  }
+
+  async startCustomPractice() {
     const masterText = (document.getElementById('selfMasterText')?.value || '').trim();
     if (!masterText || masterText.split(/\s+/).length < 5) {
       this.showToast('कृपया कम से कम 5-10 शब्दों का मूल डिक्टेशन आलेख (Master Passage) पेस्ट करें।', 'warning');
@@ -4076,16 +4160,40 @@ class StenoApp {
       return;
     }
 
-    if (this.selfAudioMode === 'upload' && !this.selfAudioBlobUrl) {
-      this.showToast('कृपया एक ऑडियो फ़ाइल चुनें अथवा "केवल टाइपिंग (साइलेंट)" मोड चुनें।', 'warning');
-      return;
-    }
-
     const words = masterText.split(/\s+/).length;
     const targetSpeed = parseInt(document.getElementById('selfTargetSpeed')?.value || '80', 10);
     const targetExam = document.getElementById('selfTargetExam')?.value || 'ssc_steno';
     const fontMode = document.getElementById('selfFontMode')?.value || 'mangal_unicode';
     const durationMinutes = parseInt(document.getElementById('selfDuration')?.value || '10', 10);
+
+    let audioUrl = null;
+    let actualDuration = durationMinutes > 0 ? durationMinutes * 60 : Math.max(300, Math.round((words / targetSpeed) * 60));
+
+    if (this.selfAudioMode === 'ai') {
+      const needsRegen = !this.selfGeneratedAudioUrl || 
+                         this.selfGeneratedText !== masterText || 
+                         this.selfGeneratedSpeed !== targetSpeed;
+
+      if (needsRegen) {
+        const genUrl = await this.generateSelfAiAudio();
+        if (!genUrl) {
+          return;
+        }
+      }
+      audioUrl = this.selfGeneratedAudioUrl;
+      if (this.selfGeneratedDuration) {
+        actualDuration = this.selfGeneratedDuration;
+      }
+    } else if (this.selfAudioMode === 'upload') {
+      if (!this.selfAudioBlobUrl) {
+        this.showToast('कृपया एक ऑडियो फ़ाइल चुनें अथवा "केवल टाइपिंग (साइलेंट)" मोड चुनें।', 'warning');
+        return;
+      }
+      audioUrl = this.selfAudioBlobUrl;
+    } else {
+      // silent mode
+      audioUrl = null;
+    }
 
     const customPassage = {
       id: 999999,
@@ -4096,11 +4204,11 @@ class StenoApp {
       difficulty: 'medium',
       target_wpm: targetSpeed,
       speed_wpm: targetSpeed,
-      duration_seconds: durationMinutes > 0 ? durationMinutes * 60 : Math.max(300, Math.round((words / targetSpeed) * 60)),
+      duration_seconds: actualDuration,
       official_text: masterText,
       official_mangal_text: masterText,
       official_kruti_dev_text: masterText,
-      audio_url: this.selfAudioMode === 'upload' ? this.selfAudioBlobUrl : (this.selfAudioMode === 'tts' ? 'tts://custom' : null),
+      audio_url: audioUrl,
       exam_rule: targetExam,
       typing_system: fontMode,
       is_free_tier: true,

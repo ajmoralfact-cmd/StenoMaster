@@ -1118,6 +1118,55 @@ class StenoMasterHandler(http.server.SimpleHTTPRequestHandler):
             self._send_json(200, {"message": "Notifications marked as read"})
             return
 
+        # AI Steno Audio Generation (Self-Practice / Custom Dictation - ai 03 steno cadence)
+        if path == '/api/practice/generate-ai-audio':
+            data = self._read_json_body()
+            text = (data.get('text') or '').strip()
+            speed_wpm = int(data.get('speed_wpm') or 80)
+            title = (data.get('title') or 'self_practice').strip()
+            voice = (data.get('voice') or 'male').strip()
+            add_intro = bool(data.get('add_intro', False))
+            pause_mode = data.get('pause_mode', 'exam')
+
+            if not text:
+                self._send_json(400, {"error": "हिंदी आलेख टेक्स्ट आवश्यक है (Hindi text is required)"})
+                return
+
+            try:
+                mp3_bytes, word_count, est_duration = ai_voice_service.generate_hindi_speech_mp3(
+                    text, target_wpm=speed_wpm, voice=voice, add_intro=add_intro, pause_mode=pause_mode
+                )
+                clean_slug = re.sub(r'[^a-zA-Z0-9_-]', '_', title)[:30].strip('_')
+                if not clean_slug:
+                    clean_slug = "self_practice"
+                ts = int(datetime.now().timestamp())
+                filename = f"audio_ai_{ts}_{speed_wpm}wpm_{clean_slug}.mp3"
+                save_path = os.path.join(UPLOADS_DIR, filename)
+                try:
+                    with open(save_path, 'wb') as f:
+                        f.write(mp3_bytes)
+                except Exception:
+                    pass
+
+                # Save to persistent database (SQLite / Supabase)
+                db.save_uploaded_file(filename, 'audio/mpeg', mp3_bytes)
+                audio_url = f"/uploads/{filename}"
+
+                self._send_json(200, {
+                    "success": True,
+                    "audio_url": audio_url,
+                    "filename": filename,
+                    "duration_seconds": est_duration,
+                    "word_count": word_count,
+                    "target_wpm": speed_wpm,
+                    "voice": voice,
+                    "add_intro": add_intro
+                })
+                return
+            except Exception as e:
+                self._send_json(500, {"error": f"AI वॉइस जनरेशन में त्रुटि: {str(e)}"})
+                return
+
         # 6. Admin Actions
         if path.startswith('/api/admin/'):
             if not user:

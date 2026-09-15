@@ -605,33 +605,75 @@
               </div>
             </div>
 
-            <div class="self-audio-tabs" style="display:flex; gap:8px; margin:14px 0 12px 0;">
-              <button type="button" class="btn-sm btn-primary" id="selfTabUploadBtn" onclick="stenoApp.switchSelfAudioMode('upload')">📁 डिवाइस से ऑडियो</button>
+            <div class="self-audio-tabs" style="display:flex; flex-wrap:wrap; gap:8px; margin:14px 0 12px 0;">
+              <button type="button" class="btn-sm btn-primary" id="selfTabAiBtn" onclick="stenoApp.switchSelfAudioMode('ai')">🎙️ AI स्टेनो डिक्टेशन (ai 03 स्टाइल)</button>
+              <button type="button" class="btn-sm btn-secondary" id="selfTabUploadBtn" onclick="stenoApp.switchSelfAudioMode('upload')">📁 डिवाइस से ऑडियो</button>
               <button type="button" class="btn-sm btn-secondary" id="selfTabSilentBtn" onclick="stenoApp.switchSelfAudioMode('silent')">⏱️ केवल टाइपिंग (साइलेंट)</button>
-              <button type="button" class="btn-sm btn-secondary" id="selfTabTtsBtn" onclick="stenoApp.switchSelfAudioMode('tts')">🗣️ टेक्स्ट-टू-स्पीच ऑटो</button>
+            </div>
+
+            <!-- AI Steno Audio Zone (ai 03 style) -->
+            <div id="selfAiVoiceZone" style="display:block; background:var(--bg-subtle); padding:14px; border-radius:10px; border:1px solid rgba(139,92,246,0.3); box-shadow:0 2px 8px rgba(139,92,246,0.06);">
+              <div style="display:flex; align-items:center; gap:8px; margin-bottom:10px;">
+                <span style="font-size:1.2rem;">✨</span>
+                <div>
+                  <div style="font-weight:700; font-size:0.88rem; color:var(--text-main);">असली स्टेनो परीक्षा आवाज़ (1-1 शब्द रुक-रुक कर)</div>
+                  <div style="font-size:0.75rem; color:var(--text-muted);">Word Speaking Time + Pause Time मिलकर सटीक WPM स्पीड बनती है।</div>
+                </div>
+              </div>
+
+              <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px;">
+                <div>
+                  <label class="form-label" style="font-size:0.78rem; font-weight:700; margin-bottom:4px;">आवाज़ चुनें (Voice):</label>
+                  <select id="selfAiVoiceSelect" class="form-select" style="font-size:0.84rem; padding:6px 10px;">
+                    <option value="male" selected>👨 पुरुष आवाज़ (Madhur - गंभीर व स्पष्ट)</option>
+                    <option value="female">👩 महिला आवाज़ (Swara - तीक्ष्ण व स्पष्ट)</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="form-label" style="font-size:0.78rem; font-weight:700; margin-bottom:4px;">पॉज़ शैली (Pacing):</label>
+                  <select id="selfAiPauseMode" class="form-select" style="font-size:0.84rem; padding:6px 10px;">
+                    <option value="exam" selected>🎯 परीक्षा रिदम (1-2 शब्द + पॉज़)</option>
+                    <option value="relaxed">🌿 विस्तृत पॉज़ (अधिक ठहराव)</option>
+                  </select>
+                </div>
+              </div>
+
+              <label style="display:flex; align-items:center; gap:8px; font-size:0.82rem; color:var(--text-secondary); cursor:pointer; margin-bottom:12px;">
+                <input type="checkbox" id="selfAiIntroCheck">
+                <span>⏱️ 5-सेकंड परीक्षा काउंटडाउन संदेश जोड़ें ("डिक्टेशन 5 सेकंड में शुरू होगी... स्टार्ट")</span>
+              </label>
+
+              <button type="button" class="btn-primary" id="selfAiGenerateBtn" onclick="stenoApp.generateSelfAiAudio()" style="width:100%; padding:9px 16px; font-size:0.9rem; font-weight:700; display:flex; align-items:center; justify-content:center; gap:8px; background:linear-gradient(135deg, #7c3aed, #4f46e5); border:none; border-radius:8px;">
+                <span id="selfAiBtnIcon">⚡</span>
+                <span id="selfAiBtnText">AI स्टेनो ऑडियो तैयार करें (Generate Audio)</span>
+              </button>
+
+              <!-- Audio Player Preview for AI Audio -->
+              <div id="selfAiPreviewWrap" style="display:none; margin-top:12px; background:var(--bg-main); padding:10px; border-radius:8px; border:1px solid var(--border);">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                  <span style="font-size:0.8rem; font-weight:700; color:#10b981;" id="selfAiStatusBadge">✓ AI ऑडियो तैयार है!</span>
+                  <span style="font-size:0.75rem; color:var(--text-muted);" id="selfAiAudioMeta">--</span>
+                </div>
+                <audio id="selfAiAudioPlayer" controls style="width:100%; height:36px;"></audio>
+              </div>
             </div>
 
             <!-- Upload dropzone -->
-            <div id="selfAudioUploadZone" class="self-dropzone" onclick="document.getElementById('selfAudioFileInput').click()">
+            <div id="selfAudioUploadZone" class="self-dropzone" style="display:none;" onclick="document.getElementById('selfAudioFileInput').click()">
               <input type="file" id="selfAudioFileInput" accept="audio/*" style="display:none;" onchange="stenoApp.handleSelfAudioFile(this)">
               <div style="font-size:2rem; margin-bottom:6px;">🎵</div>
               <div style="font-weight:700; color:var(--text-main); font-size:0.9rem;" id="selfAudioFileName">ऑडियो फ़ाइल चुनें (MP3, WAV, M4A)</div>
               <div style="font-size:0.75rem; color:var(--text-muted); margin-top:2px;">या फ़ाइल को यहाँ ड्रैग एंड ड्रॉप करें</div>
             </div>
 
-            <!-- Audio Player Preview -->
+            <!-- Audio Player Preview for Uploaded Audio -->
             <div id="selfAudioPreviewWrap" style="display:none; margin-top:10px;">
               <audio id="selfAudioPreview" controls style="width:100%; height:36px;"></audio>
             </div>
 
             <!-- Silent note -->
             <div id="selfSilentNote" style="display:none; background:var(--bg-subtle); padding:12px; border-radius:8px; border:1px solid var(--border); font-size:0.82rem; color:var(--text-secondary);">
-              ℹ️ <strong>साइलेंट मोड:</strong> कोई ऑडियो नहीं चलेगा। आप अपनी स्टैनो नोटबुक से देखकर निर्धारित समय में सीधे टाइप कर सकेंगे।
-            </div>
-
-            <!-- TTS note -->
-            <div id="selfTtsNote" style="display:none; background:var(--bg-subtle); padding:12px; border-radius:8px; border:1px solid var(--border); font-size:0.82rem; color:var(--text-secondary);">
-              ℹ️ <strong>टेक्स्ट-टू-स्पीच:</strong> नीचे पेस्ट किए गए आलेख को कंप्यूटर की आवाज़ में डिक्टेट किया जाएगा।
+              ℹ️ <strong>साइलेंट मोड:</strong> कोई ऑडियो नहीं चलेगा। आप अपनी स्टेनो नोटबुक से देखकर निर्धारित समय में सीधे टाइप कर सकेंगे।
             </div>
           </div>
 
