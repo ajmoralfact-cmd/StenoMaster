@@ -688,6 +688,11 @@
             </div>
 
             <div style="margin-top:14px;">
+                            <!-- Class Title Input (Optional) -->
+              <div style="margin-bottom:10px;">
+                <label style="font-size:0.82rem; font-weight:700; color:var(--text-secondary);">📝 क्लास का नाम / शीर्षक (वैकल्पिक):</label>
+                <input type="text" id="selfClassTitle" class="form-input" placeholder="उदा. दैनिक जागरण 80 WPM संपादकीय (खाली छोड़ने पर आलेख के प्रथम शब्दों से बनेगा)" style="font-size:0.88rem; padding:8px 12px; margin-top:4px;">
+              </div>
               <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; flex-wrap:wrap; gap:6px;">
                 <label style="font-size:0.82rem; font-weight:700; color:var(--text-secondary);">आलेख पेस्ट करें या फोटो अपलोड करें:</label>
                 <div style="display:flex; gap:6px; flex-wrap:wrap;">
@@ -769,10 +774,41 @@
             </div>
           </div>
 
-          <div style="margin-top:20px; text-align:center;">
-            <button type="button" class="btn-primary" style="padding:12px 36px; font-size:1.05rem; font-weight:700; border-radius:30px; box-shadow:0 4px 14px rgba(2,132,199,0.35);" onclick="stenoApp.startCustomPractice()">
+          <div style="margin-top:20px; display:flex; justify-content:center; gap:12px; flex-wrap:wrap;">
+            <button type="button" class="btn-primary" style="padding:12px 32px; font-size:1.02rem; font-weight:700; border-radius:30px; box-shadow:0 4px 14px rgba(2,132,199,0.35);" onclick="stenoApp.startCustomPractice()">
               🎯 कस्टम अभ्यास शुरू करें (Start Practice) →
             </button>
+            <button type="button" id="selfSaveClassBtn" style="padding:12px 28px; font-size:1.02rem; font-weight:700; border-radius:30px; background:linear-gradient(135deg, #10b981, #059669); color:#fff; border:none; box-shadow:0 4px 14px rgba(16,185,129,0.35); cursor:pointer; display:inline-flex; align-items:center; gap:6px;" onclick="stenoApp.saveCurrentCustomClass()">
+              <span>💾</span> <span>My Classes में सेव करें</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Section 4: My Saved Custom Classes -->
+        <div class="stat-card" style="margin-top:24px; padding:20px; border-top: 3px solid #10b981;">
+          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:14px;">
+            <div style="display:flex; align-items:center; gap:10px;">
+              <span style="font-size:1.6rem;">📁</span>
+              <div>
+                <h3 style="margin:0; font-size:1.08rem; color:var(--text-main); font-weight:700;">मेरी सेव की गई कस्टम क्लासेस (My Saved Classes)</h3>
+                <p style="margin:0; font-size:0.75rem; color:var(--text-muted);">यहाँ आपकी बनाई हुई सभी डिक्टेशन सुरक्षित हैं — कभी भी अभ्यास करें</p>
+              </div>
+            </div>
+            <button type="button" class="btn-sm btn-secondary" onclick="stenoApp.loadMyCustomClasses(true)" style="padding:6px 14px; font-size:0.78rem; font-weight:600; display:inline-flex; align-items:center; gap:4px;">
+              <span>🔄</span> <span>रीफ़्रेश</span>
+            </button>
+          </div>
+
+          <div id="myCustomClassesContainer">
+            <div id="myCustomClassesLoading" style="text-align:center; padding:20px; color:var(--text-muted); font-size:0.85rem;">
+              ⏳ आपकी सेव क्लासेस लोड हो रही हैं...
+            </div>
+            <div id="myCustomClassesEmpty" style="display:none; text-align:center; padding:30px 20px; background:var(--bg-subtle); border-radius:12px; border:1px dashed var(--border);">
+              <div style="font-size:2rem; margin-bottom:8px;">📝</div>
+              <div style="font-weight:700; color:var(--text-main); font-size:0.95rem;">अभी कोई कस्टम क्लास सेव नहीं है</div>
+              <p style="color:var(--text-muted); font-size:0.8rem; margin:6px 0 0 0;">ऊपर आलेख पेस्ट या फोटो अपलोड करके <strong>"My Classes में सेव करें"</strong> पर क्लिक करें।</p>
+            </div>
+            <div id="myCustomClassesList" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(280px, 1fr)); gap:14px; margin-top:10px;"></div>
           </div>
         </div>
       </main>

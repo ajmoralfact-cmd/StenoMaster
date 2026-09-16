@@ -178,6 +178,10 @@ def run_postgres_migrations(conn):
                 "ALTER TABLE passages ADD COLUMN IF NOT EXISTS typing_system TEXT DEFAULT 'dual'",
                 "ALTER TABLE passages ADD COLUMN IF NOT EXISTS is_premium INTEGER DEFAULT 0",
                 "ALTER TABLE passages ADD COLUMN IF NOT EXISTS official_text_krutidev TEXT",
+                "ALTER TABLE passages ADD COLUMN IF NOT EXISTS user_id INTEGER",
+                "ALTER TABLE passages ADD COLUMN IF NOT EXISTS is_custom INTEGER DEFAULT 0",
+                "ALTER TABLE passages ADD COLUMN IF NOT EXISTS is_approved INTEGER DEFAULT 0",
+                "ALTER TABLE passages ADD COLUMN IF NOT EXISTS submitter_name TEXT",
                 "ALTER TABLE users ADD COLUMN IF NOT EXISTS is_free_access INTEGER DEFAULT 0",
                 "ALTER TABLE users ADD COLUMN IF NOT EXISTS phone TEXT",
                 "ALTER TABLE users ADD COLUMN IF NOT EXISTS student_code TEXT",
@@ -289,6 +293,10 @@ def manual_run_migrations() -> Dict[str, Any]:
                     "ALTER TABLE passages ADD COLUMN IF NOT EXISTS typing_system TEXT DEFAULT 'dual'",
                     "ALTER TABLE passages ADD COLUMN IF NOT EXISTS is_premium INTEGER DEFAULT 0",
                     "ALTER TABLE passages ADD COLUMN IF NOT EXISTS official_text_krutidev TEXT",
+                    "ALTER TABLE passages ADD COLUMN IF NOT EXISTS user_id INTEGER",
+                    "ALTER TABLE passages ADD COLUMN IF NOT EXISTS is_custom INTEGER DEFAULT 0",
+                    "ALTER TABLE passages ADD COLUMN IF NOT EXISTS is_approved INTEGER DEFAULT 0",
+                    "ALTER TABLE passages ADD COLUMN IF NOT EXISTS submitter_name TEXT",
                     "ALTER TABLE users ADD COLUMN IF NOT EXISTS is_free_access INTEGER DEFAULT 0",
                     "ALTER TABLE users ADD COLUMN IF NOT EXISTS phone TEXT",
                     "ALTER TABLE users ADD COLUMN IF NOT EXISTS student_code TEXT",
@@ -728,6 +736,14 @@ def init_db():
         c.execute("ALTER TABLE passages ADD COLUMN steno_notes_url TEXT")
     if 'steno_notes_type' not in p_cols:
         c.execute("ALTER TABLE passages ADD COLUMN steno_notes_type TEXT")
+    if 'user_id' not in p_cols:
+        c.execute("ALTER TABLE passages ADD COLUMN user_id INTEGER")
+    if 'is_custom' not in p_cols:
+        c.execute("ALTER TABLE passages ADD COLUMN is_custom INTEGER DEFAULT 0")
+    if 'is_approved' not in p_cols:
+        c.execute("ALTER TABLE passages ADD COLUMN is_approved INTEGER DEFAULT 0")
+    if 'submitter_name' not in p_cols:
+        c.execute("ALTER TABLE passages ADD COLUMN submitter_name TEXT")
 
     # Safe Canonical Typing System Backfill (Phase 6)
     c.execute("""
@@ -3856,3 +3872,189 @@ def get_admin_referrals() -> Dict[str, Any]:
         "referrals": referral_rows,
         "top_referrers": top_referrers
     }
+
+
+# =========================================================================
+# Student Custom Classes & Admin 1-Click Publishing Workflow
+# =========================================================================
+
+def save_student_custom_passage(user_id: int, data: Dict[str, Any]) -> int:
+    """
+    Saves a custom dictation class created by a student in Self Practice mode.
+    Class is saved with is_custom = 1, status = 'custom_saved' and linked to user_id.
+    """
+    conn = get_db()
+    c = conn.cursor()
+    now_iso = datetime.now().isoformat()
+
+    title = (data.get("title") or "").strip()
+    official_text = (data.get("official_text") or "").strip()
+    if not official_text:
+        conn.close()
+        raise ValueError("मूल आलेख (Master Passage) आवश्यक है।")
+
+    if not title:
+        words = official_text.split()
+        title = " ".join(words[:6]) if len(words) >= 6 else (official_text[:30] or "कस्टम डिक्टेशन")
+
+    # Kruti Dev conversion
+    official_kruti = (data.get("official_text_krutidev") or "").strip()
+    if not official_kruti and official_text:
+        try:
+            import hindi_converter
+            official_kruti = hindi_converter.unicode_to_kruti_dev(official_text)
+        except Exception:
+            official_kruti = official_text
+
+    target_wpm = int(data.get("target_wpm") or 80)
+    duration_seconds = int(data.get("duration_seconds") or 300)
+    audio_url = (data.get("audio_url") or "").strip()
+    typing_system = (data.get("typing_system") or "mangal_unicode").strip()
+    category_id = int(data.get("category_id") or 1)
+
+    # Resolve student name for admin preview
+    submitter_name = "विद्यार्थी"
+    try:
+        c.execute("SELECT u.username, p.display_name FROM users u LEFT JOIN profiles p ON u.id = p.user_id WHERE u.id = ?", (user_id,))
+        urow = c.fetchone()
+        if urow:
+            submitter_name = urow["display_name"] or urow["username"] or "विद्यार्थी"
+    except Exception:
+        pass
+
+    try:
+        c.execute("""
+            INSERT INTO passages (
+                title, category_id, language, difficulty, official_text, official_text_krutidev,
+                typing_system, instructions, target_wpm, duration_seconds, audio_url,
+                tags, status, user_id, is_custom, is_approved, submitter_name, created_at, updated_at
+            ) VALUES (?, ?, 'hindi', 'medium', ?, ?, ?, ?, ?, ?, ?, ?, 'custom_saved', ?, 1, 0, ?, ?, ?)
+        """, (
+            title, category_id, official_text, official_kruti,
+            typing_system, "छात्र द्वारा बनाई गई कस्टम सेल्फ प्रैक्टिस क्लास",
+            target_wpm, duration_seconds, audio_url,
+            "custom,self_practice", user_id, submitter_name, now_iso, now_iso
+        ))
+        passage_id = c.lastrowid
+        conn.commit()
+        return passage_id
+    finally:
+        conn.close()
+
+
+def get_student_custom_passages(user_id: int) -> List[Dict[str, Any]]:
+    """
+    Returns all custom classes saved by a student for self practice.
+    """
+    conn = get_db()
+    c = conn.cursor()
+    try:
+        c.execute("""
+            SELECT id, title, category_id, language, difficulty, official_text, official_text_krutidev,
+                   typing_system, target_wpm, duration_seconds, audio_url, status, is_custom, is_approved,
+                   created_at, updated_at
+            FROM passages
+            WHERE user_id = ? AND is_custom = 1
+            ORDER BY id DESC
+        """, (user_id,))
+        rows = c.fetchall()
+        result = []
+        for r in rows:
+            d = dict(r)
+            txt = d.get("official_text") or ""
+            d["word_count"] = len(txt.split())
+            result.append(d)
+        return result
+    finally:
+        conn.close()
+
+
+def delete_student_custom_passage(user_id: int, passage_id: int) -> bool:
+    """
+    Allows a student to delete their own custom saved class.
+    """
+    conn = get_db()
+    c = conn.cursor()
+    try:
+        c.execute("DELETE FROM passages WHERE id = ? AND user_id = ? AND is_custom = 1", (passage_id, user_id))
+        conn.commit()
+        return True
+    finally:
+        conn.close()
+
+
+def admin_get_custom_submissions() -> List[Dict[str, Any]]:
+    """
+    Fetches all student custom submissions for admin review, including student details and audio.
+    """
+    conn = get_db()
+    c = conn.cursor()
+    try:
+        c.execute("""
+            SELECT p.id, p.title, p.category_id, p.language, p.difficulty, p.official_text,
+                   p.official_text_krutidev, p.typing_system, p.target_wpm, p.duration_seconds,
+                   p.audio_url, p.status, p.is_custom, p.is_approved, p.submitter_name,
+                   p.created_at, p.updated_at,
+                   u.username, u.email, u.phone, u.student_code,
+                   prof.display_name,
+                   cat.name as category_name
+            FROM passages p
+            LEFT JOIN users u ON p.user_id = u.id
+            LEFT JOIN profiles prof ON p.user_id = prof.user_id
+            LEFT JOIN categories cat ON p.category_id = cat.id
+            WHERE p.is_custom = 1
+            ORDER BY p.id DESC
+        """)
+        rows = c.fetchall()
+        result = []
+        for r in rows:
+            d = dict(r)
+            txt = d.get("official_text") or ""
+            d["word_count"] = len(txt.split())
+            d["student_display"] = d.get("display_name") or d.get("submitter_name") or d.get("username") or "विद्यार्थी"
+            result.append(d)
+        return result
+    finally:
+        conn.close()
+
+
+def admin_publish_custom_to_all(passage_id: int, category_id: int = 1, title: Optional[str] = None, is_premium: int = 0) -> bool:
+    """
+    Publishes a student custom submission for ALL users on the platform in 1-Click!
+    Updates status to 'published' and is_approved to 1.
+    """
+    conn = get_db()
+    c = conn.cursor()
+    now_iso = datetime.now().isoformat()
+    try:
+        if title and title.strip():
+            c.execute("""
+                UPDATE passages
+                SET status = 'published', is_approved = 1, category_id = ?, title = ?, is_premium = ?, updated_at = ?
+                WHERE id = ?
+            """, (category_id, title.strip(), is_premium, now_iso, passage_id))
+        else:
+            c.execute("""
+                UPDATE passages
+                SET status = 'published', is_approved = 1, category_id = ?, is_premium = ?, updated_at = ?
+                WHERE id = ?
+            """, (category_id, is_premium, now_iso, passage_id))
+        conn.commit()
+        return True
+    finally:
+        conn.close()
+
+
+def admin_delete_custom_submission(passage_id: int) -> bool:
+    """
+    Deletes a student custom submission.
+    """
+    conn = get_db()
+    c = conn.cursor()
+    try:
+        c.execute("DELETE FROM passages WHERE id = ?", (passage_id,))
+        conn.commit()
+        return True
+    finally:
+        conn.close()
+

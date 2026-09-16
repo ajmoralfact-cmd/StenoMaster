@@ -4000,6 +4000,7 @@ class StenoApp {
     this.selfAudioMode = this.selfAudioMode || 'ai';
     this.switchSelfAudioMode(this.selfAudioMode);
     this.updateSelfTextStats();
+    this.loadMyCustomClasses();
   }
 
   switchSelfAudioMode(mode) {
@@ -4066,6 +4067,7 @@ class StenoApp {
       if (ta && text) {
         ta.value = text;
         this.updateSelfTextStats();
+    this.loadMyCustomClasses();
         this.showToast('टेक्स्ट क्लिपबोर्ड से पेस्ट किया गया! 📋', 'success');
       }
     } catch (e) {
@@ -4119,6 +4121,7 @@ class StenoApp {
           ta.value = result.text;
         }
         this.updateSelfTextStats();
+    this.loadMyCustomClasses();
         ta.focus();
       }
 
@@ -4285,7 +4288,186 @@ class StenoApp {
     this.showToast(`सेल्फ प्रैक्टिस शुरू! (${fontMode === 'kruti_dev_010' ? 'कृति देव 010' : 'मंगल यूनिकोड'} | ${targetSpeed} WPM)`, 'success');
   }
 
+
+  async saveCurrentCustomClass() {
+    const masterText = (document.getElementById('selfMasterText')?.value || '').trim();
+    if (!masterText || masterText.split(/\s+/).length < 5) {
+      this.showToast('कृपया पहले मूल आलेख (Master Passage) में कम से कम 5-10 शब्द लिखें या फोटो स्कैन करें।', 'warning');
+      const ta = document.getElementById('selfMasterText');
+      if (ta) ta.focus();
+      return;
+    }
+
+    const titleInput = (document.getElementById('selfClassTitle')?.value || '').trim();
+    const targetSpeed = parseInt(document.getElementById('selfTargetSpeed')?.value || '80', 10);
+    const targetExam = document.getElementById('selfTargetExam')?.value || 'ssc_steno';
+    const fontMode = document.getElementById('selfFontMode')?.value || 'mangal_unicode';
+    const durationMinutes = parseInt(document.getElementById('selfDuration')?.value || '10', 10);
+    const words = masterText.split(/\s+/).length;
+    let actualDuration = durationMinutes > 0 ? durationMinutes * 60 : Math.max(300, Math.round((words / targetSpeed) * 60));
+
+    const saveBtn = document.getElementById('selfSaveClassBtn');
+    if (saveBtn) {
+      saveBtn.disabled = true;
+      saveBtn.innerHTML = '<span>⏳</span> <span>सेव हो रहा है...</span>';
+    }
+
+    try {
+      let audioUrl = null;
+      if (this.selfAudioMode === 'ai') {
+        const needsRegen = !this.selfGeneratedAudioUrl || 
+                           this.selfGeneratedText !== masterText || 
+                           this.selfGeneratedSpeed !== targetSpeed;
+        if (needsRegen) {
+          this.showToast('AI स्टेनो ऑडियो तैयार किया जा रहा है...', 'info');
+          const genUrl = await this.generateSelfAiAudio();
+          if (!genUrl) {
+            this.showToast('ऑडियो जनरेट नहीं हो सका। कृपया पुनः प्रयास करें।', 'warning');
+            return;
+          }
+        }
+        audioUrl = this.selfGeneratedAudioUrl;
+        if (this.selfGeneratedDuration) actualDuration = this.selfGeneratedDuration;
+      }
+
+      const payload = {
+        title: titleInput || ('कस्टम डिक्टेशन ' + targetSpeed + ' WPM'),
+        official_text: masterText,
+        target_wpm: targetSpeed,
+        duration_seconds: actualDuration,
+        audio_url: audioUrl || '',
+        typing_system: fontMode,
+        exam_rule: targetExam
+      };
+
+      const res = await this.apiCall('/api/practice/save-custom-class', 'POST', payload);
+      if (res && res.success) {
+        this.showToast(res.message || '✓ क्लास My Classes में सुरक्षित हो गई!', 'success');
+        await this.loadMyCustomClasses(true);
+      } else {
+        throw new Error(res?.error || 'क्लास सेव करने में त्रुटि');
+      }
+    } catch (err) {
+      console.error('saveCurrentCustomClass error:', err);
+      this.showToast(`त्रुटि: ${err.message}`, 'danger');
+    } finally {
+      if (saveBtn) {
+        saveBtn.disabled = false;
+        saveBtn.innerHTML = '<span>💾</span> <span>My Classes में सेव करें</span>';
+      }
+    }
+  }
+
+  async loadMyCustomClasses(force = false) {
+    const container = document.getElementById('myCustomClassesList');
+    const loadingEl = document.getElementById('myCustomClassesLoading');
+    const emptyEl = document.getElementById('myCustomClassesEmpty');
+    if (!container) return;
+
+    if (loadingEl) loadingEl.style.display = 'block';
+    if (emptyEl) emptyEl.style.display = 'none';
+
+    try {
+      const res = await this.apiCall('/api/practice/my-custom-classes');
+      this.myCustomClasses = res.custom_classes || [];
+
+      if (loadingEl) loadingEl.style.display = 'none';
+
+      if (!this.myCustomClasses.length) {
+        if (emptyEl) emptyEl.style.display = 'block';
+        container.innerHTML = '';
+        return;
+      }
+
+      if (emptyEl) emptyEl.style.display = 'none';
+      container.innerHTML = this.myCustomClasses.map(item => {
+        const isPub = item.status === 'published';
+        const dateStr = item.created_at ? new Date(item.created_at).toLocaleDateString('hi-IN', { day:'numeric', month:'short', year:'numeric' }) : '';
+        return `
+          <div class="stat-card" style="padding:16px; border:1px solid var(--border); border-radius:12px; display:flex; flex-direction:column; justify-content:space-between; transition:transform 0.15s, box-shadow 0.15s; background:var(--bg-card);">
+            <div>
+              <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px; margin-bottom:8px;">
+                <h4 style="margin:0; font-size:0.95rem; font-weight:700; color:var(--text-main); line-height:1.35;">${this.escapeHtml(item.title)}</h4>
+                <span class="badge ${isPub ? 'badge-success' : 'badge-warning'}" style="font-size:0.68rem; padding:2px 8px; border-radius:12px; white-space:nowrap;">
+                  ${isPub ? '🟢 सभी के लिए लाइव' : '🟡 सुरक्षित (Saved)'}
+                </span>
+              </div>
+              <div style="display:flex; gap:8px; flex-wrap:wrap; font-size:0.75rem; color:var(--text-muted); margin-bottom:10px;">
+                <span style="background:var(--bg-subtle); padding:2px 8px; border-radius:6px; font-weight:600; color:var(--primary);">⚡ ${item.target_wpm || 80} WPM</span>
+                <span style="background:var(--bg-subtle); padding:2px 8px; border-radius:6px;">📝 ${item.word_count || 0} शब्द</span>
+                <span style="background:var(--bg-subtle); padding:2px 8px; border-radius:6px;">🔤 ${item.typing_system === 'kruti_dev_010' ? 'कृति देव' : 'मंगल'}</span>
+                ${dateStr ? `<span style="background:var(--bg-subtle); padding:2px 8px; border-radius:6px;">📅 ${dateStr}</span>` : ''}
+              </div>
+              ${item.audio_url ? `
+                <div style="margin-bottom:12px;">
+                  <audio controls src="${item.audio_url}" style="width:100%; height:32px;" preload="none"></audio>
+                </div>
+              ` : ''}
+            </div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:10px; pt:8px; border-top:1px solid var(--border-subtle, #e2e8f0);">
+              <button type="button" class="btn-sm btn-primary" style="padding:6px 14px; font-size:0.8rem; font-weight:700; border-radius:20px; display:inline-flex; align-items:center; gap:4px;" onclick="stenoApp.playCustomClassById(${item.id})">
+                <span>🎯</span> <span>अभ्यास करें →</span>
+              </button>
+              <button type="button" class="btn-sm btn-secondary" style="padding:6px 10px; font-size:0.75rem; color:#ef4444; border-color:rgba(239,68,68,0.2);" onclick="stenoApp.deleteCustomClass(${item.id})" title="क्लास हटाएं">
+                <span>🗑️</span>
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    } catch (err) {
+      if (loadingEl) loadingEl.style.display = 'none';
+      console.error('loadMyCustomClasses error:', err);
+    }
+  }
+
+  playCustomClassById(passageId) {
+    if (!this.myCustomClasses) return;
+    const p = this.myCustomClasses.find(x => x.id === passageId);
+    if (!p) {
+      this.showToast('क्लास विवरण नहीं मिला।', 'warning');
+      return;
+    }
+
+    const passageObj = {
+      id: p.id,
+      is_custom: true,
+      title: p.title,
+      category_name: 'My Saved Classes',
+      language: p.language || 'hindi',
+      difficulty: p.difficulty || 'medium',
+      target_wpm: p.target_wpm || 80,
+      speed_wpm: p.target_wpm || 80,
+      duration_seconds: p.duration_seconds || 300,
+      official_text: p.official_text,
+      official_mangal_text: p.official_text,
+      official_kruti_dev_text: p.official_text_krutidev || p.official_text,
+      audio_url: p.audio_url || null,
+      typing_system: p.typing_system || 'mangal_unicode',
+      is_free_tier: true,
+      is_premium: false
+    };
+
+    const fontMode = p.typing_system || 'mangal_unicode';
+    this.openPractice(p.id, fontMode, passageObj);
+    this.showToast(`कस्टम क्लास शुरू: ${p.title} (${p.target_wpm} WPM)`, 'success');
+  }
+
+  async deleteCustomClass(passageId) {
+    if (!confirm('क्या आप वाकई इस कस्टम क्लास को हटाना चाहते हैं?')) return;
+    try {
+      const res = await this.apiCall('/api/practice/delete-custom-class', 'POST', { passage_id: passageId });
+      if (res && res.success) {
+        this.showToast('क्लास सफलतापूर्वक हटा दी गई।', 'info');
+        await this.loadMyCustomClasses(true);
+      }
+    } catch (err) {
+      this.showToast(`हटाने में त्रुटि: ${err.message}`, 'danger');
+    }
+  }
+
 }
+
 
 
 window.stenoApp = new StenoApp();

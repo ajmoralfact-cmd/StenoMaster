@@ -244,6 +244,14 @@
                 </div>
               </button>
 
+              <button type="button" class="admin-nav-tab" data-admin-tab="customclasses" onclick="stenoAdmin.switchTab('customclasses')">
+                <span class="admin-tab-icon">📥</span>
+                <div class="admin-tab-info">
+                  <span class="admin-tab-title">छात्रों की कस्टम क्लासेस</span>
+                  <span class="admin-tab-sub">समीक्षा व सभी को भेजें (1-Click)</span>
+                </div>
+              </button>
+
               <button type="button" class="admin-nav-tab" data-admin-tab="subscribers" onclick="stenoAdmin.switchTab('subscribers')">
                 <span class="admin-tab-icon">👥</span>
                 <div class="admin-tab-info">
@@ -324,6 +332,71 @@
 
               <!-- Key 4 Highlight Metrics & Quick Shortcuts injected dynamically -->
               <div id="adminOverviewMetrics"></div>
+            </div>
+
+                        <!-- TAB 10: STUDENT CUSTOM CLASSES & 1-CLICK PUBLISH TO ALL -->
+            <div class="admin-sub-panel" id="adminCustomClassesPanel" style="display:none;">
+              <div class="admin-section-hero">
+                <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+                  <div>
+                    <h2 style="margin:0; font-size:1.35rem; color:var(--text-main); font-weight:800; display:flex; align-items:center; gap:8px;">
+                      <span>📥</span> <span>छात्रों द्वारा बनाई गई कस्टम क्लासेस (Student Submissions)</span>
+                    </h2>
+                    <p style="margin:4px 0 0 0; font-size:0.82rem; color:var(--text-muted);">
+                      विद्यार्थियों ने जो आलेख व AI ऑडियो तैयार किए हैं, उन्हें यहाँ सुनें और <strong>1-Click में सभी छात्रों (All Users) के लिए प्रकाशित करें</strong>।
+                    </p>
+                  </div>
+                  <div style="display:flex; gap:8px;">
+                    <button type="button" class="btn-sm btn-secondary" onclick="stenoAdmin.loadCustomClasses()" style="padding:7px 16px; font-weight:600;">
+                      🔄 रीफ़्रेश लिस्ट
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Quick Stats Row -->
+              <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:14px; margin:18px 0;">
+                <div class="stat-card" style="padding:16px; border-left:4px solid #3b82f6;">
+                  <div style="font-size:0.75rem; color:var(--text-muted); font-weight:600;">कुल कस्टम क्लासेस</div>
+                  <div id="adminCustomTotalCount" style="font-size:1.6rem; font-weight:800; color:var(--text-main); margin-top:4px;">0</div>
+                </div>
+                <div class="stat-card" style="padding:16px; border-left:4px solid #f59e0b;">
+                  <div style="font-size:0.75rem; color:var(--text-muted); font-weight:600;">समीक्षाधीन (Saved by Student)</div>
+                  <div id="adminCustomPendingCount" style="font-size:1.6rem; font-weight:800; color:#d97706; margin-top:4px;">0</div>
+                </div>
+                <div class="stat-card" style="padding:16px; border-left:4px solid #10b981;">
+                  <div style="font-size:0.75rem; color:var(--text-muted); font-weight:600;">सभी को भेजी गईं (Published to All)</div>
+                  <div id="adminCustomPublishedCount" style="font-size:1.6rem; font-weight:800; color:#059669; margin-top:4px;">0</div>
+                </div>
+              </div>
+
+              <!-- Submissions Table / Cards Card -->
+              <div class="stat-card" style="padding:20px;">
+                <div id="adminCustomLoading" style="text-align:center; padding:30px; color:var(--text-muted); font-size:0.9rem;">
+                  ⏳ छात्रों की कस्टम क्लासेस लोड हो रही हैं...
+                </div>
+                <div id="adminCustomEmpty" style="display:none; text-align:center; padding:40px 20px;">
+                  <div style="font-size:2.5rem; margin-bottom:10px;">📭</div>
+                  <div style="font-weight:700; font-size:1.05rem; color:var(--text-main);">अभी किसी छात्र ने कस्टम क्लास सेव नहीं की है</div>
+                  <p style="color:var(--text-muted); font-size:0.82rem; margin-top:4px;">जब छात्र सेल्फ प्रैक्टिस में डिक्टेशन बनाकर सेव करेंगे, तो वे तुरंत यहाँ प्रदर्शित होंगी।</p>
+                </div>
+                <div id="adminCustomTableWrap" style="display:none; overflow-x:auto;">
+                  <table class="admin-table" style="width:100%; border-collapse:collapse;">
+                    <thead>
+                      <tr style="text-align:left; border-bottom:2px solid var(--border);">
+                        <th style="padding:10px 12px; font-size:0.8rem;">छात्र (Student)</th>
+                        <th style="padding:10px 12px; font-size:0.8rem;">शीर्षक (Title) & शब्द</th>
+                        <th style="padding:10px 12px; font-size:0.8rem;">स्पीड व फ़ॉन्ट</th>
+                        <th style="padding:10px 12px; font-size:0.8rem;">ऑडियो डिक्टेशन</th>
+                        <th style="padding:10px 12px; font-size:0.8rem;">आलेख पाठ (Text)</th>
+                        <th style="padding:10px 12px; font-size:0.8rem;">स्थिति</th>
+                        <th style="padding:10px 12px; font-size:0.8rem; text-align:center;">एक्शन (Action)</th>
+                      </tr>
+                    </thead>
+                    <tbody id="adminCustomTbody"></tbody>
+                  </table>
+                </div>
+              </div>
             </div>
 
             <!-- TAB 2: PASSAGES MANAGEMENT PANEL -->
@@ -1692,6 +1765,42 @@
       }
     });
   </script>
+
+  <!-- Modal: Publish Custom Class for All Users -->
+  <div id="publishCustomModal" class="modal-backdrop" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:9999; align-items:center; justify-content:center;">
+    <div style="background:var(--bg-card); max-width:520px; width:90%; border-radius:16px; padding:24px; box-shadow:0 20px 40px rgba(0,0,0,0.3); border:1px solid var(--border);">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+        <h3 style="margin:0; font-size:1.15rem; color:var(--text-main); font-weight:800; display:flex; align-items:center; gap:8px;">
+          <span>🚀</span> <span>सभी छात्रों के लिए प्रकाशित करें</span>
+        </h3>
+        <button type="button" onclick="stenoAdmin.closePublishCustomModal()" style="background:none; border:none; font-size:1.2rem; cursor:pointer; color:var(--text-muted);">✕</button>
+      </div>
+      <p style="font-size:0.82rem; color:var(--text-secondary); margin-bottom:14px;">
+        यह क्लास तुरंत सभी छात्रों के सामान्य क्लास सेक्शन में लाइव हो जाएगी। आप चाहें तो इसका शीर्षक या श्रेणी बदल सकते हैं:
+      </p>
+      <input type="hidden" id="pubCustomPassageId">
+      <div style="margin-bottom:12px;">
+        <label class="form-label" style="font-size:0.8rem; font-weight:700;">क्लास का शीर्षक:</label>
+        <input type="text" id="pubCustomTitle" class="form-input" style="font-size:0.88rem; padding:8px 12px;">
+      </div>
+      <div style="margin-bottom:12px;">
+        <label class="form-label" style="font-size:0.8rem; font-weight:700;">किस श्रेणी में जोड़ें (Category):</label>
+        <select id="pubCustomCategory" class="form-select"></select>
+      </div>
+      <div style="margin-bottom:18px;">
+        <label style="display:flex; align-items:center; gap:8px; font-size:0.82rem; cursor:pointer;">
+          <input type="checkbox" id="pubCustomIsPremium">
+          <span>केवल Pro/प्रीमियम छात्रों के लिए रखें (Is Premium)</span>
+        </label>
+      </div>
+      <div style="display:flex; justify-content:flex-end; gap:10px;">
+        <button type="button" class="btn-secondary" onclick="stenoAdmin.closePublishCustomModal()" style="padding:8px 18px; border-radius:8px;">रद्द करें</button>
+        <button type="button" class="btn-primary" onclick="stenoAdmin.confirmPublishCustomToAll()" style="padding:8px 22px; border-radius:8px; background:linear-gradient(135deg, #10b981, #059669); border:none; font-weight:700;">
+          🚀 प्रकाशित करें (Publish Now)
+        </button>
+      </div>
+    </div>
+  </div>
 
 </body>
 </html>

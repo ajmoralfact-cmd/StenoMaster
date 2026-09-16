@@ -534,6 +534,15 @@ class StenoMasterHandler(http.server.SimpleHTTPRequestHandler):
             self._send_json(200, {"orders": orders})
             return
 
+        # Student Saved Custom Classes
+        if path == '/api/practice/my-custom-classes':
+            if not user:
+                self._send_auth_required()
+                return
+            classes = db.get_student_custom_passages(user['user_id'])
+            self._send_json(200, {"custom_classes": classes})
+            return
+
         # ------------------ Admin Routes ------------------
         if path.startswith('/api/admin/'):
             if not user:
@@ -551,6 +560,11 @@ class StenoMasterHandler(http.server.SimpleHTTPRequestHandler):
             if path == '/api/admin/passages':
                 passages = db.get_passages(include_official_text=True)
                 self._send_json(200, {"passages": passages})
+                return
+
+            if path == '/api/admin/custom-classes':
+                custom_submissions = db.admin_get_custom_submissions()
+                self._send_json(200, {"custom_classes": custom_submissions})
                 return
 
             if path == '/api/admin/users':
@@ -1193,6 +1207,39 @@ class StenoMasterHandler(http.server.SimpleHTTPRequestHandler):
                 self._send_json(200, {"success": False, "use_client_ocr": True, "message": "Using browser OCR engine"})
                 return
 
+        # Student Save Custom Class
+        if path == '/api/practice/save-custom-class':
+            if not user:
+                self._send_auth_required()
+                return
+            data = self._read_json_body()
+            try:
+                passage_id = db.save_student_custom_passage(user['user_id'], data)
+                self._send_json(200, {
+                    "success": True,
+                    "passage_id": passage_id,
+                    "message": "✓ क्लास को सफलतापूर्वक My Classes में सेव कर लिया गया है! 🎉"
+                })
+            except ValueError as ve:
+                self._send_json(400, {"error": str(ve)})
+            except Exception as e:
+                self._send_json(500, {"error": f"क्लास सेव करने में त्रुटि: {str(e)}"})
+            return
+
+        # Student Delete Custom Class
+        if path == '/api/practice/delete-custom-class':
+            if not user:
+                self._send_auth_required()
+                return
+            data = self._read_json_body()
+            p_id = data.get("passage_id") or data.get("id")
+            if not p_id:
+                self._send_json(400, {"error": "Missing passage_id"})
+                return
+            db.delete_student_custom_passage(user['user_id'], int(p_id))
+            self._send_json(200, {"success": True, "message": "क्लास हटा दी गई है।"})
+            return
+
         # 6. Admin Actions
         if path.startswith('/api/admin/'):
             if not user:
@@ -1200,6 +1247,33 @@ class StenoMasterHandler(http.server.SimpleHTTPRequestHandler):
                 return
             if user['role'] != 'admin':
                 self._send_json(403, {"error": "Admin access required"})
+                return
+
+            # Admin Custom Classes Management (1-Click Publish to All Users)
+            if path == '/api/admin/custom-classes/publish':
+                data = self._read_json_body()
+                p_id = data.get("passage_id") or data.get("id")
+                if not p_id:
+                    self._send_json(400, {"error": "Missing passage_id"})
+                    return
+                cat_id = int(data.get("category_id") or 1)
+                title = data.get("title")
+                is_prem = int(data.get("is_premium") or 0)
+                db.admin_publish_custom_to_all(int(p_id), cat_id, title, is_prem)
+                self._send_json(200, {
+                    "success": True,
+                    "message": "✓ क्लास को सफलतापूर्वक सभी छात्रों के लिए प्रकाशित कर दिया गया है! 🚀"
+                })
+                return
+
+            if path == '/api/admin/custom-classes/delete':
+                data = self._read_json_body()
+                p_id = data.get("passage_id") or data.get("id")
+                if not p_id:
+                    self._send_json(400, {"error": "Missing passage_id"})
+                    return
+                db.admin_delete_custom_submission(int(p_id))
+                self._send_json(200, {"success": True, "message": "क्लास सफलतापूर्वक हटा दी गई।"})
                 return
 
             if path == '/api/admin/passages/save':
