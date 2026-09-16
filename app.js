@@ -4093,7 +4093,7 @@ class StenoApp {
       if (!window.stenoOcr) {
         await new Promise((resolve, reject) => {
           const s = document.createElement('script');
-          s.src = '/js/ocr_service.js';
+          s.src = '/js/ocr_service.js?v=1.1';
           s.onload = resolve;
           s.onerror = () => reject(new Error('OCR स्क्रिप्ट लोड करने में त्रुटि'));
           document.head.appendChild(s);
@@ -4132,7 +4132,7 @@ class StenoApp {
     } catch (err) {
       console.error('Photo OCR error:', err);
       this.showToast(`OCR स्कैन त्रुटि: ${err.message}`, 'danger');
-      if (statusText) statusText.textContent = '❌ स्कैन विफल';
+      if (statusText) statusText.textContent = '❌ स्कैन विफल: ' + (err.message || 'त्रुटि');
     } finally {
       if (photoBtn) photoBtn.disabled = false;
     }

@@ -1878,7 +1878,7 @@ class StenoAdmin {
       if (!window.stenoOcr) {
         await new Promise((resolve, reject) => {
           const s = document.createElement('script');
-          s.src = '/js/ocr_service.js';
+          s.src = '/js/ocr_service.js?v=1.1';
           s.onload = resolve;
           s.onerror = () => reject(new Error('OCR इंजन लोड करने में असमर्थ'));
           document.head.appendChild(s);
@@ -1917,7 +1917,7 @@ class StenoAdmin {
     } catch (err) {
       console.error('Admin Photo OCR error:', err);
       stenoApp.showToast(`OCR स्कैन त्रुटि: ${err.message}`, 'error');
-      if (statusText) statusText.textContent = '❌ स्कैन विफल';
+      if (statusText) statusText.textContent = '❌ स्कैन विफल: ' + (err.message || 'त्रुटि');
     } finally {
       if (photoBtn) photoBtn.disabled = false;
     }
