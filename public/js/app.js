@@ -4289,7 +4289,7 @@ class StenoApp {
   }
 
 
-  async saveCurrentCustomClass() {
+  openSaveCustomClassModal() {
     const masterText = (document.getElementById('selfMasterText')?.value || '').trim();
     if (!masterText || masterText.split(/\s+/).length < 5) {
       this.showToast('कृपया पहले मूल आलेख (Master Passage) में कम से कम 5-10 शब्द लिखें या फोटो स्कैन करें।', 'warning');
@@ -4298,13 +4298,100 @@ class StenoApp {
       return;
     }
 
-    const titleInput = (document.getElementById('selfClassTitle')?.value || '').trim();
+    const modal = document.getElementById('saveCustomClassModal');
+    const input = document.getElementById('modalSaveClassTitle');
+    const existingTitle = (document.getElementById('selfClassTitle')?.value || '').trim();
+    const targetSpeed = parseInt(document.getElementById('selfTargetSpeed')?.value || '80', 10);
+    const fontMode = document.getElementById('selfFontMode')?.value || 'mangal_unicode';
+    const words = masterText.split(/\s+/).length;
+
+    let defaultTitle = existingTitle;
+    if (!defaultTitle) {
+      const cleanWords = masterText.replace(/[^\u0900-\u097F\w\s]/g, ' ').trim().split(/\s+/).slice(0, 5).join(' ');
+      if (cleanWords && cleanWords.length >= 3) {
+        defaultTitle = `${cleanWords} (${targetSpeed} WPM)`;
+      } else {
+        defaultTitle = `कस्टम डिक्टेशन (${targetSpeed} WPM)`;
+      }
+    }
+
+    if (input) {
+      input.value = defaultTitle;
+    }
+
+    const chipWpm = document.getElementById('modalSaveChipWpm');
+    if (chipWpm) chipWpm.textContent = `⚡ ${targetSpeed} WPM`;
+    const chipWords = document.getElementById('modalSaveChipWords');
+    if (chipWords) chipWords.textContent = `📝 ${words} शब्द`;
+    const chipFont = document.getElementById('modalSaveChipFont');
+    if (chipFont) chipFont.textContent = `🔤 ${fontMode === 'kruti_dev_010' ? 'कृति देव' : 'मंगल'}`;
+
+    if (modal) {
+      modal.style.display = 'flex';
+      setTimeout(() => {
+        if (input) {
+          input.focus();
+          input.select();
+        }
+      }, 50);
+    }
+  }
+
+  closeSaveCustomClassModal() {
+    const modal = document.getElementById('saveCustomClassModal');
+    if (modal) modal.style.display = 'none';
+  }
+
+  async confirmSaveCustomClass() {
+    const input = document.getElementById('modalSaveClassTitle');
+    const title = (input?.value || '').trim();
+    if (!title) {
+      this.showToast('कृपया क्लास का नाम (शीर्षक) अवश्य दर्ज करें।', 'warning');
+      if (input) input.focus();
+      return;
+    }
+
+    const mainTitleInput = document.getElementById('selfClassTitle');
+    if (mainTitleInput) mainTitleInput.value = title;
+
+    const modalConfirmBtn = document.getElementById('modalConfirmSaveBtn');
+    const originalText = modalConfirmBtn ? modalConfirmBtn.innerHTML : '';
+    if (modalConfirmBtn) {
+      modalConfirmBtn.disabled = true;
+      modalConfirmBtn.innerHTML = '<span>⏳</span> <span>सेव हो रहा है...</span>';
+    }
+
+    try {
+      const saved = await this.saveCurrentCustomClass(title);
+      if (saved) {
+        this.closeSaveCustomClassModal();
+      }
+    } finally {
+      if (modalConfirmBtn) {
+        modalConfirmBtn.disabled = false;
+        modalConfirmBtn.innerHTML = originalText;
+      }
+    }
+  }
+
+  async saveCurrentCustomClass(forcedTitle = null) {
+    const masterText = (document.getElementById('selfMasterText')?.value || '').trim();
+    if (!masterText || masterText.split(/\s+/).length < 5) {
+      this.showToast('कृपया पहले मूल आलेख (Master Passage) में कम से कम 5-10 शब्द लिखें या फोटो स्कैन करें।', 'warning');
+      const ta = document.getElementById('selfMasterText');
+      if (ta) ta.focus();
+      return false;
+    }
+
+    const titleInput = (forcedTitle || document.getElementById('selfClassTitle')?.value || '').trim();
     const targetSpeed = parseInt(document.getElementById('selfTargetSpeed')?.value || '80', 10);
     const targetExam = document.getElementById('selfTargetExam')?.value || 'ssc_steno';
     const fontMode = document.getElementById('selfFontMode')?.value || 'mangal_unicode';
     const durationMinutes = parseInt(document.getElementById('selfDuration')?.value || '10', 10);
     const words = masterText.split(/\s+/).length;
     let actualDuration = durationMinutes > 0 ? durationMinutes * 60 : Math.max(300, Math.round((words / targetSpeed) * 60));
+
+    const finalTitle = titleInput || ('कस्टम डिक्टेशन ' + targetSpeed + ' WPM');
 
     const saveBtn = document.getElementById('selfSaveClassBtn');
     if (saveBtn) {
@@ -4323,7 +4410,7 @@ class StenoApp {
           const genUrl = await this.generateSelfAiAudio();
           if (!genUrl) {
             this.showToast('ऑडियो जनरेट नहीं हो सका। कृपया पुनः प्रयास करें।', 'warning');
-            return;
+            return false;
           }
         }
         audioUrl = this.selfGeneratedAudioUrl;
@@ -4331,7 +4418,7 @@ class StenoApp {
       }
 
       const payload = {
-        title: titleInput || ('कस्टम डिक्टेशन ' + targetSpeed + ' WPM'),
+        title: finalTitle,
         official_text: masterText,
         target_wpm: targetSpeed,
         duration_seconds: actualDuration,
@@ -4342,14 +4429,16 @@ class StenoApp {
 
       const res = await this.apiCall('/api/practice/save-custom-class', 'POST', payload);
       if (res && res.success) {
-        this.showToast(res.message || '✓ क्लास My Classes में सुरक्षित हो गई!', 'success');
+        this.showToast(res.message || `✓ क्लास "${finalTitle}" सुरक्षित हो गई!`, 'success');
         await this.loadMyCustomClasses(true);
+        return true;
       } else {
         throw new Error(res?.error || 'क्लास सेव करने में त्रुटि');
       }
     } catch (err) {
       console.error('saveCurrentCustomClass error:', err);
       this.showToast(`त्रुटि: ${err.message}`, 'danger');
+      return false;
     } finally {
       if (saveBtn) {
         saveBtn.disabled = false;
@@ -4357,6 +4446,7 @@ class StenoApp {
       }
     }
   }
+
 
   async loadMyCustomClasses(force = false) {
     const container = document.getElementById('myCustomClassesList');

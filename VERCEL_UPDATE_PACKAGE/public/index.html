@@ -778,7 +778,7 @@
             <button type="button" class="btn-primary" style="padding:12px 32px; font-size:1.02rem; font-weight:700; border-radius:30px; box-shadow:0 4px 14px rgba(2,132,199,0.35);" onclick="stenoApp.startCustomPractice()">
               🎯 कस्टम अभ्यास शुरू करें (Start Practice) →
             </button>
-            <button type="button" id="selfSaveClassBtn" style="padding:12px 28px; font-size:1.02rem; font-weight:700; border-radius:30px; background:linear-gradient(135deg, #10b981, #059669); color:#fff; border:none; box-shadow:0 4px 14px rgba(16,185,129,0.35); cursor:pointer; display:inline-flex; align-items:center; gap:6px;" onclick="stenoApp.saveCurrentCustomClass()">
+            <button type="button" id="selfSaveClassBtn" style="padding:12px 28px; font-size:1.02rem; font-weight:700; border-radius:30px; background:linear-gradient(135deg, #10b981, #059669); color:#fff; border:none; box-shadow:0 4px 14px rgba(16,185,129,0.35); cursor:pointer; display:inline-flex; align-items:center; gap:6px;" onclick="stenoApp.openSaveCustomClassModal()">
               <span>💾</span> <span>My Classes में सेव करें</span>
             </button>
           </div>
@@ -3229,6 +3229,50 @@
         <button type="button" class="btn-primary" onclick="stenoTypingEngine.resumeExamFullScreen()" style="background:#dc2626; border-color:#dc2626; padding:10px 24px; font-weight:700; font-size:0.9rem;">
           📺 फुल-स्क्रीन करें और परीक्षा जारी रखें →
         </button>
+      </div>
+    </div>
+  </div>
+
+
+  
+  <!-- Modal: Save Custom Class Title Prompt -->
+  <div id="saveCustomClassModal" style="display:none; position:fixed; inset:0; background:rgba(15,23,42,0.7); backdrop-filter:blur(5px); z-index:9999; justify-content:center; align-items:center; padding:16px;">
+    <div style="background:var(--bg-card, #ffffff); width:100%; max-width:480px; border-radius:18px; box-shadow:0 25px 50px -12px rgba(0,0,0,0.35); overflow:hidden; border:1px solid var(--border, #e2e8f0); animation:scaleUp 0.2s cubic-bezier(0.16, 1, 0.3, 1);">
+      <div style="background:linear-gradient(135deg, #059669, #10b981); color:#fff; padding:18px 24px; display:flex; align-items:center; justify-content:space-between;">
+        <div style="display:flex; align-items:center; gap:10px;">
+          <span style="font-size:1.5rem;">💾</span>
+          <div>
+            <h3 style="margin:0; font-size:1.15rem; font-weight:800; color:#fff;">क्लास का नाम दर्ज करें</h3>
+            <p style="margin:2px 0 0 0; font-size:0.75rem; color:rgba(255,255,255,0.9);">Save to My Custom Classes</p>
+          </div>
+        </div>
+        <button type="button" onclick="stenoApp.closeSaveCustomClassModal()" style="background:none; border:none; color:#fff; font-size:1.4rem; cursor:pointer; line-height:1; opacity:0.85;" title="बंद करें">✕</button>
+      </div>
+      
+      <div style="padding:22px;">
+        <label for="modalSaveClassTitle" style="display:block; font-size:0.86rem; font-weight:700; margin-bottom:8px; color:var(--text-main, #0f172a);">
+          डिक्टेशन का शीर्षक / नाम (Class Title) <span style="color:#ef4444;">*</span>
+        </label>
+        <input type="text" id="modalSaveClassTitle" class="form-control" style="width:100%; font-size:1rem; padding:10px 14px; border-radius:10px; border:2px solid #10b981; font-weight:600; outline:none; box-sizing:border-box;" placeholder="उदा. दैनिक जागरण संपादकीय - 80 WPM" maxlength="120" onkeydown="if(event.key==='Enter') stenoApp.confirmSaveCustomClass()">
+        
+        <div id="modalSaveClassInfo" style="display:flex; gap:8px; flex-wrap:wrap; margin-top:12px; font-size:0.75rem; color:var(--text-muted, #64748b);">
+          <span id="modalSaveChipWpm" style="background:rgba(16,185,129,0.1); color:#059669; padding:3px 10px; border-radius:6px; font-weight:700;">⚡ 80 WPM</span>
+          <span id="modalSaveChipWords" style="background:var(--bg-subtle, #f1f5f9); padding:3px 10px; border-radius:6px;">📝 400 शब्द</span>
+          <span id="modalSaveChipFont" style="background:var(--bg-subtle, #f1f5f9); padding:3px 10px; border-radius:6px;">🔤 मंगल फॉन्ट</span>
+        </div>
+
+        <p style="margin:14px 0 0 0; font-size:0.75rem; color:var(--text-muted, #64748b); line-height:1.4;">
+          💡 <strong>सुझाव:</strong> आप जो शीर्षक देंगे, वही नाम 'My Saved Classes' लिस्ट में दिखेगा जिससे आप बाद में कभी भी इस डिक्टेशन को आसानी से पहचान सकेंगे।
+        </p>
+
+        <div style="margin-top:22px; display:flex; justify-content:flex-end; gap:10px;">
+          <button type="button" class="btn-secondary" onclick="stenoApp.closeSaveCustomClassModal()" style="padding:9px 18px; font-size:0.88rem; font-weight:600; border-radius:8px;">
+            रद्द करें (Cancel)
+          </button>
+          <button type="button" id="modalConfirmSaveBtn" class="btn-primary" onclick="stenoApp.confirmSaveCustomClass()" style="padding:9px 22px; font-size:0.88rem; font-weight:700; border-radius:8px; background:linear-gradient(135deg, #10b981, #059669); border:none; box-shadow:0 4px 12px rgba(16,185,129,0.35); cursor:pointer;">
+            <span>💾</span> <span>सुरक्षित करें (Save Class)</span>
+          </button>
+        </div>
       </div>
     </div>
   </div>
