@@ -797,6 +797,40 @@
                   <button type="submit" class="btn-primary" style="margin-top:14px;">सदस्यता, Google, Cashfree एवं Email सेटिंग्स सहेजें (Save Settings)</button>
                 </form>
               </div>
+              <!-- Category-Wise Pricing Table -->
+              <div class="chart-card" id="adminCategoryPricingSection" style="margin-top:20px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; flex-wrap:wrap; gap:10px;">
+                  <div>
+                    <h3 style="font-size:1.1rem; font-weight:700; margin:0; display:flex; align-items:center; gap:8px;">
+                      <span>📚</span> प्रत्येक श्रेणी का अलग मूल्य (Category-Wise Pricing)
+                    </h3>
+                    <p style="margin:4px 0 0 0; font-size:0.8rem; color:var(--text-muted);">
+                      छात्र जिस श्रेणी (जैसे रामधारी गुप्ता खंड 1, खंड 2, आदि) को अलग से खरीदना चाहें, उसका मूल्य (₹) यहाँ निर्धारित करें।
+                    </p>
+                  </div>
+                  <button type="button" class="btn-sm btn-secondary" onclick="stenoAdmin.loadCategoryPricingTable()" style="font-size:0.8rem; font-weight:600;">
+                    🔄 रिफ्रेश लिस्ट
+                  </button>
+                </div>
+
+                <div class="table-container" style="overflow-x:auto;">
+                  <table class="admin-table" style="width:100%; border-collapse:collapse;">
+                    <thead>
+                      <tr style="text-align:left; border-bottom:2px solid var(--border-subtle);">
+                        <th style="padding:10px; font-size:0.85rem;">श्रेणी का नाम (Category)</th>
+                        <th style="padding:10px; font-size:0.85rem;">कुल डिक्टेशन</th>
+                        <th style="padding:10px; font-size:0.85rem;">फ्री डिक्टेशन</th>
+                        <th style="padding:10px; font-size:0.85rem;">मूल्य (₹)</th>
+                        <th style="padding:10px; text-align:right; font-size:0.85rem;">कार्रवाई (Action)</th>
+                      </tr>
+                    </thead>
+                    <tbody id="adminCategoryPricingTableBody">
+                      <tr><td colspan="5" style="text-align:center; padding:16px; color:var(--text-muted);">लोड हो रहा है...</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
             </div>
 
             <!-- TAB 6: EXAM SCORING RULES PANEL -->

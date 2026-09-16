@@ -1294,6 +1294,17 @@ class StenoMasterHandler(http.server.SimpleHTTPRequestHandler):
                 self._send_json(200, {"success": True, "message": "क्लास सफलतापूर्वक हटा दी गई।"})
                 return
 
+            if path == '/api/admin/categories/update-price':
+                data = self._read_json_body()
+                cat_id = data.get('category_id')
+                price = data.get('price')
+                if not cat_id or price is None:
+                    self._send_json(400, {"error": "Category ID and price required"})
+                    return
+                res = db.admin_update_category_price(int(cat_id), int(price))
+                self._send_json(200, res)
+                return
+
             if path == '/api/admin/passages/save':
                 data = self._read_json_body()
                 try:

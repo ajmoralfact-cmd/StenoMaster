@@ -1797,15 +1797,36 @@ def get_free_passage_ids(limit: int = 2) -> List[int]:
 def is_passage_accessible(user_id: Optional[int], passage_id: int) -> bool:
     """
     Checks if a passage is accessible by the user.
-    - Exactly 2 published classes/passages are completely free for all users.
-    - All other passages require an active Pro subscription or admin access.
+    - Free demo passages are completely free for all users.
+    - Pro users have access to everything.
+    - Individual category buyers have access to all passages in their purchased categories.
     """
     free_ids = get_free_passage_ids(2)
     if passage_id in free_ids:
         return True
     if not user_id:
         return False
-    return is_user_premium(user_id)
+    if is_user_premium(user_id):
+        return True
+
+    # Check if category of passage is unlocked for this user
+    try:
+        conn = get_db()
+        c = conn.cursor()
+        c.execute("SELECT category_id, is_premium FROM passages WHERE id = ?", (passage_id,))
+        p_row = c.fetchone()
+        conn.close()
+        if p_row:
+            p_dict = dict(p_row)
+            if not p_dict.get('is_premium', 0):
+                return True
+            cat_id = p_dict.get('category_id')
+            if cat_id and is_category_unlocked_for_user(user_id, cat_id):
+                return True
+    except Exception as e:
+        print(f"is_passage_accessible category check error: {e}")
+
+    return False
 
 
 _cached_categories = None
@@ -4399,3 +4420,168 @@ def admin_reset_user_password(user_id: int, new_password: str) -> Dict[str, Any]
         "success": True,
         "message": f"✓ छात्र ({u_name}) का पासवर्ड सफलतापूर्वक रीसेट कर दिया गया!"
     }
+
+
+
+# -----------------------------------------------------------------------------
+# Category-Wise Unlocking & Multi-Category Pricing Operations
+# -----------------------------------------------------------------------------
+def is_category_unlocked_for_user(user_id: Optional[int], category_id: int) -> bool:
+    if not user_id:
+        return False
+    if is_user_premium(user_id):
+        return True
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("""
+        SELECT id, expires_at 
+        FROM user_unlocked_categories 
+        WHERE user_id = ? AND category_id = ?
+    """, (user_id, category_id))
+    row = c.fetchone()
+    conn.close()
+    if not row:
+        return False
+    exp = row['expires_at'] if isinstance(row, dict) else row[1]
+    if exp and is_expired_datetime(exp):
+        return False
+    return True
+
+
+def get_user_unlocked_category_ids(user_id: Optional[int]) -> List[int]:
+    if not user_id:
+        return []
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("SELECT category_id, expires_at FROM user_unlocked_categories WHERE user_id = ?", (user_id,))
+    rows = c.fetchall()
+    conn.close()
+    unlocked = []
+    for r in rows:
+        row_dict = dict(r)
+        exp = row_dict.get('expires_at')
+        if not exp or not is_expired_datetime(exp):
+            unlocked.append(row_dict['category_id'])
+    return unlocked
+
+
+def unlock_categories_for_user(user_id: int, category_ids: List[int], order_id: Optional[str] = None, duration_days: int = 365) -> Dict[str, Any]:
+    if not user_id or not category_ids:
+        return {"success": False, "error": "User ID and category IDs required"}
+    conn = get_db()
+    c = conn.cursor()
+    now = datetime.now()
+    now_iso = now.isoformat()
+    expires_iso = (now + timedelta(days=duration_days)).isoformat()
+    unlocked_count = 0
+
+    for cat_id in category_ids:
+        try:
+            cat_id_int = int(cat_id)
+            c.execute("""
+                INSERT INTO user_unlocked_categories (user_id, category_id, order_id, expires_at, created_at)
+                VALUES (?, ?, ?, ?, ?)
+                ON CONFLICT (user_id, category_id) DO UPDATE SET 
+                    order_id = excluded.order_id,
+                    expires_at = excluded.expires_at
+            """, (user_id, cat_id_int, order_id or '', expires_iso, now_iso))
+            unlocked_count += 1
+        except Exception as e:
+            print(f"Error unlocking category {cat_id} for user {user_id}: {e}")
+
+    conn.commit()
+    conn.close()
+    return {"success": True, "unlocked_count": unlocked_count, "message": f"{unlocked_count} कैटेगरीज सफलतापूर्वक अनलॉक हो गईं!"}
+
+
+def get_categories_with_user_status(user_id: Optional[int] = None) -> List[Dict[str, Any]]:
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("""
+        SELECT c.*,
+               COUNT(p.id) as passage_count,
+               COUNT(CASE WHEN p.is_premium = 0 THEN 1 END) as free_count
+        FROM categories c
+        LEFT JOIN passages p ON c.id = p.category_id AND p.status = 'published'
+        GROUP BY c.id
+        ORDER BY c.sort_order ASC, c.id ASC
+    """)
+    rows = c.fetchall()
+    conn.close()
+
+    is_premium_user = is_user_premium(user_id) if user_id else False
+    unlocked_ids = set(get_user_unlocked_category_ids(user_id)) if user_id else set()
+
+    icon_map = {
+        'ramdhari-gupta-khand-1': '📘',
+        'ramdhari-gupta-khand-2': '📙',
+        'editorial-passages': '📰',
+        'ssc-steno': '🎯',
+        'upsssc-steno': '🏛️',
+        'court-steno': '⚖️',
+        'ramdhari-singh-dinkar': '🪶',
+        'indian-constitution': '📜',
+        'science-technology': '🔬',
+        'general-knowledge': '🌍'
+    }
+
+    result = []
+    for r in rows:
+        d = dict(r)
+        d['price'] = int(d.get('price')) if d.get('price') is not None else 49
+        slug = d.get('slug', '')
+        d['icon_emoji'] = icon_map.get(slug, '📚')
+        d['is_unlocked'] = bool(is_premium_user or (d['id'] in unlocked_ids))
+        result.append(d)
+    return result
+
+
+def get_passages_by_category(category_id: int, user_id: Optional[int] = None) -> Dict[str, Any]:
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("SELECT * FROM categories WHERE id = ?", (category_id,))
+    cat_row = c.fetchone()
+    if not cat_row:
+        conn.close()
+        return {"category": None, "passages": []}
+
+    cat_dict = dict(cat_row)
+    cat_dict['price'] = int(cat_dict.get('price')) if cat_dict.get('price') is not None else 49
+
+    is_unlocked = False
+    if user_id:
+        is_unlocked = is_user_premium(user_id) or is_category_unlocked_for_user(user_id, category_id)
+    cat_dict['is_unlocked'] = is_unlocked
+
+    c.execute("""
+        SELECT id, title, category_id, language, difficulty, target_wpm, duration_seconds,
+               typing_system, is_premium, audio_url, created_at,
+               ROUND(LENGTH(official_text) / 5) as word_count
+        FROM passages
+        WHERE category_id = ? AND status = 'published'
+        ORDER BY id ASC
+    """, (category_id,))
+    p_rows = c.fetchall()
+    conn.close()
+
+    free_ids = get_free_passage_ids(2)
+    passages = []
+    for r in p_rows:
+        pd = dict(r)
+        pd['is_free_tier'] = bool(pd['id'] in free_ids or not pd.get('is_premium', 0))
+        pd['is_accessible'] = bool(pd['is_free_tier'] or is_unlocked)
+        passages.append(pd)
+
+    return {
+        "category": cat_dict,
+        "passages": passages
+    }
+
+
+def admin_update_category_price(category_id: int, price: int) -> Dict[str, Any]:
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("UPDATE categories SET price = ? WHERE id = ?", (int(price), int(category_id)))
+    conn.commit()
+    conn.close()
+    return {"success": True, "message": f"कैटेगरी मूल्य ₹{price} सुरक्षित हो गया!"}

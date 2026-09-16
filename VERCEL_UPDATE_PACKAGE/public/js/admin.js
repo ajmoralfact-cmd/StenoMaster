@@ -142,6 +142,7 @@ class StenoAdmin {
         this.loadPayments();
       } else if (tabId === 'pricing') {
         this.loadSubscriptionSettings();
+        this.loadCategoryPricingTable();
       } else if (tabId === 'scoring') {
         this.loadScoringConfig();
       } else if (tabId === 'branding') {
@@ -1547,10 +1548,81 @@ class StenoAdmin {
       });
       stenoApp.showToast('सदस्यता एवं Google सेटिंग्स सफलतापूर्वक सहेजी गईं! ✅', 'success');
       await this.loadSubscriptionSettings();
+        this.loadCategoryPricingTable();
     } catch (err) {
       stenoApp.showToast('सेटिंग्स सहेजने में त्रुटि: ' + err.message, 'error');
     }
   }
+
+  async loadCategoryPricingTable() {
+    const tbody = document.getElementById('adminCategoryPricingTableBody');
+    if (!tbody) return;
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:16px; color:var(--text-muted);">लोड हो रहा है...</td></tr>';
+    try {
+      const res = await stenoApp.apiCall(`/api/categories?_t=${Date.now()}`);
+      const cats = res.categories || [];
+      if (!cats.length) {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:16px; color:var(--text-muted);">कोई श्रेणी उपलब्ध नहीं है।</td></tr>';
+        return;
+      }
+      tbody.innerHTML = cats.map(c => `
+        <tr style="border-bottom:1px solid var(--border-subtle);">
+          <td style="padding:10px; font-weight:600;">
+            <div style="display:flex; align-items:center; gap:8px;">
+              <span style="font-size:1.2rem;">${c.icon || '📂'}</span>
+              <div>
+                <div>${stenoApp.escapeHtml(c.name)}</div>
+                <div style="font-size:0.75rem; color:var(--text-muted);">${c.slug || ''}</div>
+              </div>
+            </div>
+          </td>
+          <td style="padding:10px;"><span class="badge" style="background:rgba(59,130,246,0.1); color:#2563eb; padding:2px 8px; border-radius:12px; font-weight:600;">${c.passage_count || 0} टेस्ट</span></td>
+          <td style="padding:10px;"><span class="badge" style="background:rgba(16,185,129,0.1); color:#059669; padding:2px 8px; border-radius:12px; font-weight:600;">${c.free_count || 0} फ्री</span></td>
+          <td style="padding:10px;">
+            <div style="display:flex; align-items:center; gap:4px;">
+              <span style="font-weight:700;">₹</span>
+              <input type="number" id="catPriceInput_${c.id}" class="form-input" value="${c.price || 49}" min="0" max="9999" style="width:90px; padding:4px 8px; font-weight:700;">
+            </div>
+          </td>
+          <td style="padding:10px; text-align:right;">
+            <button type="button" class="btn-sm btn-primary" onclick="stenoAdmin.saveCategoryPrice(${c.id})" style="padding:4px 12px; font-size:0.8rem; font-weight:600;">
+              💾 सेव मूल्य
+            </button>
+          </td>
+        </tr>
+      `).join('');
+    } catch (err) {
+      console.error('Error loading category pricing:', err);
+      tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:16px; color:#ef4444;">त्रुटि: ${stenoApp.escapeHtml(err.message || 'लोड करने में विफल')}</td></tr>`;
+    }
+  }
+
+  async saveCategoryPrice(catId) {
+    const input = document.getElementById(`catPriceInput_${catId}`);
+    if (!input) return;
+    const price = parseInt(input.value, 10);
+    if (isNaN(price) || price < 0) {
+      stenoApp.showToast('कृपया वैध मूल्य (0 या अधिक) दर्ज करें!', 'error');
+      return;
+    }
+    try {
+      stenoApp.showToast('मूल्य अपडेट हो रहा है...', 'info');
+      const res = await stenoApp.apiCall('/api/admin/categories/update-price', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ category_id: catId, price })
+      });
+      if (res && res.success) {
+        stenoApp.showToast(`श्रेणी मूल्य सफलतापूर्वक ₹${price} सेट किया गया!`, 'success');
+      } else {
+        stenoApp.showToast(res.error || 'मूल्य अपडेट नहीं हो सका', 'error');
+      }
+    } catch (err) {
+      console.error('Save category price error:', err);
+      stenoApp.showToast(err.message || 'त्रुटि हुई', 'error');
+    }
+  }
+
 
   async handleQrUpload(inputEl) {
     const file = inputEl.files[0];

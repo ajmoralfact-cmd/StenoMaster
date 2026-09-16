@@ -2025,6 +2025,7 @@ class StenoApp {
         localStorage.setItem('stenomaster_cached_categories', JSON.stringify(this.categories));
       } catch (e) {}
       this.renderCategoryPills();
+      this.renderHorizontalCategories();
     } catch (err) {
       console.error('Failed to load categories:', err);
     }
@@ -2214,6 +2215,7 @@ class StenoApp {
   renderHome() {
     this.renderCategoryPills();
     this.renderHomeCards();
+    this.renderHorizontalCategories();
     this.renderDailyTargetSummary();
   }
 
@@ -2444,6 +2446,7 @@ class StenoApp {
     }
 
     grid.innerHTML = this.passages.map(p => this.createPassageCardHTML(p)).join('');
+    this.renderHorizontalCategories();
   }
 
   // -------------------------------------------------------------------------
