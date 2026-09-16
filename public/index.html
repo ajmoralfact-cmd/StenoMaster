@@ -2823,18 +2823,100 @@
   </div>
 
   <!-- Forgot Password Modal -->
-  <div class="modal-overlay" id="forgotPasswordModal">
-    <div class="modal-card" style="max-width: 440px;">
-      <button class="modal-close-btn" onclick="stenoApp.closeModal('forgotPasswordModal')">✕</button>
-      <h3 class="modal-title">पासवर्ड रीसेट (Reset Password)</h3>
-      <p class="modal-subtitle">अपना पंजीकृत ईमेल दर्ज करें। हम पासवर्ड रीसेट निर्देश भेजेंगे।</p>
-      <form onsubmit="stenoApp.handleForgotPassword(event)">
-        <div class="form-group">
-          <label class="form-label">पंजीकृत ईमेल (Registered Email):</label>
-          <input type="email" id="forgotEmailInput" class="form-input" placeholder="student@stenomaster.com" required>
+    <!-- Modal: Email OTP Password Reset -->
+  <div id="forgotPasswordModal" class="modal-overlay" style="display:none; position:fixed; inset:0; background:rgba(15,23,42,0.75); backdrop-filter:blur(6px); z-index:99999; justify-content:center; align-items:center; padding:16px;">
+    <div style="background:var(--bg-card, #ffffff); width:100%; max-width:440px; border-radius:20px; box-shadow:0 25px 50px -12px rgba(0,0,0,0.35); overflow:hidden; border:1px solid var(--border, #e2e8f0); animation:scaleUp 0.2s cubic-bezier(0.16, 1, 0.3, 1);">
+      
+      <!-- Header -->
+      <div style="background:linear-gradient(135deg, #0284c7, #4f46e5); color:#fff; padding:20px 24px; display:flex; align-items:center; justify-content:space-between;">
+        <div style="display:flex; align-items:center; gap:10px;">
+          <span style="font-size:1.6rem;">🔐</span>
+          <div>
+            <h3 style="margin:0; font-size:1.15rem; font-weight:800; color:#fff;">पासवर्ड रीसेट (Password Reset)</h3>
+            <p style="margin:2px 0 0 0; font-size:0.75rem; color:rgba(255,255,255,0.9);">Email OTP सत्यापन</p>
+          </div>
         </div>
-        <button type="submit" class="btn-primary" style="width:100%; margin-top:10px;">पासवर्ड रीसेट लिंक भेजें (Send Reset Link)</button>
-      </form>
+        <button type="button" onclick="stenoApp.closeForgotPassword()" style="background:none; border:none; color:#fff; font-size:1.4rem; cursor:pointer; line-height:1; opacity:0.85;" title="बंद करें">✕</button>
+      </div>
+
+      <!-- Step 1: Request OTP -->
+      <div id="forgotStep1" style="padding:24px;">
+        <p style="margin:0 0 16px 0; font-size:0.86rem; color:var(--text-secondary); line-height:1.5;">
+          अपना पंजीकृत ईमेल, मोबाइल नंबर अथवा Student ID दर्ज करें। हम आपके ईमेल पर 6 अंकों का सुरक्षित OTP भेजेंगे।
+        </p>
+        <div class="form-group" style="margin-bottom:18px;">
+          <label class="form-label" style="font-weight:700; font-size:0.85rem;">पंजीकृत ईमेल या मोबाइल (Email / Phone) <span style="color:#ef4444;">*</span></label>
+          <div class="input-with-icon">
+            <span class="input-icon">✉️</span>
+            <input type="text" id="forgotIdentifierInput" class="form-input" placeholder="name@email.com / 9876543210" style="font-size:0.95rem; font-weight:600;" onkeydown="if(event.key==='Enter') stenoApp.handleSendForgotOtp()">
+          </div>
+        </div>
+        <div id="forgotStep1Error" class="auth-inline-error" style="display:none; margin-bottom:14px;"></div>
+        <button type="button" id="forgotSendOtpBtn" class="btn-primary auth-submit-btn" style="width:100%; padding:12px; font-weight:700; font-size:0.95rem; border-radius:12px; display:flex; justify-content:center; align-items:center; gap:8px;" onclick="stenoApp.handleSendForgotOtp()">
+          <span>📨</span> <span>OTP प्राप्त करें (Send OTP)</span>
+        </button>
+        <div style="text-align:center; margin-top:16px;">
+          <a href="javascript:void(0)" onclick="stenoApp.closeForgotPassword()" style="font-size:0.82rem; color:var(--text-muted); text-decoration:none; font-weight:600;">← वापस लॉगिन पर जाएं</a>
+        </div>
+      </div>
+
+      <!-- Step 2: Enter OTP & New Password -->
+      <div id="forgotStep2" style="display:none; padding:24px;">
+        <div style="background:rgba(2,132,199,0.08); border-radius:10px; padding:10px 14px; margin-bottom:16px; border-left:3px solid #0284c7;">
+          <div style="font-size:0.78rem; color:var(--text-muted);">OTP भेजा गया ईमेल:</div>
+          <strong id="forgotTargetEmailDisplay" style="font-size:0.9rem; color:#0284c7; word-break:break-all;">user@email.com</strong>
+        </div>
+
+        <div class="form-group" style="margin-bottom:16px;">
+          <label class="form-label" style="font-weight:700; font-size:0.85rem;">6-अंकीय OTP (Enter OTP) <span style="color:#ef4444;">*</span></label>
+          <input type="text" id="forgotOtpInput" class="form-input" placeholder="• • • • • •" maxlength="6" style="font-size:1.4rem; font-weight:800; letter-spacing:8px; text-align:center; font-family:monospace; border-color:#0284c7;" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
+        </div>
+
+        <div class="form-group" style="margin-bottom:14px;">
+          <label class="form-label" style="font-weight:700; font-size:0.85rem;">नया पासवर्ड (New Password) <span style="color:#ef4444;">*</span></label>
+          <div class="input-with-icon" style="position:relative;">
+            <span class="input-icon">🔒</span>
+            <input type="password" id="forgotNewPasswordInput" class="form-input" placeholder="कम से कम 4 अक्षर" style="padding-right:40px;">
+            <button type="button" onclick="stenoApp.togglePasswordVisibility('forgotNewPasswordInput')" style="position:absolute; right:10px; top:50%; transform:translateY(-50%); background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:1rem;" title="पासवर्ड देखें">👁️</button>
+          </div>
+        </div>
+
+        <div class="form-group" style="margin-bottom:18px;">
+          <label class="form-label" style="font-weight:700; font-size:0.85rem;">पासवर्ड की पुष्टि (Confirm Password) <span style="color:#ef4444;">*</span></label>
+          <div class="input-with-icon">
+            <span class="input-icon">🔒</span>
+            <input type="password" id="forgotConfirmPasswordInput" class="form-input" placeholder="वही पासवर्ड पुनः दर्ज करें" onkeydown="if(event.key==='Enter') stenoApp.handleVerifyAndResetPassword()">
+          </div>
+        </div>
+
+        <div id="forgotStep2Error" class="auth-inline-error" style="display:none; margin-bottom:14px;"></div>
+
+        <button type="button" id="forgotResetSubmitBtn" class="btn-primary auth-submit-btn" style="width:100%; padding:12px; font-weight:700; font-size:0.95rem; border-radius:12px; background:linear-gradient(135deg, #10b981, #059669); border:none; box-shadow:0 4px 14px rgba(16,185,129,0.35); display:flex; justify-content:center; align-items:center; gap:8px;" onclick="stenoApp.handleVerifyAndResetPassword()">
+          <span>🔑</span> <span>पासवर्ड बदलें (Reset Password)</span>
+        </button>
+
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:16px; font-size:0.8rem;">
+          <button type="button" onclick="stenoApp.backToForgotStep1()" style="background:none; border:none; color:var(--text-muted); cursor:pointer; font-weight:600; padding:0;">
+            ← ईमेल बदलें
+          </button>
+          <button type="button" id="forgotResendOtpBtn" onclick="stenoApp.resendForgotOtp()" style="background:none; border:none; color:var(--primary); cursor:pointer; font-weight:700; padding:0;">
+            🔄 पुनः OTP भेजें
+          </button>
+        </div>
+      </div>
+
+      <!-- Step 3: Success Confirmation -->
+      <div id="forgotStep3" style="display:none; padding:32px 24px; text-align:center;">
+        <div style="font-size:3.5rem; line-height:1; margin-bottom:16px;">🎉</div>
+        <h3 style="margin:0 0 8px 0; color:#10b981; font-weight:800; font-size:1.3rem;">पासवर्ड सफलतापूर्वक बदल गया!</h3>
+        <p style="margin:0 0 20px 0; font-size:0.86rem; color:var(--text-secondary); line-height:1.5;">
+          आपका नया पासवर्ड सुरक्षित हो चुका है। अब आप अपने नए पासवर्ड से तुरंत लॉगिन कर सकते हैं।
+        </p>
+        <button type="button" class="btn-primary" style="width:100%; padding:12px; font-weight:700; font-size:0.95rem; border-radius:12px;" onclick="stenoApp.finishForgotPasswordLogin()">
+          लॉगिन करें (Proceed to Login) →
+        </button>
+      </div>
+
     </div>
   </div>
 
