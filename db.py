@@ -204,6 +204,19 @@ def run_postgres_migrations(conn):
                     cur.execute(stmt)
                 except Exception as e:
                     print(f"Postgres migration notice: {e}")
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS email_otps (
+                    id SERIAL PRIMARY KEY,
+                    email TEXT NOT NULL,
+                    otp TEXT NOT NULL,
+                    purpose TEXT DEFAULT 'password_reset',
+                    attempts INTEGER DEFAULT 0,
+                    expires_at TEXT NOT NULL,
+                    created_at TEXT NOT NULL,
+                    is_used INTEGER DEFAULT 0
+                );
+                CREATE INDEX IF NOT EXISTS idx_email_otps_email ON email_otps(email);
+            """)
             ensure_postgres_default_data(cur)
         raw_conn.autocommit = prev_autocommit
     except Exception as e:
@@ -4058,3 +4071,331 @@ def admin_delete_custom_submission(passage_id: int) -> bool:
     finally:
         conn.close()
 
+
+
+# -----------------------------------------------------------------------------
+# Email OTP & Password Reset Operations
+# -----------------------------------------------------------------------------
+def render_otp_email_html(otp: str, user_name: str = 'Student') -> str:
+    return f"""<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"></head>
+<body style="margin:0; padding:20px; background-color:#f1f5f9; font-family:'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+  <table width="100%" border="0" cellspacing="0" cellpadding="0" style="max-width:540px; margin:0 auto; background:#ffffff; border-radius:16px; overflow:hidden; box-shadow:0 4px 20px rgba(0,0,0,0.06); border:1px solid #e2e8f0;">
+    <tr>
+      <td style="background:linear-gradient(135deg, #0284c7, #4f46e5); padding:26px 24px; text-align:center; color:#ffffff;">
+        <h1 style="margin:0; font-size:24px; font-weight:800; letter-spacing:0.5px; color:#ffffff;">⚡ StenoMaster</h1>
+        <p style="margin:4px 0 0 0; font-size:13px; color:rgba(255,255,255,0.9);">स्टेनो एवं टाइपिंग स्पीड मास्टरी प्लेटफॉर्म</p>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding:28px 24px; color:#1e293b; line-height:1.6;">
+        <h2 style="font-size:18px; margin-top:0; color:#0f172a; font-weight:700;">🔐 पासवर्ड रीसेट अनुरोध (Password Reset OTP)</h2>
+        <p style="font-size:14px; color:#475569; margin-bottom:18px;">
+          नमस्ते <strong>{user_name}</strong>,<br>
+          हमें आपके StenoMaster खाते का पासवर्ड रीसेट करने का अनुरोध प्राप्त हुआ है। अपना पासवर्ड बदलने के लिए नीचे दिए गए 6-अंकीय OTP का उपयोग करें:
+        </p>
+        
+        <div style="text-align:center; margin:24px 0;">
+          <div style="display:inline-block; background:#f0fdf4; border:2px dashed #16a34a; border-radius:12px; padding:12px 32px; font-size:32px; font-weight:800; letter-spacing:8px; color:#15803d; font-family:monospace;">
+            {otp}
+          </div>
+          <p style="font-size:12px; color:#dc2626; margin:8px 0 0 0; font-weight:600;">⏱️ यह OTP केवल 10 मिनट के लिए मान्य है</p>
+        </div>
+
+        <p style="font-size:13px; color:#64748b; line-height:1.5;">
+          ⚠️ <strong>सुरक्षा सूचना:</strong> यदि आपने पासवर्ड रीसेट का अनुरोध नहीं किया था, तो कृपया इस ईमेल को अनदेखा करें। आपका खाता पूरी तरह सुरक्षित है। अपना OTP किसी के साथ साझा न करें।
+        </p>
+      </td>
+    </tr>
+    <tr>
+      <td style="background:#f8fafc; padding:14px 24px; text-align:center; font-size:12px; color:#94a3b8; border-top:1px solid #e2e8f0;">
+        © 2026 StenoMaster • सुरक्षित स्टेनो परीक्षा पोर्टल
+      </td>
+    </tr>
+  </table>
+</body>
+</html>"""
+
+
+def send_email_smtp(to_email: str, subject: str, html_content: str, text_content: Optional[str] = None) -> Dict[str, Any]:
+    """
+    Sends an email using configured SMTP settings (e.g. Gmail SMTP or custom host).
+    Settings are retrieved from db.get_admin_settings() with fallbacks to environment variables.
+    """
+    import smtplib
+    from email.mime.text import MIMEText
+    from email.mime.multipart import MIMEMultipart
+
+    settings = get_admin_settings()
+    smtp_host = (settings.get('smtp_host') or os.environ.get('SMTP_HOST') or 'smtp.gmail.com').strip()
+    smtp_port_raw = settings.get('smtp_port') or os.environ.get('SMTP_PORT') or 587
+    try:
+        smtp_port = int(smtp_port_raw)
+    except Exception:
+        smtp_port = 587
+    smtp_user = (settings.get('smtp_user') or os.environ.get('SMTP_USER') or '').strip()
+    smtp_pass = (settings.get('smtp_pass') or os.environ.get('SMTP_PASS') or '').strip()
+    sender_name = (settings.get('smtp_from_name') or 'StenoMaster Support').strip()
+    from_email = smtp_user if smtp_user else f"no-reply@{smtp_host}"
+
+    if not smtp_user or not smtp_pass:
+        return {
+            "success": False,
+            "error": "SMTP_NOT_CONFIGURED",
+            "message": "ईमेल सेवा अभी पूरी तरह कॉन्फ़िगर नहीं है (SMTP User or App Password missing)।"
+        }
+
+    try:
+        msg = MIMEMultipart('alternative')
+        msg['Subject'] = subject
+        msg['From'] = f"{sender_name} <{from_email}>"
+        msg['To'] = to_email
+
+        if text_content:
+            msg.attach(MIMEText(text_content, 'plain', 'utf-8'))
+        msg.attach(MIMEText(html_content, 'html', 'utf-8'))
+
+        if smtp_port == 465:
+            with smtplib.SMTP_SSL(smtp_host, smtp_port, timeout=12) as server:
+                server.login(smtp_user, smtp_pass)
+                server.sendmail(from_email, [to_email], msg.as_string())
+        else:
+            with smtplib.SMTP(smtp_host, smtp_port, timeout=12) as server:
+                server.ehlo()
+                try:
+                    server.starttls()
+                    server.ehlo()
+                except Exception:
+                    pass
+                server.login(smtp_user, smtp_pass)
+                server.sendmail(from_email, [to_email], msg.as_string())
+
+        return {"success": True, "message": f"Email successfully sent to {to_email}"}
+    except Exception as e:
+        print(f"send_email_smtp error to {to_email}: {e}")
+        return {"success": False, "error": str(e), "message": f"ईमेल भेजने में त्रुटि: {str(e)}"}
+
+
+def test_admin_smtp_settings(target_email: str) -> Dict[str, Any]:
+    subject = "⚡ StenoMaster: टेस्ट ईमेल (SMTP Test Successful)"
+    html = """<!DOCTYPE html>
+    <html>
+    <body style="font-family:Arial,sans-serif; padding:20px; background:#f8fafc;">
+      <div style="max-width:480px; margin:0 auto; background:#fff; padding:24px; border-radius:12px; border:1px solid #cbd5e1;">
+        <h2 style="color:#0284c7; margin-top:0;">⚡ StenoMaster SMTP टेस्ट सफल</h2>
+        <p style="color:#334155; font-size:14px; line-height:1.6;">
+          बधाई हो! आपकी ईमेल सेवा (SMTP Configuration) सही ढंग से काम कर रही है।
+        </p>
+        <p style="color:#64748b; font-size:13px;">
+          अब कोई भी छात्र पासवर्ड भूलने पर इस ईमेल द्वारा 6-अंकीय OTP प्राप्त कर सकेगा।
+        </p>
+      </div>
+    </body>
+    </html>"""
+    return send_email_smtp(target_email, subject, html, "StenoMaster SMTP Test Successful!")
+
+
+def create_and_send_password_otp(identifier: str) -> Dict[str, Any]:
+    import re
+    clean_id = (identifier or '').strip()
+    if not clean_id:
+        return {"success": False, "error": "कृपया अपना पंजीकृत ईमेल अथवा मोबाइल नंबर दर्ज करें।"}
+
+    conn = get_db()
+    c = conn.cursor()
+
+    clean_phone = re.sub(r'[^0-9]', '', clean_id)
+    c.execute("""
+        SELECT u.id, u.username, u.email, u.phone, u.student_code, p.display_name 
+        FROM users u
+        LEFT JOIN profiles p ON u.id = p.user_id
+        WHERE LOWER(u.email) = ? OR LOWER(u.username) = ? OR u.phone = ? OR UPPER(u.student_code) = ?
+    """, (clean_id.lower(), clean_id.lower(), clean_id, clean_id.upper()))
+    user = c.fetchone()
+
+    if not user and len(clean_phone) >= 10:
+        last10 = clean_phone[-10:]
+        c.execute("""
+            SELECT u.id, u.username, u.email, u.phone, u.student_code, p.display_name 
+            FROM users u
+            LEFT JOIN profiles p ON u.id = p.user_id
+            WHERE u.phone LIKE ?
+        """, (f"%{last10}",))
+        user = c.fetchone()
+
+    if not user:
+        conn.close()
+        return {"success": False, "error": "इस विवरण से कोई पंजीकृत छात्र खाता नहीं मिला। कृपया सही ईमेल दर्ज करें।"}
+
+    user_dict = dict(user)
+    target_email = (user_dict.get('email') or '').strip()
+    if not target_email or '@' not in target_email:
+        conn.close()
+        return {"success": False, "error": "इस खाते में कोई मान्य ईमेल पता पंजीकृत नहीं है। कृपया एडमिन से संपर्क करें।"}
+
+    otp = str(secrets.randbelow(900000) + 100000)
+    now = datetime.now()
+    now_iso = now.isoformat()
+    expires_iso = (now + timedelta(minutes=10)).isoformat()
+
+    c.execute("""
+        UPDATE email_otps 
+        SET is_used = 1 
+        WHERE LOWER(email) = ? AND is_used = 0
+    """, (target_email.lower(),))
+
+    c.execute("""
+        INSERT INTO email_otps (email, otp, purpose, attempts, expires_at, created_at, is_used)
+        VALUES (?, ?, 'password_reset', 0, ?, ?, 0)
+    """, (target_email.lower(), otp, expires_iso, now_iso))
+    conn.commit()
+    conn.close()
+
+    subject = f"StenoMaster: {otp} आपका पासवर्ड रीसेट OTP है"
+    disp_name = user_dict.get('display_name') or user_dict.get('username') or 'Student'
+    html = render_otp_email_html(otp, disp_name)
+    text = f"StenoMaster Password Reset OTP: {otp}. Valid for 10 minutes."
+
+    send_res = send_email_smtp(target_email, subject, html, text)
+
+    parts = target_email.split('@')
+    name_part = parts[0]
+    obf_name = name_part[0] + '***' + name_part[-1] if len(name_part) > 2 else name_part[0] + '***'
+    masked_email = f"{obf_name}@{parts[1]}"
+
+    if not send_res.get("success"):
+        if send_res.get("error") == "SMTP_NOT_CONFIGURED":
+            return {
+                "success": True,
+                "email": target_email,
+                "masked_email": masked_email,
+                "smtp_configured": False,
+                "demo_otp": otp,
+                "message": f"OTP तैयार है: {otp} (एडमिन द्वारा ईमेल सेटिंग्स कन्फ़िगर होने तक स्क्रीन पर दिखाया गया है)"
+            }
+        else:
+            return {
+                "success": True,
+                "email": target_email,
+                "masked_email": masked_email,
+                "smtp_configured": False,
+                "demo_otp": otp,
+                "message": f"ईमेल सेवा सूचना: {otp}"
+            }
+
+    return {
+        "success": True,
+        "email": target_email,
+        "masked_email": masked_email,
+        "smtp_configured": True,
+        "message": f"6 अंकों का OTP आपके पंजीकृत ईमेल ({masked_email}) पर भेज दिया गया है।"
+    }
+
+
+def verify_otp_and_reset_password(email: str, otp: str, new_password: str) -> Dict[str, Any]:
+    clean_email = (email or '').strip().lower()
+    clean_otp = (otp or '').strip()
+    clean_pass = (new_password or '').strip()
+
+    if not clean_email or not clean_otp or not clean_pass:
+        return {"success": False, "error": "कृपया सभी आवश्यक फ़ील्ड (ईमेल, OTP, नया पासवर्ड) भरें।"}
+
+    if len(clean_pass) < 4:
+        return {"success": False, "error": "पासवर्ड कम से कम 4 अक्षरों का होना चाहिए।"}
+
+    conn = get_db()
+    c = conn.cursor()
+
+    c.execute("""
+        SELECT id, email, otp, attempts, expires_at, is_used
+        FROM email_otps
+        WHERE LOWER(email) = ? AND is_used = 0
+        ORDER BY id DESC
+        LIMIT 1
+    """, (clean_email,))
+    row = c.fetchone()
+
+    if not row:
+        conn.close()
+        return {"success": False, "error": "कोई सक्रिय OTP नहीं मिला। कृपया पुनः 'OTP भेजें' पर क्लिक करें।"}
+
+    otp_rec = dict(row)
+    attempts = otp_rec.get('attempts', 0)
+    if attempts >= 4:
+        c.execute("UPDATE email_otps SET is_used = 1 WHERE id = ?", (otp_rec['id'],))
+        conn.commit()
+        conn.close()
+        return {"success": False, "error": "अत्यधिक गलत प्रयासों के कारण यह OTP अमान्य हो गया है। कृपया नया OTP प्राप्त करें।"}
+
+    if is_expired_datetime(otp_rec['expires_at']):
+        c.execute("UPDATE email_otps SET is_used = 1 WHERE id = ?", (otp_rec['id'],))
+        conn.commit()
+        conn.close()
+        return {"success": False, "error": "यह OTP समाप्त (Expire) हो चुका है। कृपया नया OTP प्राप्त करें।"}
+
+    if otp_rec['otp'] != clean_otp:
+        c.execute("UPDATE email_otps SET attempts = attempts + 1 WHERE id = ?", (otp_rec['id'],))
+        conn.commit()
+        conn.close()
+        return {"success": False, "error": f"गलत OTP दर्ज किया गया है। (प्रयास: {attempts + 1}/3)"}
+
+    c.execute("SELECT id, username, email FROM users WHERE LOWER(email) = ?", (clean_email,))
+    user = c.fetchone()
+    if not user:
+        conn.close()
+        return {"success": False, "error": "उपयोगकर्ता खाता नहीं मिला।"}
+
+    user_id = user['id'] if isinstance(user, dict) else user[0]
+    new_hash = hash_password(clean_pass)
+
+    c.execute("UPDATE users SET password_hash = ? WHERE id = ?", (new_hash, user_id))
+    c.execute("UPDATE email_otps SET is_used = 1 WHERE id = ?", (otp_rec['id'],))
+
+    now_iso = datetime.now().isoformat()
+    c.execute("""
+        UPDATE sessions
+        SET is_active = 0, invalidated_reason = 'password_reset', superseded_at = ?
+        WHERE user_id = ? AND is_active = 1
+    """, (now_iso, user_id))
+
+    conn.commit()
+    conn.close()
+
+    return {
+        "success": True,
+        "message": "✓ पासवर्ड सफलतापूर्वक बदल दिया गया है! अब आप नए पासवर्ड से लॉगिन कर सकते हैं।"
+    }
+
+
+def admin_reset_user_password(user_id: int, new_password: str) -> Dict[str, Any]:
+    clean_pass = (new_password or '').strip()
+    if not clean_pass or len(clean_pass) < 4:
+        return {"success": False, "error": "पासवर्ड कम से कम 4 अक्षरों का होना चाहिए।"}
+
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("SELECT id, username, email FROM users WHERE id = ?", (user_id,))
+    user = c.fetchone()
+    if not user:
+        conn.close()
+        return {"success": False, "error": "छात्र खाता नहीं मिला।"}
+
+    new_hash = hash_password(clean_pass)
+    c.execute("UPDATE users SET password_hash = ? WHERE id = ?", (new_hash, user_id))
+
+    now_iso = datetime.now().isoformat()
+    c.execute("""
+        UPDATE sessions
+        SET is_active = 0, invalidated_reason = 'admin_password_reset', superseded_at = ?
+        WHERE user_id = ? AND is_active = 1
+    """, (now_iso, user_id))
+
+    conn.commit()
+    conn.close()
+
+    u_name = user['username'] if isinstance(user, dict) else user[1]
+    return {
+        "success": True,
+        "message": f"✓ छात्र ({u_name}) का पासवर्ड सफलतापूर्वक रीसेट कर दिया गया!"
+    }

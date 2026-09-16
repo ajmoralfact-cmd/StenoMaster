@@ -961,6 +961,21 @@ class StenoAdmin {
 
       const wpmEl = document.getElementById('adminDailyWpmInput');
       if (wpmEl) wpmEl.value = this.settings.daily_target_wpm || '40';
+
+      const hostEl = document.getElementById('settingSmtpHost');
+      if (hostEl) hostEl.value = this.settings.smtp_host || 'smtp.gmail.com';
+
+      const portEl = document.getElementById('settingSmtpPort');
+      if (portEl) portEl.value = this.settings.smtp_port || '587';
+
+      const userEl = document.getElementById('settingSmtpUser');
+      if (userEl) userEl.value = this.settings.smtp_user || '';
+
+      const passEl = document.getElementById('settingSmtpPass');
+      if (passEl) passEl.value = this.settings.smtp_pass || '';
+
+      const fromEl = document.getElementById('settingSmtpFromName');
+      if (fromEl) fromEl.value = this.settings.smtp_from_name || 'StenoMaster Support';
     } catch (err) {
       console.error('Failed to load system settings:', err);
     }
@@ -1063,9 +1078,14 @@ class StenoAdmin {
             <div style="font-size:0.75rem; color:var(--text-muted);">⭐ ${u.points || 0} अंक</div>
           </td>
           <td>
-            <span class="badge" style="background:var(--bg-subtle); color:var(--text-main); font-weight:700;">
-              ${u.attempts_count || 0} अभ्यास
-            </span>
+            <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+              <span class="badge" style="background:var(--bg-subtle); color:var(--text-main); font-weight:700;">
+                ${u.attempts_count || 0} अभ्यास
+              </span>
+              <button type="button" class="btn-sm btn-secondary" style="padding:2px 8px; font-size:0.75rem; color:#dc2626; border-color:rgba(220,38,38,0.3); font-weight:600;" onclick="adminApp.openResetPasswordModal(${u.id}, '${this.escapeHtml(u.display_name || u.username)}')">
+                🔑 पासवर्ड
+              </button>
+            </div>
           </td>
         </tr>
       `).join('');

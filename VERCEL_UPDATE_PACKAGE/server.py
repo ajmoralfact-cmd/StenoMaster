@@ -423,6 +423,7 @@ class StenoMasterHandler(http.server.SimpleHTTPRequestHandler):
             # Redact payment gateway credentials for students / public visitors
             if not user or user.get('role') != 'admin':
                 admin_settings.pop('cashfree_secret_key', None)
+                admin_settings.pop('smtp_pass', None)
                 admin_settings.pop('cashfree_app_id', None)
             self._send_json(200, {"settings": admin_settings})
             return
@@ -660,12 +661,29 @@ class StenoMasterHandler(http.server.SimpleHTTPRequestHandler):
             })
             return
 
-        if path == '/api/auth/forgot-password':
+        if path in ('/api/auth/forgot-password/send-otp', '/api/auth/forgot-password'):
             data = self._read_json_body()
-            email = data.get('email', '').strip().lower()
-            if not email:
-                self._send_json(400, {"error": "कृपया मान्य ईमेल दर्ज करें। (Please enter a valid email)"})
+            identifier = data.get('email') or data.get('identifier') or ''
+            res = db.create_and_send_password_otp(identifier)
+            status_code = 200 if res.get('success') else 400
+            self._send_json(status_code, res)
+            return
+
+        if path == '/api/auth/forgot-password/verify-reset':
+            data = self._read_json_body()
+            email = data.get('email', '').strip()
+            otp = data.get('otp', '').strip()
+            new_pass = data.get('new_password', '').strip()
+            confirm_pass = data.get('confirm_password', '').strip()
+
+            if new_pass and confirm_pass and new_pass != confirm_pass:
+                self._send_json(400, {"success": False, "error": "नया पासवर्ड और पुष्टि पासवर्ड मेल नहीं खाते। (Passwords do not match)"})
                 return
+
+            res = db.verify_otp_and_reset_password(email, otp, new_pass)
+            status_code = 200 if res.get('success') else 400
+            self._send_json(status_code, res)
+            return
             conn = db.get_db()
             c = conn.cursor()
             c.execute("SELECT id, username, email, student_code FROM users WHERE LOWER(email) = ?", (email,))
@@ -1337,6 +1355,29 @@ class StenoMasterHandler(http.server.SimpleHTTPRequestHandler):
                 if cat_id:
                     db.admin_delete_category(int(cat_id))
                 self._send_json(200, {"success": True})
+                return
+
+            if path == '/api/admin/users/reset-password':
+                data = self._read_json_body()
+                user_id = data.get('user_id')
+                new_pass = data.get('new_password', '').strip()
+                if not user_id or not new_pass:
+                    self._send_json(400, {"success": False, "error": "छात्र ID और नया पासवर्ड आवश्यक है।"})
+                    return
+                res = db.admin_reset_user_password(int(user_id), new_pass)
+                status_code = 200 if res.get('success') else 400
+                self._send_json(status_code, res)
+                return
+
+            if path == '/api/admin/settings/test-email':
+                data = self._read_json_body()
+                target_email = data.get('target_email') or user.get('email') or ''
+                if not target_email or '@' not in target_email:
+                    self._send_json(400, {"success": False, "error": "कृपया मान्य टेस्ट ईमेल दर्ज करें।"})
+                    return
+                res = db.test_admin_smtp_settings(target_email)
+                status_code = 200 if res.get('success') else 400
+                self._send_json(status_code, res)
                 return
 
             if path == '/api/admin/settings/update':

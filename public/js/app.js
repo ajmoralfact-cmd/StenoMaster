@@ -1087,23 +1087,231 @@ class StenoApp {
   }
 
   openForgotPassword() {
-    this.openModal('forgotPasswordModal');
-  }
+    const modal = document.getElementById('forgotPasswordModal');
+    const step1 = document.getElementById('forgotStep1');
+    const step2 = document.getElementById('forgotStep2');
+    const step3 = document.getElementById('forgotStep3');
+    const err1 = document.getElementById('forgotStep1Error');
+    const err2 = document.getElementById('forgotStep2Error');
+    const idInput = document.getElementById('forgotIdentifierInput');
 
-  async handleForgotPassword(e) {
-    if (e) e.preventDefault();
-    const emailInput = document.getElementById('forgotEmailInput');
-    const email = emailInput?.value?.trim() || '';
-    if (!email) return;
+    if (err1) err1.style.display = 'none';
+    if (err2) err2.style.display = 'none';
+    if (step1) step1.style.display = 'block';
+    if (step2) step2.style.display = 'none';
+    if (step3) step3.style.display = 'none';
 
-    try {
-      const res = await this.apiCall('/api/auth/forgot-password', 'POST', { email });
-      this.closeModal('forgotPasswordModal');
-      this.showToast(res.message || `पासवर्ड रीसेट निर्देश ${email} पर भेज दिए गए हैं।`, 'success');
-    } catch (err) {
-      this.showToast(err.message || 'ईमेल सत्यापन विफल रहा।', 'error');
+    const typedAuth = (document.getElementById('stuAuthEmail')?.value || '').trim();
+    if (idInput) {
+      idInput.value = typedAuth;
+    }
+
+    if (modal) {
+      modal.style.display = 'flex';
+      setTimeout(() => {
+        if (idInput) idInput.focus();
+      }, 50);
     }
   }
+
+  closeForgotPassword() {
+    const modal = document.getElementById('forgotPasswordModal');
+    if (modal) modal.style.display = 'none';
+  }
+
+  backToForgotStep1() {
+    const step1 = document.getElementById('forgotStep1');
+    const step2 = document.getElementById('forgotStep2');
+    const err1 = document.getElementById('forgotStep1Error');
+    if (err1) err1.style.display = 'none';
+    if (step1) step1.style.display = 'block';
+    if (step2) step2.style.display = 'none';
+  }
+
+  async handleSendForgotOtp() {
+    const idInput = document.getElementById('forgotIdentifierInput');
+    const identifier = (idInput?.value || '').trim();
+    const errEl = document.getElementById('forgotStep1Error');
+    const btn = document.getElementById('forgotSendOtpBtn');
+
+    if (errEl) errEl.style.display = 'none';
+
+    if (!identifier) {
+      if (errEl) {
+        errEl.textContent = 'कृपया अपना पंजीकृत ईमेल या मोबाइल नंबर दर्ज करें।';
+        errEl.style.display = 'block';
+      }
+      if (idInput) idInput.focus();
+      return;
+    }
+
+    const origHtml = btn ? btn.innerHTML : '';
+    if (btn) {
+      btn.disabled = true;
+      btn.innerHTML = '<span>⏳</span> <span>OTP भेजा जा रहा है...</span>';
+    }
+
+    try {
+      const res = await this.apiCall('/api/auth/forgot-password/send-otp', 'POST', { identifier });
+      if (res && res.success) {
+        this.forgotTargetEmail = res.email || identifier;
+        
+        const targetDisplay = document.getElementById('forgotTargetEmailDisplay');
+        if (targetDisplay) targetDisplay.textContent = res.masked_email || res.email || identifier;
+
+        const otpInput = document.getElementById('forgotOtpInput');
+        if (otpInput) {
+          otpInput.value = res.demo_otp || '';
+        }
+
+        const step1 = document.getElementById('forgotStep1');
+        const step2 = document.getElementById('forgotStep2');
+        if (step1) step1.style.display = 'none';
+        if (step2) step2.style.display = 'block';
+
+        this.showToast(res.message || 'OTP सफलता पूर्वक भेज दिया गया है।', 'success');
+        this.startForgotResendTimer();
+
+        setTimeout(() => {
+          if (otpInput) otpInput.focus();
+        }, 50);
+      } else {
+        throw new Error(res?.error || 'OTP भेजने में त्रुटि हुई');
+      }
+    } catch (err) {
+      if (errEl) {
+        errEl.textContent = err.message || 'OTP भेजने में विफल रहा।';
+        errEl.style.display = 'block';
+      }
+    } finally {
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = origHtml;
+      }
+    }
+  }
+
+  async resendForgotOtp() {
+    if (this._forgotResendCooling) return;
+    await this.handleSendForgotOtp();
+  }
+
+  startForgotResendTimer() {
+    let timeLeft = 30;
+    this._forgotResendCooling = true;
+    const btn = document.getElementById('forgotResendOtpBtn');
+    if (!btn) return;
+
+    btn.disabled = true;
+    btn.style.opacity = '0.6';
+
+    const interval = setInterval(() => {
+      timeLeft--;
+      if (timeLeft <= 0) {
+        clearInterval(interval);
+        this._forgotResendCooling = false;
+        btn.disabled = false;
+        btn.style.opacity = '1';
+        btn.textContent = '🔄 पुनः OTP भेजें';
+      } else {
+        btn.textContent = `पुनः OTP भेजें (${timeLeft}s)`;
+      }
+    }, 1000);
+  }
+
+  async handleVerifyAndResetPassword() {
+    const email = this.forgotTargetEmail || (document.getElementById('forgotIdentifierInput')?.value || '').trim();
+    const otp = (document.getElementById('forgotOtpInput')?.value || '').trim();
+    const newPass = (document.getElementById('forgotNewPasswordInput')?.value || '').trim();
+    const confirmPass = (document.getElementById('forgotConfirmPasswordInput')?.value || '').trim();
+    const errEl = document.getElementById('forgotStep2Error');
+    const btn = document.getElementById('forgotResetSubmitBtn');
+
+    if (errEl) errEl.style.display = 'none';
+
+    if (!otp || otp.length < 6) {
+      if (errEl) {
+        errEl.textContent = 'कृपया 6 अंकों का सही OTP दर्ज करें।';
+        errEl.style.display = 'block';
+      }
+      document.getElementById('forgotOtpInput')?.focus();
+      return;
+    }
+
+    if (!newPass || newPass.length < 4) {
+      if (errEl) {
+        errEl.textContent = 'नया पासवर्ड कम से कम 4 अक्षरों का होना चाहिए।';
+        errEl.style.display = 'block';
+      }
+      document.getElementById('forgotNewPasswordInput')?.focus();
+      return;
+    }
+
+    if (newPass !== confirmPass) {
+      if (errEl) {
+        errEl.textContent = 'पासवर्ड और पुष्टि पासवर्ड मेल नहीं खाते।';
+        errEl.style.display = 'block';
+      }
+      document.getElementById('forgotConfirmPasswordInput')?.focus();
+      return;
+    }
+
+    const origHtml = btn ? btn.innerHTML : '';
+    if (btn) {
+      btn.disabled = true;
+      btn.innerHTML = '<span>⏳</span> <span>पासवर्ड बदला जा रहा है...</span>';
+    }
+
+    try {
+      const res = await this.apiCall('/api/auth/forgot-password/verify-reset', 'POST', {
+        email,
+        otp,
+        new_password: newPass,
+        confirm_password: confirmPass
+      });
+
+      if (res && res.success) {
+        const step2 = document.getElementById('forgotStep2');
+        const step3 = document.getElementById('forgotStep3');
+        if (step2) step2.style.display = 'none';
+        if (step3) step3.style.display = 'block';
+
+        this.showToast(res.message || '✓ पासवर्ड सफलतापूर्वक रीसेट हो गया!', 'success');
+
+        const loginEmail = document.getElementById('stuAuthEmail');
+        const loginPass = document.getElementById('stuAuthPassword');
+        if (loginEmail) loginEmail.value = email;
+        if (loginPass) loginPass.value = newPass;
+      } else {
+        throw new Error(res?.error || 'पासवर्ड रीसेट विफल रहा');
+      }
+    } catch (err) {
+      if (errEl) {
+        errEl.textContent = err.message || 'पासवर्ड रीसेट विफल रहा। कृपया पुनः प्रयास करें।';
+        errEl.style.display = 'block';
+      }
+    } finally {
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = origHtml;
+      }
+    }
+  }
+
+  finishForgotPasswordLogin() {
+    this.closeForgotPassword();
+    const submitBtn = document.getElementById('stuLoginSubmitBtn');
+    if (submitBtn) {
+      submitBtn.focus();
+    }
+  }
+
+  togglePasswordVisibility(inputId) {
+    const el = document.getElementById(inputId);
+    if (!el) return;
+    el.type = el.type === 'password' ? 'text' : 'password';
+  }
+
 
   handleLogoClick() {
     if (this.user && this.user.role === 'admin') {
