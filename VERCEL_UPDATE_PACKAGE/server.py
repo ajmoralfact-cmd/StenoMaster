@@ -697,22 +697,7 @@ class StenoMasterHandler(http.server.SimpleHTTPRequestHandler):
             status_code = 200 if res.get('success') else 400
             self._send_json(status_code, res)
             return
-            conn = db.get_db()
-            c = conn.cursor()
-            c.execute("SELECT id, username, email, student_code FROM users WHERE LOWER(email) = ?", (email,))
-            u_row = c.fetchone()
-            conn.close()
-            if not u_row:
-                self._send_json(404, {"error": "इस ईमेल से कोई खाता पंजीकृत नहीं है। कृपया सही ईमेल दर्ज करें।"})
-                return
-            self._send_json(200, {
-                "success": True,
-                "email": email,
-                "username": u_row["username"],
-                "student_code": u_row["student_code"],
-                "message": f"पासवर्ड रीसेट लिंक आपके पंजीकृत ईमेल ({email}) पर भेज दिया गया है। कृपया अपना इनबॉक्स या स्पैम फ़ोल्डर चेक करें।"
-            })
-            return
+
 
         if path == '/api/auth/register':
             data = self._read_json_body()
@@ -865,6 +850,107 @@ class StenoMasterHandler(http.server.SimpleHTTPRequestHandler):
                 "success": True,
                 "request_id": req_id,
                 "message": "भुगतान अनुरोध सफलतापूर्वक जमा किया गया। एडमिन सत्यापन के बाद सदस्यता सक्रिय होगी।"
+            })
+            return
+
+        # Multi-Category Custom Purchase Endpoints
+        if path == '/api/subscription/create-custom-category-order':
+            if not user:
+                self._send_auth_required()
+                return
+            data = self._read_json_body()
+            cat_ids = data.get('category_ids', [])
+            all_in_one = bool(data.get('all_in_one', False))
+
+            if not cat_ids and not all_in_one:
+                self._send_json(400, {"error": "कृपया कम से कम एक श्रेणी चुनें। (Please select at least one category)"})
+                return
+
+            user_id = user['user_id']
+            conn = db.get_db()
+            c = conn.cursor()
+
+            if all_in_one:
+                total_amount = 100
+                plan_title = "ऑल-इन-वन प्रो पास (सभी श्रेणियां)"
+                cat_names = ["सभी श्रेणियां"]
+                valid_cat_ids = []
+            else:
+                placeholders = ','.join(['%s'] * len(cat_ids))
+                c.execute(f"SELECT id, name, price FROM categories WHERE id IN ({placeholders})", tuple(cat_ids))
+                rows = c.fetchall()
+                if not rows:
+                    conn.close()
+                    self._send_json(400, {"error": "कोई मान्य श्रेणी नहीं मिली। (No valid categories found)"})
+                    return
+                cat_info_list = [dict(r) for r in rows]
+                total_amount = sum(int(ci.get('price') or 49) for ci in cat_info_list)
+                cat_names = [ci['name'] for ci in cat_info_list]
+                valid_cat_ids = [ci['id'] for ci in cat_info_list]
+                plan_title = f"{len(valid_cat_ids)} श्रेणियां अनलॉक ({', '.join(cat_names[:2])})"
+
+            conn.close()
+
+            cf_session_id = None
+            is_cf = CashfreeService.is_configured()
+            order_id = f"CAT_{user_id}_{int(__import__('time').time())}_{__import__('uuid').uuid4().hex[:6].upper()}"
+
+            if is_cf:
+                try:
+                    cf_res = CashfreeService.create_order(user, amount=float(total_amount), plan_days=30)
+                    if cf_res.get('payment_session_id'):
+                        cf_session_id = cf_res.get('payment_session_id')
+                        order_id = cf_res.get('order_id', order_id)
+                except Exception as e:
+                    print(f"Cashfree custom category order error: {e}")
+
+            admin_settings = db.get_admin_settings()
+            self._send_json(200, {
+                "success": True,
+                "order_id": order_id,
+                "amount": total_amount,
+                "plan_title": plan_title,
+                "category_ids": valid_cat_ids,
+                "category_names": cat_names,
+                "all_in_one": all_in_one,
+                "cashfree_session_id": cf_session_id,
+                "cashfree_configured": bool(cf_session_id),
+                "upi_id": admin_settings.get('subscription_upi_id', 'stenomaster@upi'),
+                "qr_url": admin_settings.get('subscription_qr_url', '/assets/qr_payment.png')
+            })
+            return
+
+        if path == '/api/subscription/submit-category-upi':
+            if not user:
+                self._send_auth_required()
+                return
+            data = self._read_json_body()
+            order_id = data.get('order_id', '')
+            cat_ids = data.get('category_ids', [])
+            all_in_one = bool(data.get('all_in_one', False))
+            utr = data.get('utr_number', '').strip()
+            amount = data.get('amount', 0)
+            receipt_url = data.get('receipt_url', '')
+
+            if not utr:
+                self._send_json(400, {"error": "कृपया UPI UTR / Transaction Reference Number दर्ज करें।"})
+                return
+
+            import json
+            cat_notes = json.dumps({"category_ids": cat_ids, "all_in_one": all_in_one, "order_id": order_id})
+            plan_str = "All-In-One Pass" if all_in_one else f"Categories Unlock ({len(cat_ids)} श्रेणियां)"
+            req_id = db.create_payment_request(
+                user_id=user['user_id'],
+                plan_name=plan_str,
+                amount=str(amount),
+                utr_number=utr,
+                receipt_url=receipt_url,
+                notes=cat_notes
+            )
+            self._send_json(200, {
+                "success": True,
+                "request_id": req_id,
+                "message": "✓ आपका पेमेंट अनुरोध प्राप्त हो गया है। एडमिन द्वारा पुष्टि होते ही श्रेणियां तुरंत अनलॉक हो जाएंगी।"
             })
             return
 
