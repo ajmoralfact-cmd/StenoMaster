@@ -1522,6 +1522,11 @@ class StenoAdmin {
     const cashfree_app_id = document.getElementById('adminCashfreeAppIdInput')?.value.trim();
     const cashfree_secret_key = document.getElementById('adminCashfreeSecretInput')?.value.trim();
     const cashfree_env = document.getElementById('adminCashfreeEnvSelect')?.value || 'SANDBOX';
+    const smtp_host = document.getElementById('settingSmtpHost')?.value.trim() || 'smtp.gmail.com';
+    const smtp_port = document.getElementById('settingSmtpPort')?.value.trim() || '587';
+    const smtp_user = document.getElementById('settingSmtpUser')?.value.trim() || '';
+    const smtp_pass = document.getElementById('settingSmtpPass')?.value.trim() || '';
+    const smtp_from_name = document.getElementById('settingSmtpFromName')?.value.trim() || 'StenoMaster Support';
     const google_client_id = document.getElementById('adminGoogleClientIdInput')?.value.trim();
     const google_auth_enabled = document.getElementById('adminGoogleAuthEnabled')?.checked ? '1' : '0';
 
