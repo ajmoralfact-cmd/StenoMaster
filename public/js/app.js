@@ -4073,6 +4073,71 @@ class StenoApp {
     }
   }
 
+  async handleSelfPhotoUpload(input) {
+    if (!input || !input.files || !input.files[0]) return;
+    const file = input.files[0];
+    input.value = '';
+
+    const progressBox = document.getElementById('selfOcrProgressBox');
+    const statusText = document.getElementById('selfOcrStatusText');
+    const percentText = document.getElementById('selfOcrPercentText');
+    const progressBar = document.getElementById('selfOcrProgressBar');
+    const photoBtn = document.getElementById('selfPhotoUploadBtn');
+
+    if (progressBox) progressBox.style.display = 'block';
+    if (photoBtn) photoBtn.disabled = true;
+
+    try {
+      this.showToast('📷 फोटो स्कैन की जा रही है, कृपया प्रतीक्षा करें...', 'info');
+
+      if (!window.stenoOcr) {
+        await new Promise((resolve, reject) => {
+          const s = document.createElement('script');
+          s.src = '/js/ocr_service.js';
+          s.onload = resolve;
+          s.onerror = () => reject(new Error('OCR स्क्रिप्ट लोड करने में त्रुटि'));
+          document.head.appendChild(s);
+        });
+      }
+
+      const result = await window.stenoOcr.extractText(file, ({ status, percent }) => {
+        if (statusText) statusText.textContent = `🔍 ${status}`;
+        if (percentText) percentText.textContent = `${percent}%`;
+        if (progressBar) progressBar.style.width = `${percent}%`;
+      });
+
+      if (!result.text || result.text.length < 5) {
+        this.showToast('फोटो में कोई स्पष्ट टेक्स्ट नहीं मिला। कृपया साफ एवं सीधी फोटो अपलोड करें।', 'warning');
+        return;
+      }
+
+      const ta = document.getElementById('selfMasterText');
+      if (ta) {
+        if (ta.value.trim().length > 0) {
+          ta.value = ta.value.trim() + '\n\n' + result.text;
+        } else {
+          ta.value = result.text;
+        }
+        this.updateSelfTextStats();
+        ta.focus();
+      }
+
+      this.showToast(`✓ फोटो से ${result.wordCount} शब्द सफलतापूर्वक निकाले गए! 🎉`, 'success');
+
+      setTimeout(() => {
+        if (progressBox) progressBox.style.display = 'none';
+        if (progressBar) progressBar.style.width = '0%';
+      }, 2500);
+
+    } catch (err) {
+      console.error('Photo OCR error:', err);
+      this.showToast(`OCR स्कैन त्रुटि: ${err.message}`, 'danger');
+      if (statusText) statusText.textContent = '❌ स्कैन विफल';
+    } finally {
+      if (photoBtn) photoBtn.disabled = false;
+    }
+  }
+
   async generateSelfAiAudio() {
     const text = (document.getElementById('selfMasterText')?.value || '').trim();
     if (!text || text.split(/\s+/).length < 5) {

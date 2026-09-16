@@ -1167,6 +1167,32 @@ class StenoMasterHandler(http.server.SimpleHTTPRequestHandler):
                 self._send_json(500, {"error": f"AI वॉइस जनरेशन में त्रुटि: {str(e)}"})
                 return
 
+        # Optical Character Recognition (OCR - Photo to Text) Endpoint
+        if path == '/api/ocr/extract-text':
+            data = self._read_json_body()
+            img_b64 = data.get('image_base64', '')
+            if not img_b64:
+                self._send_json(400, {"error": "इमेज डेटा आवश्यक है (Image data required)"})
+                return
+
+            try:
+                import io
+                import base64
+                from PIL import Image
+                if ',' in img_b64:
+                    img_b64 = img_b64.split(',', 1)[1]
+                img_bytes = base64.b64decode(img_b64)
+                img = Image.open(io.BytesIO(img_bytes))
+
+                import pytesseract
+                text = pytesseract.image_to_string(img, lang='hin+eng')
+                self._send_json(200, {"success": True, "text": text.strip()})
+                return
+            except Exception:
+                # If pytesseract binary is not installed on system, inform client to use browser OCR engine
+                self._send_json(200, {"success": False, "use_client_ocr": True, "message": "Using browser OCR engine"})
+                return
+
         # 6. Admin Actions
         if path.startswith('/api/admin/'):
             if not user:

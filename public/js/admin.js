@@ -1858,6 +1858,71 @@ class StenoAdmin {
     }
   }
 
+  async handleAiStudioPhotoUpload(input) {
+    if (!input || !input.files || !input.files[0]) return;
+    const file = input.files[0];
+    input.value = '';
+
+    const progressBox = document.getElementById('aiStudioOcrProgressBox');
+    const statusText = document.getElementById('aiStudioOcrStatusText');
+    const percentText = document.getElementById('aiStudioOcrPercentText');
+    const progressBar = document.getElementById('aiStudioOcrProgressBar');
+    const photoBtn = document.getElementById('aiStudioPhotoBtn');
+
+    if (progressBox) progressBox.style.display = 'block';
+    if (photoBtn) photoBtn.disabled = true;
+
+    try {
+      stenoApp.showToast('📷 फोटो स्कैन की जा रही है (OCR)...', 'info');
+
+      if (!window.stenoOcr) {
+        await new Promise((resolve, reject) => {
+          const s = document.createElement('script');
+          s.src = '/js/ocr_service.js';
+          s.onload = resolve;
+          s.onerror = () => reject(new Error('OCR इंजन लोड करने में असमर्थ'));
+          document.head.appendChild(s);
+        });
+      }
+
+      const result = await window.stenoOcr.extractText(file, ({ status, percent }) => {
+        if (statusText) statusText.textContent = `🔍 ${status}`;
+        if (percentText) percentText.textContent = `${percent}%`;
+        if (progressBar) progressBar.style.width = `${percent}%`;
+      });
+
+      if (!result.text || result.text.length < 5) {
+        stenoApp.showToast('फोटो में कोई स्पष्ट टेक्स्ट नहीं मिला। कृपया साफ फोटो अपलोड करें।', 'warning');
+        return;
+      }
+
+      const ta = document.getElementById('aiStudioTextInput');
+      if (ta) {
+        if (ta.value.trim().length > 0) {
+          ta.value = ta.value.trim() + '\n\n' + result.text;
+        } else {
+          ta.value = result.text;
+        }
+        this.updateAiStudioStats();
+        ta.focus();
+      }
+
+      stenoApp.showToast(`✓ फोटो से ${result.wordCount} शब्द आलेख में जोड़ दिए गए! 🎉`, 'success');
+
+      setTimeout(() => {
+        if (progressBox) progressBox.style.display = 'none';
+        if (progressBar) progressBar.style.width = '0%';
+      }, 2500);
+
+    } catch (err) {
+      console.error('Admin Photo OCR error:', err);
+      stenoApp.showToast(`OCR स्कैन त्रुटि: ${err.message}`, 'error');
+      if (statusText) statusText.textContent = '❌ स्कैन विफल';
+    } finally {
+      if (photoBtn) photoBtn.disabled = false;
+    }
+  }
+
   async generateAiStudioAudio() {
     const text = document.getElementById('aiStudioTextInput')?.value.trim();
     if (!text) {

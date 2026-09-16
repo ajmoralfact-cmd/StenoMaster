@@ -688,11 +688,26 @@
             </div>
 
             <div style="margin-top:14px;">
-              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-                <label style="font-size:0.82rem; font-weight:700; color:var(--text-secondary);">आलेख यहाँ पेस्ट करें (Paste Text):</label>
-                <div style="display:flex; gap:8px;">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; flex-wrap:wrap; gap:6px;">
+                <label style="font-size:0.82rem; font-weight:700; color:var(--text-secondary);">आलेख पेस्ट करें या फोटो अपलोड करें:</label>
+                <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                  <input type="file" id="selfPhotoFileInput" accept="image/*" capture="environment" style="display:none;" onchange="stenoApp.handleSelfPhotoUpload(this)">
+                  <button type="button" class="btn-sm" id="selfPhotoUploadBtn" onclick="document.getElementById('selfPhotoFileInput').click()" style="padding:2px 8px; font-size:0.75rem; background:linear-gradient(135deg, #10b981, #059669); color:#fff; border:none; border-radius:6px; font-weight:700; display:inline-flex; align-items:center; gap:4px; box-shadow:0 2px 6px rgba(16,185,129,0.25); cursor:pointer;">
+                    <span>📷 फोटो से आलेख निकालें (OCR)</span>
+                  </button>
                   <button type="button" class="btn-sm btn-secondary" onclick="stenoApp.pasteFromClipboardToSelf()" style="padding:2px 8px; font-size:0.75rem;">📋 पेस्ट करें</button>
                   <button type="button" class="btn-sm btn-secondary" onclick="document.getElementById('selfMasterText').value=''; stenoApp.updateSelfTextStats();" style="padding:2px 8px; font-size:0.75rem;">✕ साफ़ करें</button>
+                </div>
+              </div>
+
+              <!-- OCR Progress Box -->
+              <div id="selfOcrProgressBox" style="display:none; background:rgba(16,185,129,0.08); border:1px solid rgba(16,185,129,0.3); border-radius:8px; padding:8px 12px; margin-bottom:8px; font-size:0.8rem; color:#047857;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                  <span id="selfOcrStatusText">🔍 फोटो स्कैन हो रही है...</span>
+                  <span id="selfOcrPercentText" style="font-weight:700;">0%</span>
+                </div>
+                <div style="width:100%; height:5px; background:rgba(16,185,129,0.2); border-radius:3px; overflow:hidden;">
+                  <div id="selfOcrProgressBar" style="width:0%; height:100%; background:#10b981; transition:width 0.2s;"></div>
                 </div>
               </div>
               <textarea id="selfMasterText" class="form-input" rows="7" placeholder="यहाँ अपना हिंदी या अंग्रेजी का मूल आलेख पेस्ट करें जिसे सुनकर आपने शॉर्टहैंड लिखा है..." style="resize:vertical; font-size:0.92rem; line-height:1.6;" oninput="stenoApp.updateSelfTextStats()"></textarea>
@@ -3158,6 +3173,7 @@
   <script src="/js/audio_player.js?v=8.1"></script>
   <script src="/js/keyboard_map.js?v=8.1"></script>
   <script src="/js/typing_engine.js?v=8.1"></script>
+  <script src="/js/ocr_service.js?v=1.0"></script>
   <script src="/js/app.js?v=8.2"></script>
   <!-- Strict Exam Hall Anti-Cheat Warning Modal -->
   <div class="modal-overlay" id="examHallWarningModal" style="z-index:99999;">
