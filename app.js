@@ -4500,7 +4500,418 @@ class StenoApp {
   }
 
 
-  openSaveCustomClassModal() {
+  // -------------------------------------------------------------------------
+  // Horizontal Category Cards & Classes View (Screenshot 1 & 2 Style)
+  // -------------------------------------------------------------------------
+  renderHorizontalCategories() {
+    try {
+      const homeContainer = document.getElementById('homeCategoriesList');
+      const classesContainer = document.getElementById('classesCategoriesList');
+      if (!homeContainer && !classesContainer) return;
+
+      const cats = this.categories || [];
+      if (!cats.length) {
+        const skeleton = `
+          <div class="stat-card" style="padding:16px; border-radius:14px; opacity:0.6; display:flex; align-items:center; gap:14px; margin-bottom:10px;">
+            <div style="width:48px; height:48px; border-radius:50%; background:var(--border);"></div>
+            <div style="flex:1;">
+              <div style="height:18px; width:40%; background:var(--border); border-radius:4px; margin-bottom:8px;"></div>
+              <div style="height:14px; width:60%; background:var(--border); border-radius:4px;"></div>
+            </div>
+          </div>
+        `;
+        if (homeContainer) homeContainer.innerHTML = skeleton;
+        if (classesContainer) classesContainer.innerHTML = skeleton;
+        return;
+      }
+
+      // Filter out auto-generated audit categories without passages
+      const activeCats = cats.filter(c => {
+        const slug = String(c.slug || '').toLowerCase();
+        const name = String(c.name || '').toLowerCase();
+        if (slug.startsWith('audit-cat-') && (!c.passage_count || c.passage_count === 0)) return false;
+        const pCount = parseInt(c.passage_count || 0, 10);
+        return pCount > 0 || slug.includes('ramdhari') || slug.includes('editorial') || slug.includes('steno') || slug.includes('court') || slug.includes('upsssc') || slug.includes('constitution') || name.includes('रामधारी');
+      });
+      const displayCats = activeCats.length > 0 ? activeCats : cats;
+
+      const html = displayCats.map(cat => {
+        const isUnlocked = Boolean(cat.is_unlocked || (this.user && (this.user.role === 'admin' || this.user.is_premium)));
+        const price = cat.price || 49;
+        const emoji = cat.icon || cat.icon_emoji || '📘';
+        const passageCount = parseInt(cat.passage_count || 0, 10);
+        const freeCount = parseInt(cat.free_count !== undefined && cat.free_count !== null ? cat.free_count : (passageCount > 0 ? 1 : 0), 10);
+
+        return `
+          <div class="category-series-card" onclick="stenoApp.openCategoryDetail(${cat.id})" style="background:var(--bg-card); border:1.5px solid var(--border); border-radius:16px; padding:16px 18px; display:flex; align-items:center; justify-content:space-between; gap:14px; cursor:pointer; transition:transform 0.15s, box-shadow 0.15s, border-color 0.15s; margin-bottom:12px; box-shadow:0 2px 8px rgba(0,0,0,0.03);">
+            <div style="display:flex; align-items:center; gap:14px; min-width:0;">
+              <!-- Circular Emblem Logo -->
+              <div style="width:50px; height:50px; border-radius:50%; background:linear-gradient(135deg, rgba(2,132,199,0.12), rgba(99,102,241,0.18)); border:1.5px solid rgba(2,132,199,0.25); display:flex; align-items:center; justify-content:center; font-size:1.5rem; flex-shrink:0;">
+                ${emoji}
+              </div>
+              <div style="min-width:0;">
+                <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:3px;">
+                  <h4 style="margin:0; font-size:1.02rem; font-weight:800; color:var(--text-main); line-height:1.3;">${this.escapeHtml(cat.name)}</h4>
+                  ${isUnlocked 
+                    ? '<span class="badge badge-success" style="font-size:0.68rem; padding:2px 8px; border-radius:10px;">🟢 अनलॉक्ड</span>' 
+                    : `<span class="badge" style="background:rgba(245,158,11,0.15); color:#b45309; font-weight:700; font-size:0.68rem; padding:2px 8px; border-radius:10px;">🔒 ₹${price}</span>`
+                  }
+                </div>
+                <div style="font-size:0.78rem; color:var(--text-muted); display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:3px;">
+                  <span><strong>${passageCount}</strong> Total Tests</span>
+                  <span style="color:var(--border);">•</span>
+                  <span style="color:#10b981; font-weight:700;">${freeCount} Free Tests</span>
+                </div>
+                <div style="font-size:0.74rem; color:var(--primary); font-weight:600;">
+                  Hindi • 80-100 WPM • मंगल एवं कृति देव
+                </div>
+              </div>
+            </div>
+            <!-- Right Button / Price -->
+            <div style="display:flex; align-items:center; gap:10px; flex-shrink:0;">
+              ${isUnlocked 
+                ? `<button type="button" class="btn-sm btn-primary" style="padding:7px 16px; font-size:0.82rem; font-weight:700; border-radius:20px; white-space:nowrap;" onclick="event.stopPropagation(); stenoApp.openCategoryDetail(${cat.id})">🎯 अभ्यास करें &gt;</button>`
+                : `<button type="button" class="btn-sm" style="background:linear-gradient(135deg, #10b981, #059669); color:#fff; border:none; padding:7px 16px; font-size:0.82rem; font-weight:700; border-radius:20px; white-space:nowrap; box-shadow:0 3px 10px rgba(16,185,129,0.35); cursor:pointer;" onclick="event.stopPropagation(); stenoApp.openMultiCategoryCheckout(${cat.id})">₹${price} अनलॉक करें</button>`
+              }
+              <span style="color:var(--text-muted); font-size:1.3rem; font-weight:700;">›</span>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      if (homeContainer) homeContainer.innerHTML = html;
+      if (classesContainer) classesContainer.innerHTML = html;
+    } catch (err) {
+      console.error('Error in renderHorizontalCategories:', err);
+    }
+  }
+
+  async openCategoryDetail(categoryId) {
+    this.currentCategoryId = categoryId;
+    this.navigate('category-detail');
+
+    const titleEl = document.getElementById('catDetailTitle');
+    const nameEl = document.getElementById('catDetailName');
+    const iconEl = document.getElementById('catDetailIcon');
+    const subEl = document.getElementById('catDetailSub');
+    const badgeEl = document.getElementById('catDetailAccessBadge');
+    const listEl = document.getElementById('catDetailPassagesList');
+    const stickyBar = document.getElementById('catDetailStickyBar');
+    const stickyPrice = document.getElementById('catStickyPrice');
+
+    if (listEl) {
+      listEl.innerHTML = '<div style="text-align:center; padding:30px; color:var(--text-muted);"><div class="spinner-small" style="display:inline-block; margin-right:8px;"></div>डिक्टेशन्स लोड हो रही हैं...</div>';
+    }
+
+    try {
+      const res = await this.apiCall(`/api/categories/detail?id=${categoryId}`);
+      const cat = res.category || {};
+      this.currentCategoryData = cat;
+      this.currentCategoryPassages = res.passages || [];
+
+      if (nameEl) nameEl.textContent = cat.name || 'डिक्टेशन टेस्ट सीरीज';
+      if (iconEl) iconEl.textContent = cat.icon_emoji || '📘';
+      if (subEl) subEl.textContent = `कुल ${this.currentCategoryPassages.length} डिक्टेशन्स • 80-100 WPM • ऑडियो सहित`;
+
+      const isUnlocked = Boolean(cat.is_unlocked || (this.user && (this.user.role === 'admin' || this.user.is_premium)));
+      if (badgeEl) {
+        badgeEl.innerHTML = isUnlocked
+          ? '<span class="badge badge-success" style="font-size:0.75rem; padding:4px 10px;">🟢 पूर्ण अनलॉक्ड</span>'
+          : `<button type="button" class="btn-sm btn-primary" onclick="stenoApp.openMultiCategoryCheckout(${cat.id})" style="font-size:0.75rem; padding:5px 12px; font-weight:700; background:#10b981; border:none;">₹${cat.price || 49} में अनलॉक करें</button>`;
+      }
+
+      if (stickyBar) {
+        if (!isUnlocked) {
+          stickyBar.style.display = 'block';
+          if (stickyPrice) stickyPrice.textContent = `₹${cat.price || 49} (एकमुश्त / Full Access)`;
+        } else {
+          stickyBar.style.display = 'none';
+        }
+      }
+
+      this.renderCategoryPassagesList(this.currentCategoryPassages);
+    } catch (err) {
+      if (listEl) listEl.innerHTML = `<div style="color:var(--accent-red); padding:20px; text-align:center;">त्रुटि: ${this.escapeHtml(err.message)}</div>`;
+    }
+  }
+
+  backFromCategoryDetail() {
+    const stickyBar = document.getElementById('catDetailStickyBar');
+    if (stickyBar) stickyBar.style.display = 'none';
+    this.navigate('classes');
+  }
+
+  filterCategoryPassages(type, btnEl) {
+    document.querySelectorAll('.cat-filter-btn').forEach(b => {
+      b.classList.remove('btn-primary');
+      b.classList.add('btn-secondary');
+    });
+    if (btnEl) {
+      btnEl.classList.remove('btn-secondary');
+      btnEl.classList.add('btn-primary');
+    }
+
+    if (!this.currentCategoryPassages) return;
+    let filtered = [...this.currentCategoryPassages];
+    if (type === 'free') {
+      filtered = filtered.filter(p => p.is_free_tier);
+    } else if (type === '80') {
+      filtered = filtered.filter(p => (p.target_wpm || 80) <= 85);
+    } else if (type === '100') {
+      filtered = filtered.filter(p => (p.target_wpm || 80) >= 95);
+    }
+    this.renderCategoryPassagesList(filtered);
+  }
+
+  renderCategoryPassagesList(passages) {
+    const container = document.getElementById('catDetailPassagesList');
+    if (!container) return;
+
+    if (!passages || passages.length === 0) {
+      container.innerHTML = '<div style="text-align:center; padding:30px; color:var(--text-muted);">इस फ़िल्टर में कोई क्लास उपलब्ध नहीं है।</div>';
+      return;
+    }
+
+    const catPrice = (this.currentCategoryData && this.currentCategoryData.price) || 49;
+    container.innerHTML = passages.map(p => {
+      const isAcc = Boolean(p.is_accessible || (this.user && (this.user.role === 'admin' || this.user.is_premium)));
+      const durationMins = p.duration_seconds ? Math.round(p.duration_seconds / 60) : 10;
+
+      return `
+        <div class="category-passage-card" style="background:var(--bg-card); border:1.5px solid var(--border); border-radius:14px; padding:16px 18px; display:flex; justify-content:space-between; align-items:center; gap:14px; transition:border-color 0.15s, box-shadow 0.15s; box-shadow:0 2px 6px rgba(0,0,0,0.02);">
+          <div style="min-width:0;">
+            <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px; flex-wrap:wrap;">
+              <h4 style="margin:0; font-size:0.98rem; font-weight:700; color:var(--text-main);">${this.escapeHtml(p.title)}</h4>
+              ${p.is_free_tier ? '<span class="badge badge-success" style="font-size:0.65rem; padding:2px 6px;">🎁 FREE DEMO</span>' : ''}
+            </div>
+            <div style="display:flex; gap:8px; font-size:0.75rem; color:var(--text-muted); flex-wrap:wrap; margin-bottom:4px;">
+              <span style="background:var(--bg-subtle); padding:2px 8px; border-radius:4px; font-weight:600; color:var(--primary);">⚡ ${p.target_wpm || 80} WPM</span>
+              <span style="background:var(--bg-subtle); padding:2px 8px; border-radius:4px;">📝 ${p.word_count || 400} शब्द</span>
+              <span style="background:var(--bg-subtle); padding:2px 8px; border-radius:4px;">⏱️ ${durationMins} मिनट</span>
+            </div>
+            <div style="font-size:0.72rem; color:var(--text-muted);">
+              🔤 मंगल एवं कृति देव 010 • आधिकारिक ऑडियो सहित
+            </div>
+          </div>
+          <div style="flex-shrink:0;">
+            ${isAcc 
+              ? `<button type="button" class="btn-primary" style="padding:8px 18px; font-size:0.84rem; font-weight:700; border-radius:20px; white-space:nowrap; box-shadow:0 3px 10px rgba(2,132,199,0.3);" onclick="stenoApp.openPractice(${p.id})">🎯 Start Test →</button>`
+              : `<button type="button" class="btn-secondary" style="padding:8px 14px; font-size:0.8rem; font-weight:700; border-radius:20px; color:#10b981; border-color:#10b981; white-space:nowrap;" onclick="stenoApp.openMultiCategoryCheckout(${p.category_id})">🔒 अनलॉक करें (₹${catPrice})</button>`
+            }
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  enrollCurrentCategory() {
+    if (this.currentCategoryId) {
+      this.openMultiCategoryCheckout(this.currentCategoryId);
+    } else {
+      this.openMultiCategoryCheckout();
+    }
+  }
+
+  // -------------------------------------------------------------------------
+  // Multi-Category Custom Checkout Operations
+  // -------------------------------------------------------------------------
+  openMultiCategoryCheckout(preSelectedCatId = null) {
+    const modal = document.getElementById('categoryCheckoutModal');
+    const container = document.getElementById('checkoutCategoriesChecklist');
+    const allInOneCheck = document.getElementById('checkAllInOnePass');
+    if (allInOneCheck) allInOneCheck.checked = false;
+
+    if (!modal || !container) return;
+
+    const cats = this.categories || [];
+    container.innerHTML = cats.map(cat => {
+      const isPre = preSelectedCatId && (cat.id === preSelectedCatId || cat.id === Number(preSelectedCatId));
+      const price = cat.price || 49;
+      const isAlreadyUnlocked = Boolean(cat.is_unlocked || (this.user && (this.user.role === 'admin' || this.user.is_premium)));
+
+      return `
+        <label class="checkout-cat-item" style="display:flex; justify-content:space-between; align-items:center; padding:10px 14px; border:1px solid var(--border); border-radius:10px; background:var(--bg-card); cursor:${isAlreadyUnlocked ? 'default' : 'pointer'}; transition:background 0.15s;">
+          <div style="display:flex; align-items:center; gap:10px;">
+            <input type="checkbox" class="cat-checkout-checkbox" value="${cat.id}" data-price="${price}" ${isPre ? 'checked' : ''} ${isAlreadyUnlocked ? 'disabled checked' : ''} onchange="stenoApp.updateCheckoutTotal()" style="width:18px; height:18px; accent-color:#0284c7; cursor:pointer;">
+            <div>
+              <div style="font-weight:700; font-size:0.88rem; color:var(--text-main);">${this.escapeHtml(cat.name)}</div>
+              <div style="font-size:0.72rem; color:var(--text-muted);">${cat.passage_count || 0} डिक्टेशन्स • 80-100 WPM</div>
+            </div>
+          </div>
+          <div style="text-align:right;">
+            ${isAlreadyUnlocked 
+              ? '<span class="badge badge-success" style="font-size:0.65rem;">पहले से अनलॉक ✓</span>'
+              : `<span style="font-weight:800; color:#0284c7; font-size:0.95rem;">₹${price}</span>`
+            }
+          </div>
+        </label>
+      `;
+    }).join('');
+
+    modal.style.display = 'flex';
+    this.updateCheckoutTotal();
+  }
+
+  closeCategoryCheckoutModal() {
+    const modal = document.getElementById('categoryCheckoutModal');
+    if (modal) modal.style.display = 'none';
+  }
+
+  selectAllCategories() {
+    const allInOneCheck = document.getElementById('checkAllInOnePass');
+    if (allInOneCheck) allInOneCheck.checked = false;
+    document.querySelectorAll('.cat-checkout-checkbox:not(:disabled)').forEach(cb => {
+      cb.checked = true;
+    });
+    this.updateCheckoutTotal();
+  }
+
+  toggleAllInOnePass() {
+    const allInOneCheck = document.getElementById('checkAllInOnePass');
+    const isChecked = allInOneCheck ? allInOneCheck.checked : false;
+
+    if (isChecked) {
+      document.querySelectorAll('.cat-checkout-checkbox:not(:disabled)').forEach(cb => {
+        cb.checked = false;
+      });
+    }
+    this.updateCheckoutTotal();
+  }
+
+  updateCheckoutTotal() {
+    const allInOneCheck = document.getElementById('checkAllInOnePass');
+    const isAllInOne = allInOneCheck ? allInOneCheck.checked : false;
+
+    const countEl = document.getElementById('checkoutSelectedCount');
+    const totalEl = document.getElementById('checkoutTotalPrice');
+    const payBtn = document.getElementById('checkoutProceedPayBtn');
+
+    if (isAllInOne) {
+      if (countEl) countEl.textContent = 'सभी कैटेगरीज (All-In-One)';
+      if (totalEl) totalEl.textContent = '₹100';
+      if (payBtn) {
+        payBtn.disabled = false;
+        payBtn.style.opacity = '1';
+      }
+      return;
+    }
+
+    let total = 0;
+    let selectedCount = 0;
+    document.querySelectorAll('.cat-checkout-checkbox:not(:disabled)').forEach(cb => {
+      if (cb.checked) {
+        total += Number(cb.getAttribute('data-price') || 49);
+        selectedCount++;
+      }
+    });
+
+    if (countEl) countEl.textContent = `${selectedCount}`;
+    if (totalEl) totalEl.textContent = `₹${total}`;
+
+    if (payBtn) {
+      payBtn.disabled = total <= 0;
+      payBtn.style.opacity = total <= 0 ? '0.5' : '1';
+    }
+  }
+
+  async proceedCategoryPayment() {
+    const allInOneCheck = document.getElementById('checkAllInOnePass');
+    const isAllInOne = allInOneCheck ? allInOneCheck.checked : false;
+
+    const selectedIds = [];
+    document.querySelectorAll('.cat-checkout-checkbox:not(:disabled)').forEach(cb => {
+      if (cb.checked) {
+        selectedIds.push(parseInt(cb.value, 10));
+      }
+    });
+
+    if (!isAllInOne && selectedIds.length === 0) {
+      this.showToast('कृपया कम से कम एक कैटेगरी चुनें।', 'warning');
+      return;
+    }
+
+    const payBtn = document.getElementById('checkoutProceedPayBtn');
+    const origHtml = payBtn ? payBtn.innerHTML : '';
+    if (payBtn) {
+      payBtn.disabled = true;
+      payBtn.innerHTML = '<span>⏳</span> <span>ऑर्डर तैयार हो रहा है...</span>';
+    }
+
+    try {
+      const res = await this.apiCall('/api/subscription/create-custom-category-order', 'POST', {
+        category_ids: selectedIds,
+        all_in_one: isAllInOne
+      });
+
+      if (!res || !res.success) {
+        throw new Error(res?.error || 'ऑर्डर तैयार करने में विफल');
+      }
+
+      this.closeCategoryCheckoutModal();
+
+      if (res.cashfree_configured && res.cashfree_session_id && window.Cashfree) {
+        this.showToast('Cashfree पेमेंट गेटवे खुल रहा है...', 'info');
+        const cashfree = Cashfree({ mode: res.cashfree_env === 'PRODUCTION' ? 'production' : 'sandbox' });
+        cashfree.checkout({
+          paymentSessionId: res.cashfree_session_id,
+          redirectTarget: '_modal'
+        }).then((result) => {
+          if (result.error) {
+            this.showToast(`भुगतान त्रुटि: ${result.error.message}`, 'danger');
+          }
+          if (result.paymentDetails) {
+            this.showToast('✓ भुगतान सफल! कैटेगरीज अनलॉक हो रही हैं...', 'success');
+            setTimeout(() => {
+              this.loadCategories();
+              this.loadPassages(true);
+            }, 1500);
+          }
+        });
+        return;
+      }
+
+      this.openCategoryUpiModal(res);
+    } catch (err) {
+      this.showToast(`त्रुटि: ${err.message}`, 'danger');
+    } finally {
+      if (payBtn) {
+        payBtn.disabled = false;
+        payBtn.innerHTML = origHtml;
+      }
+    }
+  }
+
+  openCategoryUpiModal(orderData) {
+    const amt = orderData.amount;
+    const upiId = orderData.upi_id || 'stenomaster@upi';
+    const promptMsg = `कुल देय राशि: ₹${amt}\nUPI ID: ${upiId}\n\nपेमेंट पूर्ण करने के बाद कृपया UPI UTR / Ref Number दर्ज करें:`;
+    const utr = prompt(promptMsg, '');
+    if (!utr) return;
+
+    this.submitCategoryUpiPayment(orderData.order_id, orderData.category_ids, orderData.all_in_one, utr, amt);
+  }
+
+  async submitCategoryUpiPayment(orderId, catIds, allInOne, utr, amount) {
+    try {
+      const res = await this.apiCall('/api/subscription/submit-category-upi', 'POST', {
+        order_id: orderId,
+        category_ids: catIds,
+        all_in_one: allInOne,
+        utr_number: utr,
+        amount: amount
+      });
+      if (res && res.success) {
+        this.showToast(res.message || '✓ पेमेंट अनुरोध भेजा गया! पुष्टि होते ही कक्षाएं अनलॉक हो जाएंगी।', 'success');
+      } else {
+        throw new Error(res?.error || 'अनुरोध भेजने में विफल');
+      }
+    } catch (err) {
+      this.showToast(`त्रुटि: ${err.message}`, 'danger');
+    }
+  }
+
+
+    openSaveCustomClassModal() {
     const masterText = (document.getElementById('selfMasterText')?.value || '').trim();
     if (!masterText || masterText.split(/\s+/).length < 5) {
       this.showToast('कृपया पहले मूल आलेख (Master Passage) में कम से कम 5-10 शब्द लिखें या फोटो स्कैन करें।', 'warning');
