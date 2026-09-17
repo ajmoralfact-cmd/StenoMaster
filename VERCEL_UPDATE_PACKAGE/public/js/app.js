@@ -447,7 +447,7 @@ class StenoApp {
   // -------------------------------------------------------------------------
   // API Helper
   // -------------------------------------------------------------------------
-  async apiCall(endpoint, method = 'GET', body = null, timeoutMs = 12000) {
+  async apiCall(endpoint, method = 'GET', body = null, timeoutMs = 25000) {
     const isBackground = endpoint.includes('/session-status');
     if (!isBackground) {
       this.startTopLoading();
@@ -4763,6 +4763,7 @@ class StenoApp {
   }
 
   async openCategoryDetail(categoryId) {
+    this.closeSidebar();
     this.currentCategoryId = categoryId;
     this.navigate('category-detail', { id: categoryId });
 
@@ -4807,7 +4808,16 @@ class StenoApp {
 
       this.renderCategoryPassagesList(this.currentCategoryPassages);
     } catch (err) {
-      if (listEl) listEl.innerHTML = `<div style="color:var(--accent-red); padding:20px; text-align:center;">त्रुटि: ${this.escapeHtml(err.message)}</div>`;
+      if (listEl) {
+        listEl.innerHTML = `
+          <div style="text-align:center; padding:30px 20px; background:rgba(239,68,68,0.04); border-radius:12px; border:1px dashed rgba(239,68,68,0.25); margin-top:10px;">
+            <div style="font-size:1.8rem; margin-bottom:8px;">⚠️</div>
+            <div style="color:var(--accent-red); font-weight:700; font-size:0.95rem; margin-bottom:6px;">त्रुटि: ${this.escapeHtml(err.message)}</div>
+            <div style="font-size:0.8rem; color:var(--text-muted); margin-bottom:14px;">सर्वर या इंटरनेट में क्षणिक देरी हुई। कृपया दोबारा प्रयास करें।</div>
+            <button type="button" class="btn-primary" onclick="stenoApp.openCategoryDetail(${categoryId})" style="padding:7px 20px; font-size:0.85rem; font-weight:800; border-radius:10px; cursor:pointer;">🔄 पुनः लोड करें (Retry)</button>
+          </div>
+        `;
+      }
     }
   }
 
