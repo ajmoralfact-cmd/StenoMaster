@@ -1714,10 +1714,7 @@ def verify_session(token: str) -> Optional[Dict[str, Any]]:
     res["is_free_access"] = bool(res.get("is_free_access", 0))
     now_dt = datetime.now()
     end_val = res.get('subscription_end')
-    if res.get('role') == 'admin':
-        res['subscription_days_left'] = 9999
-        res['is_premium'] = True
-    elif end_val:
+    if end_val:
         dt = parse_db_datetime(end_val)
         if dt:
             now_adj = datetime.now(dt.tzinfo) if dt.tzinfo else now_dt
@@ -1734,6 +1731,9 @@ def verify_session(token: str) -> Optional[Dict[str, Any]]:
         else:
             res['subscription_days_left'] = 30
             res['is_premium'] = True
+    elif res.get('role') == 'admin':
+        res['subscription_days_left'] = 30
+        res['is_premium'] = True
     elif res.get('subscription_status') == 'active':
         res['subscription_days_left'] = 30
         res['is_premium'] = True
@@ -3071,7 +3071,7 @@ def get_admin_users() -> List[Dict[str, Any]]:
         r["is_free_access"] = bool(r.get("is_free_access", 0))
         if r["role"] == "admin":
             r["effective_status"] = "admin"
-            r["subscription_days_left"] = 9999
+            r["subscription_days_left"] = 30
         else:
             end_val = r.get("subscription_end")
             if end_val:
@@ -3513,15 +3513,6 @@ def get_user_subscription_info(user_id: int) -> Dict[str, Any]:
     has_free_access = bool(user.get("is_free_access"))
     is_active = is_user_premium(user_id)
     days_left = 0
-    if is_admin:
-        return {
-            "is_premium": True,
-            "status": "admin",
-            "plan": "System Administrator",
-            "days_left": 9999,
-            "end_date": None,
-            "is_free_access": True
-        }
 
     end_val = user.get("subscription_end")
     if end_val:
@@ -3540,7 +3531,7 @@ def get_user_subscription_info(user_id: int) -> Dict[str, Any]:
         days_left = 30
 
     plan_name = user.get("subscription_plan")
-    if not plan_name or "लाइफटाइम" in plan_name or plan_name == "Free Tier":
+    if not plan_name or plan_name == "System Administrator" or "लाइफटाइम" in plan_name or plan_name == "Free Tier":
         if has_free_access or is_active:
             plan_name = "StenoMaster Pro (30 दिन फ्री)" if has_free_access else "StenoMaster Pro — 1 Month (₹100/माह)"
         else:
@@ -3556,6 +3547,9 @@ def get_user_subscription_info(user_id: int) -> Dict[str, Any]:
         "subscription_days_left": days_left,
         "is_free_access": has_free_access
     }
+
+    # Dummy anchor for replacing
+    
 
 
 # =========================================================================

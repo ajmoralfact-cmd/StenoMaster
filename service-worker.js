@@ -1,10 +1,10 @@
 /**
- * StenoMaster Service Worker — v9.4
+ * StenoMaster Service Worker — v9.5
  * Zero-Cache / Auto-Purging Service Worker
  * Ensures all users get fresh updates immediately without manual hard refresh or cache clear.
  */
 
-const CACHE_NAME = 'stenomaster-v9.4-shell';
+const CACHE_NAME = 'stenomaster-v9.5-shell';
 
 self.addEventListener('install', (event) => {
   self.skipWaiting();
@@ -15,7 +15,7 @@ self.addEventListener('activate', (event) => {
     caches.keys().then((keys) => {
       return Promise.all(
         keys.map((key) => {
-          console.log('[SW v9.4] Deleting obsolete cache:', key);
+          console.log('[SW v9.5] Deleting obsolete cache:', key);
           return caches.delete(key);
         })
       );

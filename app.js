@@ -1542,7 +1542,7 @@ class StenoApp {
     const isPremium = Boolean(this.user && (this.user.is_premium || this.user.is_free_access || (this.user.subscription_days_left && this.user.subscription_days_left > 0)));
     let planName = (this.user && this.user.subscription_plan) || 'StenoMaster Pro';
     if (planName === 'System Administrator' || planName.toLowerCase().includes('admin')) {
-      planName = 'StenoMaster Lifetime Pro';
+      planName = 'StenoMaster Pro (₹100/माह)';
     }
     const daysLeft = (this.user && typeof this.user.subscription_days_left === 'number') ? this.user.subscription_days_left : 0;
 
@@ -1552,7 +1552,10 @@ class StenoApp {
       'StenoMaster Standard (90 Days)': '₹250 (3 माह / 90 दिन)',
       'StenoMaster Extended (180 Days)': '₹450 (6 माह / 180 दिन)',
       'StenoMaster Annual Pro (365 Days)': '₹800 (1 वर्ष / 365 दिन)',
-      'StenoMaster Pro': '₹100 प्रति माह'
+      'StenoMaster Pro': '₹100 प्रति माह',
+      'StenoMaster Pro (₹100/माह)': '₹100 प्रति माह',
+      'StenoMaster Pro — 30 दिन (₹100)': '₹100 (1 माह / 30 दिन)',
+      'StenoMaster Pro (30 दिन फ्री)': '30 दिन फ्री एक्सेस'
     };
     const priceText = planPriceMap[planName] || '₹100 मासिक प्लान';
 
@@ -1569,11 +1572,15 @@ class StenoApp {
         tag.style.color = '#ffffff';
       }
       if (title) {
-        title.innerHTML = `${this.escapeHtml(planName)} • <span style="color:#059669; font-weight:700;">${priceText}</span> सक्रिय है`;
+        title.innerHTML = `StenoMaster Pro • <span style="color:#059669; font-weight:700;">${priceText}</span> सक्रिय है`;
         title.style.color = '#065f46';
       }
       if (subtitle) {
-        subtitle.innerHTML = `⏳ <strong>${daysLeft} दिन शेष बचे हैं</strong> • असीमित डिक्टेशन, परीक्षा हॉल मोड एवं विस्तृत मूल्यांकन सक्रिय है।`;
+        if (daysLeft >= 1000) {
+          subtitle.innerHTML = `♾️ <strong>लाइफटाइम प्रो एक्सेस</strong> • असीमित डिक्टेशन, परीक्षा हॉल मोड एवं विस्तृत मूल्यांकन सक्रिय है।`;
+        } else {
+          subtitle.innerHTML = `⏳ <strong>${daysLeft} दिन शेष बचे हैं</strong> • असीमित डिक्टेशन, परीक्षा हॉल मोड एवं विस्तृत मूल्यांकन सक्रिय है।`;
+        }
         subtitle.style.color = '#047857';
       }
       if (actionBtn) {
@@ -1666,7 +1673,7 @@ class StenoApp {
           if (validityPill) {
             validityPill.style.display = 'inline-flex';
             validityPill.className = 'plan-validity-pill is-pro';
-            validityPill.innerHTML = `👑 Pro: ${daysLeft} दिन शेष`;
+            validityPill.innerHTML = (daysLeft >= 1000) ? '👑 Pro: Active' : `👑 Pro: ${daysLeft} दिन शेष`;
             validityPill.title = 'प्रो प्लान सक्रिय है';
             validityPill.onclick = () => stenoApp.navigate('subscription');
           }
