@@ -148,6 +148,11 @@
                 Don't have an account?
                 <a href="javascript:void(0)" onclick="stenoApp.switchStudentAuthMode('signup')">Create Free Account</a>
               </div>
+              <div style="margin-top:14px; padding-top:12px; border-top:1px dashed var(--border-subtle, #e2e8f0); text-align:center;">
+                <a href="javascript:void(0)" onclick="stenoApp.switchAuthTab('admin')" style="color:var(--text-muted, #64748b); font-size:0.84rem; font-weight:600; text-decoration:none; display:inline-flex; align-items:center; gap:6px;">
+                  <span>🛡️</span> <span>एडमिन पोर्टल लॉगिन (Admin Login)</span> <span>➔</span>
+                </a>
+              </div>
             </div>
 
             <!-- 2. Student Sign Up Sub-Form -->
@@ -298,6 +303,11 @@
             </form>
             <div class="auth-security-notice">
               <span>🔒</span> Authorized administrative personnel only. Unauthorized access attempts are monitored and logged.
+            </div>
+            <div style="margin-top:14px; padding-top:12px; border-top:1px dashed var(--border-subtle, #e2e8f0); text-align:center;">
+              <a href="javascript:void(0)" onclick="stenoApp.switchAuthTab('student')" style="color:var(--text-muted, #64748b); font-size:0.84rem; font-weight:600; text-decoration:none; display:inline-flex; align-items:center; gap:6px;">
+                <span>👨‍🎓</span> <span>छात्र लॉगिन पर वापस जाएं (Student Login)</span> <span>➔</span>
+              </a>
             </div>
           </div>
         </div>
@@ -3390,7 +3400,7 @@
   <script src="/js/keyboard_map.js?v=8.1"></script>
   <script src="/js/typing_engine.js?v=8.1"></script>
   <script src="/js/ocr_service.js?v=1.1"></script>
-  <script src="/js/app.js?v=10.4"></script>
+  <script src="/js/app.js?v=10.5"></script>
   <!-- Strict Exam Hall Anti-Cheat Warning Modal -->
   <div class="modal-overlay" id="examHallWarningModal" style="z-index:99999;">
     <div class="modal-card" style="max-width: 480px; text-align:center; border:2px solid #ef4444; box-shadow:0 10px 40px rgba(239,68,68,0.3);">

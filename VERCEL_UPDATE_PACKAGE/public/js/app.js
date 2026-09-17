@@ -565,14 +565,14 @@ class StenoApp {
     const tabAdminBtn = document.getElementById('tabAdminBtn');
     const authControl = document.querySelector('.auth-segmented-control');
     if (tabAdminBtn) {
-      tabAdminBtn.style.display = isExplicitAdmin ? 'inline-flex' : 'none';
+      tabAdminBtn.style.display = 'inline-flex';
     }
     if (authControl) {
-      authControl.style.display = isExplicitAdmin ? 'flex' : 'none';
+      authControl.style.display = 'flex';
     }
 
-    if (!isExplicitAdmin && tab === 'admin') {
-      tab = 'student';
+    if (isExplicitAdmin && tab !== 'admin') {
+      tab = 'admin';
     }
 
     this.switchAuthTab(tab);
