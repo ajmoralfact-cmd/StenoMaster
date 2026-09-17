@@ -12,7 +12,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Mukta:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/css/style.css?v=9.3">
+  <link rel="stylesheet" href="/css/style.css?v=9.4">
   <!-- Google Identity Services SDK -->
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   <script>
@@ -847,85 +847,16 @@
           </div>
         </div>
 
-        <!-- Curated Practice Library: Target Exams & Sources Filter Bar -->
-        <div class="classes-curated-filter-section">
-          <!-- Row 1: Target Exam Filters -->
-          <div class="curated-filter-row">
-            <span class="curated-filter-label">🏛️ लक्ष्य परीक्षा:</span>
-            <div class="curated-pills-scroll" id="classesExamPills">
-              <button type="button" class="curated-pill active" onclick="stenoApp.filterByExam('all', this)">🌟 सभी परीक्षाएं (All)</button>
-              <button type="button" class="curated-pill" onclick="stenoApp.filterByExam('ssc', this)">🎯 SSC स्टेनोग्राफर (ग्रेड C & D)</button>
-              <button type="button" class="curated-pill" onclick="stenoApp.filterByExam('upsssc', this)">🏛️ UPSSSC आशुलिपिक</button>
-              <button type="button" class="curated-pill pill-court" onclick="stenoApp.filterByExam('court', this)">⚖️ हाईकोर्ट (AHC / RHC / District)</button>
-              <button type="button" class="curated-pill pill-reporter" onclick="stenoApp.filterByExam('reporter', this)">⚡ 140–160 WPM रिपोर्टर स्पेशल</button>
-            </div>
-          </div>
-
-          <!-- Row 2: Books & Sources Filters -->
-          <div class="curated-filter-row">
-            <span class="curated-filter-label">📚 पुस्तकें व स्रोत:</span>
-            <div class="curated-pills-scroll" id="classesSourcePills">
-              <button type="button" class="curated-pill active" onclick="stenoApp.filterBySource('all', this)">📖 सभी स्रोत (All)</button>
-              <button type="button" class="curated-pill pill-khand" onclick="stenoApp.filterBySource('khand1', this)">📘 रामधारी गुप्ता (खंड 1)</button>
-              <button type="button" class="curated-pill pill-khand" onclick="stenoApp.filterBySource('khand2', this)">📙 रामधारी गुप्ता (खंड 2)</button>
-              <button type="button" class="curated-pill pill-editorial" onclick="stenoApp.filterBySource('editorial', this)">📰 दैनिक संपादकीय (Editorial)</button>
-              <button type="button" class="curated-pill pill-court" onclick="stenoApp.filterBySource('legal', this)">⚖️ विधिक / कोर्ट आलेख</button>
-              <button type="button" class="curated-pill" onclick="stenoApp.filterBySource('free', this)">🎁 100% फ्री कक्षाएं</button>
-              <button type="button" class="curated-pill" onclick="stenoApp.filterBySource('bookmarks', this)">⭐ बुकमार्क</button>
-            </div>
-          </div>
-        </div>
-
-        <!-- Filter Bar -->
-        
-        <div class="stat-card" style="margin-bottom: 24px; display: flex; flex-wrap: wrap; gap: 16px; align-items: center;">
-          <!-- Search -->
-          <div style="flex: 1; min-width: 220px;">
-            <input type="text" class="form-input" placeholder="🔍 आलेख या विषय खोजें (Search)..."
-                   oninput="stenoApp.onSearchInput(this.value)">
-          </div>
-
-          <!-- Preferred Typing Font Quick Switcher -->
-          <div style="display:flex; align-items:center; gap:6px; background:var(--bg-subtle); padding:6px 12px; border-radius:8px; border:1px solid var(--border-subtle);">
-            <span style="font-size:0.82rem; font-weight:700; color:var(--text-secondary);">⌨️ फ़ॉन्ट:</span>
-            <button type="button" id="classesFontMangalBtn" onclick="stenoApp.setPreferredFont('mangal_unicode')" class="btn-sm" style="padding:4px 10px; font-size:0.78rem; font-weight:700; border-radius:6px; background:#0284c7; color:#fff; border:none; cursor:pointer;">
-              🅰️ मंगल (Mangal)
-            </button>
-            <button type="button" id="classesFontKrutiBtn" onclick="stenoApp.setPreferredFont('kruti_dev_010')" class="btn-sm" style="padding:4px 10px; font-size:0.78rem; font-weight:700; border-radius:6px; background:transparent; color:var(--text-secondary); border:1px solid var(--border); cursor:pointer;">
-              ⌨️ कृति देव (Kruti Dev)
-            </button>
-          </div>
-
-          <!-- Language filter -->
-          <div>
-            <select class="form-select" onchange="stenoApp.onLanguageFilterChange(this.value)">
-              <option value="all">सभी भाषाएं (All Languages)</option>
-              <option value="hindi">हिंदी (Hindi)</option>
-              <option value="english">अंग्रेजी (English)</option>
-            </select>
-          </div>
-
-          <!-- Difficulty filter -->
-          <div>
-            <select class="form-select" onchange="stenoApp.onDifficultyFilterChange(this.value)">
-              <option value="all">सभी स्तर (All Difficulties)</option>
-              <option value="easy">सरल (Easy)</option>
-              <option value="medium">मध्यम (Medium)</option>
-              <option value="hard">कठिन (Hard)</option>
-            </select>
-          </div>
-        </div>
-
         <!-- Test Series Horizontal Categories List (Screenshot 1 Style) -->
         <div id="classesCategoriesList" class="horizontal-categories-list" style="display:flex; flex-direction:column; gap:12px; margin-bottom:24px;"></div>
         <!-- Fallback Passage Cards Grid -->
-        <!-- Section Header for All Dictations -->
-        <div class="section-header" style="margin-top:20px; margin-bottom:12px;">
+        <!-- Section Header for All Dictations (Hidden in favor of Category Series) -->
+        <div class="section-header" style="display:none; margin-top:20px; margin-bottom:12px;">
           <h3 style="margin:0; font-size:1.1rem; font-weight:800; display:flex; align-items:center; gap:8px;">
             <span>📝</span> सभी उपलब्ध डिक्टेशन्स (All Dictations)
           </h3>
         </div>
-        <div class="classes-grid" id="classesListGrid"></div>
+        <div class="classes-grid" id="classesListGrid" style="display:none;"></div>
       </main>
 
       
@@ -3437,12 +3368,12 @@
   <!-- Cashfree Payment Gateway SDK (v3) - Defer to prevent blocking page render -->
   <script defer src="https://sdk.cashfree.com/js/v3/cashfree.js"></script>
 
-  <!-- Core Lightweight Scripts (charts.js & comparison_view.js?v=9.3 are lazy-loaded on demand for 50% faster startup) -->
+  <!-- Core Lightweight Scripts (charts.js & comparison_view.js?v=9.4 are lazy-loaded on demand for 50% faster startup) -->
   <script src="/js/audio_player.js?v=8.1"></script>
   <script src="/js/keyboard_map.js?v=8.1"></script>
   <script src="/js/typing_engine.js?v=8.1"></script>
   <script src="/js/ocr_service.js?v=1.1"></script>
-  <script src="/js/app.js?v=9.3"></script>
+  <script src="/js/app.js?v=9.4"></script>
   <!-- Strict Exam Hall Anti-Cheat Warning Modal -->
   <div class="modal-overlay" id="examHallWarningModal" style="z-index:99999;">
     <div class="modal-card" style="max-width: 480px; text-align:center; border:2px solid #ef4444; box-shadow:0 10px 40px rgba(239,68,68,0.3);">
