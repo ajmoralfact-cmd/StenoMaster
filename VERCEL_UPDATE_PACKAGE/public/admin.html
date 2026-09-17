@@ -1636,7 +1636,7 @@
                 <h3 style="margin:0; font-size:1.25rem; font-weight:800; color:#fff;">StenoMaster Admin Portal</h3>
                 <p style="margin:4px 0 0 0; font-size:0.78rem; color:#94a3b8;">केवल अधिकृत प्रशासकों के लिए (Restricted Access)</p>
               </div>
-              <form onsubmit="stenoAdmin.handleDirectAdminLogin(event)" style="padding:24px;">
+              <form onsubmit="(window.stenoApp||window.stenoAdmin).handleDirectAdminLogin(event)" style="padding:24px;">
                 <div style="margin-bottom:14px;">
                   <label style="display:block; font-size:0.8rem; font-weight:700; color:var(--text-secondary); margin-bottom:6px;">एडमिन यूजरनेम या ईमेल (Admin Email)</label>
                   <input type="text" id="adminDirectEmail" class="form-input" placeholder="admin@stenomaster.com" value="admin@stenomaster.com" required style="width:100%; padding:10px 14px; border-radius:10px; border:1.5px solid var(--border); font-size:0.9rem;">
@@ -1879,13 +1879,14 @@
     }
 
     window.stenoApp = new StenoAdminAppBridge();
+    window.adminApp = window.stenoApp;
   </script>
 
   <!-- Required Admin Scripts -->
   <script src="/js/charts.js?v=8.1"></script>
   <script src="/js/comparison_view.js?v=8.1"></script>
   <script src="/js/ocr_service.js?v=1.1"></script>
-  <script src="/js/admin.js?v=10.5"></script>
+  <script src="/js/admin.js?v=10.6"></script>
 
   <!-- Standalone In-Page Admin Login Modal (Never redirects away) -->
   <div id="adminStandaloneAuthModal" class="modal-overlay" style="display:none; z-index:999999; background:rgba(15, 23, 42, 0.85); backdrop-filter:blur(8px);">

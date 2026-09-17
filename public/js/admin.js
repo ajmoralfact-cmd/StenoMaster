@@ -1914,8 +1914,8 @@ class StenoAdmin {
     }
   }
 
-  async saveCategoryOrder(catId) {
-    const input = document.getElementById(catOrder_);
+    async saveCategoryOrder(catId) {
+    const input = document.getElementById(`catOrder_${catId}`);
     if (!input) return;
     const order = parseInt(input.value, 10);
     if (isNaN(order) || order < 0) {
@@ -1929,7 +1929,7 @@ class StenoAdmin {
         sort_order: order
       });
       if (res && res.success) {
-        stenoApp.showToast(✓ श्रेणी का क्रम # सफलतापूर्वक सेव हो गया! 🎯, 'success');
+        stenoApp.showToast(`✓ श्रेणी का क्रम #${order} सफलतापूर्वक सेव हो गया! 🎯`, 'success');
         await this.loadCategoriesTable();
         if (typeof stenoApp.loadCategories === 'function') {
           await stenoApp.loadCategories();
@@ -2826,3 +2826,14 @@ class StenoAdmin {
 
 
 window.stenoAdmin = new StenoAdmin();
+window.adminApp = window.stenoAdmin;
+
+// Cross-compatibility bridge between stenoAdmin and stenoApp
+if (typeof window !== 'undefined') {
+  if (window.stenoApp) {
+    window.stenoAdmin.handleDirectAdminLogin = function(e) { return window.stenoApp.handleDirectAdminLogin(e); };
+    window.stenoAdmin.closeResetPasswordModal = function() { return window.stenoApp.closeResetPasswordModal(); };
+    window.stenoAdmin.sendTestEmail = function() { return window.stenoApp.sendTestEmail(); };
+    window.stenoAdmin.submitResetPassword = function() { return window.stenoApp.submitResetPassword(); };
+  }
+}
