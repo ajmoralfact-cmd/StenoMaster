@@ -2262,12 +2262,18 @@ def save_practice_attempt(
                 if cur_streak > longest_streak:
                     longest_streak = cur_streak
 
-            # 5. Reward transactions & achievements
+            # 5. Reward transactions & achievements (Speed + Accuracy merged into points)
+            base_pts = 10 if (net_wpm > 0 or accuracy > 10) else 5
+            perf_pts = round(float(net_wpm) * (float(accuracy) / 100.0))
+            acc_bonus = 20 if accuracy >= 95.0 else (12 if accuracy >= 90.0 else (6 if accuracy >= 80.0 else 0))
+            spd_bonus = 25 if net_wpm >= 100.0 else (15 if net_wpm >= 80.0 else (8 if net_wpm >= 60.0 else 0))
+            total_attempt_pts = base_pts + perf_pts + acc_bonus + spd_bonus
+
             bg_c.execute("""
                 INSERT INTO reward_transactions (user_id, points, type, reference_id, description, created_at)
                 VALUES (?, ?, 'practice', ?, ?, ?)
                 ON CONFLICT DO NOTHING
-            """, (user_id, practice_pts, f"attempt:{attempt_id}", f"डिक्टेशन अभ्यास #{attempt_id} पूर्ण", now_iso))
+            """, (user_id, total_attempt_pts, f"attempt:{attempt_id}", f"डिक्टेशन अभ्यास #{attempt_id} ({round(net_wpm)} WPM, {round(accuracy)}% सटीकता)", now_iso))
 
             bg_c.execute("SELECT COUNT(*) as count FROM practice_attempts WHERE user_id = ? AND date(created_at) = date(?)", (user_id, now_iso))
             today_row = bg_c.fetchone()
@@ -2676,7 +2682,7 @@ def get_leaderboard(period: str = 'all', limit: int = 50) -> List[Dict[str, Any]
         WHERE u.is_active = 1
         GROUP BY u.id, p.show_on_leaderboard, p.display_name, p.avatar, p.target_exam, p.points
         HAVING COUNT(pa.id) > 0 OR p.points > 0
-        ORDER BY COALESCE(MAX(pa.net_wpm), 0) DESC, COALESCE(AVG(pa.accuracy), 0) DESC, p.points DESC
+        ORDER BY p.points DESC, COALESCE(MAX(pa.net_wpm), 0) DESC, COALESCE(AVG(pa.accuracy), 0) DESC, COUNT(pa.id) DESC
         LIMIT ?
     """
     c.execute(query, (limit,))

@@ -3352,15 +3352,15 @@ class StenoApp {
               <div style="display:flex; align-items:center; gap:10px;">
                 <div class="user-avatar" style="width:32px; height:32px; font-size:0.8rem;">${r.display_name.charAt(0)}</div>
                 <div>
-                  <div style="font-weight:600;">${r.display_name}</div>
+                  <div style="font-weight:700; color:var(--text-main);">${r.display_name}</div>
                   <div style="font-size:0.75rem; color:var(--text-muted);">${r.target_exam || 'Steno Aspirant'}</div>
                 </div>
               </div>
             </td>
-            <td><strong style="color:var(--primary); font-size:1.05rem;">${r.best_wpm} WPM</strong></td>
-            <td><strong style="color:var(--accent-green);">${r.avg_accuracy}%</strong></td>
-            <td>${r.attempts_count}</td>
-            <td><span class="badge" style="background:var(--accent-amber-subtle); color:#b45309;">⭐ ${r.points} Pts</span></td>
+            <td><span class="badge" style="background:rgba(245, 158, 11, 0.15); color:#b45309; font-weight:800; font-size:0.92rem; padding:4px 10px; border-radius:8px; border:1px solid rgba(245,158,11,0.3);">⭐ ${r.points} PTS</span></td>
+            <td><strong style="color:var(--primary); font-size:1rem;">${r.best_wpm} WPM</strong></td>
+            <td><strong style="color:var(--accent-green); font-size:0.95rem;">${r.avg_accuracy}%</strong></td>
+            <td style="font-weight:600;">${r.attempts_count}</td>
           </tr>
         `;
       }).join('');
