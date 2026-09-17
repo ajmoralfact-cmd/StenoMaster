@@ -1110,6 +1110,14 @@ class StenoAdmin {
                 ${iconDisplay}
               </div>
             </td>
+            <td style="padding:10px; text-align:center; background:rgba(99,102,241,0.03);">
+              <div style="display:inline-flex; align-items:center; gap:5px;">
+                <input type="number" id="catOrder_${c.id}" class="cat-sort-order-input form-input" data-cat-id="${c.id}" value="${c.sort_order !== undefined && c.sort_order !== null ? c.sort_order : 0}" min="0" max="9999" style="width:65px; padding:4px 6px; font-weight:800; text-align:center; border:1.5px solid #6366f1; border-radius:8px; font-size:0.92rem; background:#fff;" title="छात्र पोर्टल पर किस नंबर पर दिखेगी (1 = सबसे ऊपर)">
+                <button type="button" class="btn-sm btn-primary" onclick="stenoAdmin.saveCategoryOrder(${c.id})" style="padding:5px 8px; font-size:0.75rem; font-weight:700; background:#4f46e5; border-color:#4f46e5; border-radius:8px; cursor:pointer;" title="इस श्रेणी का क्रम नंबर सेव करें">
+                  💾
+                </button>
+              </div>
+            </td>
             <td style="padding:10px; font-weight:800; color:var(--text-main); font-size:0.95rem;">
               <div>${stenoApp.escapeHtml(c.name)}</div>
               ${c.description ? `<div style="font-size:0.75rem; color:var(--text-muted); font-weight:normal; margin-top:2px;">${stenoApp.escapeHtml(c.description)}</div>` : ''}
@@ -1237,6 +1245,7 @@ class StenoAdmin {
     document.getElementById('catNameInput').value = '';
     document.getElementById('catSlugInput').value = '';
     if (document.getElementById('catPriceInput')) document.getElementById('catPriceInput').value = '49';
+    if (document.getElementById('catSortOrderInputModal')) document.getElementById('catSortOrderInputModal').value = '1';
     if (document.getElementById('catIconInput')) document.getElementById('catIconInput').value = '🪶';
     document.getElementById('catDescInput').value = '';
     document.getElementById('catLanguageSelect').value = 'both';
@@ -1254,7 +1263,8 @@ class StenoAdmin {
     document.getElementById('catIdInput').value = cat.id || '';
     document.getElementById('catNameInput').value = cat.name || '';
     document.getElementById('catSlugInput').value = cat.slug || '';
-    if (document.getElementById('catPriceInput')) document.getElementById('catPriceInput').value = cat.price || 49;
+    if (document.getElementById('catPriceInput')) document.getElementById('catPriceInput').value = cat.price !== undefined ? cat.price : 49;
+    if (document.getElementById('catSortOrderInputModal')) document.getElementById('catSortOrderInputModal').value = cat.sort_order !== undefined ? cat.sort_order : 0;
     if (document.getElementById('catIconInput')) document.getElementById('catIconInput').value = cat.icon || cat.icon_emoji || '🪶';
     document.getElementById('catDescInput').value = cat.description || '';
     document.getElementById('catLanguageSelect').value = cat.language || 'both';
@@ -1285,6 +1295,9 @@ class StenoAdmin {
       slug = 'cat-' + Date.now();
     }
 
+    const sortOrderVal = parseInt(document.getElementById('catSortOrderInputModal')?.value || '0', 10);
+    const sort_order = isNaN(sortOrderVal) ? 0 : sortOrderVal;
+
     try {
       const payload = {
         name,
@@ -1292,7 +1305,8 @@ class StenoAdmin {
         description,
         language,
         icon,
-        price
+        price,
+        sort_order
       };
       if (catId) {
         payload.category_id = parseInt(catId, 10);

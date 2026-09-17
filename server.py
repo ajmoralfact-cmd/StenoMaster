@@ -1401,6 +1401,28 @@ class StenoMasterHandler(http.server.SimpleHTTPRequestHandler):
                 self._send_json(200, {"success": True, "message": "क्लास सफलतापूर्वक हटा दी गई।"})
                 return
 
+            if path == '/api/admin/categories/update-order':
+                data = self._read_json_body()
+                orders = data.get("orders")
+                if orders and isinstance(orders, list):
+                    res = db.admin_update_category_orders_bulk(orders)
+                    self._send_json(200, res)
+                    return
+                cat_id = data.get("category_id") or data.get("id")
+                sort_order = data.get("sort_order")
+                if not cat_id or sort_order is None:
+                    self._send_json(400, {"error": "Category ID and sort_order are required"})
+                    return
+                try:
+                    cat_id = int(cat_id)
+                    sort_order = int(sort_order)
+                except (ValueError, TypeError):
+                    self._send_json(400, {"error": "Invalid category ID or sort_order"})
+                    return
+                res = db.admin_update_category_order(cat_id, sort_order)
+                self._send_json(200, res)
+                return
+
             if path == '/api/admin/categories/update-price':
                 data = self._read_json_body()
                 cat_id = data.get('category_id')

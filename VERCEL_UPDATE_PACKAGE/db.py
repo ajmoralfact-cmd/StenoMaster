@@ -4627,6 +4627,30 @@ def get_passages_by_category(category_id: int, user_id: Optional[int] = None) ->
     }
 
 
+
+def admin_update_category_order(category_id: int, sort_order: int) -> Dict[str, Any]:
+    invalidate_categories_cache()
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("UPDATE categories SET sort_order = ? WHERE id = ?", (int(sort_order), int(category_id)))
+    conn.commit()
+    conn.close()
+    return {"success": True, "message": f"श्रेणी क्रम #{sort_order} सुरक्षित हो गया!"}
+
+
+def admin_update_category_orders_bulk(orders: List[Dict[str, int]]) -> Dict[str, Any]:
+    invalidate_categories_cache()
+    conn = get_db()
+    c = conn.cursor()
+    for item in orders:
+        c_id = item.get("category_id") or item.get("id")
+        order = item.get("sort_order", 0)
+        if c_id is not None:
+            c.execute("UPDATE categories SET sort_order = ? WHERE id = ?", (int(order), int(c_id)))
+    conn.commit()
+    conn.close()
+    return {"success": True, "message": f"{len(orders)} श्रेणियों का क्रम सफलतापूर्वक अपडेट हो गया!"}
+
 def admin_update_category_price(category_id: int, price: int) -> Dict[str, Any]:
     invalidate_categories_cache()
     conn = get_db()
