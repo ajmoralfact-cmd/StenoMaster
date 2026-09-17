@@ -5649,37 +5649,68 @@ class StenoApp {
       }
 
       if (emptyEl) emptyEl.style.display = 'none';
-      container.innerHTML = this.myCustomClasses.map(item => {
+
+      const countBadge = document.getElementById('mySavedClassesCountBadge');
+      if (countBadge) {
+        countBadge.textContent = `${this.myCustomClasses.length} डिक्टेशन सुरक्षित`;
+      }
+
+      const gradientThemes = [
+        'playlist-theme-purple',
+        'playlist-theme-emerald',
+        'playlist-theme-rose',
+        'playlist-theme-blue'
+      ];
+
+      container.innerHTML = this.myCustomClasses.map((item, idx) => {
+        const theme = gradientThemes[idx % gradientThemes.length];
         const isPub = item.status === 'published';
         const dateStr = item.created_at ? new Date(item.created_at).toLocaleDateString('hi-IN', { day:'numeric', month:'short', year:'numeric' }) : '';
+        const fontTitle = item.typing_system === 'kruti_dev_010' ? 'कृति देव 010' : 'मंगल (Mangal)';
+
         return `
-          <div class="stat-card" style="padding:16px; border:1px solid var(--border); border-radius:12px; display:flex; flex-direction:column; justify-content:space-between; transition:transform 0.15s, box-shadow 0.15s; background:var(--bg-card);">
-            <div>
-              <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px; margin-bottom:8px;">
-                <h4 style="margin:0; font-size:0.95rem; font-weight:700; color:var(--text-main); line-height:1.35;">${this.escapeHtml(item.title)}</h4>
-                <span class="badge ${isPub ? 'badge-success' : 'badge-warning'}" style="font-size:0.68rem; padding:2px 8px; border-radius:12px; white-space:nowrap;">
-                  ${isPub ? '🟢 सभी के लिए लाइव' : '🟡 सुरक्षित (Saved)'}
-                </span>
-              </div>
-              <div style="display:flex; gap:8px; flex-wrap:wrap; font-size:0.75rem; color:var(--text-muted); margin-bottom:10px;">
-                <span style="background:var(--bg-subtle); padding:2px 8px; border-radius:6px; font-weight:600; color:var(--primary);">⚡ ${item.target_wpm || 80} WPM</span>
-                <span style="background:var(--bg-subtle); padding:2px 8px; border-radius:6px;">📝 ${item.word_count || 0} शब्द</span>
-                <span style="background:var(--bg-subtle); padding:2px 8px; border-radius:6px;">🔤 ${item.typing_system === 'kruti_dev_010' ? 'कृति देव' : 'मंगल'}</span>
-                ${dateStr ? `<span style="background:var(--bg-subtle); padding:2px 8px; border-radius:6px;">📅 ${dateStr}</span>` : ''}
-              </div>
-              ${item.audio_url ? `
-                <div style="margin-bottom:12px;">
-                  <audio controls src="${item.audio_url}" style="width:100%; height:32px;" preload="none"></audio>
+          <div class="saved-playlist-card-3d ${theme}">
+            <div class="saved-playlist-inner">
+              <div>
+                <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px; margin-bottom:12px;">
+                  <div style="display:flex; align-items:center; gap:10px; min-width:0;">
+                    <div class="playlist-card-icon-wrap" style="width:38px; height:38px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:1.15rem; flex-shrink:0; background:rgba(255,255,255,0.85); box-shadow:0 2px 6px rgba(0,0,0,0.06);">
+                      🎙️
+                    </div>
+                    <h4 style="margin:0; font-size:1.02rem; font-weight:800; color:var(--text-main); line-height:1.35; letter-spacing:-0.2px; word-break:break-word;">
+                      ${this.escapeHtml(item.title)}
+                    </h4>
+                  </div>
+                  <span class="badge ${isPub ? 'badge-success' : 'badge-warning'}" style="font-size:0.72rem; padding:3px 10px; border-radius:14px; white-space:nowrap; font-weight:700; display:inline-flex; align-items:center; gap:4px; box-shadow:0 1px 3px rgba(0,0,0,0.06);">
+                    ${isPub ? '🟢 सभी के लिए लाइव' : '🟡 सुरक्षित (SAVED)'}
+                  </span>
                 </div>
-              ` : ''}
-            </div>
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:10px; pt:8px; border-top:1px solid var(--border-subtle, #e2e8f0);">
-              <button type="button" class="btn-sm btn-primary" style="padding:6px 14px; font-size:0.8rem; font-weight:700; border-radius:20px; display:inline-flex; align-items:center; gap:4px;" onclick="stenoApp.playCustomClassById(${item.id})">
-                <span>🎯</span> <span>अभ्यास करें →</span>
-              </button>
-              <button type="button" class="btn-sm btn-secondary" style="padding:6px 10px; font-size:0.75rem; color:#ef4444; border-color:rgba(239,68,68,0.2);" onclick="stenoApp.deleteCustomClass(${item.id})" title="क्लास हटाएं">
-                <span>🗑️</span>
-              </button>
+
+                <div style="display:flex; gap:6px; flex-wrap:wrap; font-size:0.76rem; margin-bottom:14px;">
+                  <span style="background:rgba(99, 102, 241, 0.12); color:#4f46e5; border:1px solid rgba(99, 102, 241, 0.25); padding:3px 10px; border-radius:8px; font-weight:800;">⚡ ${item.target_wpm || 80} WPM</span>
+                  <span style="background:var(--bg-subtle, #f1f5f9); color:var(--text-secondary); border:1px solid var(--border-subtle); padding:3px 10px; border-radius:8px; font-weight:600;">📝 ${item.word_count || 0} शब्द</span>
+                  <span style="background:var(--bg-subtle, #f1f5f9); color:var(--text-secondary); border:1px solid var(--border-subtle); padding:3px 10px; border-radius:8px; font-weight:600;">🔤 ${fontTitle}</span>
+                  ${dateStr ? `<span style="background:var(--bg-subtle, #f1f5f9); color:var(--text-muted); border:1px solid var(--border-subtle); padding:3px 10px; border-radius:8px;">📅 ${dateStr}</span>` : ''}
+                </div>
+
+                ${item.audio_url ? `
+                  <div style="margin-bottom:14px; background:rgba(2,132,199,0.06); padding:8px 12px; border-radius:14px; border:1px solid rgba(2,132,199,0.18);">
+                    <div style="font-size:0.72rem; font-weight:700; color:#0284c7; margin-bottom:6px; display:flex; align-items:center; gap:5px;">
+                      <span>🔊</span> <span>ऑडियो डिक्टेशन प्लेयर:</span>
+                    </div>
+                    <audio controls src="${item.audio_url}" style="width:100%; height:34px; border-radius:8px;" preload="none"></audio>
+                  </div>
+                ` : ''}
+              </div>
+
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-top:14px; padding-top:12px; border-top:1px dashed var(--border-subtle);">
+                <button type="button" class="btn-primary" style="padding:8px 20px; font-size:0.86rem; font-weight:800; border-radius:25px; display:inline-flex; align-items:center; gap:6px; background:linear-gradient(135deg, #0284c7, #2563eb); border:none; box-shadow:0 4px 12px rgba(37,99,235,0.32); cursor:pointer; transition:all 0.2s;" onclick="stenoApp.playCustomClassById(${item.id})">
+                  <span>🎯</span> <span>अभ्यास शुरू करें →</span>
+                </button>
+                <button type="button" style="width:36px; height:36px; border-radius:10px; background:rgba(239, 68, 68, 0.08); border:1px solid rgba(239, 68, 68, 0.2); color:#ef4444; display:flex; align-items:center; justify-content:center; font-size:0.95rem; cursor:pointer; transition:all 0.2s;" onclick="stenoApp.deleteCustomClass(${item.id})" title="क्लास हटाएं">
+                  <span>🗑️</span>
+                </button>
+              </div>
             </div>
           </div>
         `;
