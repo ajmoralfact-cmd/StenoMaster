@@ -403,7 +403,7 @@ class StenoApp {
     } catch (e) {}
 
     // 2. Auto purge all browser caches when app version updates
-    const APP_VERSION = 'v9.0';
+    const APP_VERSION = 'v9.1';
     if (localStorage.getItem('stenomaster_client_version') !== APP_VERSION) {
       localStorage.setItem('stenomaster_client_version', APP_VERSION);
       if ('caches' in window) {
@@ -1529,7 +1529,10 @@ class StenoApp {
     const actionBtn = document.getElementById('planBannerActionBtn');
 
     const isPremium = Boolean(this.user && (this.user.is_premium || this.user.is_free_access || (this.user.subscription_days_left && this.user.subscription_days_left > 0)));
-    const planName = (this.user && this.user.subscription_plan) || 'StenoMaster Pro';
+    let planName = (this.user && this.user.subscription_plan) || 'StenoMaster Pro';
+    if (planName === 'System Administrator' || planName.toLowerCase().includes('admin')) {
+      planName = 'StenoMaster Lifetime Pro';
+    }
     const daysLeft = (this.user && typeof this.user.subscription_days_left === 'number') ? this.user.subscription_days_left : 0;
 
     // Pricing mapping
@@ -1613,31 +1616,26 @@ class StenoApp {
       if (streakEl) streakEl.textContent = `${this.user.streak_days || 0} Day Streak`;
 
       if (roleEl) {
-        if (this.user.role === 'admin') {
-          roleEl.textContent = 'Admin';
-          roleEl.className = 'header-user-role role-admin';
-        } else {
-          roleEl.textContent = 'Student';
-          roleEl.className = 'header-user-role role-student';
-        }
+        roleEl.textContent = (this.user.role === 'admin' || this.user.is_premium) ? 'Pro Member' : 'Student';
+        roleEl.className = 'header-user-role role-student';
       }
 
       const headerAdminPortalLink = document.getElementById('headerAdminPortalLink');
-      if (headerAdminPortalLink) {
-        headerAdminPortalLink.style.display = (this.user.role === 'admin') ? 'inline-flex' : 'none';
+      if (headerAdminPortalLink) headerAdminPortalLink.style.display = 'none';
+      if (adminNav) adminNav.style.display = 'none';
+
+      if (areaBadge) {
+        areaBadge.className = 'area-indicator-badge';
+        areaBadge.innerHTML = '👨‍🎓 Student Area';
       }
 
       if (this.user.role === 'admin') {
-        if (adminNav) adminNav.style.display = 'flex';
-        if (areaBadge) {
-          areaBadge.className = 'area-indicator-badge admin-badge';
-          areaBadge.innerHTML = '🛡️ Admin Portal';
-        }
         if (validityPill) {
           validityPill.style.display = 'inline-flex';
-          validityPill.className = 'plan-validity-pill is-admin';
-          validityPill.innerHTML = '🛡️ Admin Console ↗';
-          validityPill.onclick = () => { window.location.href = '/admin.html'; };
+          validityPill.className = 'plan-validity-pill is-pro';
+          validityPill.innerHTML = '👑 ऑल एक्सेस (Pro Active)';
+          validityPill.title = 'प्रो प्लान सक्रिय है';
+          validityPill.onclick = () => stenoApp.navigate('subscription');
         }
         if (avatarEl) {
           avatarEl.classList.add('pro-rainbow-ring');
@@ -1746,37 +1744,8 @@ class StenoApp {
     const isAdmin = Boolean(this.user && this.user.role === 'admin');
     const currentView = this.activeView || 'home';
 
-    if (isAdmin) {
-      navContainer.innerHTML = `
-        <div class="sidebar-role-badge admin-badge">
-          <span>🛡️</span> <span>ADMIN PORTAL</span>
-        </div>
-        <a href="/admin.html" class="nav-item active" style="margin-top:8px; background:rgba(239, 68, 68, 0.08); border:1px solid rgba(239, 68, 68, 0.25); border-radius:10px; padding:12px 14px; text-decoration:none;">
-          <span class="nav-item-icon" style="font-size:1.3rem;">⚙️</span>
-          <div style="flex:1; min-width:0;">
-            <div style="font-weight:700; font-size:0.92rem; color:#ef4444;">एडमिन कंसोल खोलें →</div>
-            <div style="font-size:0.75rem; color:var(--text-muted);">Dedicated Admin Page</div>
-          </div>
-        </a>
-      `;
-
-      if (footerContainer) {
-        const adminName = (this.user && (this.user.display_name || this.user.username)) || 'Administrator';
-        footerContainer.innerHTML = `
-          <div class="sidebar-user-preview admin-preview">
-            <div class="sidebar-avatar" style="background:linear-gradient(135deg, #ef4444, #991b1b);">🛡️</div>
-            <div class="sidebar-user-details">
-              <div class="sidebar-user-name">${this.escapeHtml(adminName)}</div>
-              <div class="sidebar-user-role">🛡️ System Administrator</div>
-            </div>
-          </div>
-          <button class="nav-item" style="width:100%; margin-top:6px; color:var(--accent-red); justify-content:center; gap:8px;" onclick="stenoApp.closeSidebar(); stenoApp.logout();">
-            <span class="nav-item-icon">🚪</span>
-            <span>लॉगआउट (Logout)</span>
-          </button>
-        `;
-      }
-      return;
+    if (false) {
+      // Disabled: Admin portal items strictly excluded from student app
     } else {
       // Student Sidebar Items (Strictly NO admin items in DOM)
       const studentItems = [
