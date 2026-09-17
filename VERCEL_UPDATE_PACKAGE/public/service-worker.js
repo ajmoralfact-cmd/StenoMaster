@@ -1,79 +1,41 @@
 /**
- * StenoMaster Service Worker — v8.1
- * Network-First Architecture with Offline Cache Fallback
- * Ensures changes are visible immediately without manual hard refresh or incognito
+ * StenoMaster Service Worker — v9.0
+ * Zero-Cache / Auto-Purging Service Worker
+ * Ensures all users get fresh updates immediately without manual hard refresh or cache clear.
  */
 
-const CACHE_NAME = 'stenomaster-v8.1-shell';
-const ASSETS_TO_PRECACHE = [
-  '/',
-  '/index.html',
-  '/css/style.css?v=8.1',
-  '/js/audio_player.js?v=8.1',
-  '/js/keyboard_map.js?v=8.1',
-  '/js/typing_engine.js?v=8.1',
-  '/js/app.js?v=8.1',
-  '/manifest.json',
-  '/assets/logo.png',
-  '/assets/fonts/Mangal.ttf',
-  '/assets/fonts/Kruti_Dev_010.ttf'
-];
+const CACHE_NAME = 'stenomaster-v9.0-shell';
 
-// Install: Pre-cache assets and immediately activate without waiting
 self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(ASSETS_TO_PRECACHE).catch(() => {});
-    })
-  );
   self.skipWaiting();
 });
 
-// Activate: Immediately delete all obsolete caches and take control
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((keys) => {
       return Promise.all(
         keys.map((key) => {
-          if (key !== CACHE_NAME) {
-            console.log('[SW v8.1] Purging obsolete cache:', key);
-            return caches.delete(key);
-          }
+          console.log('[SW v9.0] Deleting obsolete cache:', key);
+          return caches.delete(key);
         })
       );
     }).then(() => self.clients.claim())
   );
 });
 
-// Fetch: Network-First with Cache Fallback for instant updates
+// Network-First for everything; never hold stale HTML or JS
 self.addEventListener('fetch', (event) => {
   const req = event.request;
   const url = req.url;
 
-  // 1. Dynamic API calls, audio uploads, and Admin portal: STRICTLY Network-only
-  if (url.includes('/api/') || url.includes('/uploads/') || url.includes('/admin') || url.includes('/admin.html')) {
+  // Dynamic API calls or Admin portal: strictly network
+  if (url.includes('/api/') || url.includes('/uploads/') || url.includes('/admin')) {
     event.respondWith(fetch(req));
     return;
   }
 
-  // 2. Navigation & Static Assets (.html, .js, .css): Network-First
   event.respondWith(
     fetch(req)
-      .then((networkResponse) => {
-        if (networkResponse && networkResponse.status === 200) {
-          const copy = networkResponse.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(req, copy));
-        }
-        return networkResponse;
-      })
-      .catch(() => {
-        return caches.match(req).then((cached) => {
-          if (cached) return cached;
-          if (req.mode === 'navigate' || req.headers.get('accept')?.includes('text/html')) {
-            return caches.match('/index.html');
-          }
-          return null;
-        });
-      })
+      .catch(() => caches.match(req))
   );
 });

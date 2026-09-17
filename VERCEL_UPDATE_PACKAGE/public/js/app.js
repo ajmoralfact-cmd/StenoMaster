@@ -389,8 +389,30 @@ class StenoApp {
 
   initPWA() {
     this.deferredPwaPrompt = null;
+
+    // 1. Purge legacy demo credentials from previous tests
+    try {
+      const stuRaw = localStorage.getItem('stenomaster_saved_student_creds');
+      if (stuRaw && (stuRaw.includes('student@stenomaster.com') || stuRaw.includes('student123'))) {
+        localStorage.removeItem('stenomaster_saved_student_creds');
+      }
+      const adminRaw = localStorage.getItem('stenomaster_saved_admin_creds');
+      if (adminRaw && (adminRaw.includes('admin@stenomaster.com') || adminRaw.includes('admin123'))) {
+        localStorage.removeItem('stenomaster_saved_admin_creds');
+      }
+    } catch (e) {}
+
+    // 2. Auto purge all browser caches when app version updates
+    const APP_VERSION = 'v9.0';
+    if (localStorage.getItem('stenomaster_client_version') !== APP_VERSION) {
+      localStorage.setItem('stenomaster_client_version', APP_VERSION);
+      if ('caches' in window) {
+        caches.keys().then(names => names.forEach(n => caches.delete(n))).catch(() => {});
+      }
+    }
+
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/service-worker.js?v=8.0')
+      navigator.serviceWorker.register('/service-worker.js?v=9.0')
         .then((reg) => {
           reg.update().catch(() => {});
           reg.addEventListener('updatefound', () => {
