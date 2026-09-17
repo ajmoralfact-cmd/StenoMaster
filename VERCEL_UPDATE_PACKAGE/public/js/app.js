@@ -845,6 +845,9 @@ class StenoApp {
       if (studentBtn) { studentBtn.classList.add('active'); studentBtn.setAttribute('aria-selected', 'true'); }
       if (adminBtn) { adminBtn.classList.remove('active'); adminBtn.setAttribute('aria-selected', 'false'); }
       if (indicator) indicator.classList.remove('slide-right');
+      if (window.location.hash && window.location.hash.toLowerCase().includes('admin')) {
+        history.replaceState(null, document.title, window.location.pathname + window.location.search);
+      }
       if (studentPanel) {
         studentPanel.style.display = 'block';
         this.loadSavedCredentials();
@@ -1022,12 +1025,17 @@ class StenoApp {
       const redirectRoute = sessionStorage.getItem('stenomaster_redirect_after_login') || localStorage.getItem('stenomaster_last_route');
       sessionStorage.removeItem('stenomaster_redirect_after_login');
 
-      if (this.user.role === 'admin') {
-        window.location.href = '/admin.html';
-        return;
-      } else {
-        this.restoreRouteOnLoad(redirectRoute && !redirectRoute.startsWith('admin') ? redirectRoute : 'home');
+      // Clear any leftover hash containing 'admin' to prevent unwanted navigation
+      if (window.location.hash && window.location.hash.toLowerCase().includes('admin')) {
+        history.replaceState(null, document.title, window.location.pathname + window.location.search);
       }
+
+      // In Student Portal login, always land on Student Portal (home or requested student view)
+      const targetRoute = (redirectRoute && !redirectRoute.startsWith('admin')) ? redirectRoute : 'home';
+      if (redirectRoute && redirectRoute.startsWith('admin')) {
+        localStorage.setItem('stenomaster_last_route', 'home');
+      }
+      this.restoreRouteOnLoad(targetRoute);
     } catch (err) {
       const msg = err.status === 401 ? 'Invalid username or password.' : (err.message || 'Login failed.');
       if (errBox) {
@@ -1065,12 +1073,8 @@ class StenoApp {
       await this.loadCategories();
       await this.loadPassages();
       this.showToast(`स्वागतम्, ${this.user.display_name || this.user.username}! 👋`, 'success');
-      if (this.user.role === 'admin') {
-        window.location.href = '/admin.html';
-        return;
-      } else {
-        this.navigate('home');
-      }
+      // Stay in Student Portal on successful student login
+      this.navigate('home');
     } catch (err) {
       const msg = err.status === 401 ? 'गलत ईमेल/यूज़रनेम अथवा पासवर्ड।' : (err.message || 'लॉगिन विफल रहा।');
       this.showToast(msg, 'error');
@@ -1797,6 +1801,15 @@ class StenoApp {
       ];
 
       navContainer.innerHTML = `
+        ${isAdmin ? `
+          <a href="/admin.html" class="nav-item" data-sidebar-item="admin-console-link" style="background:rgba(239,68,68,0.08); border:1px solid rgba(239,68,68,0.25); border-radius:10px; margin-top:8px; color:#ef4444;" title="एडमिन कंसोल">
+            <span class="nav-item-icon">🛡️</span>
+            <div style="flex:1; min-width:0;">
+              <div style="font-weight:700; font-size:0.86rem; color:#ef4444;">Admin Console</div>
+              <div style="font-size:0.7rem; color:var(--text-muted);">प्रशासनिक पोर्टल खोलें ➔</div>
+            </div>
+          </a>
+        ` : ''}
         <div class="sidebar-role-badge student-badge">
           <span>👨‍🎓</span> <span>STUDENT PORTAL</span>
         </div>
@@ -2049,7 +2062,7 @@ class StenoApp {
       }
     }
     // Transient views must never be remembered across browser launches
-    if (viewId !== 'result' && viewId !== 'practice') {
+    if (viewId !== 'result' && viewId !== 'practice' && viewId !== 'admin') {
       localStorage.setItem('stenomaster_last_route', routeStr);
     } else {
       localStorage.setItem('stenomaster_last_route', 'home');
