@@ -1145,6 +1145,87 @@ class StenoAdmin {
     }
   }
 
+  openCategoryClassesModal(categoryId, categoryName, categoryIcon) {
+    this.activeCategoryModalId = categoryId;
+    this.activeCategoryModalName = categoryName;
+
+    const titleEl = document.getElementById('catClassesModalTitle');
+    if (titleEl) titleEl.textContent = '📂 ' + categoryName + ' — कक्षाएं प्रबंधन';
+    const iconEl = document.getElementById('catClassesModalIcon');
+    if (iconEl) iconEl.textContent = this.getCategoryIconDisplay(categoryIcon, '', categoryName);
+
+    stenoApp.openModal('adminCategoryClassesModal');
+    this.loadCategoryClasses(categoryId);
+  }
+
+  addPassageToCurrentCategory() {
+    if (!this.activeCategoryModalId) return;
+    stenoApp.closeModal('adminCategoryClassesModal');
+    this.openNewPassageModal('dual', this.activeCategoryModalId, this.activeCategoryModalName);
+  }
+
+  editCategoryClass(passageId) {
+    stenoApp.closeModal('adminCategoryClassesModal');
+    this.openEditPassage(passageId);
+  }
+
+  async loadCategoryClasses(categoryId) {
+    const tbody = document.getElementById('adminCategoryPassagesTableBody');
+    const statsEl = document.getElementById('catClassesModalStats');
+    if (!tbody) return;
+
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:20px; color:var(--text-muted);"><div class="spinner-small" style="display:inline-block; margin-right:8px;"></div>कक्षाएं लोड हो रही हैं...</td></tr>';
+
+    try {
+      const res = await stenoApp.apiCall('/api/categories/detail?id=' + categoryId + '&_t=' + Date.now());
+      const passages = res.passages || [];
+
+      if (statsEl) {
+        statsEl.innerHTML = '📊 कुल <strong>' + passages.length + '</strong> कक्षाएं उपलब्ध हैं';
+      }
+
+      if (!passages.length) {
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:30px 20px;"><div style="font-size:2rem; margin-bottom:8px;">📭</div><div style="font-size:0.95rem; font-weight:700; color:var(--text-main); margin-bottom:4px;">इस श्रेणी में अभी कोई क्लास नहीं है</div><div style="font-size:0.8rem; color:var(--text-muted); margin-bottom:14px;">छात्रों के लिए अभ्यास कक्षाएं अपलोड करने हेतु नीचे बटन दबाएं</div><button type="button" class="btn-primary" onclick="stenoAdmin.addPassageToCurrentCategory()" style="padding:6px 16px; font-size:0.84rem; font-weight:800;">➕ पहली क्लास अपलोड करें</button></td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = passages.map(p => {
+        const titleSafe = stenoApp.escapeHtml(p.title);
+        const durationMins = p.duration_seconds ? Math.round(p.duration_seconds / 60) : 5;
+        const words = p.word_count || 400;
+
+        return '<tr style="border-bottom: 1px solid var(--border-subtle);">' +
+          '<td style="padding:10px; font-weight:700; color:var(--text-muted);">#' + p.id + '</td>' +
+          '<td style="padding:10px; font-weight:800; color:var(--text-main);">' +
+            '<div>' + titleSafe + '</div>' +
+            (p.is_free_tier ? '<span class="badge" style="background:#10b981; color:#fff; font-size:0.65rem; padding:1px 6px; border-radius:4px;">फ्री डेमो</span>' : '') +
+          '</td>' +
+          '<td style="padding:10px; text-align:center;">' +
+            '<span class="badge" style="background:rgba(2,132,199,0.12); color:#0284c7; font-weight:800; padding:2px 8px; border-radius:6px;">⚡ ' + (p.target_wpm || 80) + ' WPM</span>' +
+          '</td>' +
+          '<td style="padding:10px; text-align:center; font-size:0.82rem; color:var(--text-muted);">' +
+            '⏱️ ' + durationMins + ' मिनट' +
+          '</td>' +
+          '<td style="padding:10px; text-align:center; font-size:0.82rem; font-weight:600;">' +
+            '📝 ' + words + ' शब्द' +
+          '</td>' +
+          '<td style="padding:10px; text-align:center; font-size:0.8rem;">' +
+            (p.audio_url ? '<span style="color:#10b981; font-weight:700;">🎵 ऑडियो सहित</span>' : '<span style="color:var(--text-muted);">म्यूट</span>') +
+          '</td>' +
+          '<td style="padding:10px; text-align:right;">' +
+            '<div style="display:inline-flex; gap:6px;">' +
+              '<button type="button" class="btn-sm btn-secondary" onclick="stenoAdmin.editCategoryClass(' + p.id + ')" style="padding:3px 8px; font-size:0.75rem; font-weight:700; border-color:#0284c7; color:#0284c7;">✏️ एडिट</button>' +
+              '<button type="button" class="btn-sm btn-secondary" onclick="stenoAdmin.deletePassage(' + p.id + ')" style="padding:3px 8px; font-size:0.75rem; font-weight:700; border-color:#ef4444; color:#ef4444;">🗑️</button>' +
+            '</div>' +
+          '</td>' +
+        '</tr>';
+      }).join('');
+    } catch (err) {
+      console.error('Error loading category classes:', err);
+      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:16px; color:#ef4444;">त्रुटि: ' + stenoApp.escapeHtml(err.message || 'कक्षाएं लोड नहीं हो सकीं') + '</td></tr>';
+    }
+  }
+
   openCategoryModal() {
     document.getElementById('catIdInput').value = '';
     document.getElementById('catNameInput').value = '';
