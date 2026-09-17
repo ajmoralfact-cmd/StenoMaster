@@ -4836,19 +4836,16 @@ class StenoApp {
         return;
       }
 
-      // Filter out empty audit categories
-      const activeCats = cats.filter(c => {
+      // Show all genuine categories (only exclude obsolete temporary audit tests with 0 passages)
+      const displayCats = cats.filter(c => {
         const slug = String(c.slug || '').toLowerCase();
-        const name = String(c.name || '').toLowerCase();
         if (slug.startsWith('audit-cat-') && (!c.passage_count || c.passage_count === 0)) return false;
-        const pCount = parseInt(c.passage_count || 0, 10);
-        return pCount > 0 || slug.includes('ramdhari') || slug.includes('editorial') || slug.includes('steno') || slug.includes('court') || slug.includes('upsssc') || slug.includes('constitution') || name.includes('रामधारी');
+        return true;
       });
-      const displayCats = activeCats.length > 0 ? activeCats : cats;
 
       const html = displayCats.map(cat => {
-        const isUnlocked = Boolean(cat.is_unlocked);
-        const price = cat.price || 49;
+        const isUnlocked = Boolean(cat.is_unlocked || cat.price === 0);
+        const price = (cat.price !== undefined && cat.price !== null) ? cat.price : 49;
         const iconDisplay = this.getCategoryIconDisplay(cat.icon, cat.slug, cat.name);
         const passageCount = parseInt(cat.passage_count || 0, 10);
         const freeCount = parseInt(cat.free_count !== undefined && cat.free_count !== null ? cat.free_count : (passageCount > 0 ? 1 : 0), 10);
@@ -4902,7 +4899,7 @@ class StenoApp {
 
             <!-- RIGHT SECTION: Action / Unlock Button -->
             <div style="display:flex; align-items:center; justify-content:flex-end; gap:10px; flex-shrink:0;">
-              ${isUnlocked 
+              ${(isUnlocked || price === 0)
                 ? `<button type="button" class="btn-primary" style="padding:10px 22px; font-size:0.92rem; font-weight:800; border-radius:12px; background:linear-gradient(135deg, #0284c7, #2563eb); border:none; box-shadow:0 4px 14px rgba(2,132,199,0.35); display:inline-flex; align-items:center; gap:6px; cursor:pointer;" onclick="event.stopPropagation(); stenoApp.openCategoryDetail(${cat.id})">
                     <span>🎯 अभ्यास करें</span> <span style="font-size:1.1rem; line-height:1;">➔</span>
                   </button>`
@@ -5031,7 +5028,16 @@ class StenoApp {
     if (!container) return;
 
     if (!passages || passages.length === 0) {
-      container.innerHTML = '<div style="text-align:center; padding:30px; color:var(--text-muted);">इस फ़िल्टर में कोई क्लास उपलब्ध नहीं है।</div>';
+      container.innerHTML = `
+        <div style="text-align:center; padding:45px 20px; background:var(--bg-subtle); border-radius:16px; border:1.5px dashed var(--border); margin-top:14px;">
+          <div style="font-size:2.5rem; margin-bottom:12px;">🎧</div>
+          <h3 style="font-weight:800; font-size:1.15rem; color:var(--text-main); margin-bottom:8px;">इस श्रेणी में डिक्टेशन्स जल्द आ रही हैं!</h3>
+          <p style="font-size:0.88rem; color:var(--text-muted); max-width:440px; margin:0 auto 20px; line-height:1.5;">
+            प्रशासन द्वारा इस श्रेणी में नए ऑडियो एवं अभ्यास टेस्ट शीघ्र ही जोड़े जा रहे हैं। कृपया अन्य श्रेणियों का अभ्यास करें।
+          </p>
+          <button type="button" class="btn-secondary" onclick="stenoApp.goBack()" style="padding:10px 24px; font-size:0.9rem; font-weight:700; border-radius:12px; cursor:pointer;">← वापस जाएं</button>
+        </div>
+      `;
       return;
     }
 

@@ -3026,6 +3026,7 @@ def admin_toggle_passage_status(passage_id: int) -> str:
 
 
 def admin_save_category(name: str, slug: str, description: str = "", language: str = "both", icon: str = "book", sort_order: int = 0, category_id: int = None, price: int = 49) -> int:
+    invalidate_categories_cache()
     conn = get_db()
     c = conn.cursor()
     if category_id:
@@ -3050,6 +3051,7 @@ def admin_save_category(name: str, slug: str, description: str = "", language: s
 
 
 def admin_delete_category(category_id: int) -> bool:
+    invalidate_categories_cache()
     conn = get_db()
     c = conn.cursor()
     c.execute("SELECT COUNT(*) FROM passages WHERE category_id = ?", (category_id,))
@@ -4578,7 +4580,7 @@ def get_categories_with_user_status(user_id: Optional[int] = None) -> List[Dict[
     result = []
     for cat in base_cats:
         c_copy = dict(cat)
-        c_copy['is_unlocked'] = bool(c_copy['id'] in unlocked_ids)
+        c_copy['is_unlocked'] = bool(c_copy['id'] in unlocked_ids or c_copy.get('price') == 0)
         result.append(c_copy)
     return result
 

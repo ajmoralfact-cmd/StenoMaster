@@ -1480,6 +1480,7 @@ class StenoMasterHandler(http.server.SimpleHTTPRequestHandler):
                 except (ValueError, TypeError):
                     order = 0
                 saved_id = db.admin_save_category(name, slug, desc, lang, icon, order, category_id=cat_id, price=price)
+                db.invalidate_categories_cache()
                 self._send_json(200, {"success": True, "category_id": saved_id})
                 return
 
@@ -1491,6 +1492,7 @@ class StenoMasterHandler(http.server.SimpleHTTPRequestHandler):
                     return
                 try:
                     db.admin_delete_category(int(cat_id))
+                    db.invalidate_categories_cache()
                     self._send_json(200, {"success": True})
                 except ValueError as ve:
                     self._send_json(400, {"error": str(ve)})
