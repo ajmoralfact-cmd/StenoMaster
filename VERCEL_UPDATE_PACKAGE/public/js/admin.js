@@ -88,7 +88,12 @@ class StenoAdmin {
       btn.classList.toggle('active', btn.dataset.adminTab === tabId);
     });
 
-    // 2. Hide all admin sub-panels
+    // 2. Hide all admin sub-panels (both via class selector and explicit panel IDs)
+    document.querySelectorAll('.admin-sub-panel').forEach(el => {
+      el.style.display = 'none';
+      el.classList.remove('active');
+    });
+
     const panelIds = [
       'adminOverviewPanel',
       'adminPassagesPanel',
@@ -98,7 +103,8 @@ class StenoAdmin {
       'adminPricingPanel',
       'adminScoringPanel',
       'adminBrandingPanel',
-      'adminCustomClassesPanel'
+      'adminCustomClassesPanel',
+      'adminAivoicePanel'
     ];
 
     panelIds.forEach(id => {
