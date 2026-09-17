@@ -12,7 +12,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Mukta:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/css/style.css?v=8.5">
+  <link rel="stylesheet" href="/css/style.css?v=8.7">
   <!-- Google Identity Services SDK -->
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   <script>
@@ -344,7 +344,12 @@
 
       <!-- Compact Top Header with 3-Dot Navigation Toggle -->
       <header class="top-header">
-        <div class="header-left">
+                <div class="header-left">
+          <!-- Universal Header Back Button (Visible on all subpages) -->
+          <button class="header-back-btn" id="headerBackBtn" onclick="stenoApp.goBack()" style="display:none;" title="वापस जाएं (Go Back)" aria-label="Go Back">
+            <span class="back-arrow">←</span>
+            <span class="back-text">वापस</span>
+          </button>
           <!-- 3-Dot Slide Drawer Toggle Button -->
           <button class="three-dot-btn" id="navToggleBtn" onclick="stenoApp.toggleSidebar()" aria-label="Open navigation menu" aria-expanded="false" title="नेविगेशन मेनू खोलें (Open Menu)">
             <span class="three-dots-icon">⋮</span>
@@ -596,6 +601,11 @@
            VIEW: SELF PRACTICE / CUSTOM AUDIO & TEXT
            =================================================================== -->
       <main class="page-view" id="view-self-practice">
+        <div class="view-top-back-wrap" style="margin-bottom:14px;">
+          <button type="button" class="view-back-strip-btn" onclick="stenoApp.goBack()" title="वापस जाएं">
+            <span class="back-icon">←</span> <span>मुख्य पृष्ठ (Home)</span>
+          </button>
+        </div>
         <div class="section-header">
           <div>
             <h2 class="section-title">🎙️ सेल्फ प्रैक्टिस (Custom Dictation Practice)</h2>
@@ -828,6 +838,11 @@
            VIEW: CLASSES / PRACTICE LIST
            =================================================================== -->
       <main class="page-view" id="view-classes">
+        <div class="view-top-back-wrap" style="margin-bottom:14px;">
+          <button type="button" class="view-back-strip-btn" onclick="stenoApp.goBack()" title="वापस जाएं">
+            <span class="back-icon">←</span> <span>मुख्य पृष्ठ (Home)</span>
+          </button>
+        </div>
         <div class="section-header">
           <div>
             <h2 class="section-title">सभी अभ्यास डिक्टेशन (All Dictation Classes)</h2>
@@ -920,10 +935,10 @@
       <!-- ===================================================================
            VIEW: CATEGORY CLASSES DETAIL (SCREENSHOT 2 STYLE)
            =================================================================== -->
-      <main class="page-view" id="view-category-detail" style="display:none; max-width:960px; margin:0 auto; padding-bottom:80px;">
+      <main class="page-view" id="view-category-detail" style="max-width:960px; margin:0 auto; padding-bottom:80px;">
         <!-- Header with Back Button -->
         <div style="display:flex; align-items:center; gap:12px; margin-bottom:18px; flex-wrap:wrap;">
-          <button type="button" class="back-btn" onclick="stenoApp.backFromCategoryDetail()" style="padding:8px 16px; font-size:0.88rem; font-weight:700; border-radius:8px; display:inline-flex; align-items:center; gap:6px;">
+          <button type="button" class="back-btn" onclick="stenoApp.goBack()" style="padding:8px 16px; font-size:0.88rem; font-weight:700; border-radius:8px; display:inline-flex; align-items:center; gap:6px;">
             ← वापस (Back)
           </button>
           <div style="flex:1; min-width:200px;">
@@ -977,7 +992,7 @@
       <main class="page-view" id="view-practice">
         <div class="practice-container">
           <div class="practice-header-bar">
-            <button class="back-btn" onclick="stenoApp.navigate('classes')">
+            <button class="back-btn" onclick="stenoApp.goBack()">
               ← वापस कक्षाओं पर जाएं (Back)
             </button>
             <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
@@ -1188,6 +1203,11 @@
            VIEW: MY PRACTICE (HISTORY)
            =================================================================== -->
       <main class="page-view" id="view-my-practice">
+        <div class="view-top-back-wrap" style="margin-bottom:14px;">
+          <button type="button" class="view-back-strip-btn" onclick="stenoApp.goBack()" title="वापस जाएं">
+            <span class="back-icon">←</span> <span>वापस जाएं (Back)</span>
+          </button>
+        </div>
         <div class="section-header">
           <div>
             <h2 class="section-title">मेरा अभ्यास इतिहास (My Practice History)</h2>
@@ -1220,6 +1240,11 @@
            VIEW: PROGRESS & ANALYTICS
            =================================================================== -->
       <main class="page-view" id="view-progress">
+        <div class="view-top-back-wrap" style="margin-bottom:14px;">
+          <button type="button" class="view-back-strip-btn" onclick="stenoApp.goBack()" title="वापस जाएं">
+            <span class="back-icon">←</span> <span>वापस जाएं (Back)</span>
+          </button>
+        </div>
         <div class="section-header" style="margin-bottom: 20px;">
           <div>
             <h2 class="section-title">📊 वास्तविक स्टेनो प्रगति व दक्षता विश्लेषण</h2>
@@ -1402,6 +1427,11 @@
            VIEW: LEADERBOARD
            =================================================================== -->
       <main class="page-view" id="view-leaderboard">
+        <div class="view-top-back-wrap" style="margin-bottom:14px;">
+          <button type="button" class="view-back-strip-btn" onclick="stenoApp.goBack()" title="वापस जाएं">
+            <span class="back-icon">←</span> <span>वापस जाएं (Back)</span>
+          </button>
+        </div>
         <div class="section-header">
           <div>
             <h2 class="section-title">स्टेनो रैंकिंग लीडरबोर्ड (Steno Leaderboard)</h2>
@@ -1448,6 +1478,11 @@
            VIEW: BOOKMARKS
            =================================================================== -->
       <main class="page-view" id="view-bookmarks">
+        <div class="view-top-back-wrap" style="margin-bottom:14px;">
+          <button type="button" class="view-back-strip-btn" onclick="stenoApp.goBack()" title="वापस जाएं">
+            <span class="back-icon">←</span> <span>वापस जाएं (Back)</span>
+          </button>
+        </div>
         <div class="section-header">
           <div>
             <h2 class="section-title">मेरे बुकमार्क किए गए आलेख (My Bookmarks)</h2>
@@ -1461,6 +1496,11 @@
            VIEW: PROFILE
            =================================================================== -->
       <main class="page-view" id="view-profile">
+        <div class="view-top-back-wrap" style="margin-bottom:14px;">
+          <button type="button" class="view-back-strip-btn" onclick="stenoApp.goBack()" title="वापस जाएं">
+            <span class="back-icon">←</span> <span>वापस जाएं (Back)</span>
+          </button>
+        </div>
         <div class="section-header">
           <div>
             <h2 class="section-title">मेरी प्रोफ़ाइल (User Profile)</h2>
@@ -1547,6 +1587,11 @@
            VIEW: SUBSCRIPTION (PRO MEMBERSHIP & PAYMENTS)
            =================================================================== -->
       <main class="page-view" id="view-subscription">
+        <div class="view-top-back-wrap" style="margin-bottom:14px;">
+          <button type="button" class="view-back-strip-btn" onclick="stenoApp.goBack()" title="वापस जाएं">
+            <span class="back-icon">←</span> <span>वापस जाएं (Back)</span>
+          </button>
+        </div>
         <div class="clean-sub-container">
 
                     <!-- Header with Title & Live Status -->
@@ -1893,6 +1938,11 @@
            VIEW: REFER & EARN
            =================================================================== -->
       <main class="page-view" id="view-refer">
+        <div class="view-top-back-wrap" style="margin-bottom:14px;">
+          <button type="button" class="view-back-strip-btn" onclick="stenoApp.goBack()" title="वापस जाएं">
+            <span class="back-icon">←</span> <span>वापस जाएं (Back)</span>
+          </button>
+        </div>
         <div class="section-header">
           <div>
             <h2 class="section-title">रेफर करें और पॉइंट्स अर्जित करें (Refer & Earn)</h2>
@@ -1993,6 +2043,11 @@
            VIEW: NOTIFICATIONS
            =================================================================== -->
       <main class="page-view" id="view-notifications">
+        <div class="view-top-back-wrap" style="margin-bottom:14px;">
+          <button type="button" class="view-back-strip-btn" onclick="stenoApp.goBack()" title="वापस जाएं">
+            <span class="back-icon">←</span> <span>वापस जाएं (Back)</span>
+          </button>
+        </div>
         <div class="section-header">
           <div>
             <h2 class="section-title">सूचनाएं व अलर्ट (Notifications)</h2>
@@ -2006,6 +2061,11 @@
            VIEW: SETTINGS
            =================================================================== -->
       <main class="page-view" id="view-settings">
+        <div class="view-top-back-wrap" style="margin-bottom:14px;">
+          <button type="button" class="view-back-strip-btn" onclick="stenoApp.goBack()" title="वापस जाएं">
+            <span class="back-icon">←</span> <span>वापस जाएं (Back)</span>
+          </button>
+        </div>
         <div class="section-header">
           <div>
             <h2 class="section-title">प्लेटफ़ॉर्म सेटिंग्स (Platform Settings)</h2>
@@ -2054,6 +2114,11 @@
            VIEW: HELP & EXAM GUIDE
            =================================================================== -->
       <main class="page-view" id="view-help">
+        <div class="view-top-back-wrap" style="margin-bottom:14px;">
+          <button type="button" class="view-back-strip-btn" onclick="stenoApp.goBack()" title="वापस जाएं">
+            <span class="back-icon">←</span> <span>वापस जाएं (Back)</span>
+          </button>
+        </div>
         <div class="section-header">
           <div>
             <h2 class="section-title">स्टेनोग्राफर परीक्षा मार्गदर्शन एवं टाइपिंग सहायता</h2>
@@ -2087,6 +2152,11 @@
            VIEW: EXAM RULES (परीक्षा नियम)
            =================================================================== -->
       <main class="page-view" id="view-rules">
+        <div class="view-top-back-wrap" style="margin-bottom:14px;">
+          <button type="button" class="view-back-strip-btn" onclick="stenoApp.goBack()" title="वापस जाएं">
+            <span class="back-icon">←</span> <span>वापस जाएं (Back)</span>
+          </button>
+        </div>
         <div class="section-header">
           <div>
             <h2 class="section-title">📜 परीक्षा नियम (Exam Rules)</h2>
@@ -2326,6 +2396,11 @@
            VIEW: FOUNDER & MENTOR (संस्थापक परिचय)
            =================================================================== -->
       <main class="page-view" id="view-founder">
+        <div class="view-top-back-wrap" style="margin-bottom:14px;">
+          <button type="button" class="view-back-strip-btn" onclick="stenoApp.goBack()" title="वापस जाएं">
+            <span class="back-icon">←</span> <span>वापस जाएं (Back)</span>
+          </button>
+        </div>
         <div class="founder-container">
 
           <!-- Header -->
@@ -3365,7 +3440,7 @@
   <script src="/js/keyboard_map.js?v=8.1"></script>
   <script src="/js/typing_engine.js?v=8.1"></script>
   <script src="/js/ocr_service.js?v=1.1"></script>
-  <script src="/js/app.js?v=8.5"></script>
+  <script src="/js/app.js?v=8.7"></script>
   <!-- Strict Exam Hall Anti-Cheat Warning Modal -->
   <div class="modal-overlay" id="examHallWarningModal" style="z-index:99999;">
     <div class="modal-card" style="max-width: 480px; text-align:center; border:2px solid #ef4444; box-shadow:0 10px 40px rgba(239,68,68,0.3);">

@@ -265,6 +265,14 @@ class StenoApp {
       return;
     }
 
+    if (path === 'category-detail' && params.id) {
+      const catId = parseInt(params.id, 10);
+      if (this.currentCategoryId !== catId || this.activeView !== 'category-detail') {
+        this.openCategoryDetail(catId);
+      }
+      return;
+    }
+
     if (path === 'practice' && params.id) {
       const pId = parseInt(params.id, 10);
       if (!this.currentPassage || this.currentPassage.id !== pId) {
@@ -1827,6 +1835,47 @@ class StenoApp {
     this.renderSidebarNav();
   }
 
+  goBack() {
+    // If practice running, confirm
+    if (this.activeView === 'practice' && window.stenoTypingEngine && window.stenoTypingEngine.isStarted && !window.stenoTypingEngine.isCompleted) {
+      if (!confirm('क्या आप वाकई टेस्ट छोड़कर वापस जाना चाहते हैं? (Are you sure you want to leave the test?)')) {
+        return;
+      }
+    }
+
+    if (window.stenoAudioPlayer && typeof window.stenoAudioPlayer.stop === 'function') {
+      window.stenoAudioPlayer.stop();
+    }
+
+    const stickyBar = document.getElementById('catDetailStickyBar');
+    if (stickyBar) stickyBar.style.display = 'none';
+
+    if (this.navigationHistory && this.navigationHistory.length > 0) {
+      const prevView = this.navigationHistory.pop();
+      if (prevView && prevView !== this.activeView) {
+        if (prevView === 'category-detail' && this.currentCategoryId) {
+          this.openCategoryDetail(this.currentCategoryId);
+          return;
+        }
+        this.navigate(prevView, {}, true);
+        return;
+      }
+    }
+
+    // Smart fallback
+    if (this.activeView === 'category-detail') {
+      this.navigate('classes');
+    } else if (this.activeView === 'practice' || this.activeView === 'result') {
+      if (this.currentCategoryId) {
+        this.openCategoryDetail(this.currentCategoryId);
+      } else {
+        this.navigate('classes');
+      }
+    } else {
+      this.navigate('home');
+    }
+  }
+
   showView(viewId) {
     if (typeof viewId === 'string' && viewId.startsWith('view-')) {
       viewId = viewId.replace('view-', '');
@@ -1846,6 +1895,19 @@ class StenoApp {
       return;
     }
 
+    if (this.activeView && this.activeView !== viewId) {
+      if (!this.navigationHistory) this.navigationHistory = [];
+      if (this.navigationHistory[this.navigationHistory.length - 1] !== this.activeView) {
+        this.navigationHistory.push(this.activeView);
+        if (this.navigationHistory.length > 25) this.navigationHistory.shift();
+      }
+    }
+
+    const headerBackBtn = document.getElementById('headerBackBtn');
+    if (headerBackBtn) {
+      headerBackBtn.style.display = (viewId === 'home') ? 'none' : 'inline-flex';
+    }
+
     this.startTopLoading();
     this.activeView = viewId;
     this.closeSidebar();
@@ -1863,6 +1925,9 @@ class StenoApp {
     if (viewId === 'admin') {
       const adminTab = (params && params.adminTab) || (window.stenoAdmin && window.stenoAdmin.activeTab) || localStorage.getItem('stenomaster_last_admin_tab') || 'overview';
       routeStr = `admin/${adminTab}`;
+    } else if (viewId === 'category-detail') {
+      const cId = (params && params.id) || this.currentCategoryId;
+      if (cId) routeStr = `category-detail?id=${cId}`;
     } else if (viewId === 'practice') {
       const pId = (params && params.passageId) || (this.currentPassage && this.currentPassage.id);
       if (pId) {
@@ -1887,6 +1952,8 @@ class StenoApp {
     // Update document title dynamically
     const pageTitles = {
       'home': 'डैशबोर्ड (Dashboard) — StenoMaster',
+      'category-detail': 'डिक्टेशन कक्षाएं — StenoMaster',
+      'self-practice': 'सेल्फ प्रैक्टिस — StenoMaster',
       'classes': 'अभ्यास कक्षाएं (Classes) — StenoMaster',
       'subscription': 'सदस्यता प्लान (Subscription) — StenoMaster',
       'practice': 'स्टेनो टंकण अभ्यास (Typing Test) — StenoMaster',
@@ -1909,6 +1976,8 @@ class StenoApp {
     // Update active badge in top header
     const viewTitles = {
       'home': 'Dashboard',
+      'category-detail': 'Category Classes',
+      'self-practice': 'Self Practice',
       'classes': 'Practice Classes',
       'subscription': 'Subscription & Pro Access',
       'practice': 'Typing Test',
@@ -4695,7 +4764,7 @@ class StenoApp {
 
   async openCategoryDetail(categoryId) {
     this.currentCategoryId = categoryId;
-    this.navigate('category-detail');
+    this.navigate('category-detail', { id: categoryId });
 
     const titleEl = document.getElementById('catDetailTitle');
     const nameEl = document.getElementById('catDetailName');

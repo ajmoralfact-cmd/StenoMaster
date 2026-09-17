@@ -6195,3 +6195,87 @@ body.dark-mode .ww-tip-row {
     justify-content: center !important;
   }
 }
+
+
+/* ==========================================================================
+   UNIVERSAL BACK NAVIGATION BUTTONS (HEADER + IN-PAGE)
+   ========================================================================== */
+.header-back-btn {
+  display: none;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  height: 36px;
+  border-radius: 9999px;
+  border: 1.5px solid var(--border-subtle, #e2e8f0);
+  background: var(--bg-surface, #ffffff);
+  color: var(--primary, #0284c7);
+  font-size: 0.88rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.04);
+  margin-right: 6px;
+  user-select: none;
+  flex-shrink: 0;
+}
+
+.header-back-btn:hover {
+  background: rgba(2, 132, 199, 0.1);
+  border-color: #0284c7;
+  transform: translateX(-2px);
+  box-shadow: 0 3px 8px rgba(2, 132, 199, 0.18);
+}
+
+.header-back-btn .back-arrow {
+  font-size: 1.15rem;
+  font-weight: 900;
+  line-height: 1;
+}
+
+@media (max-width: 640px) {
+  .header-back-btn .back-text {
+    display: none;
+  }
+  .header-back-btn {
+    padding: 0;
+    width: 36px;
+    height: 36px;
+    justify-content: center;
+  }
+}
+
+.view-back-strip-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 16px;
+  margin-bottom: 16px;
+  border-radius: 10px;
+  border: 1px solid var(--border-subtle, #e2e8f0);
+  background: var(--bg-surface, #ffffff);
+  color: var(--text-secondary, #475569);
+  font-size: 0.86rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.03);
+}
+
+.view-back-strip-btn:hover {
+  background: var(--bg-subtle, #f8fafc);
+  border-color: var(--primary, #0284c7);
+  color: var(--primary, #0284c7);
+  transform: translateX(-2px);
+}
+
+.view-back-strip-btn .back-icon {
+  font-size: 1.1rem;
+  font-weight: 900;
+  line-height: 1;
+}
+
+/* Ensure active page-views are always strictly visible */
+.page-view.active {
+  display: block !important;
+}
