@@ -1589,7 +1589,7 @@
 
         // Security Guard: Non-admins cannot view or stay on admin.html
         if (!this.token || !this.user || this.user.role !== 'admin') {
-          window.location.replace('/?auth_error=unauthorized_admin');
+          this.showDirectAdminLogin();
           return;
         }
         this.categories = [];
@@ -1604,6 +1604,81 @@
         if (this.user) {
           const nameEl = document.getElementById('navAdminName');
           if (nameEl) nameEl.textContent = this.user.display_name || this.user.username || 'Administrator';
+        }
+      }
+
+            showDirectAdminLogin() {
+        let modal = document.getElementById('adminDirectLoginModal');
+        if (!modal) {
+          modal = document.createElement('div');
+          modal.id = 'adminDirectLoginModal';
+          modal.style.cssText = 'position:fixed; inset:0; background:rgba(15,23,42,0.92); backdrop-filter:blur(8px); z-index:999999; display:flex; justify-content:center; align-items:center; padding:16px; font-family:var(--font-sans, system-ui);';
+          modal.innerHTML = `
+            <div style="background:var(--bg-card, #ffffff); width:100%; max-width:420px; border-radius:20px; box-shadow:0 25px 50px -12px rgba(0,0,0,0.5); border:1px solid var(--border, #e2e8f0); overflow:hidden;">
+              <div style="background:linear-gradient(135deg, #0f172a, #1e293b); padding:24px; text-align:center; color:#fff; border-bottom:2px solid #2563eb;">
+                <div style="font-size:2.4rem; margin-bottom:6px;">🛡️</div>
+                <h3 style="margin:0; font-size:1.25rem; font-weight:800; color:#fff;">StenoMaster Admin Portal</h3>
+                <p style="margin:4px 0 0 0; font-size:0.78rem; color:#94a3b8;">केवल अधिकृत प्रशासकों के लिए (Restricted Access)</p>
+              </div>
+              <form onsubmit="stenoAdmin.handleDirectAdminLogin(event)" style="padding:24px;">
+                <div style="margin-bottom:14px;">
+                  <label style="display:block; font-size:0.8rem; font-weight:700; color:var(--text-secondary); margin-bottom:6px;">एडमिन यूजरनेम या ईमेल (Admin Email)</label>
+                  <input type="text" id="adminDirectEmail" class="form-input" placeholder="admin@stenomaster.com" value="admin@stenomaster.com" required style="width:100%; padding:10px 14px; border-radius:10px; border:1.5px solid var(--border); font-size:0.9rem;">
+                </div>
+                <div style="margin-bottom:18px;">
+                  <label style="display:block; font-size:0.8rem; font-weight:700; color:var(--text-secondary); margin-bottom:6px;">एडमिन पासवर्ड (Password)</label>
+                  <input type="password" id="adminDirectPassword" class="form-input" placeholder="••••••••" value="admin123" required style="width:100%; padding:10px 14px; border-radius:10px; border:1.5px solid var(--border); font-size:0.9rem;">
+                </div>
+                <div id="adminDirectError" style="display:none; background:#fef2f2; color:#b91c1c; border:1px solid #fecaca; padding:10px; border-radius:8px; font-size:0.82rem; margin-bottom:14px; font-weight:600;"></div>
+                <button type="submit" id="adminDirectSubmitBtn" class="btn-primary" style="width:100%; padding:12px; font-size:0.95rem; font-weight:800; border-radius:10px; background:linear-gradient(135deg, #2563eb, #1d4ed8); border:none; color:#fff; cursor:pointer;">
+                  🔐 एडमिन पैनल लॉगिन करें →
+                </button>
+                <div style="text-align:center; margin-top:14px;">
+                  <a href="/" style="font-size:0.8rem; color:var(--text-muted); text-decoration:none;">← मुख्य वेबसाइट पर वापस जाएं</a>
+                </div>
+              </form>
+            </div>
+          `;
+          document.body.appendChild(modal);
+        }
+        modal.style.display = 'flex';
+      }
+
+      async handleDirectAdminLogin(e) {
+        if (e) e.preventDefault();
+        const email = document.getElementById('adminDirectEmail')?.value.trim();
+        const pwd = document.getElementById('adminDirectPassword')?.value;
+        const errEl = document.getElementById('adminDirectError');
+        const btn = document.getElementById('adminDirectSubmitBtn');
+        if (!email || !pwd) return;
+
+        if (errEl) errEl.style.display = 'none';
+        if (btn) { btn.disabled = true; btn.textContent = 'सत्यापन हो रहा है...'; }
+
+        try {
+          const res = await fetch('/api/auth/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email_or_username: email, password: pwd })
+          }).then(r => r.json());
+
+          if (!res || !res.token || !res.user) {
+            throw new Error(res?.error || 'गलत यूजरनेम या पासवर्ड।');
+          }
+          if (res.user.role !== 'admin') {
+            throw new Error('प्रवेश अस्वीकृत: इस खाते के पास एडमिन अधिकार नहीं हैं।');
+          }
+
+          localStorage.setItem('stenomaster_token', res.token);
+          localStorage.setItem('stenomaster_user', JSON.stringify(res.user));
+          window.location.reload();
+        } catch (err) {
+          if (errEl) {
+            errEl.style.display = 'block';
+            errEl.textContent = err.message || 'लॉगिन विफल रहा।';
+          }
+        } finally {
+          if (btn) { btn.disabled = false; btn.textContent = '🔐 एडमिन पैनल लॉगिन करें →'; }
         }
       }
 
