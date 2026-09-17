@@ -1914,6 +1914,68 @@ class StenoAdmin {
     }
   }
 
+  async saveCategoryOrder(catId) {
+    const input = document.getElementById(catOrder_);
+    if (!input) return;
+    const order = parseInt(input.value, 10);
+    if (isNaN(order) || order < 0) {
+      stenoApp.showToast('कृपया वैध क्रम संख्या (0 या अधिक) दर्ज करें!', 'error');
+      return;
+    }
+    try {
+      stenoApp.showToast('श्रेणी क्रम अपडेट हो रहा है...', 'info');
+      const res = await stenoApp.apiCall('/api/admin/categories/update-order', 'POST', {
+        category_id: catId,
+        sort_order: order
+      });
+      if (res && res.success) {
+        stenoApp.showToast(✓ श्रेणी का क्रम # सफलतापूर्वक सेव हो गया! 🎯, 'success');
+        await this.loadCategoriesTable();
+        if (typeof stenoApp.loadCategories === 'function') {
+          await stenoApp.loadCategories();
+        }
+      } else {
+        throw new Error(res.error || 'अपडेट विफल');
+      }
+    } catch (err) {
+      stenoApp.showToast('क्रम सेव करने में त्रुटि: ' + err.message, 'error');
+    }
+  }
+
+  async saveAllCategoryOrders() {
+    const inputs = document.querySelectorAll('.cat-sort-order-input');
+    if (!inputs.length) {
+      stenoApp.showToast('कोई श्रेणी उपलब्ध नहीं है!', 'warning');
+      return;
+    }
+    const orders = [];
+    inputs.forEach(inp => {
+      const catId = parseInt(inp.getAttribute('data-cat-id'), 10);
+      const order = parseInt(inp.value, 10);
+      if (!isNaN(catId) && !isNaN(order)) {
+        orders.push({ category_id: catId, sort_order: order });
+      }
+    });
+
+    try {
+      stenoApp.showToast('सभी श्रेणियों का क्रम अपडेट हो रहा है...', 'info');
+      const res = await stenoApp.apiCall('/api/admin/categories/update-order', 'POST', {
+        orders: orders
+      });
+      if (res && res.success) {
+        stenoApp.showToast('✓ सभी श्रेणियों का क्रम सफलतापूर्वक सुरक्षित हो गया! 🎯', 'success');
+        await this.loadCategoriesTable();
+        if (typeof stenoApp.loadCategories === 'function') {
+          await stenoApp.loadCategories();
+        }
+      } else {
+        throw new Error(res.error || 'क्रम सेव करने में विफल');
+      }
+    } catch (err) {
+      stenoApp.showToast('क्रम सेव करने में त्रुटि: ' + err.message, 'error');
+    }
+  }
+
   async saveCategoryPrice(catId) {
     const input = document.getElementById(`catPriceInput_${catId}`);
     if (!input) return;
