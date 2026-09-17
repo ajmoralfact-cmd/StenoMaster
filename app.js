@@ -49,6 +49,20 @@ class StenoApp {
         this.categories = JSON.parse(cachedCats);
       }
     } catch(e) {}
+    if (!this.categories || this.categories.length === 0) {
+      // 0ms instant fallback seed so user sees categories immediately without waiting
+      this.categories = [
+        { id: 126, slug: 'ramdhari-gupta-khand-1', name: 'रामधारी गुप्ता (खंड 1)', passage_count: 1, free_count: 1, price: 49, icon_emoji: '📘' },
+        { id: 127, slug: 'ramdhari-gupta-khand-2', name: 'रामधारी गुप्ता (खंड 2)', passage_count: 1, free_count: 1, price: 49, icon_emoji: '📙' },
+        { id: 125, slug: 'audit-cat-1788546457', name: 'संसदीय एवं विधिक डिक्टेशन', passage_count: 3, free_count: 1, price: 49, icon_emoji: '🏛️' },
+        { id: 8, slug: 'editorial-passages', name: 'समाचार सम्पादकीय', passage_count: 1, free_count: 1, price: 49, icon_emoji: '📰' },
+        { id: 10, slug: 'upsssc-steno', name: 'UPSSSC Steno', passage_count: 2, free_count: 1, price: 49, icon_emoji: '🏛️' },
+        { id: 11, slug: 'court-steno', name: 'High Court Steno', passage_count: 1, free_count: 1, price: 49, icon_emoji: '⚖️' },
+        { id: 9, slug: 'ssc-steno', name: 'SSC Stenographer', passage_count: 1, free_count: 1, price: 49, icon_emoji: '🎯' },
+        { id: 1, slug: 'ramdhari-singh-dinkar', name: 'रामधारी सिंह दिनकर', passage_count: 1, free_count: 1, price: 49, icon_emoji: '🪶' }
+      ];
+    }
+    this._categoryDetailCache = new Map();
 
     this.init();
   }
@@ -2178,15 +2192,18 @@ class StenoApp {
     // 0ms Instant Hydration from memory/localStorage
     if (this.categories && this.categories.length > 0) {
       this.renderCategoryPills();
+      this.renderHorizontalCategories();
     }
     try {
       const res = await this.apiCall('/api/categories');
-      this.categories = res.categories || [];
-      try {
-        localStorage.setItem('stenomaster_cached_categories', JSON.stringify(this.categories));
-      } catch (e) {}
-      this.renderCategoryPills();
-      this.renderHorizontalCategories();
+      if (res && res.categories && res.categories.length > 0) {
+        this.categories = res.categories;
+        try {
+          localStorage.setItem('stenomaster_cached_categories', JSON.stringify(this.categories));
+        } catch (e) {}
+        this.renderCategoryPills();
+        this.renderHorizontalCategories();
+      }
     } catch (err) {
       console.error('Failed to load categories:', err);
     }
@@ -2598,6 +2615,9 @@ class StenoApp {
   }
 
   renderClasses() {
+    // Always render horizontal categories immediately (0ms) regardless of passage loading state
+    this.renderHorizontalCategories();
+
     const grid = document.getElementById('classesListGrid');
     if (!grid) return;
 
@@ -2607,7 +2627,6 @@ class StenoApp {
     }
 
     grid.innerHTML = this.passages.map(p => this.createPassageCardHTML(p)).join('');
-    this.renderHorizontalCategories();
   }
 
   // -------------------------------------------------------------------------
@@ -4770,6 +4789,18 @@ class StenoApp {
     };
   }
 
+  prefetchCategoryDetail(categoryId) {
+    if (!categoryId) return;
+    const cId = parseInt(categoryId, 10);
+    if (!this._categoryDetailCache) this._categoryDetailCache = new Map();
+    if (this._categoryDetailCache.has(cId)) return;
+    this.apiCall(`/api/categories/detail?id=${cId}`).then(res => {
+      if (res && res.category) {
+        this._categoryDetailCache.set(cId, res);
+      }
+    }).catch(() => {});
+  }
+
   renderHorizontalCategories() {
     try {
       const homeContainer = document.getElementById('homeCategoriesList');
@@ -4811,7 +4842,7 @@ class StenoApp {
         const theme = this.getCategoryTheme(cat, isUnlocked);
 
         return `
-          <div class="category-series-card" onclick="stenoApp.openCategoryDetail(${cat.id})" style="background:${theme.bgGradient}; border:1.5px solid ${theme.borderColor}; border-radius:18px; padding:18px 22px; display:flex; align-items:center; justify-content:space-between; gap:18px; cursor:pointer; transition:all 0.25s cubic-bezier(0.16, 1, 0.3, 1); margin-bottom:14px; box-shadow:${theme.boxShadow}; position:relative; overflow:hidden;">
+          <div class="category-series-card" onmouseenter="stenoApp.prefetchCategoryDetail(${cat.id})" ontouchstart="stenoApp.prefetchCategoryDetail(${cat.id})" onclick="stenoApp.openCategoryDetail(${cat.id})" style="background:${theme.bgGradient}; border:1.5px solid ${theme.borderColor}; border-radius:18px; padding:18px 22px; display:flex; align-items:center; justify-content:space-between; gap:18px; cursor:pointer; transition:all 0.25s cubic-bezier(0.16, 1, 0.3, 1); margin-bottom:14px; box-shadow:${theme.boxShadow}; position:relative; overflow:hidden;">
             <!-- Left Accent Strip -->
             <div style="position:absolute; top:0; left:0; width:5px; height:100%; background:${theme.accentColor};"></div>
 
@@ -4895,12 +4926,11 @@ class StenoApp {
     const stickyBar = document.getElementById('catDetailStickyBar');
     const stickyPrice = document.getElementById('catStickyPrice');
 
-    if (listEl) {
-      listEl.innerHTML = '<div style="text-align:center; padding:30px; color:var(--text-muted);"><div class="spinner-small" style="display:inline-block; margin-right:8px;"></div>डिक्टेशन्स लोड हो रही हैं...</div>';
-    }
+    if (!this._categoryDetailCache) this._categoryDetailCache = new Map();
+    const cIdInt = parseInt(categoryId, 10);
+    const cached = this._categoryDetailCache.get(cIdInt);
 
-    try {
-      const res = await this.apiCall(`/api/categories/detail?id=${categoryId}`);
+    const applyDetailData = (res) => {
       const cat = res.category || {};
       this.currentCategoryData = cat;
       this.currentCategoryPassages = res.passages || [];
@@ -4926,8 +4956,23 @@ class StenoApp {
       }
 
       this.renderCategoryPassagesList(this.currentCategoryPassages);
+    };
+
+    // 0ms Instant Hydration if already prefetched or visited
+    if (cached) {
+      applyDetailData(cached);
+    } else if (listEl) {
+      listEl.innerHTML = '<div style="text-align:center; padding:30px; color:var(--text-muted);"><div class="spinner-small" style="display:inline-block; margin-right:8px;"></div>डिक्टेशन्स लोड हो रही हैं...</div>';
+    }
+
+    try {
+      const res = await this.apiCall(`/api/categories/detail?id=${categoryId}`);
+      if (res && res.category) {
+        this._categoryDetailCache.set(cIdInt, res);
+        applyDetailData(res);
+      }
     } catch (err) {
-      if (listEl) {
+      if (!cached && listEl) {
         listEl.innerHTML = `
           <div style="text-align:center; padding:30px 20px; background:rgba(239,68,68,0.04); border-radius:12px; border:1px dashed rgba(239,68,68,0.25); margin-top:10px;">
             <div style="font-size:1.8rem; margin-bottom:8px;">⚠️</div>

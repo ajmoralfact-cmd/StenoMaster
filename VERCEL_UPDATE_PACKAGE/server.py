@@ -325,7 +325,8 @@ class StenoMasterHandler(http.server.SimpleHTTPRequestHandler):
             user = self._get_auth_user()
             user_id = user['user_id'] if user else None
             cats = db.get_categories_with_user_status(user_id)
-            self._send_json(200, {"categories": cats})
+            cache_ctrl = 'private, max-age=15, stale-while-revalidate=60' if user_id else 'public, s-maxage=60, stale-while-revalidate=300'
+            self._send_json(200, {"categories": cats}, cache_control=cache_ctrl)
             return
 
         if path == '/api/categories/detail':
@@ -336,7 +337,8 @@ class StenoMasterHandler(http.server.SimpleHTTPRequestHandler):
                 self._send_json(400, {"error": "Category ID is required"})
                 return
             data = db.get_passages_by_category(int(cat_id), user_id)
-            self._send_json(200, data)
+            cache_ctrl = 'private, max-age=15, stale-while-revalidate=60' if user_id else 'public, s-maxage=60, stale-while-revalidate=300'
+            self._send_json(200, data, cache_control=cache_ctrl)
             return
 
         if path == '/api/passages':

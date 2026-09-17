@@ -12,6 +12,18 @@ import secrets
 from datetime import datetime, date, timedelta, timezone
 from typing import List, Dict, Any, Optional
 
+import time
+
+_CATEGORIES_CACHE = {
+    "data": None,
+    "timestamp": 0
+}
+
+def invalidate_categories_cache():
+    global _CATEGORIES_CACHE
+    _CATEGORIES_CACHE["data"] = None
+    _CATEGORIES_CACHE["timestamp"] = 0
+
 DB_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'stenomaster.db')
 
 
@@ -4487,6 +4499,7 @@ def get_user_unlocked_category_ids(user_id: Optional[int]) -> List[int]:
 
 
 def unlock_categories_for_user(user_id: int, category_ids: List[int], order_id: Optional[str] = None, duration_days: int = 365) -> Dict[str, Any]:
+    invalidate_categories_cache()
     if not user_id or not category_ids:
         return {"success": False, "error": "User ID and category IDs required"}
     conn = get_db()
@@ -4516,44 +4529,57 @@ def unlock_categories_for_user(user_id: int, category_ids: List[int], order_id: 
 
 
 def get_categories_with_user_status(user_id: Optional[int] = None) -> List[Dict[str, Any]]:
-    conn = get_db()
-    c = conn.cursor()
-    c.execute("""
-        SELECT c.*,
-               COUNT(p.id) as passage_count,
-               COUNT(CASE WHEN p.is_premium = 0 THEN 1 END) as free_count
-        FROM categories c
-        LEFT JOIN passages p ON c.id = p.category_id AND p.status = 'published'
-        GROUP BY c.id
-        ORDER BY c.sort_order ASC, c.id ASC
-    """)
-    rows = c.fetchall()
-    conn.close()
+    global _CATEGORIES_CACHE
+    now_ts = time.time()
+    
+    # Check if cache is fresh (30 seconds TTL for fast 0ms in-memory delivery)
+    if _CATEGORIES_CACHE.get("data") is not None and (now_ts - _CATEGORIES_CACHE.get("timestamp", 0)) < 30:
+        base_cats = _CATEGORIES_CACHE["data"]
+    else:
+        conn = get_db()
+        c = conn.cursor()
+        c.execute("""
+            SELECT c.*,
+                   COUNT(p.id) as passage_count,
+                   COUNT(CASE WHEN p.is_premium = 0 THEN 1 END) as free_count
+            FROM categories c
+            LEFT JOIN passages p ON c.id = p.category_id AND p.status = 'published'
+            GROUP BY c.id
+            ORDER BY c.sort_order ASC, c.id ASC
+        """)
+        rows = c.fetchall()
+        conn.close()
 
-    is_premium_user = is_user_premium(user_id) if user_id else False
+        icon_map = {
+            'ramdhari-gupta-khand-1': '📘',
+            'ramdhari-gupta-khand-2': '📙',
+            'editorial-passages': '📰',
+            'ssc-steno': '🎯',
+            'upsssc-steno': '🏛️',
+            'court-steno': '⚖️',
+            'ramdhari-singh-dinkar': '🪶',
+            'indian-constitution': '📜',
+            'science-technology': '🔬',
+            'general-knowledge': '🌍'
+        }
+
+        base_cats = []
+        for r in rows:
+            d = dict(r)
+            d['price'] = int(d.get('price')) if d.get('price') is not None else 49
+            slug = d.get('slug', '')
+            d['icon_emoji'] = icon_map.get(slug, '📚')
+            base_cats.append(d)
+        
+        _CATEGORIES_CACHE["data"] = base_cats
+        _CATEGORIES_CACHE["timestamp"] = now_ts
+
     unlocked_ids = set(get_user_unlocked_category_ids(user_id)) if user_id else set()
-
-    icon_map = {
-        'ramdhari-gupta-khand-1': '📘',
-        'ramdhari-gupta-khand-2': '📙',
-        'editorial-passages': '📰',
-        'ssc-steno': '🎯',
-        'upsssc-steno': '🏛️',
-        'court-steno': '⚖️',
-        'ramdhari-singh-dinkar': '🪶',
-        'indian-constitution': '📜',
-        'science-technology': '🔬',
-        'general-knowledge': '🌍'
-    }
-
     result = []
-    for r in rows:
-        d = dict(r)
-        d['price'] = int(d.get('price')) if d.get('price') is not None else 49
-        slug = d.get('slug', '')
-        d['icon_emoji'] = icon_map.get(slug, '📚')
-        d['is_unlocked'] = bool(d['id'] in unlocked_ids)
-        result.append(d)
+    for cat in base_cats:
+        c_copy = dict(cat)
+        c_copy['is_unlocked'] = bool(c_copy['id'] in unlocked_ids)
+        result.append(c_copy)
     return result
 
 
@@ -4600,6 +4626,7 @@ def get_passages_by_category(category_id: int, user_id: Optional[int] = None) ->
 
 
 def admin_update_category_price(category_id: int, price: int) -> Dict[str, Any]:
+    invalidate_categories_cache()
     conn = get_db()
     c = conn.cursor()
     c.execute("UPDATE categories SET price = ? WHERE id = ?", (int(price), int(category_id)))
