@@ -995,9 +995,12 @@
                     <input type="text" id="aiStudioTitleInput" class="form-input" placeholder="उदा. रामधारी गुप्ता खंड 1 — अभ्यास 28">
                   </div>
                   <div class="form-group" style="margin:0;">
-                    <label class="form-label" style="font-weight:700;">श्रेणी (Category):</label>
-                    <select id="aiStudioCategorySelect" class="form-select">
-                      <!-- Populated via stenoAdmin.populateCategoryDropdown() -->
+                    <label class="form-label" style="font-weight:700; display:flex; justify-content:space-between; align-items:center;">
+                      <span>📁 किस श्रेणी में अपलोड करें (Select Category) <span style="color:#ef4444;">*</span>:</span>
+                      <button type="button" onclick="stenoAdmin.populateAiStudioCategories()" style="background:none; border:none; color:#4f46e5; font-size:0.75rem; font-weight:700; cursor:pointer; text-decoration:underline;">🔄 रिफ्रेश</button>
+                    </label>
+                    <select id="aiStudioCategorySelect" class="form-select" style="font-weight:700; border-color:#6366f1; background:rgba(99,102,241,0.04); height:42px; border-radius:10px;">
+                      <option value="">-- श्रेणी चुनें (Select Category) --</option>
                     </select>
                   </div>
                 </div>
@@ -1094,12 +1097,15 @@
                         गति: 80 WPM | शब्द: 0 | कुल समय: 00:00
                       </div>
                     </div>
-                    <div style="display:flex; gap:8px;">
+                    <div style="display:flex; gap:8px; flex-wrap:wrap;">
                       <a id="aiStudioDownloadBtn" href="#" download="steno_dictation.mp3" class="btn-secondary" style="font-size:0.82rem; padding:6px 12px; display:inline-flex; align-items:center; gap:5px;">
                         <span>📥</span> <span>MP3 डाउनलोड</span>
                       </a>
-                      <button type="button" class="btn-primary" onclick="stenoAdmin.createPassageFromAiStudio()" style="font-size:0.82rem; padding:6px 14px; background:#059669; border-color:#059669; display:inline-flex; align-items:center; gap:5px;">
-                        <span>📝</span> <span>सीधे नया आलेख बनाएं (1-Click Publish) →</span>
+                      <button type="button" class="btn-secondary" onclick="stenoAdmin.createPassageFromAiStudio()" style="font-size:0.82rem; padding:6px 14px; border-color:#0284c7; color:#0284c7; font-weight:700; display:inline-flex; align-items:center; gap:5px;" title="फॉर्म खोलकर चेक करें">
+                        <span>📝</span> <span>फॉर्म में चेक करें</span>
+                      </button>
+                      <button type="button" class="btn-primary" onclick="stenoAdmin.directPublishAiAudio()" style="font-size:0.82rem; padding:6px 16px; background:linear-gradient(135deg, #10b981, #059669); border:none; font-weight:800; display:inline-flex; align-items:center; gap:5px; box-shadow:0 3px 10px rgba(16,185,129,0.3);" title="सीधे उसी श्रेणी में अपलोड करें">
+                        <span>🚀</span> <span>सीधे श्रेणी में सेव करें (Direct Publish) →</span>
                       </button>
                     </div>
                   </div>
@@ -1788,7 +1794,7 @@
   <script src="/js/charts.js?v=8.1"></script>
   <script src="/js/comparison_view.js?v=8.1"></script>
   <script src="/js/ocr_service.js?v=1.1"></script>
-  <script src="/js/admin.js?v=8.6"></script>
+  <script src="/js/admin.js?v=9.0"></script>
 
   <!-- Standalone In-Page Admin Login Modal (Never redirects away) -->
   <div id="adminStandaloneAuthModal" class="modal-overlay" style="display:none; z-index:999999; background:rgba(15, 23, 42, 0.85); backdrop-filter:blur(8px);">

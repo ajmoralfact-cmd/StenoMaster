@@ -2146,18 +2146,41 @@ class StenoAdmin {
   // =========================================================================
   // AI VOICE DICTATION STUDIO METHODS
   // =========================================================================
+  async populateAiStudioCategories(targetId = null) {
+    const sel = document.getElementById('aiStudioCategorySelect');
+    if (!sel) return;
+
+    let cats = (this._allCategoriesCache && this._allCategoriesCache.length)
+      ? this._allCategoriesCache
+      : (this.categoriesList && this.categoriesList.length ? this.categoriesList : []);
+
+    if (!cats.length) {
+      try {
+        const res = await stenoApp.apiCall('/api/categories');
+        cats = res.categories || [];
+        this._allCategoriesCache = cats;
+      } catch (e) {
+        console.warn('Could not fetch categories for AI studio:', e);
+      }
+    }
+
+    if (cats && cats.length) {
+      sel.innerHTML = '<option value="">-- श्रेणी चुनें (Select Category) --</option>' + cats.map(c => `
+        <option value="${c.id}">${this.escapeHtml(c.name)} (ID: #${c.id})</option>
+      `).join('');
+      if (targetId) {
+        sel.value = String(targetId);
+      } else if (this.activeCategoryModalId) {
+        sel.value = String(this.activeCategoryModalId);
+      }
+    } else {
+      sel.innerHTML = '<option value="1">रामधारी सिंह दिनकर (ID: #1)</option>';
+    }
+  }
+
   initAiVoiceStudio() {
     this.populateAiStudioCategories();
     this.updateAiStudioStats();
-  }
-
-  populateAiStudioCategories() {
-    const sel = document.getElementById('aiStudioCategorySelect');
-    if (!sel) return;
-    const cats = (window.stenoApp && window.stenoApp.categories) || [];
-    if (cats.length) {
-      sel.innerHTML = cats.map(c => `<option value="${c.id}">${this.escapeHtml(c.name)}</option>`).join('');
-    }
   }
 
   setAiStudioVoice(voice, btnEl) {
@@ -2357,7 +2380,8 @@ class StenoAdmin {
           speed_wpm: wpm,
           duration_seconds: res.duration_seconds,
           word_count: res.word_count,
-          category_id: document.getElementById('aiStudioCategorySelect')?.value || 1
+          category_id: parseInt(document.getElementById('aiStudioCategorySelect')?.value || 1, 10),
+          category_name: document.getElementById('aiStudioCategorySelect')?.options[document.getElementById('aiStudioCategorySelect')?.selectedIndex]?.text || ''
         };
 
         const resultCard = document.getElementById('aiStudioResultCard');
@@ -2409,11 +2433,15 @@ class StenoAdmin {
     }
 
     const d = this.lastGeneratedAiAudio;
-    this.openNewPassageModal('dual');
+    const catSel = document.getElementById('aiStudioCategorySelect');
+    const selectedCatId = catSel ? parseInt(catSel.value || d.category_id || 1, 10) : (d.category_id || 1);
+    const selectedCatName = catSel && catSel.selectedIndex >= 0 ? catSel.options[catSel.selectedIndex].text : (d.category_name || '');
+
+    this.openNewPassageModal('dual', selectedCatId, selectedCatName);
 
     document.getElementById('passageTitleInput').value = d.title || 'AI डिक्टेशन अभ्यास';
-    const catSel = document.getElementById('passageCategorySelect');
-    if (catSel && d.category_id) catSel.value = d.category_id;
+    const sel = document.getElementById('passageCategorySelect');
+    if (sel && selectedCatId) sel.value = String(selectedCatId);
     document.getElementById('passageTargetWpmInput').value = d.speed_wpm || 80;
     document.getElementById('passageDurationInput').value = d.duration_seconds || 180;
     document.getElementById('passageAudioUrlInput').value = d.audio_url || '';
@@ -2424,7 +2452,64 @@ class StenoAdmin {
     // Auto-convert to Kruti Dev so passage works for both fonts
     this.convertMangalToKrutiModal();
 
-    stenoApp.showToast('आलेख विवरण व AI ऑडियो स्वतः लोड कर दिया गया! 📝⚡', 'success');
+    stenoApp.showToast(`आलेख विवरण व AI ऑडियो श्रेणी [${selectedCatName || selectedCatId}] हेतु लोड कर दिया गया! 📝⚡`, 'success');
+  }
+
+  async directPublishAiAudio() {
+    if (!this.lastGeneratedAiAudio) {
+      stenoApp.showToast('कृपया पहले AI ऑडियो तैयार करें।', 'warning');
+      return;
+    }
+
+    const d = this.lastGeneratedAiAudio;
+    const catSel = document.getElementById('aiStudioCategorySelect');
+    const categoryId = catSel ? parseInt(catSel.value || d.category_id || 1, 10) : (d.category_id || 1);
+    if (!categoryId) {
+      stenoApp.showToast('कृपया श्रेणी (Category) चुनें।', 'warning');
+      if (catSel) catSel.focus();
+      return;
+    }
+    const categoryName = catSel && catSel.selectedIndex >= 0 ? catSel.options[catSel.selectedIndex].text : (d.category_name || `ID #${categoryId}`);
+
+    // Convert text to Kruti Dev if converter available
+    let krutiText = '';
+    try {
+      if (typeof window.mangalToKrutiDev === 'function') {
+        krutiText = window.mangalToKrutiDev(d.text);
+      }
+    } catch (e) {}
+
+    const payload = {
+      title: d.title || 'AI डिक्टेशन अभ्यास',
+      category_id: categoryId,
+      target_wpm: d.speed_wpm || 80,
+      duration_seconds: d.duration_seconds || 180,
+      word_count: d.word_count || 400,
+      audio_url: d.audio_url,
+      official_text: d.text,
+      official_kruti_text: krutiText || d.text,
+      difficulty: (d.speed_wpm >= 100) ? 'hard' : ((d.speed_wpm <= 60) ? 'easy' : 'medium'),
+      language: 'hindi',
+      status: 'published',
+      is_free_tier: 0
+    };
+
+    try {
+      stenoApp.showToast(`श्रेणी [${categoryName}] में क्लास प्रकाशित हो रही है... ⏳`, 'info');
+      const res = await stenoApp.apiCall('/api/admin/passages/save', 'POST', payload);
+      if (res && res.success) {
+        stenoApp.showToast(`🎉 क्लास सफलतापूर्वक श्रेणी [${categoryName}] में जुड़ गई! छात्रों को तुरंत उपलब्ध होगी।`, 'success');
+        if (typeof this.loadPassagesTable === 'function') this.loadPassagesTable();
+        if (typeof this.loadCategoriesTable === 'function') this.loadCategoriesTable();
+        if (this.activeCategoryModalId && typeof this.loadCategoryClasses === 'function') {
+          this.loadCategoryClasses(this.activeCategoryModalId);
+        }
+      } else {
+        stenoApp.showToast(res.error || 'क्लास सेव नहीं हो सकी', 'error');
+      }
+    } catch (err) {
+      stenoApp.showToast(`त्रुटि: ${err.message}`, 'error');
+    }
   }
 
   async generateAudioForCurrentPassage(wpm = 80) {
