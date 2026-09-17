@@ -523,7 +523,7 @@ class StenoComparisonView {
       ` : ''}
 
       <div style="display:flex; justify-content:center; gap:16px; margin-top:30px; margin-bottom:40px;">
-        <button class="btn-secondary" onclick="stenoApp.navigate('classes')">← वापस क्लास सूची पर जाएं (Back to Classes)</button>
+        <button class="btn-secondary" onclick="stenoApp.goBack()">← वापस जाएं (Back)</button>
         <button class="btn-primary" onclick="stenoApp.retryPractice()">🔄 पुनः अभ्यास करें (Retry)</button>
       </div>
     `;

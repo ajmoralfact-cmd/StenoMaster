@@ -219,6 +219,17 @@ class StenoApp {
       return;
     }
 
+    // 2b. Category detail direct URL restore
+    if (path === 'category-detail') {
+      const catId = params.id ? parseInt(params.id, 10) : null;
+      if (catId) {
+        this.openCategoryDetail(catId);
+      } else {
+        this.navigate('classes', {}, true);
+      }
+      return;
+    }
+
     // 3. Result report - fallback to home if no active report exists
     if (path === 'result') {
       const reportContainer = document.getElementById('resultReportContainer');
@@ -232,11 +243,11 @@ class StenoApp {
     const validViews = [
       'home', 'classes', 'self-practice', 'subscription', 'result', 'my-practice',
       'progress', 'leaderboard', 'bookmarks', 'profile', 'refer',
-      'notifications', 'settings', 'rules', 'founder'
+      'notifications', 'settings', 'rules', 'founder', 'category-detail', 'help'
     ];
 
     if (validViews.includes(path)) {
-      this.navigate(path, params, false);
+      this.navigate(path, params, false, true);
     } else {
       this.navigate(isAdmin ? 'admin' : 'home', {}, true);
     }
@@ -282,7 +293,7 @@ class StenoApp {
     }
 
     if (path !== this.activeView) {
-      this.navigate(path, params, false);
+      this.navigate(path, params, false, true);
     }
   }
 
@@ -1875,7 +1886,7 @@ class StenoApp {
   }
 
   goBack() {
-    // If practice running, confirm
+    // 1. If practice typing test is currently active, confirm before exiting
     if (this.activeView === 'practice' && window.stenoTypingEngine && window.stenoTypingEngine.isStarted && !window.stenoTypingEngine.isCompleted) {
       if (!confirm('क्या आप वाकई टेस्ट छोड़कर वापस जाना चाहते हैं? (Are you sure you want to leave the test?)')) {
         return;
@@ -1889,30 +1900,58 @@ class StenoApp {
     const stickyBar = document.getElementById('catDetailStickyBar');
     if (stickyBar) stickyBar.style.display = 'none';
 
-    if (this.navigationHistory && this.navigationHistory.length > 0) {
-      const prevView = this.navigationHistory.pop();
-      if (prevView && prevView !== this.activeView) {
-        if (prevView === 'category-detail' && this.currentCategoryId) {
-          this.openCategoryDetail(this.currentCategoryId);
+    // 2. Context-aware back from Practice or Result report
+    if (this.activeView === 'practice' || this.activeView === 'result') {
+      if (this.practiceOrigin && this.practiceOrigin.view) {
+        const origin = this.practiceOrigin;
+        this.practiceOrigin = null;
+        if (origin.view === 'category-detail' && origin.categoryId) {
+          this.openCategoryDetail(origin.categoryId);
           return;
         }
-        this.navigate(prevView, {}, true);
+        if (origin.view && origin.view !== 'practice' && origin.view !== 'result') {
+          this.navigate(origin.view, {}, true, true);
+          return;
+        }
+      }
+      if (this.currentCategoryId) {
+        this.openCategoryDetail(this.currentCategoryId);
         return;
+      }
+      this.navigate('classes', {}, true, true);
+      return;
+    }
+
+    // 3. Context-aware back from Category Detail view
+    if (this.activeView === 'category-detail') {
+      const origin = this.categoryOrigin || 'home';
+      this.categoryOrigin = null;
+      this.navigate(origin === 'classes' ? 'classes' : 'home', {}, true, true);
+      return;
+    }
+
+    // 4. Pop through custom navigationHistory until a truly different view is found
+    if (this.navigationHistory && this.navigationHistory.length > 0) {
+      while (this.navigationHistory.length > 0) {
+        const prev = this.navigationHistory.pop();
+        if (!prev) continue;
+        const targetView = (typeof prev === 'string') ? prev : prev.view;
+        const targetParams = (typeof prev === 'object') ? prev.params : {};
+        const targetCatId = (typeof prev === 'object') ? prev.categoryId : null;
+
+        if (targetView && targetView !== this.activeView) {
+          if (targetView === 'category-detail' && (targetCatId || this.currentCategoryId)) {
+            this.openCategoryDetail(targetCatId || this.currentCategoryId);
+            return;
+          }
+          this.navigate(targetView, targetParams, true, true);
+          return;
+        }
       }
     }
 
-    // Smart fallback
-    if (this.activeView === 'category-detail') {
-      this.navigate('classes');
-    } else if (this.activeView === 'practice' || this.activeView === 'result') {
-      if (this.currentCategoryId) {
-        this.openCategoryDetail(this.currentCategoryId);
-      } else {
-        this.navigate('classes');
-      }
-    } else {
-      this.navigate('home');
-    }
+    // 5. Ultimate fallback to Home
+    this.navigate('home', {}, true, true);
   }
 
   showView(viewId) {
@@ -1922,22 +1961,29 @@ class StenoApp {
     return this.navigate(viewId);
   }
 
-  navigate(viewId, params = {}, updateHash = true) {
+  navigate(viewId, params = {}, updateHash = true, isBack = false) {
     // Role-based access control (RBAC) enforcement
     if (viewId === 'admin') {
       if (!this.user || this.user.role !== 'admin') {
         this.showToast('This account does not have administrator access.', 'error');
-        this.navigate('home', {}, true);
+        this.navigate('home', {}, true, true);
         return;
       }
       window.location.href = '/admin.html';
       return;
     }
 
-    if (this.activeView && this.activeView !== viewId) {
+    // Only record history when moving forward (never when backing out)
+    if (!isBack && !this.isBackNavigating && this.activeView && this.activeView !== viewId) {
       if (!this.navigationHistory) this.navigationHistory = [];
-      if (this.navigationHistory[this.navigationHistory.length - 1] !== this.activeView) {
-        this.navigationHistory.push(this.activeView);
+      const last = this.navigationHistory[this.navigationHistory.length - 1];
+      const lastView = (typeof last === 'string') ? last : (last && last.view);
+      if (lastView !== this.activeView) {
+        this.navigationHistory.push({
+          view: this.activeView,
+          categoryId: this.currentCategoryId || null,
+          params: { ...params }
+        });
         if (this.navigationHistory.length > 25) this.navigationHistory.shift();
       }
     }
@@ -2714,6 +2760,13 @@ class StenoApp {
   // Practice Dictation Flow (Phase 8)
   // -------------------------------------------------------------------------
   async openPractice(passageId, forcedSystem = null, customPassage = null) {
+    if (this.activeView && this.activeView !== 'practice') {
+      this.practiceOrigin = {
+        view: this.activeView,
+        categoryId: this.currentCategoryId || null,
+        categoryData: this.currentCategoryData || null
+      };
+    }
     if (customPassage) {
       this.currentPassage = customPassage;
       const selectedSystem = forcedSystem || (this.currentPassage.typing_system || 'mangal_unicode');
@@ -4803,6 +4856,9 @@ class StenoApp {
 
   async openCategoryDetail(categoryId) {
     this.closeSidebar();
+    if (this.activeView && this.activeView !== 'category-detail') {
+      this.categoryOrigin = this.activeView;
+    }
     this.currentCategoryId = categoryId;
     this.navigate('category-detail', { id: categoryId });
 
@@ -4863,7 +4919,7 @@ class StenoApp {
   backFromCategoryDetail() {
     const stickyBar = document.getElementById('catDetailStickyBar');
     if (stickyBar) stickyBar.style.display = 'none';
-    this.navigate('classes');
+    this.goBack();
   }
 
   filterCategoryPassages(type, btnEl) {
