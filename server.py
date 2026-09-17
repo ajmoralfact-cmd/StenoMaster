@@ -876,8 +876,14 @@ class StenoMasterHandler(http.server.SimpleHTTPRequestHandler):
                 cat_names = ["सभी श्रेणियां"]
                 valid_cat_ids = []
             else:
-                placeholders = ','.join(['%s'] * len(cat_ids))
-                c.execute(f"SELECT id, name, price FROM categories WHERE id IN ({placeholders})", tuple(cat_ids))
+                clean_cat_ids = [int(x) for x in cat_ids if str(x).isdigit()]
+                if not clean_cat_ids:
+                    conn.close()
+                    self._send_json(400, {"error": "कोई मान्य श्रेणी नहीं मिली। (No valid categories found)"})
+                    return
+                ph = '%s' if getattr(db, 'is_postgres', lambda: False)() else '?'
+                placeholders = ','.join([ph] * len(clean_cat_ids))
+                c.execute(f"SELECT id, name, price FROM categories WHERE id IN ({placeholders})", tuple(clean_cat_ids))
                 rows = c.fetchall()
                 if not rows:
                     conn.close()

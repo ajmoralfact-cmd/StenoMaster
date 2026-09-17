@@ -4779,7 +4779,7 @@ class StenoApp {
       const displayCats = activeCats.length > 0 ? activeCats : cats;
 
       const html = displayCats.map(cat => {
-        const isUnlocked = Boolean(cat.is_unlocked || (this.user && (this.user.role === 'admin' || this.user.is_premium)));
+        const isUnlocked = Boolean(cat.is_unlocked);
         const price = cat.price || 49;
         const iconDisplay = this.getCategoryIconDisplay(cat.icon, cat.slug, cat.name);
         const passageCount = parseInt(cat.passage_count || 0, 10);
@@ -4800,8 +4800,8 @@ class StenoApp {
                 <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:4px;">
                   <h4 style="margin:0; font-size:1.18rem; font-weight:800; color:var(--text-main); line-height:1.35;">${this.escapeHtml(cat.name)}</h4>
                   ${isUnlocked 
-                    ? '<span class="badge" style="background:#10b981; color:#fff; font-size:0.75rem; font-weight:800; padding:3px 9px; border-radius:6px;">✓ अनलॉक्ड</span>' 
-                    : `<span class="badge" style="background:linear-gradient(135deg, #f59e0b, #d97706); color:#fff; font-weight:800; font-size:0.75rem; padding:3px 9px; border-radius:6px; box-shadow:0 2px 6px rgba(245,158,11,0.3);">🔒 ₹${price} में उपलब्ध</span>`
+                    ? '<span class="badge" style="background:#10b981; color:#fff; font-size:0.75rem; font-weight:800; padding:4px 10px; border-radius:6px;">✓ अनलॉक्ड</span>' 
+                    : `<span class="badge badge-paid" onclick="event.stopPropagation(); stenoApp.openMultiCategoryCheckout(${cat.id})" style="background:linear-gradient(135deg, #f59e0b, #d97706); color:#fff; font-weight:800; font-size:0.78rem; padding:4px 11px; border-radius:8px; box-shadow:0 2px 8px rgba(245,158,11,0.3); cursor:pointer; display:inline-flex; align-items:center; gap:5px;" title="क्लिक करके ₹${price} में खरीदें">🔒 पेड श्रेणी • ₹${price} <span style="font-size:0.72rem; text-decoration:underline; opacity:0.95;">(अनलॉक ➔)</span></span>`
                   }
                 </div>
                 <div style="font-size:0.86rem; color:var(--text-muted); display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-top:3px;">
@@ -4839,7 +4839,7 @@ class StenoApp {
                     <span>🎯 अभ्यास करें</span> <span style="font-size:1.1rem; line-height:1;">➔</span>
                   </button>`
                 : `<button type="button" class="btn-primary" style="padding:10px 22px; font-size:0.92rem; font-weight:800; border-radius:12px; background:linear-gradient(135deg, #10b981, #059669); border:none; box-shadow:0 4px 14px rgba(16,185,129,0.35); display:inline-flex; align-items:center; gap:6px; cursor:pointer;" onclick="event.stopPropagation(); stenoApp.openMultiCategoryCheckout(${cat.id})">
-                    <span>🔒 ₹${price} अनलॉक</span> <span style="font-size:1.1rem; line-height:1;">➔</span>
+                    <span>🔒 ₹${price} में खरीदें</span> <span style="font-size:1.1rem; line-height:1;">➔</span>
                   </button>`
               }
             </div>
@@ -4885,11 +4885,11 @@ class StenoApp {
       if (iconEl) iconEl.textContent = cat.icon_emoji || '📘';
       if (subEl) subEl.textContent = `कुल ${this.currentCategoryPassages.length} डिक्टेशन्स • 80-100 WPM • ऑडियो सहित`;
 
-      const isUnlocked = Boolean(cat.is_unlocked || (this.user && (this.user.role === 'admin' || this.user.is_premium)));
+      const isUnlocked = Boolean(cat.is_unlocked);
       if (badgeEl) {
         badgeEl.innerHTML = isUnlocked
-          ? '<span class="badge badge-success" style="font-size:0.75rem; padding:4px 10px;">🟢 पूर्ण अनलॉक्ड</span>'
-          : `<button type="button" class="btn-sm btn-primary" onclick="stenoApp.openMultiCategoryCheckout(${cat.id})" style="font-size:0.75rem; padding:5px 12px; font-weight:700; background:#10b981; border:none;">₹${cat.price || 49} में अनलॉक करें</button>`;
+          ? '<span class="badge badge-success" style="font-size:0.78rem; padding:5px 12px; font-weight:800;">🟢 पूर्ण अनलॉक्ड</span>'
+          : `<button type="button" class="btn-primary" onclick="stenoApp.openMultiCategoryCheckout(${cat.id})" style="font-size:0.82rem; padding:7px 16px; font-weight:800; background:linear-gradient(135deg, #10b981, #059669); border:none; border-radius:10px; box-shadow:0 3px 10px rgba(16,185,129,0.3); cursor:pointer;">🔒 पेड श्रेणी • ₹${cat.price || 49} में अभी अनलॉक करें ➔</button>`;
       }
 
       if (stickyBar) {
@@ -4955,7 +4955,7 @@ class StenoApp {
 
     const catPrice = (this.currentCategoryData && this.currentCategoryData.price) || 49;
     container.innerHTML = passages.map(p => {
-      const isAcc = Boolean(p.is_accessible || (this.user && (this.user.role === 'admin' || this.user.is_premium)));
+      const isAcc = Boolean(p.is_free_tier || (this.currentCategoryData && this.currentCategoryData.is_unlocked));
       const durationMins = p.duration_seconds ? Math.round(p.duration_seconds / 60) : 10;
 
       return `
@@ -5008,7 +5008,7 @@ class StenoApp {
     container.innerHTML = cats.map(cat => {
       const isPre = preSelectedCatId && (cat.id === preSelectedCatId || cat.id === Number(preSelectedCatId));
       const price = cat.price || 49;
-      const isAlreadyUnlocked = Boolean(cat.is_unlocked || (this.user && (this.user.role === 'admin' || this.user.is_premium)));
+      const isAlreadyUnlocked = Boolean(cat.is_unlocked);
 
       return `
         <label class="checkout-cat-item" style="display:flex; justify-content:space-between; align-items:center; padding:10px 14px; border:1px solid var(--border); border-radius:10px; background:var(--bg-card); cursor:${isAlreadyUnlocked ? 'default' : 'pointer'}; transition:background 0.15s;">

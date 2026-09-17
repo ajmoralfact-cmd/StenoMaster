@@ -448,6 +448,11 @@ def init_db():
     )
     """)
 
+    try:
+        c.execute("ALTER TABLE categories ADD COLUMN price INTEGER DEFAULT 49")
+    except Exception:
+        pass
+
     # 4. Passages
     c.execute("""
     CREATE TABLE IF NOT EXISTS passages (
@@ -4547,7 +4552,7 @@ def get_categories_with_user_status(user_id: Optional[int] = None) -> List[Dict[
         d['price'] = int(d.get('price')) if d.get('price') is not None else 49
         slug = d.get('slug', '')
         d['icon_emoji'] = icon_map.get(slug, '📚')
-        d['is_unlocked'] = bool(is_premium_user or (d['id'] in unlocked_ids))
+        d['is_unlocked'] = bool(d['id'] in unlocked_ids)
         result.append(d)
     return result
 
@@ -4566,7 +4571,7 @@ def get_passages_by_category(category_id: int, user_id: Optional[int] = None) ->
 
     is_unlocked = False
     if user_id:
-        is_unlocked = is_user_premium(user_id) or is_category_unlocked_for_user(user_id, category_id)
+        is_unlocked = is_category_unlocked_for_user(user_id, category_id)
     cat_dict['is_unlocked'] = is_unlocked
 
     c.execute("""
