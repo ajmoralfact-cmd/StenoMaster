@@ -1446,25 +1446,48 @@ class StenoMasterHandler(http.server.SimpleHTTPRequestHandler):
 
             if path == '/api/admin/categories/save':
                 data = self._read_json_body()
+                cat_id = data.get("category_id") or data.get("id")
+                if cat_id:
+                    try:
+                        cat_id = int(cat_id)
+                    except ValueError:
+                        cat_id = None
                 name = data.get("name", "").strip()
                 slug = data.get("slug", "").strip()
-                if not name or not slug:
-                    self._send_json(400, {"error": "Category name and slug are required"})
+                if not name:
+                    self._send_json(400, {"error": "श्रेणी का नाम आवश्यक है (Category name required)"})
                     return
+                if not slug:
+                    import time
+                    slug = f"cat-{int(time.time())}"
                 desc = data.get("description", "")
                 lang = data.get("language", "both")
                 icon = data.get("icon", "book")
-                order = int(data.get("sort_order", 0))
-                cat_id = db.admin_save_category(name, slug, desc, lang, icon, order)
-                self._send_json(200, {"success": True, "category_id": cat_id})
+                try:
+                    price = int(data.get("price", 49))
+                except (ValueError, TypeError):
+                    price = 49
+                try:
+                    order = int(data.get("sort_order", 0))
+                except (ValueError, TypeError):
+                    order = 0
+                saved_id = db.admin_save_category(name, slug, desc, lang, icon, order, category_id=cat_id, price=price)
+                self._send_json(200, {"success": True, "category_id": saved_id})
                 return
 
             if path == '/api/admin/categories/delete':
                 data = self._read_json_body()
-                cat_id = data.get("id")
-                if cat_id:
+                cat_id = data.get("category_id") or data.get("id")
+                if not cat_id:
+                    self._send_json(400, {"error": "Category ID is required"})
+                    return
+                try:
                     db.admin_delete_category(int(cat_id))
-                self._send_json(200, {"success": True})
+                    self._send_json(200, {"success": True})
+                except ValueError as ve:
+                    self._send_json(400, {"error": str(ve)})
+                except Exception as e:
+                    self._send_json(500, {"error": str(e)})
                 return
 
             if path == '/api/admin/users/reset-password':

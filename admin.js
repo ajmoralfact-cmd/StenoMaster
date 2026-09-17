@@ -137,6 +137,7 @@ class StenoAdmin {
     } else {
       this.stopSubscribersLiveSync();
       if (tabId === 'passages') {
+        this.loadCategoriesTable();
         this.loadPassages();
       } else if (tabId === 'payments') {
         this.loadPayments();
@@ -1007,19 +1008,144 @@ class StenoAdmin {
     }
   }
 
+  // -------------------------------------------------------------------------
+  // Passage Categories Management (Table, Edit, Add, Delete)
+  // -------------------------------------------------------------------------
+  getCategoryIconDisplay(icon, slug, name) {
+    const iconMap = {
+      'feather': '🪶',
+      'scale': '⚖️',
+      'book-open': '📖',
+      'book': '📚',
+      'award': '🏆',
+      'shield': '🛡️',
+      'mic': '🎙️',
+      'landmark': '🏛️',
+      'file-text': '📄',
+      'briefcase': '💼',
+      'star': '⭐',
+      'scroll': '📜'
+    };
+    if (icon && iconMap[String(icon).toLowerCase()]) return iconMap[String(icon).toLowerCase()];
+    if (icon && !/^[a-zA-Z0-9_-]+$/.test(String(icon).trim())) return String(icon).trim();
+
+    const str = `${slug || ''} ${name || ''}`.toLowerCase();
+    if (str.includes('ramdhari') || str.includes('dinkar')) return '🪶';
+    if (str.includes('vidhik') || str.includes('court') || str.includes('legal') || str.includes('nyay') || str.includes('scale')) return '⚖️';
+    if (str.includes('samvidhan') || str.includes('constitution') || str.includes('sansad') || str.includes('landmark')) return '🏛️';
+    if (str.includes('editorial') || str.includes('sampadkiya') || str.includes('patrika')) return '📰';
+    if (str.includes('ssc') || str.includes('upsssc') || str.includes('award')) return '🏆';
+    return '📘';
+  }
+
+  async loadCategoriesTable() {
+    const tbody = document.getElementById('adminCategoriesTableBody');
+    if (!tbody) return;
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding:16px; color:var(--text-muted);"><div class="spinner-small" style="display:inline-block; margin-right:8px;"></div>श्रेणियां लोड हो रही हैं...</td></tr>';
+
+    try {
+      const res = await stenoApp.apiCall(`/api/categories?_t=${Date.now()}`);
+      const cats = res.categories || [];
+      if (!cats.length) {
+        tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; padding:20px; color:var(--text-muted);">कोई श्रेणी उपलब्ध नहीं है। ऊपर "➕ नई श्रेणी जोड़ें" पर क्लिक करें।</td></tr>`;
+        return;
+      }
+
+      this._allCategoriesCache = cats;
+      tbody.innerHTML = cats.map(c => {
+        const iconDisplay = this.getCategoryIconDisplay(c.icon, c.slug, c.name);
+        const pCount = parseInt(c.passage_count || 0, 10);
+        const freeCount = parseInt(c.free_count || 0, 10);
+        const price = c.price || 49;
+        const catJson = JSON.stringify(c).replace(/"/g, '&quot;');
+
+        return `
+          <tr style="border-bottom: 1px solid var(--border-subtle); transition: background 0.15s;">
+            <td style="padding:10px; font-weight:700; color:var(--text-muted);">#${c.id}</td>
+            <td style="padding:10px; text-align:center;">
+              <div style="width:36px; height:36px; border-radius:10px; background:rgba(99,102,241,0.12); display:inline-flex; align-items:center; justify-content:center; font-size:1.3rem; border:1px solid rgba(99,102,241,0.25);">
+                ${iconDisplay}
+              </div>
+            </td>
+            <td style="padding:10px; font-weight:800; color:var(--text-main); font-size:0.95rem;">
+              <div>${stenoApp.escapeHtml(c.name)}</div>
+              ${c.description ? `<div style="font-size:0.75rem; color:var(--text-muted); font-weight:normal; margin-top:2px;">${stenoApp.escapeHtml(c.description)}</div>` : ''}
+            </td>
+            <td style="padding:10px;">
+              <code style="font-size:0.78rem; background:var(--bg-subtle); padding:3px 8px; border-radius:6px; color:var(--primary); font-family:monospace;">${stenoApp.escapeHtml(c.slug || '')}</code>
+            </td>
+            <td style="padding:10px; text-align:center;">
+              <span class="badge" style="background:rgba(2,132,199,0.12); color:#0284c7; font-weight:700; padding:3px 10px; border-radius:10px; font-size:0.8rem;">${pCount} डिक्टेशन</span>
+            </td>
+            <td style="padding:10px; text-align:center;">
+              <span class="badge" style="background:rgba(16,185,129,0.12); color:#059669; font-weight:700; padding:3px 10px; border-radius:10px; font-size:0.8rem;">${freeCount} फ्री</span>
+            </td>
+            <td style="padding:10px; font-weight:800; color:#0284c7; font-size:0.95rem;">
+              ₹${price}
+            </td>
+            <td style="padding:10px; text-align:right;">
+              <div style="display:inline-flex; gap:6px;">
+                <button type="button" class="btn-sm btn-secondary" onclick="stenoAdmin.editCategory(${catJson})" style="padding:4px 10px; font-size:0.78rem; font-weight:700; border-color:#6366f1; color:#4f46e5;">
+                  ✏️ एडिट
+                </button>
+                <button type="button" class="btn-sm btn-secondary" onclick="stenoAdmin.deleteCategory(${c.id}, '${stenoApp.escapeHtml(c.name).replace(/'/g, "\'")}')" style="padding:4px 10px; font-size:0.78rem; font-weight:700; border-color:#ef4444; color:#ef4444;">
+                  🗑️
+                </button>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    } catch (err) {
+      console.error('Error loading categories table:', err);
+      tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; padding:16px; color:#ef4444;">त्रुटि: ${stenoApp.escapeHtml(err.message || 'लोड करने में विफल')}</td></tr>`;
+    }
+  }
+
   openCategoryModal() {
+    document.getElementById('catIdInput').value = '';
     document.getElementById('catNameInput').value = '';
     document.getElementById('catSlugInput').value = '';
+    if (document.getElementById('catPriceInput')) document.getElementById('catPriceInput').value = '49';
+    if (document.getElementById('catIconInput')) document.getElementById('catIconInput').value = '🪶';
     document.getElementById('catDescInput').value = '';
+    document.getElementById('catLanguageSelect').value = 'both';
+
+    const titleEl = document.getElementById('catModalTitle');
+    if (titleEl) titleEl.textContent = '➕ नई श्रेणी जोड़ें (Create Category)';
+    const btnEl = document.getElementById('catModalSubmitBtn');
+    if (btnEl) btnEl.textContent = '💾 श्रेणी जोड़ें (Create)';
+
+    stenoApp.openModal('categoryModal');
+  }
+
+  editCategory(cat) {
+    if (!cat) return;
+    document.getElementById('catIdInput').value = cat.id || '';
+    document.getElementById('catNameInput').value = cat.name || '';
+    document.getElementById('catSlugInput').value = cat.slug || '';
+    if (document.getElementById('catPriceInput')) document.getElementById('catPriceInput').value = cat.price || 49;
+    if (document.getElementById('catIconInput')) document.getElementById('catIconInput').value = cat.icon || cat.icon_emoji || '🪶';
+    document.getElementById('catDescInput').value = cat.description || '';
+    document.getElementById('catLanguageSelect').value = cat.language || 'both';
+
+    const titleEl = document.getElementById('catModalTitle');
+    if (titleEl) titleEl.textContent = `✏️ श्रेणी संपादित करें: ${cat.name}`;
+    const btnEl = document.getElementById('catModalSubmitBtn');
+    if (btnEl) btnEl.textContent = '💾 परिवर्तन सहेजें (Update)';
+
     stenoApp.openModal('categoryModal');
   }
 
   async saveCategory(e) {
     e.preventDefault();
+    const catId = document.getElementById('catIdInput')?.value.trim();
     const name = document.getElementById('catNameInput').value.trim();
     let slug = document.getElementById('catSlugInput').value.trim();
     const description = document.getElementById('catDescInput').value.trim();
     const language = document.getElementById('catLanguageSelect').value;
+    const price = parseInt(document.getElementById('catPriceInput')?.value || '49', 10);
+    const icon = document.getElementById('catIconInput')?.value.trim() || 'book';
 
     if (!name) {
       stenoApp.showToast('श्रेणी नाम आवश्यक है।', 'error');
@@ -1030,14 +1156,61 @@ class StenoAdmin {
     }
 
     try {
-      await stenoApp.apiCall('/api/admin/categories/save', 'POST', { name, slug, description, language });
-      stenoApp.showToast(`श्रेणी '${name}' सफलतापूर्ण जोड़ी गई! 📁`, 'success');
-      stenoApp.closeModal('categoryModal');
-      await stenoApp.loadCategories();
+      const payload = {
+        name,
+        slug,
+        description,
+        language,
+        icon,
+        price
+      };
+      if (catId) {
+        payload.category_id = parseInt(catId, 10);
+      }
+
+      stenoApp.showToast(catId ? 'श्रेणी अपडेट हो रही है...' : 'श्रेणी जोड़ी जा रही है...', 'info');
+      const res = await stenoApp.apiCall('/api/admin/categories/save', 'POST', payload);
+      if (res && res.success) {
+        stenoApp.showToast(`✓ श्रेणी '${name}' सफलतापूर्वक सहेजी गई! 📁`, 'success');
+        stenoApp.closeModal('categoryModal');
+        await this.loadCategoriesTable();
+        if (typeof this.loadCategoryPricingTable === 'function') {
+          this.loadCategoryPricingTable();
+        }
+        await stenoApp.loadCategories();
+      } else {
+        throw new Error(res.error || 'सहेजने में विफल');
+      }
     } catch (err) {
       stenoApp.showToast('श्रेणी सहेजने में त्रुटि: ' + err.message, 'error');
     }
   }
+
+  async deleteCategory(catId, catName) {
+    if (!catId) return;
+    const ok = confirm(`क्या आप श्रेणी "${catName}" (ID: #${catId}) को हटाना चाहते हैं?
+
+ध्यान दें: यदि इस श्रेणी में पहले से डिक्टेशन्स हैं तो यह डिलीट नहीं होगी।`);
+    if (!ok) return;
+
+    try {
+      stenoApp.showToast('श्रेणी हटाई जा रही है...', 'info');
+      const res = await stenoApp.apiCall('/api/admin/categories/delete', 'POST', { id: catId, category_id: catId });
+      if (res && res.success) {
+        stenoApp.showToast(`✓ श्रेणी "${catName}" सफलतापूर्वक हटा दी गई!`, 'success');
+        await this.loadCategoriesTable();
+        if (typeof this.loadCategoryPricingTable === 'function') {
+          this.loadCategoryPricingTable();
+        }
+        await stenoApp.loadCategories();
+      } else {
+        throw new Error(res.error || 'डिलीट करने में विफल');
+      }
+    } catch (err) {
+      stenoApp.showToast(err.message || 'त्रुटि हुई', 'error');
+    }
+  }
+
 
   async openUsersModal() {
     stenoApp.openModal('adminUsersModal');

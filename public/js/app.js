@@ -4503,6 +4503,88 @@ class StenoApp {
   // -------------------------------------------------------------------------
   // Horizontal Category Cards & Classes View (Screenshot 1 & 2 Style)
   // -------------------------------------------------------------------------
+  // -------------------------------------------------------------------------
+  // Horizontal Category Cards & Classes View (Screenshot 1 & 2 Style)
+  // -------------------------------------------------------------------------
+  getCategoryIconDisplay(icon, slug, name) {
+    const iconMap = {
+      'feather': '🪶',
+      'scale': '⚖️',
+      'book-open': '📖',
+      'book': '📚',
+      'award': '🏆',
+      'shield': '🛡️',
+      'mic': '🎙️',
+      'landmark': '🏛️',
+      'file-text': '📄',
+      'briefcase': '💼',
+      'star': '⭐',
+      'scroll': '📜'
+    };
+    if (icon && iconMap[String(icon).toLowerCase()]) return iconMap[String(icon).toLowerCase()];
+    if (icon && !/^[a-zA-Z0-9_-]+$/.test(String(icon).trim())) return String(icon).trim();
+
+    const str = `${slug || ''} ${name || ''}`.toLowerCase();
+    if (str.includes('ramdhari') || str.includes('dinkar')) return '🪶';
+    if (str.includes('vidhik') || str.includes('court') || str.includes('legal') || str.includes('nyay') || str.includes('scale')) return '⚖️';
+    if (str.includes('samvidhan') || str.includes('constitution') || str.includes('sansad') || str.includes('landmark')) return '🏛️';
+    if (str.includes('editorial') || str.includes('sampadkiya') || str.includes('patrika')) return '📰';
+    if (str.includes('ssc') || str.includes('upsssc') || str.includes('award')) return '🏆';
+    return '📘';
+  }
+
+  getCategoryTheme(cat, isUnlocked) {
+    if (isUnlocked) {
+      return {
+        accentColor: '#10b981',
+        borderColor: 'rgba(16, 185, 129, 0.45)',
+        bgGradient: 'linear-gradient(90deg, rgba(16, 185, 129, 0.08) 0%, rgba(255, 255, 255, 0.98) 35%, rgba(16, 185, 129, 0.04) 100%)',
+        boxShadow: '0 6px 20px -2px rgba(16, 185, 129, 0.14), 0 2px 6px rgba(0, 0, 0, 0.04)',
+        emblemBg: 'linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(52, 211, 153, 0.25))',
+        emblemBorder: 'rgba(16, 185, 129, 0.35)'
+      };
+    }
+
+    const str = `${cat.slug || ''} ${cat.name || ''}`.toLowerCase();
+    if (str.includes('ramdhari') || str.includes('dinkar')) {
+      return {
+        accentColor: '#6366f1',
+        borderColor: 'rgba(99, 102, 241, 0.4)',
+        bgGradient: 'linear-gradient(90deg, rgba(99, 102, 241, 0.08) 0%, rgba(255, 255, 255, 0.98) 35%, rgba(99, 102, 241, 0.04) 100%)',
+        boxShadow: '0 6px 20px -2px rgba(99, 102, 241, 0.14), 0 2px 6px rgba(0, 0, 0, 0.04)',
+        emblemBg: 'linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(129, 140, 248, 0.25))',
+        emblemBorder: 'rgba(99, 102, 241, 0.35)'
+      };
+    } else if (str.includes('court') || str.includes('vidhik') || str.includes('legal')) {
+      return {
+        accentColor: '#d97706',
+        borderColor: 'rgba(217, 119, 6, 0.4)',
+        bgGradient: 'linear-gradient(90deg, rgba(217, 119, 6, 0.08) 0%, rgba(255, 255, 255, 0.98) 35%, rgba(217, 119, 6, 0.04) 100%)',
+        boxShadow: '0 6px 20px -2px rgba(217, 119, 6, 0.14), 0 2px 6px rgba(0, 0, 0, 0.04)',
+        emblemBg: 'linear-gradient(135deg, rgba(217, 119, 6, 0.15), rgba(245, 158, 11, 0.25))',
+        emblemBorder: 'rgba(217, 119, 6, 0.35)'
+      };
+    } else if (str.includes('editorial') || str.includes('sampadkiya')) {
+      return {
+        accentColor: '#0284c7',
+        borderColor: 'rgba(2, 132, 199, 0.4)',
+        bgGradient: 'linear-gradient(90deg, rgba(2, 132, 199, 0.08) 0%, rgba(255, 255, 255, 0.98) 35%, rgba(2, 132, 199, 0.04) 100%)',
+        boxShadow: '0 6px 20px -2px rgba(2, 132, 199, 0.14), 0 2px 6px rgba(0, 0, 0, 0.04)',
+        emblemBg: 'linear-gradient(135deg, rgba(2, 132, 199, 0.15), rgba(56, 189, 248, 0.25))',
+        emblemBorder: 'rgba(2, 132, 199, 0.35)'
+      };
+    }
+
+    return {
+      accentColor: '#8b5cf6',
+      borderColor: 'rgba(139, 92, 246, 0.4)',
+      bgGradient: 'linear-gradient(90deg, rgba(139, 92, 246, 0.08) 0%, rgba(255, 255, 255, 0.98) 35%, rgba(139, 92, 246, 0.04) 100%)',
+      boxShadow: '0 6px 20px -2px rgba(139, 92, 246, 0.14), 0 2px 6px rgba(0, 0, 0, 0.04)',
+      emblemBg: 'linear-gradient(135deg, rgba(139, 92, 246, 0.15), rgba(167, 139, 250, 0.25))',
+      emblemBorder: 'rgba(139, 92, 246, 0.35)'
+    };
+  }
+
   renderHorizontalCategories() {
     try {
       const homeContainer = document.getElementById('homeCategoriesList');
@@ -4512,11 +4594,11 @@ class StenoApp {
       const cats = this.categories || [];
       if (!cats.length) {
         const skeleton = `
-          <div class="stat-card" style="padding:16px; border-radius:14px; opacity:0.6; display:flex; align-items:center; gap:14px; margin-bottom:10px;">
-            <div style="width:48px; height:48px; border-radius:50%; background:var(--border);"></div>
+          <div class="stat-card" style="padding:18px; border-radius:16px; opacity:0.6; display:flex; align-items:center; gap:16px; margin-bottom:12px;">
+            <div style="width:58px; height:58px; border-radius:16px; background:var(--border);"></div>
             <div style="flex:1;">
-              <div style="height:18px; width:40%; background:var(--border); border-radius:4px; margin-bottom:8px;"></div>
-              <div style="height:14px; width:60%; background:var(--border); border-radius:4px;"></div>
+              <div style="height:20px; width:45%; background:var(--border); border-radius:4px; margin-bottom:8px;"></div>
+              <div style="height:15px; width:65%; background:var(--border); border-radius:4px;"></div>
             </div>
           </div>
         `;
@@ -4525,7 +4607,7 @@ class StenoApp {
         return;
       }
 
-      // Filter out auto-generated audit categories without passages
+      // Filter out empty audit categories
       const activeCats = cats.filter(c => {
         const slug = String(c.slug || '').toLowerCase();
         const name = String(c.name || '').toLowerCase();
@@ -4538,42 +4620,67 @@ class StenoApp {
       const html = displayCats.map(cat => {
         const isUnlocked = Boolean(cat.is_unlocked || (this.user && (this.user.role === 'admin' || this.user.is_premium)));
         const price = cat.price || 49;
-        const emoji = cat.icon || cat.icon_emoji || '📘';
+        const iconDisplay = this.getCategoryIconDisplay(cat.icon, cat.slug, cat.name);
         const passageCount = parseInt(cat.passage_count || 0, 10);
         const freeCount = parseInt(cat.free_count !== undefined && cat.free_count !== null ? cat.free_count : (passageCount > 0 ? 1 : 0), 10);
+        const theme = this.getCategoryTheme(cat, isUnlocked);
 
         return `
-          <div class="category-series-card" onclick="stenoApp.openCategoryDetail(${cat.id})" style="background:var(--bg-card); border:1.5px solid var(--border); border-radius:16px; padding:16px 18px; display:flex; align-items:center; justify-content:space-between; gap:14px; cursor:pointer; transition:transform 0.15s, box-shadow 0.15s, border-color 0.15s; margin-bottom:12px; box-shadow:0 2px 8px rgba(0,0,0,0.03);">
-            <div style="display:flex; align-items:center; gap:14px; min-width:0;">
-              <!-- Circular Emblem Logo -->
-              <div style="width:50px; height:50px; border-radius:50%; background:linear-gradient(135deg, rgba(2,132,199,0.12), rgba(99,102,241,0.18)); border:1.5px solid rgba(2,132,199,0.25); display:flex; align-items:center; justify-content:center; font-size:1.5rem; flex-shrink:0;">
-                ${emoji}
+          <div class="category-series-card" onclick="stenoApp.openCategoryDetail(${cat.id})" style="background:${theme.bgGradient}; border:1.5px solid ${theme.borderColor}; border-radius:18px; padding:18px 22px; display:flex; align-items:center; justify-content:space-between; gap:18px; cursor:pointer; transition:all 0.25s cubic-bezier(0.16, 1, 0.3, 1); margin-bottom:14px; box-shadow:${theme.boxShadow}; position:relative; overflow:hidden;">
+            <!-- Left Accent Strip -->
+            <div style="position:absolute; top:0; left:0; width:5px; height:100%; background:${theme.accentColor};"></div>
+
+            <!-- LEFT SECTION: Emblem Avatar + Title & Badges -->
+            <div style="display:flex; align-items:center; gap:16px; min-width:280px; flex:1.2;">
+              <div style="width:60px; height:60px; min-width:60px; border-radius:16px; background:${theme.emblemBg}; border:1.5px solid ${theme.emblemBorder}; display:flex; align-items:center; justify-content:center; font-size:2rem; flex-shrink:0; box-shadow:0 3px 10px rgba(0,0,0,0.05);">
+                ${iconDisplay}
               </div>
-              <div style="min-width:0;">
-                <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:3px;">
-                  <h4 style="margin:0; font-size:1.02rem; font-weight:800; color:var(--text-main); line-height:1.3;">${this.escapeHtml(cat.name)}</h4>
+              <div>
+                <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:4px;">
+                  <h4 style="margin:0; font-size:1.18rem; font-weight:800; color:var(--text-main); line-height:1.35;">${this.escapeHtml(cat.name)}</h4>
                   ${isUnlocked 
-                    ? '<span class="badge badge-success" style="font-size:0.68rem; padding:2px 8px; border-radius:10px;">🟢 अनलॉक्ड</span>' 
-                    : `<span class="badge" style="background:rgba(245,158,11,0.15); color:#b45309; font-weight:700; font-size:0.68rem; padding:2px 8px; border-radius:10px;">🔒 ₹${price}</span>`
+                    ? '<span class="badge" style="background:#10b981; color:#fff; font-size:0.75rem; font-weight:800; padding:3px 9px; border-radius:6px;">✓ अनलॉक्ड</span>' 
+                    : `<span class="badge" style="background:linear-gradient(135deg, #f59e0b, #d97706); color:#fff; font-weight:800; font-size:0.75rem; padding:3px 9px; border-radius:6px; box-shadow:0 2px 6px rgba(245,158,11,0.3);">🔒 ₹${price} में उपलब्ध</span>`
                   }
                 </div>
-                <div style="font-size:0.78rem; color:var(--text-muted); display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:3px;">
-                  <span><strong>${passageCount}</strong> Total Tests</span>
+                <div style="font-size:0.86rem; color:var(--text-muted); display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-top:3px;">
+                  <span style="font-weight:700; color:var(--text-main);">📊 <strong>${passageCount}</strong> कुल टेस्ट</span>
                   <span style="color:var(--border);">•</span>
-                  <span style="color:#10b981; font-weight:700;">${freeCount} Free Tests</span>
-                </div>
-                <div style="font-size:0.74rem; color:var(--primary); font-weight:600;">
-                  Hindi • 80-100 WPM • मंगल एवं कृति देव
+                  <span style="color:#059669; font-weight:800;">🎁 <strong>${freeCount}</strong> फ्री डेमो टेस्ट</span>
                 </div>
               </div>
             </div>
-            <!-- Right Button / Price -->
-            <div style="display:flex; align-items:center; gap:10px; flex-shrink:0;">
+
+            <!-- MIDDLE SECTION: Rich Specifications & Feature Highlights (Filling the empty space!) -->
+            <div class="cat-middle-specs" style="flex:1.4; display:flex; flex-direction:column; gap:6px; min-width:240px; padding:0 14px; border-left:1px dashed var(--border); border-right:1px dashed var(--border);">
+              <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+                <span style="background:rgba(2,132,199,0.1); color:#0284c7; border:1px solid rgba(2,132,199,0.25); font-weight:800; font-size:0.8rem; padding:4px 10px; border-radius:8px; display:inline-flex; align-items:center; gap:4px;">
+                  ⚡ 80 - 100 WPM
+                </span>
+                <span style="background:rgba(99,102,241,0.1); color:#4f46e5; border:1px solid rgba(99,102,241,0.25); font-weight:800; font-size:0.8rem; padding:4px 10px; border-radius:8px; display:inline-flex; align-items:center; gap:4px;">
+                  ⏱️ 5-10 मिनट डिक्टेशन
+                </span>
+                <span style="background:rgba(16,185,129,0.1); color:#059669; border:1px solid rgba(16,185,129,0.25); font-weight:800; font-size:0.8rem; padding:4px 10px; border-radius:8px; display:inline-flex; align-items:center; gap:4px;">
+                  🎙️ ऑडियो + आउटलाइन
+                </span>
+              </div>
+              <div style="font-size:0.82rem; color:var(--text-muted); font-weight:600; display:flex; align-items:center; gap:6px; flex-wrap:wrap; line-height:1.4;">
+                <span>⌨️ मंगल (रेमिंगटन गेल/CBI) एवं कृति देव 010</span>
+                <span>•</span>
+                <span>तुरंत AI मूल्यांकन</span>
+              </div>
+            </div>
+
+            <!-- RIGHT SECTION: Action / Unlock Button -->
+            <div style="display:flex; align-items:center; justify-content:flex-end; gap:10px; flex-shrink:0;">
               ${isUnlocked 
-                ? `<button type="button" class="btn-sm btn-primary" style="padding:7px 16px; font-size:0.82rem; font-weight:700; border-radius:20px; white-space:nowrap;" onclick="event.stopPropagation(); stenoApp.openCategoryDetail(${cat.id})">🎯 अभ्यास करें &gt;</button>`
-                : `<button type="button" class="btn-sm" style="background:linear-gradient(135deg, #10b981, #059669); color:#fff; border:none; padding:7px 16px; font-size:0.82rem; font-weight:700; border-radius:20px; white-space:nowrap; box-shadow:0 3px 10px rgba(16,185,129,0.35); cursor:pointer;" onclick="event.stopPropagation(); stenoApp.openMultiCategoryCheckout(${cat.id})">₹${price} अनलॉक करें</button>`
+                ? `<button type="button" class="btn-primary" style="padding:10px 22px; font-size:0.92rem; font-weight:800; border-radius:12px; background:linear-gradient(135deg, #0284c7, #2563eb); border:none; box-shadow:0 4px 14px rgba(2,132,199,0.35); display:inline-flex; align-items:center; gap:6px; cursor:pointer;" onclick="event.stopPropagation(); stenoApp.openCategoryDetail(${cat.id})">
+                    <span>🎯 अभ्यास करें</span> <span style="font-size:1.1rem; line-height:1;">➔</span>
+                  </button>`
+                : `<button type="button" class="btn-primary" style="padding:10px 22px; font-size:0.92rem; font-weight:800; border-radius:12px; background:linear-gradient(135deg, #10b981, #059669); border:none; box-shadow:0 4px 14px rgba(16,185,129,0.35); display:inline-flex; align-items:center; gap:6px; cursor:pointer;" onclick="event.stopPropagation(); stenoApp.openMultiCategoryCheckout(${cat.id})">
+                    <span>🔒 ₹${price} अनलॉक</span> <span style="font-size:1.1rem; line-height:1;">➔</span>
+                  </button>`
               }
-              <span style="color:var(--text-muted); font-size:1.3rem; font-weight:700;">›</span>
             </div>
           </div>
         `;

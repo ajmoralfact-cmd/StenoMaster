@@ -3002,23 +3002,39 @@ def admin_toggle_passage_status(passage_id: int) -> str:
     return new_status
 
 
-def admin_save_category(name: str, slug: str, description: str = "", language: str = "both", icon: str = "book", sort_order: int = 0) -> int:
+def admin_save_category(name: str, slug: str, description: str = "", language: str = "both", icon: str = "book", sort_order: int = 0, category_id: int = None, price: int = 49) -> int:
     conn = get_db()
     c = conn.cursor()
-    c.execute("""
-        INSERT INTO categories (name, slug, description, language, icon, sort_order)
-        VALUES (?, ?, ?, ?, ?, ?)
-        ON CONFLICT(slug) DO UPDATE SET name = excluded.name, description = excluded.description, language = excluded.language
-    """, (name, slug, description, language, icon, sort_order))
-    cat_id = c.lastrowid
-    conn.commit()
-    conn.close()
-    return cat_id
+    if category_id:
+        c.execute("""
+            UPDATE categories
+            SET name = ?, slug = ?, description = ?, language = ?, icon = ?, price = ?, sort_order = ?
+            WHERE id = ?
+        """, (name, slug, description, language, icon, price, sort_order, category_id))
+        conn.commit()
+        conn.close()
+        return category_id
+    else:
+        c.execute("""
+            INSERT INTO categories (name, slug, description, language, icon, price, sort_order)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+            ON CONFLICT(slug) DO UPDATE SET name = excluded.name, description = excluded.description, language = excluded.language, icon = excluded.icon, price = excluded.price
+        """, (name, slug, description, language, icon, price, sort_order))
+        cat_id = c.lastrowid
+        conn.commit()
+        conn.close()
+        return cat_id
 
 
 def admin_delete_category(category_id: int) -> bool:
     conn = get_db()
     c = conn.cursor()
+    c.execute("SELECT COUNT(*) FROM passages WHERE category_id = ?", (category_id,))
+    cnt = c.fetchone()
+    count_val = list(cnt.values())[0] if isinstance(cnt, dict) else (cnt[0] if cnt else 0)
+    if count_val > 0:
+        conn.close()
+        raise ValueError(f"इस श्रेणी में {count_val} डिक्टेशन्स मौजूद हैं। कृपया पहले उन्हें किसी अन्य श्रेणी में स्थानांतरित करें।")
     c.execute("DELETE FROM categories WHERE id = ?", (category_id,))
     conn.commit()
     conn.close()
