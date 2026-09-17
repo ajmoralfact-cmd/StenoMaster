@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Devanagari:wght@400;500;600;700;800&family=Rozha+One&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/css/style.css?v=8.4">
+  <link rel="stylesheet" href="/css/style.css?v=8.5">
 
   <!-- Smooth Admin Auth Guard (Shows In-Page Modal without broken redirect) -->
   <script>
@@ -1119,10 +1119,65 @@
   <!-- =====================================================================
        ADMIN MODALS (Extracted from index.html)
        ===================================================================== -->
+    <!-- CATEGORY CLASSES VIEWER & MANAGEMENT MODAL -->
+  <div class="modal-overlay" id="adminCategoryClassesModal">
+    <div class="modal-card" style="max-width: 860px; max-height: 90vh; display:flex; flex-direction:column; padding: 22px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; border-bottom:1px solid var(--border-subtle); padding-bottom:12px;">
+        <div style="display:flex; align-items:center; gap:12px;">
+          <div id="catClassesModalIcon" style="width:50px; height:50px; min-width:50px; border-radius:14px; background:linear-gradient(135deg, rgba(99,102,241,0.18), rgba(129,140,248,0.25)); border:1.5px solid rgba(99,102,241,0.35); display:flex; align-items:center; justify-content:center; font-size:1.8rem; box-shadow:0 3px 10px rgba(0,0,0,0.05);">
+            📁
+          </div>
+          <div>
+            <h3 class="modal-title" id="catClassesModalTitle" style="margin:0; font-size:1.25rem; font-weight:800; color:var(--text-main);">श्रेणी की कक्षाएं</h3>
+            <p class="modal-subtitle" id="catClassesModalSubtitle" style="margin:3px 0 0 0; font-size:0.82rem; color:var(--text-muted);">इस श्रेणी के अंतर्गत उपलब्ध सभी डिक्टेशन कक्षाएं</p>
+          </div>
+        </div>
+        <button class="modal-close-btn" onclick="stenoApp.closeModal('adminCategoryClassesModal')">✕</button>
+      </div>
+
+      <!-- Action Bar inside Modal -->
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; background:var(--bg-subtle); padding:12px 16px; border-radius:12px; border:1px solid var(--border-subtle); flex-wrap:wrap; gap:10px;">
+        <div id="catClassesModalStats" style="font-size:0.9rem; font-weight:700; color:var(--text-main); display:flex; align-items:center; gap:8px;">
+          📊 <span>कुल 0 कक्षाएं</span>
+        </div>
+        <div style="display:flex; gap:10px;">
+          <button type="button" class="btn-primary" id="catClassesAddBtn" onclick="stenoAdmin.addPassageToCurrentCategory()" style="padding:8px 18px; font-weight:800; font-size:0.86rem; border-radius:10px; background:linear-gradient(135deg, #0284c7, #2563eb); border:none; box-shadow:0 3px 10px rgba(2,132,199,0.35); display:inline-flex; align-items:center; gap:6px;">
+            <span>➕</span> <span>इस श्रेणी में नई क्लास जोड़ें</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Classes List Table -->
+      <div class="table-responsive" style="overflow-y:auto; flex:1; max-height:55vh;">
+        <table class="data-table" id="adminCategoryPassagesTable" style="width:100%; border-collapse:collapse;">
+          <thead>
+            <tr style="border-bottom: 2px solid var(--border-subtle); text-align:left;">
+              <th style="padding:10px; width:50px;">ID</th>
+              <th style="padding:10px;">शीर्षक (Title)</th>
+              <th style="padding:10px; text-align:center;">गति (WPM)</th>
+              <th style="padding:10px; text-align:center;">अवधि</th>
+              <th style="padding:10px; text-align:center;">शब्द संख्या</th>
+              <th style="padding:10px; text-align:center;">प्रकार / फ़ॉन्ट</th>
+              <th style="padding:10px; text-align:right;">कार्रवाई</th>
+            </tr>
+          </thead>
+          <tbody id="adminCategoryPassagesTableBody">
+            <tr><td colspan="7" style="text-align:center; padding:20px; color:var(--text-muted);">लोड हो रहा है...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+
   <div class="modal-overlay" id="passageEditModal">
     <div class="modal-card" style="max-width: 680px;">
       <button class="modal-close-btn" onclick="stenoApp.closeModal('passageEditModal')">✕</button>
       <h3 class="modal-title" id="passageModalTitle">स्टेनो आलेख जोड़ें</h3>
+      <div id="passageCategoryNotice" style="display:none; background:rgba(2,132,199,0.1); border:1.5px solid rgba(2,132,199,0.3); border-radius:10px; padding:8px 14px; margin-bottom:14px; font-size:0.88rem; color:#0284c7; font-weight:700; align-items:center; gap:8px;">
+        <span>📁</span>
+        <span>चयनित श्रेणी: <span id="passageCategoryNoticeName" style="color:var(--text-main); font-weight:800;">-</span></span>
+      </div>
       <form id="passageForm" onsubmit="stenoAdmin.savePassage(event)">
         <input type="hidden" id="passageEditId">
 
@@ -1134,18 +1189,8 @@
         <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
           <div class="form-group">
             <label class="form-label">श्रेणी (Category):</label>
-            <select id="passageCategorySelect" class="form-select">
-              <option value="1">रामधारी सिंह दिनकर</option>
-              <option value="2">महात्मा गांधी</option>
-              <option value="3">भारतीय संविधान</option>
-              <option value="4">भारत का इतिहास</option>
-              <option value="5">विज्ञान एवं प्रौद्योगिकी</option>
-              <option value="6">सामान्य ज्ञान</option>
-              <option value="7">करंट अफेयर्स</option>
-              <option value="8">समाचार सम्पादकीय</option>
-              <option value="9">SSC Stenographer</option>
-              <option value="10">UPSSSC Steno</option>
-              <option value="11">High Court Steno</option>
+            <select id="passageCategorySelect" class="form-select" onchange="stenoAdmin.onPassageCategoryChange(this.value)">
+              <option value="">श्रेणी चुनें...</option>
             </select>
           </div>
 
@@ -1737,7 +1782,7 @@
   <script src="/js/charts.js?v=8.1"></script>
   <script src="/js/comparison_view.js?v=8.1"></script>
   <script src="/js/ocr_service.js?v=1.1"></script>
-  <script src="/js/admin.js?v=8.4"></script>
+  <script src="/js/admin.js?v=8.5"></script>
 
   <!-- Standalone In-Page Admin Login Modal (Never redirects away) -->
   <div id="adminStandaloneAuthModal" class="modal-overlay" style="display:none; z-index:999999; background:rgba(15, 23, 42, 0.85); backdrop-filter:blur(8px);">

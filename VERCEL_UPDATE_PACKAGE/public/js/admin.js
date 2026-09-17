@@ -440,27 +440,64 @@ class StenoAdmin {
     // Admin reference is authoritative - no silent automatic overwrite on input
   }
 
-  populateCategoryDropdown() {
+  populateCategoryDropdown(targetId = null) {
     const sel = document.getElementById('passageCategorySelect');
     if (!sel) return;
-    const cats = (stenoApp && stenoApp.categories && stenoApp.categories.length) ? stenoApp.categories : this.categoriesList;
+    const cats = (this._allCategoriesCache && this._allCategoriesCache.length)
+      ? this._allCategoriesCache
+      : ((stenoApp && stenoApp.categories && stenoApp.categories.length) ? stenoApp.categories : (this.categoriesList || []));
+
     if (cats && cats.length) {
-      const currentVal = sel.value;
-      sel.innerHTML = cats.map(c => `
-        <option value="${c.id}">${this.escapeHtml(c.name)}</option>
+      sel.innerHTML = '<option value="">-- श्रेणी चुनें (Select Category) --</option>' + cats.map(c => `
+        <option value="${c.id}">${this.escapeHtml(c.name)} (ID: #${c.id})</option>
       `).join('');
-      if (currentVal) sel.value = currentVal;
+      if (targetId) {
+        sel.value = String(targetId);
+      }
     }
   }
 
-  openNewPassageModal(mode = 'dual') {
+  onPassageCategoryChange(val) {
+    const noticeEl = document.getElementById('passageCategoryNotice');
+    const noticeNameEl = document.getElementById('passageCategoryNoticeName');
+    const sel = document.getElementById('passageCategorySelect');
+    if (!sel) return;
+    const selectedText = sel.options[sel.selectedIndex]?.text || '';
+    if (val && noticeEl && noticeNameEl) {
+      noticeEl.style.display = 'flex';
+      noticeNameEl.textContent = selectedText;
+    } else if (noticeEl) {
+      noticeEl.style.display = 'none';
+    }
+  }
+
+  openNewPassageModal(mode = 'dual', targetCategoryId = null, targetCategoryName = '') {
     const sys = (mode === 'krutidev' || mode === 'kruti_dev_010')
       ? 'kruti_dev_010'
       : ((mode === 'mangal' || mode === 'mangal_unicode') ? 'mangal_unicode' : 'dual');
-    document.getElementById('passageModalTitle').textContent = '📝 नया स्टेनो आलेख जोड़ें (Add Passage)';
+
+    const noticeEl = document.getElementById('passageCategoryNotice');
+    const noticeNameEl = document.getElementById('passageCategoryNoticeName');
+    const titleEl = document.getElementById('passageModalTitle');
+
+    if (targetCategoryId) {
+      if (titleEl) titleEl.textContent = `📝 नई क्लास जोड़ें ➔ ${targetCategoryName || 'चयनित श्रेणी'}`;
+      if (noticeEl) noticeEl.style.display = 'flex';
+      if (noticeNameEl) noticeNameEl.textContent = targetCategoryName || `ID: #${targetCategoryId}`;
+    } else {
+      if (titleEl) titleEl.textContent = '📝 नया स्टेनो आलेख जोड़ें (Add Passage)';
+      if (noticeEl) noticeEl.style.display = 'none';
+    }
+
     document.getElementById('passageEditId').value = '';
     document.getElementById('passageForm').reset();
-    this.populateCategoryDropdown();
+    this.populateCategoryDropdown(targetCategoryId);
+
+    if (targetCategoryId) {
+      const sel = document.getElementById('passageCategorySelect');
+      if (sel) sel.value = String(targetCategoryId);
+    }
+
     const krutiInput = document.getElementById('passageOfficialKrutiInput');
     if (krutiInput) krutiInput.value = '';
     const mangalInput = document.getElementById('passageOfficialTextInput');
@@ -1084,11 +1121,17 @@ class StenoAdmin {
               ₹${price}
             </td>
             <td style="padding:10px; text-align:right;">
-              <div style="display:inline-flex; gap:6px;">
-                <button type="button" class="btn-sm btn-secondary" onclick="stenoAdmin.editCategory(${catJson})" style="padding:4px 10px; font-size:0.78rem; font-weight:700; border-color:#6366f1; color:#4f46e5;">
-                  ✏️ एडिट
+              <div style="display:inline-flex; gap:6px; flex-wrap:wrap; justify-content:flex-end;">
+                <button type="button" class="btn-sm btn-primary" onclick="stenoAdmin.openCategoryClassesModal(${c.id}, '${stenoApp.escapeHtml(c.name).replace(/'/g, "\'")}', '${c.icon || ''}')" style="padding:4px 10px; font-size:0.78rem; font-weight:800; background:linear-gradient(135deg, #0284c7, #2563eb); border:none; display:inline-flex; align-items:center; gap:4px; box-shadow:0 2px 6px rgba(2,132,199,0.3);">
+                  <span>📂</span> <span>कक्षाएं (${pCount})</span>
                 </button>
-                <button type="button" class="btn-sm btn-secondary" onclick="stenoAdmin.deleteCategory(${c.id}, '${stenoApp.escapeHtml(c.name).replace(/'/g, "\'")}')" style="padding:4px 10px; font-size:0.78rem; font-weight:700; border-color:#ef4444; color:#ef4444;">
+                <button type="button" class="btn-sm btn-secondary" onclick="stenoAdmin.openNewPassageModal('dual', ${c.id}, '${stenoApp.escapeHtml(c.name).replace(/'/g, "\'")}')" style="padding:4px 10px; font-size:0.78rem; font-weight:800; border-color:#059669; color:#059669; display:inline-flex; align-items:center; gap:4px;">
+                  <span>➕</span> <span>क्लास जोड़ें</span>
+                </button>
+                <button type="button" class="btn-sm btn-secondary" onclick="stenoAdmin.editCategory(${catJson})" style="padding:4px 8px; font-size:0.78rem; font-weight:700; border-color:#6366f1; color:#4f46e5;">
+                  ✏️
+                </button>
+                <button type="button" class="btn-sm btn-secondary" onclick="stenoAdmin.deleteCategory(${c.id}, '${stenoApp.escapeHtml(c.name).replace(/'/g, "\'")}')" style="padding:4px 8px; font-size:0.78rem; font-weight:700; border-color:#ef4444; color:#ef4444;">
                   🗑️
                 </button>
               </div>
