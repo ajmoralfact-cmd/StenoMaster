@@ -3557,6 +3557,11 @@ class StenoApp {
 
       // Render the multi-tier plans selector cards
       this.renderSubscriptionPlans();
+      if (this.subSelectedTab === 'category') {
+        this.switchSubPlanTab('category');
+      } else {
+        this.switchSubPlanTab('month');
+      }
 
       // Default selection: retain current selection if valid, or pick popular/first plan
       if (!this.selectedPlan || !this.subscriptionPlans.some(p => p.id === this.selectedPlan.id)) {
@@ -3762,13 +3767,25 @@ class StenoApp {
     if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'सत्यापन अनुरोध भेजा जा रहा है...'; }
 
     try {
-      const res = await this.apiCall('/api/subscription/request-payment', 'POST', {
-        transaction_id: txnId,
-        screenshot_url: screenshot,
-        plan_name: currentPlan.name,
-        amount: currentPlan.price,
-        plan_days: currentPlan.days
-      });
+      let res;
+      if (this.subSelectedTab === 'category' && this.selectedCategoryCheckout && this.selectedCategoryCheckout.category_ids?.length > 0) {
+        res = await this.apiCall('/api/subscription/submit-category-upi', 'POST', {
+          order_id: `CAT_UPI_${Date.now()}`,
+          category_ids: this.selectedCategoryCheckout.category_ids,
+          all_in_one: false,
+          utr_number: txnId,
+          amount: this.selectedCategoryCheckout.totalAmount || parseFloat(document.getElementById('payAmountInput')?.value) || 49,
+          receipt_url: screenshot
+        });
+      } else {
+        res = await this.apiCall('/api/subscription/request-payment', 'POST', {
+          transaction_id: txnId,
+          screenshot_url: screenshot,
+          plan_name: currentPlan.name,
+          amount: currentPlan.price,
+          plan_days: currentPlan.days
+        });
+      }
 
       if (msgBox) {
         msgBox.style.display = 'block';
@@ -4992,6 +5009,210 @@ class StenoApp {
     }).join('');
   }
 
+
+  switchSubPlanTab(tab = 'month') {
+    this.subSelectedTab = tab;
+    const monthBtn = document.getElementById('subTabMonthBtn');
+    const catBtn = document.getElementById('subTabCategoryBtn');
+    const monthWrap = document.getElementById('subMonthlyPlansWrap');
+    const catWrap = document.getElementById('subCategoryPlansWrap');
+
+    if (tab === 'month') {
+      if (monthBtn) {
+        monthBtn.style.background = 'var(--primary, #2563eb)';
+        monthBtn.style.color = '#fff';
+        monthBtn.style.boxShadow = '0 2px 8px rgba(37,99,235,0.25)';
+      }
+      if (catBtn) {
+        catBtn.style.background = 'transparent';
+        catBtn.style.color = 'var(--text-secondary, #64748b)';
+        catBtn.style.boxShadow = 'none';
+      }
+      if (monthWrap) monthWrap.style.display = 'block';
+      if (catWrap) catWrap.style.display = 'none';
+
+      const qrCatChip = document.getElementById('qrChipCategory');
+      if (qrCatChip) qrCatChip.style.display = 'none';
+      const curPlan = this.selectedPlan || (this.subscriptionPlans && this.subscriptionPlans[0]) || { id: '1m', price: 100, days: 30, name: 'StenoMaster Pro — 1 Month (₹100/माह)' };
+      this.setQrPlan(curPlan.id, curPlan.price);
+    } else {
+      if (catBtn) {
+        catBtn.style.background = 'var(--primary, #2563eb)';
+        catBtn.style.color = '#fff';
+        catBtn.style.boxShadow = '0 2px 8px rgba(37,99,235,0.25)';
+      }
+      if (monthBtn) {
+        monthBtn.style.background = 'transparent';
+        monthBtn.style.color = 'var(--text-secondary, #64748b)';
+        monthBtn.style.boxShadow = 'none';
+      }
+      if (monthWrap) monthWrap.style.display = 'none';
+      if (catWrap) catWrap.style.display = 'block';
+
+      this.renderCategorySubscriptionView();
+    }
+  }
+
+  renderCategorySubscriptionView() {
+    const wrap = document.getElementById('subCategoryPlansWrap');
+    if (!wrap) return;
+
+    const data = this.selectedCategoryCheckout;
+    if (!data || !data.categories || data.categories.length === 0) {
+      wrap.innerHTML = `
+        <div style="background:var(--bg-card); border:2px dashed var(--border); border-radius:16px; padding:32px 20px; text-align:center;">
+          <div style="font-size:2.4rem; margin-bottom:8px;">📚</div>
+          <h4 style="margin:0 0 6px 0; font-size:1.15rem; font-weight:800; color:var(--text-main);">कैटेगरी अनुसार डिक्टेशन पैकेज (₹49 प्रति श्रेणी)</h4>
+          <p style="margin:0 auto 16px auto; max-width:500px; font-size:0.86rem; color:var(--text-muted); line-height:1.5;">
+            यदि आप पूरे 1 माह के प्लान के बजाय केवल अपनी विशेष पसंदीदा कैटेगरीज लेना चाहते हैं, तो नीचे बटन पर क्लिक करके कैटेगरीज चुनें।
+          </p>
+          <button type="button" class="btn-primary" onclick="stenoApp.openMultiCategoryCheckout()" style="padding:10px 24px; font-size:0.92rem; font-weight:800; border-radius:10px;">
+            🛒 कैटेगरीज चुनें (Select Categories) →
+          </button>
+        </div>
+      `;
+      return;
+    }
+
+    const catBadges = data.categories.map(c => `
+      <span style="display:inline-flex; align-items:center; gap:6px; background:rgba(37,99,235,0.1); border:1px solid rgba(37,99,235,0.25); color:var(--primary); padding:6px 12px; border-radius:8px; font-size:0.85rem; font-weight:700;">
+        <span>✓</span> <span>${this.escapeHtml(c.name)}</span> <span style="color:#0284c7; font-weight:800;">₹${c.price}</span>
+      </span>
+    `).join(' ');
+
+    wrap.innerHTML = `
+      <div style="background:linear-gradient(135deg, rgba(2,132,199,0.06), rgba(16,185,129,0.06)); border:2px solid #0284c7; border-radius:18px; padding:22px; margin-bottom:20px; box-shadow:0 8px 24px rgba(2,132,199,0.08);">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:12px; margin-bottom:16px;">
+          <div>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <span style="font-size:1.4rem;">📚</span>
+              <h4 style="margin:0; font-size:1.15rem; font-weight:800; color:var(--text-main);">चयनित कैटेगरीज (Selected Categories - ${data.categories.length})</h4>
+            </div>
+            <p style="margin:4px 0 0 0; font-size:0.78rem; color:#10b981; font-weight:700;">✓ लाइफटाइम / वार्षिक डिक्टेशन एक्सेस</p>
+          </div>
+          <button type="button" class="btn-secondary" onclick="stenoApp.openMultiCategoryCheckout()" style="padding:6px 14px; font-size:0.8rem; font-weight:700; border-radius:8px;">
+            ✏️ कैटेगरीज बदलें / और जोड़ें
+          </button>
+        </div>
+
+        <div style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:18px;">
+          ${catBadges}
+        </div>
+
+        <div style="background:var(--bg-surface, #ffffff); border:1px solid var(--border); border-radius:12px; padding:14px 18px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:16px;">
+          <div>
+            <div style="font-size:0.78rem; color:var(--text-muted);">कुल देय राशि (Total Amount):</div>
+            <div style="font-size:0.75rem; color:var(--text-secondary);">${data.categories.length} श्रेणी × ₹49 प्रति श्रेणी</div>
+          </div>
+          <div style="font-size:1.8rem; font-weight:900; color:#0284c7;">
+            ₹${data.totalAmount}
+          </div>
+        </div>
+
+        <div style="display:flex; flex-direction:column; gap:10px;">
+          <button type="button" id="btnPayCategoryCashfree" class="btn-primary" onclick="stenoApp.paySelectedCategoriesCashfree()" style="width:100%; padding:14px; font-size:1.02rem; font-weight:800; border-radius:12px; background:linear-gradient(135deg, #10b981, #059669); border:none; box-shadow:0 4px 16px rgba(16,185,129,0.35); display:flex; justify-content:center; align-items:center; gap:8px;">
+            <span>⚡ ₹${data.totalAmount} का सुरक्षित ऑनलाइन भुगतान करें (Cashfree Pay Now)</span>
+            <span>→</span>
+          </button>
+          <div style="text-align:center; font-size:0.82rem; color:var(--text-muted);">
+            अथवा नीचे दिए गए QR कोड को स्कैन कर <strong>₹${data.totalAmount}</strong> का सीधा भुगतान करें ↓
+          </div>
+        </div>
+      </div>
+    `;
+
+    const qrLabel = document.getElementById('qrPayAmountLabel');
+    if (qrLabel) qrLabel.textContent = `₹${data.totalAmount}`;
+    const payAmtInput = document.getElementById('payAmountInput');
+    if (payAmtInput) payAmtInput.value = data.totalAmount;
+    const payPlanInput = document.getElementById('payPlanNameInput');
+    if (payPlanInput) payPlanInput.value = `Categories Unlock (${data.categories.length} श्रेणियां)`;
+    const payDaysInput = document.getElementById('payPlanDaysInput');
+    if (payDaysInput) payDaysInput.value = 365;
+
+    let qrCatChip = document.getElementById('qrChipCategory');
+    const chipContainer = document.getElementById('qrPlanChipsContainer') || document.querySelector('.qr-plan-chip')?.parentElement;
+    if (!qrCatChip && chipContainer) {
+      qrCatChip = document.createElement('button');
+      qrCatChip.type = 'button';
+      qrCatChip.id = 'qrChipCategory';
+      qrCatChip.className = 'qr-plan-chip active';
+      qrCatChip.style.background = '#0284c7';
+      qrCatChip.style.color = '#ffffff';
+      chipContainer.prepend(qrCatChip);
+    }
+    if (qrCatChip) {
+      qrCatChip.style.display = 'inline-block';
+      qrCatChip.textContent = `📚 चयनित कैटेगरीज (₹${data.totalAmount})`;
+      document.querySelectorAll('.qr-plan-chip').forEach(c => {
+        if (c !== qrCatChip) c.classList.remove('active');
+      });
+    }
+  }
+
+  async paySelectedCategoriesCashfree() {
+    if (!this.user) {
+      this.showAuthGateway('student', 'कैटेगरीज खरीदने के लिए कृपया पहले लॉगिन करें।');
+      return;
+    }
+
+    const data = this.selectedCategoryCheckout;
+    if (!data || !data.category_ids || data.category_ids.length === 0) {
+      this.showToast('कोई कैटेगरी चयनित नहीं है।', 'warning');
+      return;
+    }
+
+    const btn = document.getElementById('btnPayCategoryCashfree');
+    const origText = btn ? btn.innerHTML : '';
+    if (btn) {
+      btn.disabled = true;
+      btn.innerHTML = '<span>⏳</span> <span>Cashfree सुरक्षित पेमेंट लोड हो रहा है...</span>';
+    }
+
+    try {
+      this.showToast(`Cashfree पेमेंट पेज (₹${data.totalAmount}) खोला जा रहा है... 🔐`, 'info');
+      const res = await this.apiCall('/api/subscription/create-custom-category-order', 'POST', {
+        category_ids: data.category_ids,
+        all_in_one: false
+      });
+
+      if (!res || !res.success) {
+        throw new Error(res?.error || 'ऑर्डर बनाने में असमर्थ।');
+      }
+
+      if (res.cashfree_configured && res.cashfree_session_id && window.Cashfree) {
+        const cashfree = window.Cashfree({
+          mode: res.cashfree_env === 'PRODUCTION' ? 'production' : 'sandbox'
+        });
+        cashfree.checkout({
+          paymentSessionId: res.cashfree_session_id,
+          redirectTarget: '_modal'
+        }).then((result) => {
+          if (result && result.error) {
+            this.showToast(`भुगतान: ${result.error.message || 'भुगतान रद्द किया गया'}`, 'warning');
+          }
+          if (result && result.paymentDetails) {
+            this.showToast('✓ भुगतान सफल! कैटेगरीज अनलॉक हो रही हैं...', 'success');
+            setTimeout(() => {
+              this.loadCategories();
+              this.loadPassages(true);
+            }, 1500);
+          }
+        });
+      } else {
+        this.showToast(`ऑनलाइन पेमेंट गेटवे अनुपलब्ध है। कृपया नीचे दिए गए QR कोड से ₹${data.totalAmount} का भुगतान करें।`, 'info');
+        document.getElementById('qrAccordionSection')?.scrollIntoView({ behavior: 'smooth' });
+      }
+    } catch (err) {
+      this.showToast(`त्रुटि: ${err.message}`, 'danger');
+    } finally {
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = origText;
+      }
+    }
+  }
+
   enrollCurrentCategory() {
     if (this.currentCategoryId) {
       this.openMultiCategoryCheckout(this.currentCategoryId);
@@ -5102,70 +5323,54 @@ class StenoApp {
     }
   }
 
-  async proceedCategoryPayment() {
+    proceedCategoryPayment() {
     const allInOneCheck = document.getElementById('checkAllInOnePass');
     const isAllInOne = allInOneCheck ? allInOneCheck.checked : false;
 
-    const selectedIds = [];
+    const selectedCats = [];
     document.querySelectorAll('.cat-checkout-checkbox:not(:disabled)').forEach(cb => {
       if (cb.checked) {
-        selectedIds.push(parseInt(cb.value, 10));
+        const catId = parseInt(cb.value, 10);
+        const cat = (this.categories || []).find(c => c.id === catId) || { id: catId, name: 'डिक्टेशन श्रेणी' };
+        selectedCats.push({
+          id: catId,
+          name: cat.name,
+          price: Number(cb.getAttribute('data-price') || cat.price || 49)
+        });
       }
     });
 
-    if (!isAllInOne && selectedIds.length === 0) {
-      this.showToast('कृपया कम से कम एक कैटेगरी चुनें।', 'warning');
+    if (!isAllInOne && selectedCats.length === 0) {
+      this.showToast('कृपया कम से कम एक कैटेगरी चुनें या ऑल-इन-वन प्रो पास चुनें।', 'warning');
       return;
     }
 
-    const payBtn = document.getElementById('checkoutProceedPayBtn');
-    const origHtml = payBtn ? payBtn.innerHTML : '';
-    if (payBtn) {
-      payBtn.disabled = true;
-      payBtn.innerHTML = '<span>⏳</span> <span>ऑर्डर तैयार हो रहा है...</span>';
-    }
+    this.closeCategoryCheckoutModal();
 
-    try {
-      const res = await this.apiCall('/api/subscription/create-custom-category-order', 'POST', {
-        category_ids: selectedIds,
-        all_in_one: isAllInOne
-      });
-
-      if (!res || !res.success) {
-        throw new Error(res?.error || 'ऑर्डर तैयार करने में विफल');
-      }
-
-      this.closeCategoryCheckoutModal();
-
-      if (res.cashfree_configured && res.cashfree_session_id && window.Cashfree) {
-        this.showToast('Cashfree पेमेंट गेटवे खुल रहा है...', 'info');
-        const cashfree = Cashfree({ mode: res.cashfree_env === 'PRODUCTION' ? 'production' : 'sandbox' });
-        cashfree.checkout({
-          paymentSessionId: res.cashfree_session_id,
-          redirectTarget: '_modal'
-        }).then((result) => {
-          if (result.error) {
-            this.showToast(`भुगतान त्रुटि: ${result.error.message}`, 'danger');
-          }
-          if (result.paymentDetails) {
-            this.showToast('✓ भुगतान सफल! कैटेगरीज अनलॉक हो रही हैं...', 'success');
-            setTimeout(() => {
-              this.loadCategories();
-              this.loadPassages(true);
-            }, 1500);
-          }
-        });
-        return;
-      }
-
-      this.openCategoryUpiModal(res);
-    } catch (err) {
-      this.showToast(`त्रुटि: ${err.message}`, 'danger');
-    } finally {
-      if (payBtn) {
-        payBtn.disabled = false;
-        payBtn.innerHTML = origHtml;
-      }
+    if (isAllInOne) {
+      this.subSelectedTab = 'month';
+      this.navigate('subscription');
+      setTimeout(() => {
+        this.switchSubPlanTab('month');
+        this.selectSubscriptionPlan('1m');
+        document.getElementById('subPlansGrid')?.scrollIntoView({ behavior: 'smooth' });
+      }, 100);
+      this.showToast('👑 ऑल-इन-वन मासिक पास चुना गया है। नीचे 4 प्लान्स में से अपना पसंदीदा प्लान चुनकर भुगतान करें।', 'info');
+    } else {
+      const totalAmount = selectedCats.reduce((sum, c) => sum + c.price, 0);
+      this.selectedCategoryCheckout = {
+        category_ids: selectedCats.map(c => c.id),
+        category_names: selectedCats.map(c => c.name),
+        categories: selectedCats,
+        totalAmount: totalAmount
+      };
+      this.subSelectedTab = 'category';
+      this.navigate('subscription');
+      setTimeout(() => {
+        this.switchSubPlanTab('category');
+        document.getElementById('subCategoryPlansWrap')?.scrollIntoView({ behavior: 'smooth' });
+      }, 100);
+      this.showToast(`✓ ${selectedCats.length} कैटेगरी चुनी गई (कुल: ₹${totalAmount})। नीचे दिए गए विकल्पों में से भुगतान करें।`, 'success');
     }
   }
 
