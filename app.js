@@ -511,6 +511,23 @@ class StenoApp {
     if (gateway) gateway.style.display = 'flex';
     if (appContainer) appContainer.style.display = 'none';
 
+    const hash = window.location.hash || '';
+    const search = window.location.search || '';
+    const isExplicitAdmin = hash.toLowerCase().includes('admin') || search.toLowerCase().includes('admin');
+
+    const tabAdminBtn = document.getElementById('tabAdminBtn');
+    const authControl = document.querySelector('.auth-segmented-control');
+    if (tabAdminBtn) {
+      tabAdminBtn.style.display = isExplicitAdmin ? 'inline-flex' : 'none';
+    }
+    if (authControl) {
+      authControl.style.display = isExplicitAdmin ? 'flex' : 'none';
+    }
+
+    if (!isExplicitAdmin && tab === 'admin') {
+      tab = 'student';
+    }
+
     this.switchAuthTab(tab);
     this.loadSavedCredentials();
     this.initGoogleAuth();
@@ -538,10 +555,9 @@ class StenoApp {
   }
 
   loadSavedCredentials() {
-    // 1. Student Saved Credentials (Single Unified 1-Click Card)
+    // 1. Student Saved Credentials (Only shown if previously saved ON THIS SPECIFIC DEVICE)
     try {
       const stuRaw = localStorage.getItem('stenomaster_saved_student_creds');
-      const stuCreds = stuRaw ? JSON.parse(stuRaw) : { email_or_username: 'student@stenomaster.com', password: 'student123', name: 'student@stenomaster.com' };
       const emailInp = document.getElementById('stuAuthEmail');
       const passInp = document.getElementById('stuAuthPassword');
       const card = document.getElementById('stuQuickLoginCard');
@@ -549,33 +565,58 @@ class StenoApp {
       const nameEl = document.getElementById('stuQuickLoginName');
       const clearBtn = document.getElementById('stuClearSavedCredsBtn');
 
-      if (emailInp && !emailInp.value) emailInp.value = stuCreds.email_or_username;
-      if (passInp && !passInp.value) passInp.value = stuCreds.password;
-      if (card) card.style.display = 'block';
-      if (subTitleEl) {
-        subTitleEl.textContent = stuRaw ? 'सहेजा गया छात्र खाता (Saved Account):' : 'डेमो छात्र खाता (Default Student):';
+      if (stuRaw) {
+        const stuCreds = JSON.parse(stuRaw);
+        if (stuCreds && (stuCreds.email_or_username || stuCreds.password)) {
+          if (emailInp) emailInp.value = stuCreds.email_or_username || '';
+          if (passInp) passInp.value = stuCreds.password || '';
+          if (card) card.style.display = 'block';
+          if (subTitleEl) subTitleEl.textContent = 'इस डिवाइस पर सहेजा गया छात्र खाता:';
+          if (nameEl) nameEl.textContent = stuCreds.name || stuCreds.email_or_username;
+          if (clearBtn) clearBtn.style.display = 'inline-block';
+        } else {
+          if (card) card.style.display = 'none';
+          if (clearBtn) clearBtn.style.display = 'none';
+        }
+      } else {
+        // Fresh device or link shared with someone else: strictly leave empty
+        if (emailInp) emailInp.value = '';
+        if (passInp) passInp.value = '';
+        if (card) card.style.display = 'none';
+        if (clearBtn) clearBtn.style.display = 'none';
       }
-      if (nameEl) nameEl.textContent = stuCreds.name || stuCreds.email_or_username;
-      if (clearBtn) clearBtn.style.display = stuRaw ? 'inline-block' : 'none';
     } catch (e) {
       console.warn('Failed to load saved student credentials', e);
     }
 
-    // 2. Admin Saved Credentials (or Default Demo Admin if empty)
+    // 2. Admin Saved Credentials (Only shown if previously saved ON THIS SPECIFIC DEVICE)
     try {
       const adminRaw = localStorage.getItem('stenomaster_saved_admin_creds');
-      const adminCreds = adminRaw ? JSON.parse(adminRaw) : { email_or_username: 'admin@stenomaster.com', password: 'admin123', name: 'मुख्य एडमिनिस्ट्रेटर (Administrator)' };
       const emailInp = document.getElementById('adminAuthEmail');
       const passInp = document.getElementById('adminAuthPassword');
       const card = document.getElementById('adminQuickLoginCard');
       const nameEl = document.getElementById('adminQuickLoginName');
       const clearBtn = document.getElementById('adminClearSavedCredsBtn');
 
-      if (emailInp && !emailInp.value) emailInp.value = adminCreds.email_or_username;
-      if (passInp && !passInp.value) passInp.value = adminCreds.password;
-      if (card) card.style.display = 'block';
-      if (nameEl) nameEl.textContent = adminCreds.name || adminCreds.email_or_username || 'Administrator';
-      if (clearBtn && adminRaw) clearBtn.style.display = 'inline-block';
+      if (adminRaw) {
+        const adminCreds = JSON.parse(adminRaw);
+        if (adminCreds && (adminCreds.email_or_username || adminCreds.password)) {
+          if (emailInp) emailInp.value = adminCreds.email_or_username || '';
+          if (passInp) passInp.value = adminCreds.password || '';
+          if (card) card.style.display = 'block';
+          if (nameEl) nameEl.textContent = adminCreds.name || adminCreds.email_or_username || 'Administrator';
+          if (clearBtn) clearBtn.style.display = 'inline-block';
+        } else {
+          if (card) card.style.display = 'none';
+          if (clearBtn) clearBtn.style.display = 'none';
+        }
+      } else {
+        // Fresh device: strictly leave empty
+        if (emailInp) emailInp.value = '';
+        if (passInp) passInp.value = '';
+        if (card) card.style.display = 'none';
+        if (clearBtn) clearBtn.style.display = 'none';
+      }
     } catch (e) {
       console.warn('Failed to load saved admin credentials', e);
     }
@@ -586,16 +627,12 @@ class StenoApp {
     const emailInp = document.getElementById('stuAuthEmail');
     const passInp = document.getElementById('stuAuthPassword');
     const card = document.getElementById('stuQuickLoginCard');
-    const subTitleEl = document.getElementById('stuQuickLoginSubtitle');
-    const nameEl = document.getElementById('stuQuickLoginName');
     const clearBtn = document.getElementById('stuClearSavedCredsBtn');
-    if (emailInp) emailInp.value = 'student@stenomaster.com';
-    if (passInp) passInp.value = 'student123';
-    if (card) card.style.display = 'block';
-    if (subTitleEl) subTitleEl.textContent = 'डेमो छात्र खाता (Default Student):';
-    if (nameEl) nameEl.textContent = 'student@stenomaster.com';
+    if (emailInp) emailInp.value = '';
+    if (passInp) passInp.value = '';
+    if (card) card.style.display = 'none';
     if (clearBtn) clearBtn.style.display = 'none';
-    this.showToast('सहेजी गई छात्र लॉगिन जानकारी हटा दी गई। डेमो खाता सक्रिय है।', 'info');
+    this.showToast('सहेजी गई छात्र लॉगिन जानकारी हटा दी गई।', 'info');
   }
 
   clearSavedAdminCreds() {
@@ -612,18 +649,30 @@ class StenoApp {
   }
 
   oneClickStudentLogin() {
+    const stuRaw = localStorage.getItem('stenomaster_saved_student_creds');
+    if (!stuRaw) {
+      this.showToast('कृपया मोबाइल/ईमेल एवं पासवर्ड दर्ज करके लॉगिन करें।', 'info');
+      return;
+    }
+    const stuCreds = JSON.parse(stuRaw);
     const emailInp = document.getElementById('stuAuthEmail');
     const passInp = document.getElementById('stuAuthPassword');
-    if (!emailInp?.value || !passInp?.value) {
-      const stuRaw = localStorage.getItem('stenomaster_saved_student_creds');
-      const stuCreds = stuRaw ? JSON.parse(stuRaw) : { email_or_username: 'student@stenomaster.com', password: 'student123' };
-      if (emailInp) emailInp.value = stuCreds.email_or_username;
-      if (passInp) passInp.value = stuCreds.password;
-    }
+    if (emailInp) emailInp.value = stuCreds.email_or_username || '';
+    if (passInp) passInp.value = stuCreds.password || '';
     this.handleStudentLogin();
   }
 
   oneClickAdminLogin() {
+    const adminRaw = localStorage.getItem('stenomaster_saved_admin_creds');
+    if (!adminRaw) {
+      this.showToast('कृपया एडमिन ईमेल व पासवर्ड दर्ज करें।', 'info');
+      return;
+    }
+    const adminCreds = JSON.parse(adminRaw);
+    const emailInp = document.getElementById('adminAuthEmail');
+    const passInp = document.getElementById('adminAuthPassword');
+    if (emailInp) emailInp.value = adminCreds.email_or_username || '';
+    if (passInp) passInp.value = adminCreds.password || '';
     this.handleAdminLogin();
   }
 
@@ -1551,6 +1600,11 @@ class StenoApp {
         }
       }
 
+      const headerAdminPortalLink = document.getElementById('headerAdminPortalLink');
+      if (headerAdminPortalLink) {
+        headerAdminPortalLink.style.display = (this.user.role === 'admin') ? 'inline-flex' : 'none';
+      }
+
       if (this.user.role === 'admin') {
         if (adminNav) adminNav.style.display = 'flex';
         if (areaBadge) {
@@ -1567,6 +1621,8 @@ class StenoApp {
           avatarEl.classList.add('pro-rainbow-ring');
         }
       } else {
+        const headerAdminPortalLink = document.getElementById('headerAdminPortalLink');
+        if (headerAdminPortalLink) headerAdminPortalLink.style.display = 'none';
         if (adminNav) adminNav.style.display = 'none';
         if (areaBadge) {
           areaBadge.className = 'area-indicator-badge';
@@ -1730,15 +1786,7 @@ class StenoApp {
             </div>
           </a>
         `).join('')}
-        <div style="margin: 10px 4px 6px 4px; border-top: 1px dashed var(--border-subtle, #e2e8f0); padding-top: 8px;">
-          <a href="/admin.html" class="nav-item admin-switch-direct-link" style="border:1px solid rgba(239, 68, 68, 0.25); background:rgba(239, 68, 68, 0.05); border-radius:10px; padding:9px 12px; text-decoration:none;" title="प्रशासक पोर्टल खोलें">
-            <span class="nav-item-icon" style="font-size:1.15rem; color:#ef4444;">🛡️</span>
-            <div style="flex:1; min-width:0;">
-              <div style="font-weight:700; font-size:0.86rem; color:#ef4444;">एडमिन पोर्टल (Admin Portal)</div>
-              <div style="font-size:0.7rem; color:var(--text-muted);">प्रशासक लॉगिन एवं नियंत्रण →</div>
-            </div>
-          </a>
-        </div>
+
       `;
 
       studentItems.forEach(item => {

@@ -1580,6 +1580,12 @@
         } catch(e) {
           this.user = null;
         }
+
+        // Security Guard: Non-admins cannot view or stay on admin.html
+        if (!this.token || !this.user || this.user.role !== 'admin') {
+          window.location.replace('/?auth_error=unauthorized_admin');
+          return;
+        }
         this.categories = [];
         this._activeLoadingOps = 0;
         this._topLoadingTimer = null;

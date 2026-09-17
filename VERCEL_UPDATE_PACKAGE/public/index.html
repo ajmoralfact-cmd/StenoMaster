@@ -97,7 +97,7 @@
                         <!-- 1. Student Login Sub-Form -->
             <div id="studentSubLoginForm">
               <!-- Quick 1-Click Login Card (Single Smart Card for Student) -->
-              <div id="stuQuickLoginCard" style="background:linear-gradient(135deg, rgba(2, 132, 199, 0.08), rgba(99, 102, 241, 0.08)); border:1.5px solid #0284c7; border-radius:12px; padding:12px 14px; margin-bottom:14px;">
+              <div id="stuQuickLoginCard" style="display:none; background:linear-gradient(135deg, rgba(2, 132, 199, 0.08), rgba(99, 102, 241, 0.08)); border:1.5px solid #0284c7; border-radius:12px; padding:12px 14px; margin-bottom:14px;">
                 <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
                   <div style="min-width:0;">
                     <div id="stuQuickLoginSubtitle" style="font-size:0.75rem; color:var(--text-muted);">सहेजा गया छात्र खाता (Saved Account):</div>
@@ -114,7 +114,7 @@
                   <label class="form-label">मोबाइल नंबर, ईमेल, या छात्र आईडी (Mobile Number, Email or Student ID)</label>
                   <div class="input-with-icon">
                     <span class="input-icon">👤</span>
-                    <input type="text" id="stuAuthEmail" class="form-input" placeholder="उदा. 9876543210 / ईमेल / STM-2026-000001" required autocomplete="username">
+                    <input type="text" id="stuAuthEmail" class="form-input" placeholder="मोबाइल नंबर, ईमेल, या छात्र कोड दर्ज करें" required autocomplete="username">
                   </div>
                 </div>
                 <div class="form-group">
@@ -403,8 +403,8 @@
             </div>
           </button>
 
-          <!-- Admin Portal Quick Switch Link -->
-          <a href="/admin.html" class="btn-secondary hide-mobile" style="color:#ef4444; border-color:rgba(239,68,68,0.25); background:rgba(239,68,68,0.05); font-weight:700; text-decoration:none; padding:6px 12px; display:inline-flex; align-items:center; gap:6px; border-radius:8px; font-size:0.82rem;" title="एडमिन पोर्टल खोलें">
+          <!-- Admin Portal Quick Switch Link (ONLY shown when user is Admin) -->
+          <a href="/admin.html" id="headerAdminPortalLink" class="btn-secondary hide-mobile" style="display:none; color:#ef4444; border-color:rgba(239,68,68,0.25); background:rgba(239,68,68,0.05); font-weight:700; text-decoration:none; padding:6px 12px; align-items:center; gap:6px; border-radius:8px; font-size:0.82rem;" title="एडमिन पोर्टल खोलें">
             <span>🛡️</span> <span>एडमिन पोर्टल</span>
           </a>
 
@@ -3440,7 +3440,7 @@
   <script src="/js/keyboard_map.js?v=8.1"></script>
   <script src="/js/typing_engine.js?v=8.1"></script>
   <script src="/js/ocr_service.js?v=1.1"></script>
-  <script src="/js/app.js?v=8.8"></script>
+  <script src="/js/app.js?v=8.9"></script>
   <!-- Strict Exam Hall Anti-Cheat Warning Modal -->
   <div class="modal-overlay" id="examHallWarningModal" style="z-index:99999;">
     <div class="modal-card" style="max-width: 480px; text-align:center; border:2px solid #ef4444; box-shadow:0 10px 40px rgba(239,68,68,0.3);">
