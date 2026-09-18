@@ -12,7 +12,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Mukta:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/css/style.css?v=10.7">
+  <link rel="stylesheet" href="/css/style.css?v=10.8">
   <!-- Google Identity Services SDK -->
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   <script>
@@ -593,14 +593,8 @@
         <!-- Class Cards Grid -->
         <!-- Test Series Horizontal Categories List (Screenshot 1 Style) -->
         <div id="homeCategoriesList" class="horizontal-categories-list" style="display:flex; flex-direction:column; gap:12px; margin-bottom:24px;"></div>
-        <!-- Fallback / Filtered Passage Cards Grid -->
-        <!-- Section Header for All Classes -->
-        <div class="section-header" style="margin-top:20px; margin-bottom:12px;">
-          <h3 style="margin:0; font-size:1.1rem; font-weight:800; display:flex; align-items:center; gap:8px;">
-            <span>⚡</span> नवीनतम डिक्टेशन्स (Latest Dictations)
-          </h3>
-        </div>
-        <div class="classes-grid" id="homeClassCardsGrid"></div>
+        <!-- Classes are exclusively displayed inside their respective categories -->
+        <div id="homeClassCardsGrid" style="display:none;" aria-hidden="true"></div>
       </main>
 
       
@@ -3405,7 +3399,7 @@
   <script src="/js/keyboard_map.js?v=8.1"></script>
   <script src="/js/typing_engine.js?v=8.1"></script>
   <script src="/js/ocr_service.js?v=1.1"></script>
-  <script src="/js/app.js?v=10.7"></script>
+  <script src="/js/app.js?v=10.8"></script>
   <!-- Strict Exam Hall Anti-Cheat Warning Modal -->
   <div class="modal-overlay" id="examHallWarningModal" style="z-index:99999;">
     <div class="modal-card" style="max-width: 480px; text-align:center; border:2px solid #ef4444; box-shadow:0 10px 40px rgba(239,68,68,0.3);">

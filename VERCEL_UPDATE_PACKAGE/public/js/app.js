@@ -2616,15 +2616,8 @@ class StenoApp {
   renderHomeCards() {
     const grid = document.getElementById('homeClassCardsGrid');
     if (!grid) return;
-
-    // Show all classes together without any category filter split
-    const list = (this.allPassages && this.allPassages.length > 0) ? this.allPassages : (this.passages || []);
-    if (!list || list.length === 0) {
-      this.renderPassagesSkeleton();
-      return;
-    }
-
-    grid.innerHTML = list.map(p => this.createPassageCardHTML(p)).join('');
+    grid.innerHTML = '';
+    grid.style.display = 'none';
   }
 
   renderClasses() {
