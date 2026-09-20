@@ -3420,20 +3420,27 @@ def mark_cashfree_order_paid(
     """, (cf_payment_id or '', payment_method or 'Cashfree PG', pay_time, order_id))
 
     # Calculate new expiry: if user already has an active future end date, extend from there; otherwise now + plan_days
-    c.execute("SELECT subscription_status, subscription_end FROM users WHERE id = ?", (user_id,))
+    c.execute("SELECT subscription_status, subscription_plan, subscription_end FROM users WHERE id = ?", (user_id,))
     u = c.fetchone()
     base_dt = now_dt
-    if u and u["subscription_status"] == "active" and u["subscription_end"]:
+    existing_plan = ""
+    if u and u["subscription_status"] == "active" and u.get("subscription_end"):
         try:
-            curr_end = datetime.fromisoformat(u["subscription_end"])
-            if curr_end > now_dt:
-                base_dt = curr_end
+            curr_end = parse_db_datetime(u["subscription_end"])
+            if curr_end:
+                now_cmp = datetime.now(curr_end.tzinfo) if curr_end.tzinfo else now_dt
+                if curr_end > now_cmp:
+                    base_dt = curr_end
+                    existing_plan = u.get("subscription_plan") or ""
         except Exception:
             pass
 
     new_end_dt = base_dt + timedelta(days=plan_days)
     new_end_iso = new_end_dt.isoformat()
-    plan_title = f"StenoMaster Pro — {plan_days} दिन (₹{order['amount']:.0f})"
+    if existing_plan and ("1 वर्ष" in existing_plan or "365" in existing_plan):
+        plan_title = f"{existing_plan} (+{plan_days} दिन)"
+    else:
+        plan_title = f"StenoMaster Pro — {plan_days} दिन (₹{order['amount']:.0f})"
 
     c.execute("""
         UPDATE users
@@ -4701,9 +4708,28 @@ def purchase_course_with_gold_coins(user_id: int, plan_id: str = None) -> Dict[s
         VALUES (?, ?, 'course_purchase_full', ?, ?)
     """, (user_id, -required_coins, f"{plan_name} कोर्स खरीद में {required_coins} गोल्ड कॉइन्स का उपयोग", now_iso))
 
-    # Grant subscription
+    # Grant or extend subscription safely
     now_dt = datetime.now()
-    exp_dt = now_dt + timedelta(days=plan_days)
+    c.execute("SELECT subscription_status, subscription_plan, subscription_end FROM users WHERE id = ?", (user_id,))
+    u_sub = c.fetchone()
+    base_dt = now_dt
+    existing_plan = ""
+    if u_sub and (u_sub["subscription_status"] if isinstance(u_sub, dict) else u_sub[0]) == "active":
+        curr_sub_end = u_sub.get("subscription_end") if isinstance(u_sub, dict) else u_sub[2]
+        if curr_sub_end:
+            try:
+                parsed_end = parse_db_datetime(curr_sub_end)
+                if parsed_end:
+                    now_cmp = datetime.now(parsed_end.tzinfo) if parsed_end.tzinfo else now_dt
+                    if parsed_end > now_cmp:
+                        base_dt = parsed_end
+                        existing_plan = u_sub.get("subscription_plan") if isinstance(u_sub, dict) else u_sub[1]
+            except Exception:
+                pass
+
+    exp_dt = base_dt + timedelta(days=plan_days)
+    final_plan_title = f"{existing_plan} (+{plan_days} दिन)" if existing_plan else plan_name
+
     c.execute("""
         UPDATE users
         SET subscription_status = 'active',
@@ -4711,7 +4737,7 @@ def purchase_course_with_gold_coins(user_id: int, plan_id: str = None) -> Dict[s
             subscription_start = ?,
             subscription_end = ?
         WHERE id = ?
-    """, (plan_name, now_dt.isoformat(), exp_dt.isoformat(), user_id))
+    """, (final_plan_title, now_dt.isoformat(), exp_dt.isoformat(), user_id))
 
     c.execute("""
         INSERT INTO notifications (user_id, title, message, type, is_read, created_at)
