@@ -7008,3 +7008,23 @@ body.dark-mode .ww-tip-row {
     justify-content: center;
   }
 }
+
+
+.btn-toggle-pwd {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  font-size: 1.1rem;
+  cursor: pointer;
+  padding: 4px;
+  opacity: 0.65;
+  transition: opacity 0.2s, transform 0.15s;
+  line-height: 1;
+}
+.btn-toggle-pwd:hover {
+  opacity: 1;
+  transform: translateY(-50%) scale(1.15);
+}

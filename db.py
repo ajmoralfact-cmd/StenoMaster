@@ -4406,3 +4406,100 @@ def admin_update_category_price(category_id: int, price: int) -> Dict[str, Any]:
     conn.commit()
     conn.close()
     return {"success": True, "message": f"कैटेगरी मूल्य ₹{price} सुरक्षित हो गया!"}
+
+
+
+# -----------------------------------------------------------------------------
+# Student Profile & Account Management (Name, Username, Email, Phone, Password)
+# -----------------------------------------------------------------------------
+def update_student_full_profile(user_id: int, data: Dict[str, Any]) -> Dict[str, Any]:
+    conn = get_db()
+    c = conn.cursor()
+
+    c.execute("SELECT id, username, email, phone FROM users WHERE id = ?", (user_id,))
+    curr_user = c.fetchone()
+    if not curr_user:
+        conn.close()
+        return {"success": False, "error": "उपयोगकर्ता खाता नहीं मिला।"}
+
+    curr_uname = curr_user['username'] if isinstance(curr_user, dict) else curr_user[1]
+    curr_email = curr_user['email'] if isinstance(curr_user, dict) else curr_user[2]
+
+    # Username change
+    new_uname = (data.get("username") or "").strip()
+    if new_uname and new_uname != curr_uname:
+        if not re.match(r'^[a-zA-Z0-9_]{3,30}$', new_uname):
+            conn.close()
+            return {"success": False, "error": "यूज़रनेम में केवल 3-30 अक्षर, अंक या अंडरस्कोर (_) होने चाहिए।"}
+        c.execute("SELECT id FROM users WHERE LOWER(username) = LOWER(?) AND id != ?", (new_uname, user_id))
+        if c.fetchone():
+            conn.close()
+            return {"success": False, "error": f"यूज़रनेम '{new_uname}' पहले से किसी अन्य छात्र द्वारा उपयोग में है।"}
+        c.execute("UPDATE users SET username = ? WHERE id = ?", (new_uname, user_id))
+
+    # Email change
+    new_email = (data.get("email") or "").strip().lower()
+    if new_email and new_email != (curr_email or "").lower():
+        if "@" not in new_email or "." not in new_email:
+            conn.close()
+            return {"success": False, "error": "कृपया एक वैध ईमेल पता दर्ज करें।"}
+        c.execute("SELECT id FROM users WHERE LOWER(email) = LOWER(?) AND id != ?", (new_email, user_id))
+        if c.fetchone():
+            conn.close()
+            return {"success": False, "error": f"ईमेल '{new_email}' पहले से पंजीकृत है।"}
+        c.execute("UPDATE users SET email = ? WHERE id = ?", (new_email, user_id))
+
+    # Phone change
+    if "phone" in data:
+        raw_phone = str(data.get("phone") or "").replace("+91", "").strip()
+        clean_phone = "".join(filter(str.isdigit, raw_phone))
+        if len(clean_phone) > 10:
+            clean_phone = clean_phone[-10:]
+        c.execute("UPDATE users SET phone = ? WHERE id = ?", (clean_phone, user_id))
+
+    # Profiles table update
+    display_name = (data.get("display_name") or new_uname or curr_uname).strip()
+    target_exam = data.get("target_exam") or "SSC Stenographer"
+    preferred_language = data.get("preferred_language") or "hindi"
+    preferred_typing_mode = data.get("preferred_typing_mode") or "mangal"
+    target_wpm = int(data.get("target_wpm") or 80)
+    show_on_lb = 1 if data.get("show_on_leaderboard", True) else 0
+
+    c.execute("""
+        UPDATE profiles
+        SET display_name = ?, target_exam = ?, preferred_language = ?,
+            preferred_typing_mode = ?, target_wpm = ?, show_on_leaderboard = ?
+        WHERE user_id = ?
+    """, (display_name, target_exam, preferred_language, preferred_typing_mode, target_wpm, show_on_lb, user_id))
+
+    conn.commit()
+    conn.close()
+    return {"success": True, "message": "प्रोफ़ाइल व खाता विवरण सफलतापूर्वक सहेज लिया गया है! ✅"}
+
+
+def change_user_password(user_id: int, current_password: str, new_password: str) -> Dict[str, Any]:
+    curr = (current_password or "").strip()
+    new_p = (new_password or "").strip()
+    if not curr:
+        return {"success": False, "error": "कृपया अपना वर्तमान पासवर्ड दर्ज करें।"}
+    if not new_p or len(new_p) < 4:
+        return {"success": False, "error": "नया पासवर्ड कम से कम 4 अक्षरों का होना चाहिए।"}
+
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("SELECT id, username, email, password_hash FROM users WHERE id = ?", (user_id,))
+    user = c.fetchone()
+    if not user:
+        conn.close()
+        return {"success": False, "error": "उपयोगकर्ता खाता नहीं मिला।"}
+
+    pwd_hash = user['password_hash'] if isinstance(user, dict) else user[3]
+    if hash_password(curr) != pwd_hash:
+        conn.close()
+        return {"success": False, "error": "वर्तमान पासवर्ड गलत है। कृपया सही पासवर्ड दर्ज करें।"}
+
+    new_hash = hash_password(new_p)
+    c.execute("UPDATE users SET password_hash = ? WHERE id = ?", (new_hash, user_id))
+    conn.commit()
+    conn.close()
+    return {"success": True, "message": "पासवर्ड सफलतापूर्वक बदल दिया गया है! ✅"}

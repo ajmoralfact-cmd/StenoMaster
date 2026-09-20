@@ -1217,31 +1217,32 @@ class StenoMasterHandler(http.server.SimpleHTTPRequestHandler):
             self._send_json(200, eval_result)
             return
 
-        # 4. Profile Update
+        # 4. Profile & Account Update (Name, Username, Email, Phone, Exam Settings)
         if path == '/api/profile/update':
             if not user:
                 self._send_auth_required()
                 return
             data = self._read_json_body()
-            conn = db.get_db()
-            c = conn.cursor()
-            c.execute("""
-                UPDATE profiles
-                SET display_name = ?, target_exam = ?, preferred_language = ?,
-                    preferred_typing_mode = ?, target_wpm = ?, show_on_leaderboard = ?
-                WHERE user_id = ?
-            """, (
-                data.get("display_name", user.get("display_name")),
-                data.get("target_exam", user.get("target_exam")),
-                data.get("preferred_language", user.get("preferred_language")),
-                data.get("preferred_typing_mode", user.get("preferred_typing_mode")),
-                int(data.get("target_wpm", 50)),
-                1 if data.get("show_on_leaderboard", True) else 0,
-                user['user_id']
-            ))
-            conn.commit()
-            conn.close()
-            self._send_json(200, {"message": "Profile updated successfully"})
+            res = db.update_student_full_profile(user['user_id'], data)
+            if res.get("success"):
+                self._send_json(200, res)
+            else:
+                self._send_json(400, res)
+            return
+
+        # 4b. Change Password
+        if path == '/api/profile/change-password':
+            if not user:
+                self._send_auth_required()
+                return
+            data = self._read_json_body()
+            curr_pass = data.get("current_password", "")
+            new_pass = data.get("new_password", "")
+            res = db.change_user_password(user['user_id'], curr_pass, new_pass)
+            if res.get("success"):
+                self._send_json(200, res)
+            else:
+                self._send_json(400, res)
             return
 
         # 5. Mark notifications read

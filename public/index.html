@@ -12,7 +12,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Mukta:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/css/style.css?v=11.0">
+  <link rel="stylesheet" href="/css/style.css?v=11.1">
   <!-- Google Identity Services SDK -->
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   <script>
@@ -1437,7 +1437,7 @@
       <!-- ===================================================================
            VIEW: PROFILE
            =================================================================== -->
-            <main class="page-view" id="view-profile" style="max-width: 1040px; margin: 0 auto; padding-bottom: 50px;">
+                  <main class="page-view" id="view-profile" style="max-width: 1040px; margin: 0 auto; padding-bottom: 50px;">
         <div class="view-top-back-wrap" style="margin-bottom:16px;">
           <button type="button" class="view-back-strip-btn" onclick="stenoApp.goBack()" title="वापस जाएं">
             <span class="back-icon">←</span> <span>वापस जाएं (Back)</span>
@@ -1524,222 +1524,193 @@
           </div>
         </div>
 
-        <!-- 2. FOUR 3D COLOURFUL TRANSPARENT BOXES GRID -->
-        <div class="profile-boxes-grid">
-          
-          <!-- BOX 1: 🎓 आधिकारिक छात्र पहचान (Student ID & Credentials) - THEME BLUE -->
-          <div class="profile-3d-box profile-theme-blue">
-            <div class="profile-3d-inner">
-              <div>
-                <div class="profile-box-header">
-                  <div class="profile-box-icon-wrap icon-blue">🎓</div>
-                  <div>
-                    <h3 class="profile-box-title">आधिकारिक छात्र पहचान</h3>
-                    <p class="profile-box-subtitle">Student Roll & Account Credentials</p>
-                  </div>
-                </div>
-
-                <div class="profile-info-list">
-                  <div class="profile-info-item">
-                    <span class="profile-info-label">छात्र आईडी (Student ID):</span>
-                    <div class="profile-info-val-wrap">
-                      <span class="profile-highlight-code" id="profileStudentCodeDisplay">STM-2026-000008</span>
-                      <button type="button" class="btn-micro-copy" onclick="stenoApp.copyStudentId()" title="कॉपी करें">📋 कॉपी</button>
+        <!-- 2. MAIN WORK OF MY PROFILE: EDITABLE PROFILE & ACCOUNT DETAILS (NAME, USERNAME, EMAIL, PHONE, EXAM & PASSWORD) -->
+        <form onsubmit="stenoApp.saveProfile(event)" id="profileFullForm">
+          <div class="profile-boxes-grid" style="margin-bottom: 22px;">
+            
+            <!-- BOX 1: 👤 व्यक्तिगत पहचान व खाता संपादन (Name, Username, Email, Phone) - THEME BLUE -->
+            <div class="profile-3d-box profile-theme-blue">
+              <div class="profile-3d-inner">
+                <div>
+                  <div class="profile-box-header">
+                    <div class="profile-box-icon-wrap icon-blue">👤</div>
+                    <div>
+                      <h3 class="profile-box-title">व्यक्तिगत पहचान व खाता विवरण</h3>
+                      <p class="profile-box-subtitle">नाम, यूज़रनेम, ईमेल एवं फ़ोन नंबर अपडेट करें</p>
                     </div>
                   </div>
 
-                  <div class="profile-info-item">
-                    <span class="profile-info-label">पंजीकृत ईमेल (Email):</span>
-                    <span class="profile-info-val" id="profileEmailDisplay">student@stenomaster.com</span>
-                  </div>
-
-                  <div class="profile-info-item">
-                    <span class="profile-info-label">मोबाइल नंबर (Phone):</span>
-                    <span class="profile-info-val" id="profilePhoneDisplay">+91 9876543210</span>
-                  </div>
-
-                  <div class="profile-info-item">
-                    <span class="profile-info-label">खाता स्थिति (Status):</span>
-                    <span class="badge badge-success" style="font-size:0.75rem; padding:4px 10px;">🟢 सत्यापित एवं सक्रिय (Verified)</span>
-                  </div>
-                </div>
-              </div>
-
-              <div class="profile-box-footer">
-                <button type="button" class="btn-box-action btn-blue" onclick="stenoApp.openModal('feedbackModal')">
-                  <span>💬</span> <span>तकनीकी सहायता / सुझाव भेजें</span>
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <!-- BOX 2: 👑 प्रो सदस्यता एवं वैधता स्थिति - THEME EMERALD -->
-          <div class="profile-3d-box profile-theme-emerald">
-            <div class="profile-3d-inner">
-              <div>
-                <div class="profile-box-header">
-                  <div class="profile-box-icon-wrap icon-emerald">👑</div>
-                  <div>
-                    <h3 class="profile-box-title">प्रो सदस्यता एवं वैधता स्थिति</h3>
-                    <p class="profile-box-subtitle">Subscription & Premium Access Status</p>
-                  </div>
-                </div>
-
-                <div class="profile-sub-details-wrap">
-                  <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:12px; flex-wrap:wrap;">
-                    <span id="profileSubscriptionBadge" class="badge badge-success" style="font-size:0.82rem; padding:5px 12px; border-radius:12px; font-weight:700;">
-                      👑 PRO ACTIVE
-                    </span>
-                    <span id="profileDaysRemainingBadge" class="profile-countdown-badge">
-                      ⏳ 30 दिन शेष
-                    </span>
-                  </div>
-
-                  <div class="profile-sub-name-box">
-                    <div style="font-size:0.78rem; color:var(--text-muted); font-weight:600;">सक्रिय प्लान:</div>
-                    <div id="profilePlanTitle" style="font-size:1.05rem; font-weight:800; color:var(--text-main); margin-top:2px;">
-                      StenoMaster Pro — 1 माह
-                    </div>
-                    <div id="profileExpiryDisplay" style="font-size:0.8rem; color:var(--text-secondary); margin-top:4px;">
-                      📅 वैधता: सक्रिय
-                    </div>
-                  </div>
-
-                  <div class="profile-features-checklist">
-                    <div class="feat-check-item"><span>✓</span> <span>सभी 100+ डिक्टेशन कक्षाएं अनलॉक</span></div>
-                    <div class="feat-check-item"><span>✓</span> <span>मंगल (Inscript/Remington) व कृति देव 010 सटीक मूल्यांकन</span></div>
-                    <div class="feat-check-item"><span>✓</span> <span>0.5x से 2.0x ऑडियो प्लेबैक गति नियंत्रण</span></div>
-                    <div class="feat-check-item"><span>✓</span> <span>SSC / UPSSSC मानक परीक्षा रिपोर्ट कार्ड</span></div>
-                  </div>
-                </div>
-              </div>
-
-              <div class="profile-box-footer">
-                <button type="button" class="btn-box-action btn-emerald" onclick="stenoApp.navigate('subscription')">
-                  <span>💳</span> <span>सदस्यता प्लान्स व नवीनीकरण (Manage) →</span>
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <!-- BOX 3: 🎯 परीक्षा लक्ष्य व टंकण प्राथमिकताएं (Form) - THEME PURPLE -->
-          <div class="profile-3d-box profile-theme-purple">
-            <div class="profile-3d-inner">
-              <div>
-                <div class="profile-box-header">
-                  <div class="profile-box-icon-wrap icon-purple">🎯</div>
-                  <div>
-                    <h3 class="profile-box-title">परीक्षा लक्ष्य व टंकण वरीयताएँ</h3>
-                    <p class="profile-box-subtitle">Personalize Target Exam & Typing System</p>
-                  </div>
-                </div>
-
-                <form onsubmit="stenoApp.saveProfile(event)" id="profileSettingsForm">
-                  <div class="form-group" style="margin-bottom:12px;">
-                    <label class="form-label" style="font-size:0.82rem;">प्रदर्शित नाम (Display Name):</label>
-                    <input type="text" id="profileDisplayNameInput" class="form-input" required placeholder="अपना पूरा नाम दर्ज करें">
-                  </div>
-
-                  <div class="form-group" style="margin-bottom:12px;">
-                    <label class="form-label" style="font-size:0.82rem;">लक्ष्य परीक्षा (Target Exam):</label>
-                    <select id="profileTargetExamSelect" class="form-select">
-                      <option value="SSC Stenographer">SSC Stenographer Grade C & D</option>
-                      <option value="UPSSSC Stenographer">UPSSSC आशुलिपिक परीक्षा</option>
-                      <option value="High Court Stenographer">उच्च न्यायालय / जिला न्यायालय स्टेनो</option>
-                      <option value="State PSC Steno">राज्य लोक सेवा आयोग स्टेनो</option>
-                      <option value="Parliamentary Reporter">संसदीय रिपोर्टर / विधानसभा</option>
-                    </select>
-                  </div>
-
-                  <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:12px;">
+                  <div style="display:flex; flex-direction:column; gap:14px;">
                     <div class="form-group" style="margin:0;">
-                      <label class="form-label" style="font-size:0.82rem;">प्राथमिक भाषा:</label>
-                      <select id="profileLanguageSelect" class="form-select">
-                        <option value="hindi">हिंदी आशुलिपि (Hindi)</option>
-                        <option value="english">अंग्रेजी आशुलिपि (English)</option>
+                      <label class="form-label" style="font-size:0.82rem; font-weight:700;">
+                        📝 पूरा नाम / प्रदर्शित नाम (Display Name):
+                      </label>
+                      <input type="text" id="profileDisplayNameInput" class="form-input" required placeholder="उदा. राहुल शर्मा">
+                    </div>
+
+                    <div class="form-group" style="margin:0;">
+                      <label class="form-label" style="font-size:0.82rem; font-weight:700;">
+                        🏷️ यूज़रनेम / लॉगिन आईडी (Username):
+                      </label>
+                      <input type="text" id="profileUsernameInput" class="form-input" required placeholder="उदा. rahul_steno" autocomplete="username">
+                      <small style="color:var(--text-muted); font-size:0.75rem; display:block; margin-top:3px;">
+                        ⚠️ यह आपका लॉगिन यूज़रनेम है (अक्षर, अंक और _ मान्य)
+                      </small>
+                    </div>
+
+                    <div class="form-group" style="margin:0;">
+                      <label class="form-label" style="font-size:0.82rem; font-weight:700;">
+                        📧 पंजीकृत ईमेल आईडी (Email Address):
+                      </label>
+                      <input type="email" id="profileEmailInput" class="form-input" required placeholder="student@example.com" autocomplete="email">
+                    </div>
+
+                    <div class="form-group" style="margin:0;">
+                      <label class="form-label" style="font-size:0.82rem; font-weight:700;">
+                        📱 मोबाइल नंबर (Mobile Number):
+                      </label>
+                      <input type="tel" id="profilePhoneInput" class="form-input" placeholder="10-अंकीय मोबाइल नंबर" maxlength="13">
+                    </div>
+
+                    <div class="profile-info-item" style="margin-top:4px;">
+                      <span class="profile-info-label">🎓 आधिकारिक रोल कोड (Student ID):</span>
+                      <div class="profile-info-val-wrap">
+                        <span class="profile-highlight-code" id="profileStudentCodeDisplay">STM-2026-000008</span>
+                        <button type="button" class="btn-micro-copy" onclick="stenoApp.copyStudentId()" title="कॉपी करें">📋 कॉपी</button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- BOX 2: 🎯 परीक्षा लक्ष्य व टंकण प्राथमिकताएं (Target Exam & Preferences) - THEME PURPLE -->
+            <div class="profile-3d-box profile-theme-purple">
+              <div class="profile-3d-inner">
+                <div>
+                  <div class="profile-box-header">
+                    <div class="profile-box-icon-wrap icon-purple">🎯</div>
+                    <div>
+                      <h3 class="profile-box-title">परीक्षा लक्ष्य व टंकण वरीयताएँ</h3>
+                      <p class="profile-box-subtitle">अपनी तैयारी अनुसार लक्ष्य परीक्षा, भाषा, फॉन्ट व गति चुनें</p>
+                    </div>
+                  </div>
+
+                  <div style="display:flex; flex-direction:column; gap:14px;">
+                    <div class="form-group" style="margin:0;">
+                      <label class="form-label" style="font-size:0.82rem; font-weight:700;">
+                        🏛️ लक्ष्य परीक्षा (Target Exam):
+                      </label>
+                      <select id="profileTargetExamSelect" class="form-select">
+                        <option value="SSC Stenographer">SSC Stenographer Grade C & D</option>
+                        <option value="UPSSSC Stenographer">UPSSSC आशुलिपिक परीक्षा</option>
+                        <option value="High Court Stenographer">उच्च न्यायालय / जिला न्यायालय स्टेनो</option>
+                        <option value="State PSC Steno">राज्य लोक सेवा आयोग स्टेनो</option>
+                        <option value="Parliamentary Reporter">संसदीय रिपोर्टर / विधानसभा</option>
                       </select>
                     </div>
 
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                      <div class="form-group" style="margin:0;">
+                        <label class="form-label" style="font-size:0.82rem; font-weight:700;">
+                          🌐 प्राथमिक भाषा:
+                        </label>
+                        <select id="profileLanguageSelect" class="form-select">
+                          <option value="hindi">हिंदी आशुलिपि (Hindi)</option>
+                          <option value="english">अंग्रेजी आशुलिपि (English)</option>
+                        </select>
+                      </div>
+
+                      <div class="form-group" style="margin:0;">
+                        <label class="form-label" style="font-size:0.82rem; font-weight:700;">
+                          ⚡ लक्ष्य गति (WPM):
+                        </label>
+                        <input type="number" id="profileTargetWpmInput" class="form-input" min="20" max="160" value="80" step="5">
+                      </div>
+                    </div>
+
                     <div class="form-group" style="margin:0;">
-                      <label class="form-label" style="font-size:0.82rem;">लक्ष्य गति (WPM):</label>
-                      <input type="number" id="profileTargetWpmInput" class="form-input" min="20" max="160" value="80">
+                      <label class="form-label" style="font-size:0.82rem; font-weight:700;">
+                        ⌨️ डिफ़ॉल्ट टंकण फॉन्ट/कीबोर्ड (Typing Mode):
+                      </label>
+                      <select id="profileTypingModeSelect" class="form-select">
+                        <option value="mangal">Mangal / Unicode Hindi</option>
+                        <option value="krutidev">Kruti Dev 010</option>
+                        <option value="inscript">Inscript</option>
+                        <option value="remington">Remington-Style</option>
+                      </select>
+                    </div>
+
+                    <div class="form-group" style="display:flex; align-items:center; gap:8px; margin:4px 0 0 0; background:rgba(99,102,241,0.06); padding:10px 14px; border-radius:12px; border:1px solid rgba(99,102,241,0.18);">
+                      <input type="checkbox" id="profileLeaderboardVisibility" style="width:18px; height:18px; cursor:pointer;">
+                      <label for="profileLeaderboardVisibility" style="font-size:0.82rem; font-weight:600; cursor:pointer; margin:0;">
+                        🏆 लीडरबोर्ड पर मेरा नाम सार्वजनिक रूप से दिखाएं (Public Leaderboard)
+                      </label>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="profile-box-footer" style="margin-top:16px;">
+                  <button type="submit" class="btn-box-action btn-purple" id="btnSaveProfile">
+                    <span>💾</span> <span>प्रोफ़ाइल विवरण सहेजें (Save Profile Changes)</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </form>
+
+        <!-- 3. BOX 3: 🔐 सुरक्षा एवं पासवर्ड बदलें (Security & Password Change) - THEME ROSE -->
+        <div class="profile-3d-box profile-theme-rose" style="max-width: 620px; margin: 0 auto;">
+          <div class="profile-3d-inner">
+            <div>
+              <div class="profile-box-header">
+                <div class="profile-box-icon-wrap icon-rose">🔐</div>
+                <div>
+                  <h3 class="profile-box-title">सुरक्षा एवं पासवर्ड बदलें</h3>
+                  <p class="profile-box-subtitle">Change Account Password Securely</p>
+                </div>
+              </div>
+
+              <form onsubmit="stenoApp.changePassword(event)" id="profileChangePasswordForm">
+                <div style="display:flex; flex-direction:column; gap:12px;">
+                  <div class="form-group" style="margin:0;">
+                    <label class="form-label" style="font-size:0.82rem; font-weight:700;">
+                      🔒 वर्तमान पासवर्ड (Current Password):
+                    </label>
+                    <div style="position:relative;">
+                      <input type="password" id="profileCurrentPasswordInput" class="form-input" required placeholder="अपना पुराना पासवर्ड दर्ज करें" autocomplete="current-password" style="padding-right:40px;">
+                      <button type="button" class="btn-toggle-pwd" onclick="stenoApp.togglePasswordVisibility('profileCurrentPasswordInput', this)" title="पासवर्ड देखें/छिपाएं">👁️</button>
                     </div>
                   </div>
 
-                  <div class="form-group" style="margin-bottom:12px;">
-                    <label class="form-label" style="font-size:0.82rem;">डिफ़ॉल्ट टंकण मोड (Typing Mode / Font):</label>
-                    <select id="profileTypingModeSelect" class="form-select">
-                      <option value="mangal">Mangal / Unicode Hindi</option>
-                      <option value="krutidev">Kruti Dev 010</option>
-                      <option value="inscript">Inscript</option>
-                      <option value="remington">Remington-Style</option>
-                    </select>
-                  </div>
-
-                  <div class="form-group" style="display:flex; align-items:center; gap:8px; margin:12px 0 16px 0; background:rgba(99,102,241,0.06); padding:8px 12px; border-radius:10px; border:1px solid rgba(99,102,241,0.18);">
-                    <input type="checkbox" id="profileLeaderboardVisibility" style="width:17px; height:17px; cursor:pointer;">
-                    <label for="profileLeaderboardVisibility" style="font-size:0.82rem; font-weight:600; cursor:pointer; margin:0;">
-                      लीडरबोर्ड पर मेरा नाम सार्वजनिक रूप से दिखाएं
+                  <div class="form-group" style="margin:0;">
+                    <label class="form-label" style="font-size:0.82rem; font-weight:700;">
+                      🔑 नया पासवर्ड (New Password):
                     </label>
+                    <div style="position:relative;">
+                      <input type="password" id="profileNewPasswordInput" class="form-input" required placeholder="कम से कम 4-6 अक्षर" autocomplete="new-password" style="padding-right:40px;">
+                      <button type="button" class="btn-toggle-pwd" onclick="stenoApp.togglePasswordVisibility('profileNewPasswordInput', this)" title="पासवर्ड देखें/छिपाएं">👁️</button>
+                    </div>
                   </div>
 
-                  <button type="submit" class="btn-box-action btn-purple" style="width:100%;">
-                    <span>💾</span> <span>प्रोफ़ाइल प्राथमिकताएं सहेजें (Save Profile)</span>
+                  <div class="form-group" style="margin:0;">
+                    <label class="form-label" style="font-size:0.82rem; font-weight:700;">
+                      ✅ नया पासवर्ड पुनः दर्ज करें (Confirm New Password):
+                    </label>
+                    <input type="password" id="profileConfirmPasswordInput" class="form-input" required placeholder="नया पासवर्ड दोबारा लिखें" autocomplete="new-password">
+                  </div>
+                </div>
+
+                <div class="profile-box-footer" style="margin-top:16px;">
+                  <button type="submit" class="btn-box-action btn-rose" id="btnChangePassword">
+                    <span>🔑</span> <span>नया पासवर्ड सेट करें (Update Password)</span>
                   </button>
-                </form>
-              </div>
+                </div>
+              </form>
             </div>
           </div>
-
-          <!-- BOX 4: 📊 प्रदर्शन व दक्षता रिपोर्ट - THEME ROSE -->
-          <div class="profile-3d-box profile-theme-rose">
-            <div class="profile-3d-inner">
-              <div>
-                <div class="profile-box-header">
-                  <div class="profile-box-icon-wrap icon-rose">📊</div>
-                  <div>
-                    <h3 class="profile-box-title">दक्षता व अभ्यास रिपोर्ट</h3>
-                    <p class="profile-box-subtitle">Performance & Speed Analytics</p>
-                  </div>
-                </div>
-
-                <div class="profile-perf-grid">
-                  <div class="profile-perf-tile">
-                    <div class="profile-perf-num" id="profileStatBestWpm">0 WPM</div>
-                    <div class="profile-perf-lbl">सर्वोच्च टंकण गति</div>
-                  </div>
-                  <div class="profile-perf-tile">
-                    <div class="profile-perf-num" id="profileStatAvgAcc">0%</div>
-                    <div class="profile-perf-lbl">औसत शुद्धता (Accuracy)</div>
-                  </div>
-                  <div class="profile-perf-tile">
-                    <div class="profile-perf-num" id="profileStatPractices">0</div>
-                    <div class="profile-perf-lbl">कुल पूर्ण डिक्टेशन</div>
-                  </div>
-                  <div class="profile-perf-tile">
-                    <div class="profile-perf-num" id="profileStatTotalTime">0 mins</div>
-                    <div class="profile-perf-lbl">कुल अभ्यास समय</div>
-                  </div>
-                </div>
-
-                <div style="margin-top:14px; background:rgba(244,63,94,0.06); padding:10px 14px; border-radius:12px; border:1px solid rgba(244,63,94,0.18);">
-                  <div style="font-size:0.78rem; font-weight:700; color:#e11d48; margin-bottom:3px;">
-                    💡 स्टेनो सफलता टिप:
-                  </div>
-                  <div style="font-size:0.76rem; color:var(--text-secondary); line-height:1.4;">
-                    प्रतिदिन कम से कम 2 डिक्टेशन का अभ्यास करें। अपनी गलतियों के विश्लेषण हेतु विस्तृत रिपोर्ट कार्ड का अवलोकन करें।
-                  </div>
-                </div>
-              </div>
-
-              <div class="profile-box-footer">
-                <button type="button" class="btn-box-action btn-rose" onclick="stenoApp.navigate('progress')">
-                  <span>📈</span> <span>सम्पूर्ण प्रगति विश्लेषण देखें →</span>
-                </button>
-              </div>
-            </div>
-          </div>
-
         </div>
       </main>
 
@@ -3449,7 +3420,7 @@
   <script src="/js/keyboard_map.js?v=8.1"></script>
   <script src="/js/typing_engine.js?v=8.1"></script>
   <script src="/js/ocr_service.js?v=1.1"></script>
-  <script src="/js/app.js?v=11.0"></script>
+  <script src="/js/app.js?v=11.1"></script>
   <!-- Strict Exam Hall Anti-Cheat Warning Modal -->
   <div class="modal-overlay" id="examHallWarningModal" style="z-index:99999;">
     <div class="modal-card" style="max-width: 480px; text-align:center; border:2px solid #ef4444; box-shadow:0 10px 40px rgba(239,68,68,0.3);">

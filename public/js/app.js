@@ -3429,8 +3429,9 @@ class StenoApp {
 
     const stuCode = this.user.student_code || `STM-2026-${String(this.user.user_id || this.user.id || 1).padStart(6, '0')}`;
     const displayName = (this.user.display_name || this.user.username || 'Student').trim();
-    const email = this.user.email || 'ईमेल दर्ज नहीं है';
-    const phone = this.user.phone ? `📱 +91 ${String(this.user.phone).replace('+91', '').trim()}` : 'फ़ोन दर्ज नहीं है';
+    const username = (this.user.username || '').trim();
+    const email = this.user.email || '';
+    const phone = this.user.phone ? String(this.user.phone).replace('+91', '').trim() : '';
 
     // 1. Hero Header Elements
     const heroName = document.getElementById('profileHeroName');
@@ -3444,9 +3445,9 @@ class StenoApp {
       heroAvatar.textContent = initial || '🎓';
     }
     if (heroStuCode) heroStuCode.textContent = stuCode;
-    if (heroEmail) heroEmail.textContent = email;
+    if (heroEmail) heroEmail.textContent = email || 'ईमेल दर्ज नहीं है';
 
-    // 2. Subscription & Remaining Days
+    // 2. Subscription & Remaining Days in Hero Card
     const isPremium = Boolean(this.user.subscription_status === 'active' || this.user.is_premium || this.user.is_free_access);
     const daysLeft = typeof this.user.subscription_days_left === 'number'
       ? this.user.subscription_days_left
@@ -3457,60 +3458,51 @@ class StenoApp {
 
     const heroDaysLeft = document.getElementById('profileHeroDaysLeft');
     const heroPlanStatus = document.getElementById('profileHeroPlanStatus');
-    const badgeEl = document.getElementById('profileSubscriptionBadge');
-    const daysBadge = document.getElementById('profileDaysRemainingBadge');
-    const planTitle = document.getElementById('profilePlanTitle');
-    const expiryEl = document.getElementById('profileExpiryDisplay');
-
-    const activePlanInfo = typeof this.getActivePlanDisplay === 'function' ? this.getActivePlanDisplay(this.user) : { name: 'StenoMaster Pro' };
 
     if (isPremium) {
       const daysText = daysLeft > 0 ? `${daysLeft} दिन शेष` : 'सक्रिय';
       if (heroDaysLeft) heroDaysLeft.textContent = `👑 Pro Active • ${daysText}`;
       if (heroPlanStatus) heroPlanStatus.textContent = `वैधता: ${expStr}`;
-      if (badgeEl) {
-        badgeEl.className = 'badge badge-success';
-        badgeEl.textContent = '👑 PRO ACTIVE';
-      }
-      if (daysBadge) daysBadge.textContent = `⏳ ${daysText}`;
-      if (planTitle) planTitle.textContent = activePlanInfo.name || 'StenoMaster Pro';
-      if (expiryEl) expiryEl.textContent = `📅 सदस्यता समाप्ति तिथि: ${expStr}`;
     } else {
       if (heroDaysLeft) heroDaysLeft.textContent = 'मुफ़्त प्लान (Free Plan)';
       if (heroPlanStatus) heroPlanStatus.textContent = 'प्रो अपग्रेड उपलब्ध';
-      if (badgeEl) {
-        badgeEl.className = 'badge badge-secondary';
-        badgeEl.textContent = 'Free Plan';
-      }
-      if (daysBadge) daysBadge.textContent = '⚠️ प्रो लॉक';
-      if (planTitle) planTitle.textContent = 'निःशुल्क परीक्षण (Free)';
-      if (expiryEl) expiryEl.textContent = '📅 कोई सक्रिय सदस्यता नहीं';
     }
 
-    // 3. Credentials Box (Box 1)
-    const stuCodeEl = document.getElementById('profileStudentCodeDisplay');
-    const emailEl = document.getElementById('profileEmailDisplay');
-    const phoneEl = document.getElementById('profilePhoneDisplay');
-    if (stuCodeEl) stuCodeEl.textContent = stuCode;
-    if (emailEl) emailEl.textContent = email;
-    if (phoneEl) phoneEl.textContent = phone;
-
-    // 4. Form Inputs (Box 3)
+    // 3. Populate Editable Form Inputs (Box 1: Account Credentials)
     const nameInput = document.getElementById('profileDisplayNameInput');
+    const unameInput = document.getElementById('profileUsernameInput');
+    const emailInput = document.getElementById('profileEmailInput');
+    const phoneInput = document.getElementById('profilePhoneInput');
+    const stuCodeEl = document.getElementById('profileStudentCodeDisplay');
+
+    if (nameInput) nameInput.value = displayName;
+    if (unameInput) unameInput.value = username;
+    if (emailInput) emailInput.value = email;
+    if (phoneInput) phoneInput.value = phone;
+    if (stuCodeEl) stuCodeEl.textContent = stuCode;
+
+    // 4. Populate Editable Form Inputs (Box 2: Exam & Typing Preferences)
     const examSelect = document.getElementById('profileTargetExamSelect');
     const langSelect = document.getElementById('profileLanguageSelect');
     const modeSelect = document.getElementById('profileTypingModeSelect');
     const wpmInput = document.getElementById('profileTargetWpmInput');
     const lbVis = document.getElementById('profileLeaderboardVisibility');
 
-    if (nameInput) nameInput.value = this.user.display_name || '';
     if (examSelect) examSelect.value = this.user.target_exam || 'SSC Stenographer';
     if (langSelect) langSelect.value = this.user.preferred_language || 'hindi';
     if (modeSelect) modeSelect.value = this.user.preferred_typing_mode || 'mangal';
     if (wpmInput) wpmInput.value = this.user.target_wpm || 80;
     if (lbVis) lbVis.checked = !!this.user.show_on_leaderboard;
 
-    // 5. Asynchronously fetch Rank, Points & Performance Analytics
+    // 5. Clear Password Inputs
+    const currPassInput = document.getElementById('profileCurrentPasswordInput');
+    const newPassInput = document.getElementById('profileNewPasswordInput');
+    const confPassInput = document.getElementById('profileConfirmPasswordInput');
+    if (currPassInput) currPassInput.value = '';
+    if (newPassInput) newPassInput.value = '';
+    if (confPassInput) confPassInput.value = '';
+
+    // 6. Asynchronously fetch Rank, Points & Streak for Hero Card
     try {
       const [progRes, lbRes] = await Promise.all([
         this.apiCall('/api/progress/summary').catch(() => null),
@@ -3535,7 +3527,7 @@ class StenoApp {
       const heroTotalPrac = document.getElementById('profileHeroTotalPractices');
       if (heroTotalPrac) heroTotalPrac.textContent = `${practices} डिक्टेशन पूर्ण`;
 
-      // All India Leaderboard Rank
+      // Leaderboard Rank
       const heroRank = document.getElementById('profileHeroRank');
       if (lbRes && lbRes.leaderboard && Array.isArray(lbRes.leaderboard)) {
         const myEntry = lbRes.leaderboard.find(e =>
@@ -3551,18 +3543,6 @@ class StenoApp {
       } else {
         if (heroRank) heroRank.textContent = `रैंक #1`;
       }
-
-      // Performance Box Highlights (Box 4)
-      const bestWpmEl = document.getElementById('profileStatBestWpm');
-      const avgAccEl = document.getElementById('profileStatAvgAcc');
-      const totalPracEl = document.getElementById('profileStatPractices');
-      const totalTimeEl = document.getElementById('profileStatTotalTime');
-
-      if (bestWpmEl) bestWpmEl.textContent = `${stats.best_wpm || 0} WPM`;
-      if (avgAccEl) avgAccEl.textContent = `${stats.avg_accuracy || 0}%`;
-      if (totalPracEl) totalPracEl.textContent = String(practices);
-      if (totalTimeEl) totalTimeEl.textContent = stats.total_time_formatted || '0 mins';
-
     } catch (err) {
       console.warn('Could not load extra profile stats:', err);
     }
@@ -3582,511 +3562,94 @@ class StenoApp {
     }
   }
 
-  // -------------------------------------------------------------------------
-  // Subscription & Pro Payment Handlers (Phase 3)
-  // -------------------------------------------------------------------------
-  getActivePlanDisplay(details) {
-    const rawPlan = (details.subscription_plan || details.plan_name || '').toLowerCase();
-    const daysLeft = details.subscription_days_left !== undefined ? details.subscription_days_left : (details.days_left || 0);
-
-    if (rawPlan.includes('admin')) {
-      return { price: '₹0', name: 'एडमिन प्रो आजीवन प्लान', full: '₹0 (लाइफटाइम) — एडमिन प्रो प्लान' };
-    }
-    if (rawPlan.includes('800') || rawPlan.includes('1y') || rawPlan.includes('1 वर्ष') || rawPlan.includes('1 year') || daysLeft > 180) {
-      return { price: '₹800', name: '1 वर्ष (365 दिन) प्लान', full: '₹800 का 1 वर्ष (365 दिन) प्लान' };
-    }
-    if (rawPlan.includes('450') || rawPlan.includes('6m') || rawPlan.includes('6 माह') || rawPlan.includes('6 month') || daysLeft > 90) {
-      return { price: '₹450', name: '6 माह (180 दिन) प्लान', full: '₹450 का 6 माह (180 दिन) प्लान' };
-    }
-    if (rawPlan.includes('250') || rawPlan.includes('3m') || rawPlan.includes('3 माह') || rawPlan.includes('3 month') || daysLeft > 30) {
-      return { price: '₹250', name: '3 माह (90 दिन) प्लान', full: '₹250 का 3 माह (90 दिन) प्लान' };
-    }
-    if (rawPlan.includes('30 दिन फ्री') || details.is_free_access) {
-      return { price: '₹0', name: '30 दिन प्रो ट्रायल प्लान', full: '₹0 का 30 दिन प्रो ट्रायल प्लान' };
-    }
-    const priceStr = details.plan_price ? `₹${details.plan_price}` : '₹100';
-    return { price: priceStr, name: '1 माह (30 दिन) प्लान', full: `${priceStr} का 1 माह (30 दिन) प्लान` };
-  }
-
-  renderActivePlanBar(details) {
-    const barEl = document.getElementById('subActivePlanBox');
-    if (!barEl) return;
-
-    const isPro = Boolean(details.is_premium || details.subscription_status === 'active');
-    const daysLeft = details.subscription_days_left !== undefined ? details.subscription_days_left : (details.days_left || 0);
-
-    if (isPro && daysLeft > 0) {
-      const planInfo = this.getActivePlanDisplay(details);
-      const expDate = details.subscription_end
-        ? new Date(details.subscription_end).toLocaleDateString('hi-IN', { day: 'numeric', month: 'short', year: 'numeric' })
-        : 'सक्रिय';
-
-      barEl.className = 'sub-active-bar bar-active';
-      barEl.innerHTML = `
-        <div class="sub-active-bar-inner">
-          <div class="sub-active-bar-left">
-            <span class="sub-active-badge"><span class="sub-active-pulse-dot"></span> सक्रिय प्लान (Active Plan)</span>
-            <span class="sub-active-highlight">${planInfo.full} एक्टिव है</span>
-          </div>
-          <div class="sub-active-bar-right">
-            <span class="sub-active-days-chip">⏳ <strong>${daysLeft} दिन शेष</strong></span>
-            <span class="sub-active-exp-text">(वैधता: ${expDate} तक)</span>
-          </div>
-        </div>
-      `;
+  togglePasswordVisibility(inputId, btn) {
+    const inp = document.getElementById(inputId);
+    if (!inp) return;
+    if (inp.type === 'password') {
+      inp.type = 'text';
+      btn.textContent = '🙈';
     } else {
-      barEl.className = 'sub-active-bar bar-inactive';
-      barEl.innerHTML = `
-        <div class="sub-active-bar-inner">
-          <div class="sub-active-bar-left">
-            <span class="sub-active-lead">🔴 कोई प्लान एक्टिव नहीं है (No Active Plan)</span>
-            <span class="sub-active-desc">— असीमित डिक्टेशन अभ्यास व परीक्षा मोड के लिए नीचे से कोई भी प्लान चुनें।</span>
-          </div>
-          <div class="sub-active-bar-right">
-            <span class="sub-active-pill-inactive">अक्रिय (Inactive)</span>
-          </div>
-        </div>
-      `;
-    }
-  }
-
-  async loadSubscription() {
-    try {
-      if (this.user) {
-        this.renderActivePlanBar(this.user);
-      }
-      const details = await this.apiCall('/api/subscription/details');
-      this.subscriptionPlans = details.plans || [];
-      const upiId = details.upi_id || 'stenomaster@upi';
-      const statusBadgeWrap = document.getElementById('subCurrentStatusBadgeWrap');
-      if (statusBadgeWrap) { statusBadgeWrap.style.display = 'none'; statusBadgeWrap.innerHTML = ''; }
-      this.renderActivePlanBar(details);
-      const expiringBanner = document.getElementById('subExpiringSoonBanner');
-      const qrImgEl = document.getElementById('subActiveQrImg');
-      const upiDisplayEl = document.getElementById('subUpiIdDisplay');
-
-      if (upiDisplayEl) upiDisplayEl.textContent = upiId;
-      if (qrImgEl && details.qr_url) {
-        qrImgEl.src = `${details.qr_url}?t=${Date.now()}`;
-      }
-
-      const isPro = Boolean(details.is_premium || details.subscription_status === 'active');
-      const daysLeft = details.subscription_days_left !== undefined ? details.subscription_days_left : (details.days_left || 0);
-
-      if (statusBadgeWrap) {
-        if (isPro && daysLeft > 0) {
-          const expDate = details.subscription_end ? new Date(details.subscription_end).toLocaleDateString('hi-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : 'सक्रिय';
-          statusBadgeWrap.innerHTML = `
-            <span class="badge badge-success" style="font-size:0.9rem; padding:8px 16px;">
-              👑 Pro Active (वैधता: ${expDate} • ${daysLeft} दिन शेष)
-            </span>
-          `;
-        } else {
-          statusBadgeWrap.innerHTML = `
-            <span class="badge badge-secondary" style="font-size:0.9rem; padding:8px 16px;">
-              🆓 Free Plan (2 फ्री कक्षाएं)
-            </span>
-          `;
-        }
-      }
-
-      // Expiring soon alert banner (shown if Pro and <= 3 days remain)
-      if (expiringBanner) {
-        if (isPro && daysLeft <= 3) {
-          expiringBanner.style.display = 'flex';
-          const titleEl = document.getElementById('subExpiryAlertTitle');
-          const subEl = document.getElementById('subExpiryAlertSubtitle');
-          if (titleEl) {
-            titleEl.textContent = daysLeft <= 0 ? 'आपकी प्रो सदस्यता आज समाप्त हो रही है!' : `आपकी प्रो सदस्यता समाप्त होने में केवल ${daysLeft} दिन शेष हैं!`;
-          }
-          if (subEl) {
-            subEl.textContent = 'बिना रुकावट डिक्टेशन अभ्यास जारी रखने के लिए नीचे अपना पसंदीदा प्लान चुनें और रिन्यू करें।';
-          }
-        } else {
-          expiringBanner.style.display = 'none';
-        }
-      }
-
-      // Render the multi-tier plans selector cards
-      this.renderSubscriptionPlans();
-      if (this.subSelectedTab === 'category') {
-        this.switchSubPlanTab('category');
-      } else {
-        this.switchSubPlanTab('month');
-      }
-
-      // Default selection: retain current selection if valid, or pick popular/first plan
-      if (!this.selectedPlan || !this.subscriptionPlans.some(p => p.id === this.selectedPlan.id)) {
-        const defaultPlan = this.subscriptionPlans.find(p => p.popular) || this.subscriptionPlans[0];
-        if (defaultPlan) {
-          this.selectSubscriptionPlan(defaultPlan.id);
-        }
-      } else {
-        this.selectSubscriptionPlan(this.selectedPlan.id);
-      }
-
-      // Load Student's previous payment requests
-      await this.loadStudentPaymentRequests();
-    } catch (err) {
-      console.error('Failed to load subscription details:', err);
-    }
-  }
-
-  renderSubscriptionPlans() {
-    const container = document.getElementById('subPlansGrid');
-    if (!container) return;
-
-    if (!this.subscriptionPlans || this.subscriptionPlans.length === 0) {
-      container.innerHTML = '<div style="color:var(--text-muted); padding:16px;">प्लान लोड हो रहे हैं...</div>';
-      return;
-    }
-
-    container.innerHTML = this.subscriptionPlans.map(plan => {
-      const isPopular = plan.id === '3m' || (plan.badge && plan.badge.includes('POPULAR'));
-      const isBest = plan.id === '1y' || (plan.badge && plan.badge.includes('BEST'));
-
-      let tagHtml = '';
-      if (isPopular) {
-        tagHtml = '<div class="sub-plan-card-tag tag-popular">⭐ लोकप्रिय (POPULAR)</div>';
-      } else if (isBest) {
-        tagHtml = '<div class="sub-plan-card-tag tag-best">👑 बेस्ट वैल्यू (BEST VALUE)</div>';
-      } else if (plan.savings) {
-        tagHtml = `<div class="sub-plan-card-tag">💰 ${this.escapeHtml(plan.savings)}</div>`;
-      }
-
-      const durationTitle = plan.title_hi || `${plan.days} दिन`;
-      const subtitle = plan.subtitle_hi || plan.name;
-      const savingsPill = plan.savings ? `<div class="sub-plan-savings-pill">🎉 ${this.escapeHtml(plan.savings)}</div>` : '<div class="sub-plan-savings-pill" style="visibility:hidden;">—</div>';
-
-      return `
-        <div class="sub-plan-card" data-plan-id="${plan.id}" onclick="stenoApp.initiateCashfreePayment('${plan.id}')">
-          ${tagHtml}
-          <div>
-            <div class="sub-plan-title">${this.escapeHtml(durationTitle)}</div>
-            <div class="sub-plan-subtitle">${this.escapeHtml(subtitle)}</div>
-            <div class="sub-plan-price-row">
-              <span class="sub-plan-amount">₹${plan.price}</span>
-              <span class="sub-plan-period">/ ${plan.days} दिन</span>
-            </div>
-            ${savingsPill}
-          </div>
-          <button type="button" class="sub-buy-now-btn" onclick="event.stopPropagation(); stenoApp.initiateCashfreePayment('${plan.id}')">
-            <span>⚡ ₹${plan.price} में खरीदें</span>
-            <span>→</span>
-          </button>
-        </div>
-      `;
-    }).join('');
-  }
-
-  setQrPlan(planId, price) {
-    const plan = (this.subscriptionPlans || []).find(p => p.id === planId) || { id: planId, price: price, days: planId === '1y' ? 365 : planId === '6m' ? 180 : planId === '3m' ? 90 : 30, name: `StenoMaster Pro — ${planId}` };
-    this.selectedPlan = plan;
-
-    document.querySelectorAll('.qr-plan-chip').forEach(chip => {
-      chip.classList.toggle('active', chip.getAttribute('data-plan-id') === planId);
-    });
-
-    const qrPayAmountLabel = document.getElementById('qrPayAmountLabel');
-    const payAmountInput = document.getElementById('payAmountInput');
-    const payPlanNameInput = document.getElementById('payPlanNameInput');
-    const payPlanDaysInput = document.getElementById('payPlanDaysInput');
-
-    if (qrPayAmountLabel) qrPayAmountLabel.textContent = `₹${plan.price}`;
-    if (payAmountInput) payAmountInput.value = plan.price;
-    if (payPlanNameInput) payPlanNameInput.value = plan.name || `StenoMaster Pro — ${plan.days} दिन`;
-    if (payPlanDaysInput) payPlanDaysInput.value = plan.days;
-  }
-
-  selectSubscriptionPlan(planId) {
-    const plan = (this.subscriptionPlans || []).find(p => p.id === planId) || this.subscriptionPlans[0];
-    if (!plan) return;
-    this.selectedPlan = plan;
-
-    // Update selection styling in plans grid
-    document.querySelectorAll('#subPlansGrid .sub-plan-card').forEach(card => {
-      const id = card.getAttribute('data-plan-id');
-      const isSelected = id === plan.id;
-      card.classList.toggle('selected', isSelected);
-      const btn = card.querySelector('.sub-select-btn');
-      if (btn) {
-        btn.textContent = isSelected ? '✓ चयनित प्लान (Selected)' : 'यह प्लान चुनें →';
-      }
-    });
-
-    // Update Showcase card details
-    const planTitleEl = document.getElementById('subPlanTitleDisplay');
-    const planPriceEl = document.getElementById('subPlanPriceDisplay');
-    const planDaysEl = document.getElementById('subPlanDaysDisplay');
-    const cashfreeBtnText = document.getElementById('btnCashfreeText');
-
-    const durationTitle = plan.title_hi || `${plan.days} दिन`;
-    if (planTitleEl) planTitleEl.textContent = `StenoMaster Pro — ${durationTitle}`;
-    if (planPriceEl) planPriceEl.textContent = `₹${plan.price}`;
-    if (planDaysEl) planDaysEl.textContent = `/ ${plan.days} दिन (${durationTitle})`;
-    if (cashfreeBtnText) cashfreeBtnText.textContent = `⚡ ₹${plan.price} का सुरक्षित भुगतान करें (Pay ₹${plan.price} via Cashfree)`;
-
-    // Update Manual QR accordion inputs & badges if present
-    const qrPriceBadge = document.getElementById('qrPriceBadge');
-    const qrPayAmountLabel = document.getElementById('qrPayAmountLabel');
-    const payAmountInput = document.getElementById('payAmountInput');
-    const payPlanNameInput = document.getElementById('payPlanNameInput');
-    const payPlanDaysInput = document.getElementById('payPlanDaysInput');
-
-    if (qrPriceBadge) qrPriceBadge.textContent = `₹${plan.price}`;
-    if (qrPayAmountLabel) qrPayAmountLabel.textContent = `₹${plan.price}`;
-    if (payAmountInput) payAmountInput.value = plan.price;
-    if (payPlanNameInput) payPlanNameInput.value = plan.name;
-    if (payPlanDaysInput) payPlanDaysInput.value = plan.days;
-  }
-
-  copyUpiId() {
-    const upiEl = document.getElementById('subUpiIdDisplay');
-    const upiId = upiEl ? upiEl.textContent.trim() : 'stenomaster@upi';
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(upiId).then(() => {
-        this.showToast(`UPI ID '${upiId}' क्लिपबोर्ड पर कॉपी हो गई! 📋`, 'success');
-      }).catch(() => {
-        this.fallbackCopyText(upiId);
-      });
-    } else {
-      this.fallbackCopyText(upiId);
-    }
-  }
-
-  async loadStudentPaymentRequests() {
-    if (!this.user) return;
-    const tbody = document.getElementById('studentPaymentsTableBody');
-    if (!tbody) return;
-
-    try {
-      const res = await this.apiCall('/api/subscription/my-requests');
-      const requests = res.requests || [];
-      if (requests.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:24px; color:var(--text-muted);">कोई पूर्व भुगतान अनुरोध नहीं मिला।</td></tr>';
-        return;
-      }
-
-      tbody.innerHTML = requests.map(r => {
-        const dt = new Date(r.created_at).toLocaleDateString('hi-IN', { month: 'short', day: 'numeric', year: 'numeric' });
-        let statusBadge = '<span class="badge badge-warning">⏳ Pending</span>';
-        if (r.status === 'approved') statusBadge = '<span class="badge badge-success">✅ Approved</span>';
-        if (r.status === 'rejected') statusBadge = '<span class="badge badge-hard">❌ Rejected</span>';
-
-        return `
-          <tr>
-            <td style="font-weight:700;">#${r.id}</td>
-            <td>${this.escapeHtml(r.plan_name)}</td>
-            <td><strong>₹${r.amount}</strong></td>
-            <td><code>${this.escapeHtml(r.transaction_id)}</code></td>
-            <td>${statusBadge}</td>
-            <td>${dt}</td>
-            <td style="font-size:0.85rem; color:var(--text-secondary);">${this.escapeHtml(r.admin_notes || '—')}</td>
-          </tr>
-        `;
-      }).join('');
-    } catch (err) {
-      tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:24px; color:var(--accent-red);">त्रुटि: ${this.escapeHtml(err.message)}</td></tr>`;
-    }
-  }
-
-  async handlePaymentSubmit(e) {
-    if (e) e.preventDefault();
-    const txnInput = document.getElementById('payTransactionIdInput');
-    const screenshotInput = document.getElementById('payScreenshotUrlInput');
-    const msgBox = document.getElementById('paymentSubmitMsg');
-    const submitBtn = document.getElementById('submitPaymentBtn');
-
-    if (!txnInput) return;
-    const txnId = txnInput.value.trim();
-    const screenshot = screenshotInput ? screenshotInput.value.trim() : '';
-
-    if (!txnId) {
-      if (msgBox) {
-        msgBox.style.display = 'block';
-        msgBox.style.color = 'var(--accent-red)';
-        msgBox.textContent = 'कृपया 12-अंकीय UPI Transaction ID / UTR दर्ज करें।';
-      }
-      return;
-    }
-
-    const currentPlan = this.selectedPlan || {
-      name: document.getElementById('payPlanNameInput')?.value || 'StenoMaster Pro — 1 Month (₹100/माह)',
-      price: parseFloat(document.getElementById('payAmountInput')?.value) || 100,
-      days: parseInt(document.getElementById('payPlanDaysInput')?.value) || 30
-    };
-
-    if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'सत्यापन अनुरोध भेजा जा रहा है...'; }
-
-    try {
-      let res;
-      if (this.subSelectedTab === 'category' && this.selectedCategoryCheckout && this.selectedCategoryCheckout.category_ids?.length > 0) {
-        res = await this.apiCall('/api/subscription/submit-category-upi', 'POST', {
-          order_id: `CAT_UPI_${Date.now()}`,
-          category_ids: this.selectedCategoryCheckout.category_ids,
-          all_in_one: false,
-          utr_number: txnId,
-          amount: this.selectedCategoryCheckout.totalAmount || parseFloat(document.getElementById('payAmountInput')?.value) || 49,
-          receipt_url: screenshot
-        });
-      } else {
-        res = await this.apiCall('/api/subscription/request-payment', 'POST', {
-          transaction_id: txnId,
-          screenshot_url: screenshot,
-          plan_name: currentPlan.name,
-          amount: currentPlan.price,
-          plan_days: currentPlan.days
-        });
-      }
-
-      if (msgBox) {
-        msgBox.style.display = 'block';
-        msgBox.style.color = 'var(--accent-green)';
-        msgBox.textContent = res.message || 'भुगतान विवरण सफलतापूर्वक जमा किया गया!';
-      }
-      txnInput.value = '';
-      if (screenshotInput) screenshotInput.value = '';
-
-      this.showToast(`₹${currentPlan.price} का भुगतान अनुरोध सफलतापूर्वक सबमिट हुआ! एडमिन सत्यापन उपरांत प्रो सक्रिय होगा। 🎉`, 'success');
-      await this.loadStudentPaymentRequests();
-    } catch (err) {
-      if (msgBox) {
-        msgBox.style.display = 'block';
-        msgBox.style.color = 'var(--accent-red)';
-        msgBox.textContent = err.message || 'सबमिशन विफल रहा।';
-      } else {
-        this.showToast(err.message || 'सबमिशन विफल रहा।', 'error');
-      }
-    } finally {
-      if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'मैन्युअल UTR सबमिट करें (Submit Payment Proof)'; }
-    }
-  }
-
-  // -------------------------------------------------------------------------
-  // Cashfree Payment Gateway Integration (Instant Unlock)
-  // -------------------------------------------------------------------------
-  async initiateCashfreePayment(planId = null) {
-    if (!this.user) {
-      this.showAuthGateway('student', 'सदस्यता खरीदने के लिए कृपया पहले लॉगिन करें।');
-      return;
-    }
-
-    let currentPlan = null;
-    if (typeof planId === 'string') {
-      currentPlan = (this.subscriptionPlans || []).find(p => p.id === planId);
-    }
-    if (!currentPlan) {
-      currentPlan = this.selectedPlan || (this.subscriptionPlans && this.subscriptionPlans[0]) || { id: '1m', name: 'StenoMaster Pro — 1 Month', price: 100, days: 30 };
-    }
-    this.selectedPlan = currentPlan;
-
-    // Visual feedback on the specific plan card button
-    const cardEl = document.querySelector(`.sub-plan-card[data-plan-id="${currentPlan.id}"]`);
-    const btnEl = cardEl ? cardEl.querySelector('.sub-buy-now-btn') : null;
-    const originalContent = btnEl ? btnEl.innerHTML : '';
-    if (btnEl) {
-      btnEl.disabled = true;
-      btnEl.innerHTML = `<span>⏳ लोड हो रहा है...</span>`;
-    }
-
-    try {
-      this.showToast(`Cashfree सुरक्षित भुगतान पेज (₹${currentPlan.price}) खोला जा रहा है... 🔐`, 'info');
-      const returnUrl = `${window.location.origin}/?order_id={order_id}&payment=cashfree`;
-      const orderData = await this.apiCall('/api/payment/cashfree/create-order', 'POST', {
-        plan_id: currentPlan.id,
-        amount: currentPlan.price,
-        plan_days: currentPlan.days,
-        plan_name: currentPlan.name,
-        return_url: returnUrl
-      });
-
-      if (!orderData.success && !orderData.order_id) {
-        throw new Error(orderData.error || 'ऑर्डर बनाने में असमर्थ।');
-      }
-
-      const orderId = orderData.order_id;
-      const paymentSessionId = orderData.payment_session_id;
-      const isSimulator = !!orderData.is_simulator;
-
-      // If Cashfree JS SDK is available and we have a session ID & not simulator
-      if (window.Cashfree && paymentSessionId && !isSimulator) {
-        try {
-          const cashfree = window.Cashfree({
-            mode: orderData.mode === 'production' ? 'production' : 'sandbox'
-          });
-
-          cashfree.checkout({
-            paymentSessionId: paymentSessionId,
-            redirectTarget: '_self'
-          }).then(async (result) => {
-            if (result && result.error) {
-              this.showToast(`भुगतान: ${result.error.message || 'भुगतान रद्द किया गया'}`, 'warning');
-            }
-          });
-        } catch (sdkErr) {
-          console.warn('Cashfree SDK redirect failed, falling back to direct verify:', sdkErr);
-          await this.verifyCashfreeOrder(orderId, currentPlan);
-        }
-      } else {
-        // Direct sandbox/simulation verification
-        this.showToast('सैंडबॉक्स भुगतान सत्यापित किया जा रहा है... 💳', 'info');
-        await this.verifyCashfreeOrder(orderId, currentPlan);
-      }
-    } catch (err) {
-      this.showToast('भुगतान आरंभ करने में त्रुटि: ' + (err.message || 'अज्ञात त्रुटि'), 'error');
-    } finally {
-      if (btnEl) {
-        btnEl.disabled = false;
-        btnEl.innerHTML = originalContent;
-      }
-    }
-  }
-
-  async verifyCashfreeOrder(orderId, plan = null) {
-    try {
-      this.showToast('भुगतान स्थिति जांची जा रही है... ⏳', 'info');
-      const verifyRes = await this.apiCall('/api/payment/cashfree/verify', 'POST', {
-        order_id: orderId
-      });
-
-      const planName = plan ? plan.name : 'प्रो सदस्यता';
-      const planDays = plan ? `${plan.days} दिन` : '30 दिन';
-
-      if (verifyRes.success && (verifyRes.order_status === 'PAID' || verifyRes.status === 'PAID')) {
-        this.showToast(`🎉 भुगतान सफल! आपकी ${planName} (${planDays}) सक्रिय हो गई है!`, 'success');
-        await this.fetchCurrentUser();
-        this.updateUserUI();
-        await this.loadPassages();
-        await this.loadSubscription();
-        this.navigate('classes');
-      } else {
-        this.showToast(verifyRes.message || 'भुगतान अभी लंबित है या रद्द हो गया।', 'warning');
-        await this.fetchCurrentUser();
-        this.updateUserUI();
-        await this.loadSubscription();
-      }
-    } catch (err) {
-      this.showToast('भुगतान सत्यापन में त्रुटि: ' + err.message, 'error');
+      inp.type = 'password';
+      btn.textContent = '👁️';
     }
   }
 
   async saveProfile(e) {
-    e.preventDefault();
+    if (e && e.preventDefault) e.preventDefault();
+    const btn = document.getElementById('btnSaveProfile');
+    const origText = btn ? btn.innerHTML : '';
+    if (btn) {
+      btn.disabled = true;
+      btn.innerHTML = '<span>⏳</span> <span>सहेजा जा रहा है...</span>';
+    }
+
     const payload = {
-      display_name: document.getElementById('profileDisplayNameInput').value.trim(),
-      target_exam: document.getElementById('profileTargetExamSelect').value,
-      preferred_language: document.getElementById('profileLanguageSelect').value,
-      preferred_typing_mode: document.getElementById('profileTypingModeSelect').value,
-      target_wpm: parseInt(document.getElementById('profileTargetWpmInput').value) || 50,
-      show_on_leaderboard: document.getElementById('profileLeaderboardVisibility').checked
+      display_name: (document.getElementById('profileDisplayNameInput')?.value || '').trim(),
+      username: (document.getElementById('profileUsernameInput')?.value || '').trim(),
+      email: (document.getElementById('profileEmailInput')?.value || '').trim(),
+      phone: (document.getElementById('profilePhoneInput')?.value || '').trim(),
+      target_exam: document.getElementById('profileTargetExamSelect')?.value || 'SSC Stenographer',
+      preferred_language: document.getElementById('profileLanguageSelect')?.value || 'hindi',
+      preferred_typing_mode: document.getElementById('profileTypingModeSelect')?.value || 'mangal',
+      target_wpm: parseInt(document.getElementById('profileTargetWpmInput')?.value) || 80,
+      show_on_leaderboard: !!document.getElementById('profileLeaderboardVisibility')?.checked
     };
 
     try {
-      await this.apiCall('/api/profile/update', 'POST', payload);
-      this.showToast('प्रोफ़ाइल सफलतापूर्ण अपडेट की गई! ✅', 'success');
+      const res = await this.apiCall('/api/profile/update', 'POST', payload);
+      this.showToast(res.message || 'प्रोफ़ाइल व खाता विवरण सफलतापूर्वक अपडेट हो गया! ✅', 'success');
       await this.fetchCurrentUser();
+      await this.renderProfile();
     } catch (err) {
-      this.showToast('प्रोफ़ाइल अपडेट में त्रुटि: ' + err.message, 'error');
+      this.showToast('प्रोफ़ाइल अपडेट में त्रुटि: ' + (err.message || 'अज्ञात त्रुटि'), 'error');
+    } finally {
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = origText;
+      }
+    }
+  }
+
+  async changePassword(e) {
+    if (e && e.preventDefault) e.preventDefault();
+    const currPass = (document.getElementById('profileCurrentPasswordInput')?.value || '').trim();
+    const newPass = (document.getElementById('profileNewPasswordInput')?.value || '').trim();
+    const confPass = (document.getElementById('profileConfirmPasswordInput')?.value || '').trim();
+
+    if (!currPass) {
+      this.showToast('कृपया अपना वर्तमान पासवर्ड दर्ज करें।', 'warning');
+      return;
+    }
+    if (!newPass || newPass.length < 4) {
+      this.showToast('नया पासवर्ड कम से कम 4 अक्षरों का होना चाहिए।', 'warning');
+      return;
+    }
+    if (newPass !== confPass) {
+      this.showToast('नया पासवर्ड और पुष्टि पासवर्ड मेल नहीं खा रहे हैं!', 'error');
+      return;
+    }
+
+    const btn = document.getElementById('btnChangePassword');
+    const origText = btn ? btn.innerHTML : '';
+    if (btn) {
+      btn.disabled = true;
+      btn.innerHTML = '<span>⏳</span> <span>पासवर्ड अपडेट हो रहा है...</span>';
+    }
+
+    try {
+      const res = await this.apiCall('/api/profile/change-password', 'POST', {
+        current_password: currPass,
+        new_password: newPass
+      });
+      this.showToast(res.message || 'पासवर्ड सफलतापूर्वक बदल दिया गया है! ✅', 'success');
+      document.getElementById('profileChangePasswordForm')?.reset();
+    } catch (err) {
+      this.showToast('पासवर्ड बदलने में त्रुटि: ' + (err.message || 'अज्ञात त्रुटि'), 'error');
+    } finally {
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = origText;
+      }
     }
   }
 
