@@ -2829,21 +2829,6 @@ class StenoAdmin {
     }
   }
 
-}
-
-
-window.stenoAdmin = new StenoAdmin();
-window.adminApp = window.stenoAdmin;
-
-// Cross-compatibility bridge between stenoAdmin and stenoApp
-if (typeof window !== 'undefined') {
-  if (window.stenoApp) {
-    window.stenoAdmin.handleDirectAdminLogin = function(e) { return window.stenoApp.handleDirectAdminLogin(e); };
-    window.stenoAdmin.closeResetPasswordModal = function() { return window.stenoApp.closeResetPasswordModal(); };
-    window.stenoAdmin.sendTestEmail = function() { return window.stenoApp.sendTestEmail(); };
-    window.stenoAdmin.submitResetPassword = function() { return window.stenoApp.submitResetPassword(); };
-  }
-
   // =========================================================================
   // STUDENT UPI WITHDRAWALS (10% REAL CASH COMMISSION PAYOUTS)
   // =========================================================================
@@ -2981,4 +2966,17 @@ if (typeof window !== 'undefined') {
     }
   }
 
+}
+
+window.stenoAdmin = new StenoAdmin();
+window.adminApp = window.stenoAdmin;
+
+// Cross-compatibility bridge between stenoAdmin and stenoApp
+if (typeof window !== 'undefined') {
+  if (window.stenoApp) {
+    window.stenoAdmin.handleDirectAdminLogin = function(e) { return window.stenoApp.handleDirectAdminLogin(e); };
+    window.stenoAdmin.closeResetPasswordModal = function() { return window.stenoApp.closeResetPasswordModal(); };
+    window.stenoAdmin.sendTestEmail = function() { return window.stenoApp.sendTestEmail(); };
+    window.stenoAdmin.submitResetPassword = function() { return window.stenoApp.submitResetPassword(); };
+  }
 }
