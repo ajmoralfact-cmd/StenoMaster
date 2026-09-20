@@ -1043,21 +1043,41 @@ def create_user(username: str, email: str, password: str, display_name: str = No
             if referrer:
                 referrer_id = referrer['id'] if isinstance(referrer, dict) else referrer[0]
                 if referrer_id != user_id:
-                    # 1. Record referral with 100 points
+                    # 1. Record referral
                     c.execute("""
                         INSERT INTO referrals (referrer_user_id, referred_user_id, referral_code, reward_points, status, created_at)
-                        VALUES (?, ?, ?, 100, 'completed', ?)
+                        VALUES (?, ?, ?, 5, 'completed', ?)
                     """, (referrer_id, user_id, ref_code.strip().upper(), now))
 
-                    # 2. Award 100 points to Referrer
-                    c.execute("UPDATE profiles SET points = points + 100 WHERE user_id = ?", (referrer_id,))
+                    # 2. Award +5 Gold Coins to Referrer (1 Coin = ₹1)
                     c.execute("""
-                        INSERT INTO reward_transactions (user_id, points, type, reference_id, description, created_at)
-                        VALUES (?, 100, 'referral_bonus', ?, ?, ?)
-                    """, (referrer_id, f"ref:{user_id}", f"Referral reward for inviting new student: {username}", now))
+                        UPDATE profiles
+                        SET gold_coins = COALESCE(gold_coins, 0) + 5,
+                            total_gold_coins_earned = COALESCE(total_gold_coins_earned, 0) + 5
+                        WHERE user_id = ?
+                    """, (referrer_id,))
+                    c.execute("""
+                        INSERT INTO gold_coin_transactions (user_id, amount, type, description, created_at)
+                        VALUES (?, 5, 'signup_referral_reward', ?, ?)
+                    """, (referrer_id, f"नए छात्र ({username}) द्वारा साइन-अप करने पर +5 गोल्ड कॉइन्स", now))
+                    c.execute("""
+                        INSERT INTO notifications (user_id, title, message, type, is_read, created_at)
+                        VALUES (?, '🪙 +5 गोल्ड कॉइन्स प्राप्त!',
+                                'बधाई! आपके रेफरल लिंक से छात्र (' || ? || ') ने साइन-अप किया। आपको 5 गोल्ड कॉइन्स मिले!',
+                                'reward', 0, ?)
+                    """, (referrer_id, username, now))
 
-                    # 3. Award 50 welcome bonus points to New Student
-                    c.execute("UPDATE profiles SET points = points + 50 WHERE user_id = ?", (user_id,))
+                    # 3. Award +5 Gold Coins Welcome Bonus to New Student
+                    c.execute("""
+                        UPDATE profiles
+                        SET gold_coins = COALESCE(gold_coins, 0) + 5,
+                            total_gold_coins_earned = COALESCE(total_gold_coins_earned, 0) + 5
+                        WHERE user_id = ?
+                    """, (user_id,))
+                    c.execute("""
+                        INSERT INTO gold_coin_transactions (user_id, amount, type, description, created_at)
+                        VALUES (?, 5, 'welcome_bonus', 'रेफरल लिंक से जुड़ने पर +5 गोल्ड कॉइन्स वेलकम बोनस', now)
+                    """, (user_id,))
                     c.execute("""
                         INSERT INTO reward_transactions (user_id, points, type, reference_id, description, created_at)
                         VALUES (?, 50, 'welcome_bonus', ?, ?, ?)
@@ -3227,6 +3247,10 @@ def admin_review_payment(request_id: int, action: str, admin_id: int, notes: str
             admin_id=admin_id,
             notes=f"भुगतान #{request_id} (UTR: {req['transaction_id']}) स्वीकृत"
         )
+        try:
+            award_purchase_commission(req["user_id"], amount, req["transaction_id"])
+        except Exception as e:
+            print(f"Error awarding commission in review: {e}")
 
     return {"success": True, "status": status}
 
@@ -3432,6 +3456,12 @@ def mark_cashfree_order_paid(
 
     conn.commit()
     conn.close()
+
+    try:
+        award_purchase_commission(user_id, order['amount'], order_id)
+    except Exception as e:
+        print(f"Error awarding commission in mark_cashfree_order_paid: {e}")
+
     return {
         "success": True,
         "order_id": order_id,
@@ -4503,3 +4533,415 @@ def change_user_password(user_id: int, current_password: str, new_password: str)
     conn.commit()
     conn.close()
     return {"success": True, "message": "पासवर्ड सफलतापूर्वक बदल दिया गया है! ✅"}
+
+
+
+# -----------------------------------------------------------------------------
+# DUAL-WALLET SYSTEM: GOLD COINS (1 COIN = ₹1) & 10% CASH COMMISSION
+# -----------------------------------------------------------------------------
+def award_share_gold_coin(user_id: int, platform: str = "whatsapp") -> Dict[str, Any]:
+    """Awards +1 Gold Coin when user shares the app/link (Max 3 shares per day)."""
+    conn = get_db()
+    c = conn.cursor()
+    now_iso = datetime.now().isoformat()
+    today_start = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0).isoformat()
+
+    # Check shares today
+    c.execute("""
+        SELECT COUNT(*) FROM share_logs
+        WHERE user_id = ? AND created_at >= ?
+    """, (user_id, today_start))
+    row = c.fetchone()
+    shares_today = (row[0] if isinstance(row, (tuple, list)) else row.get('count', 0)) if row else 0
+
+    c.execute("SELECT gold_coins FROM profiles WHERE user_id = ?", (user_id,))
+    p_row = c.fetchone()
+    curr_coins = (p_row['gold_coins'] if isinstance(p_row, dict) else p_row[0]) if p_row else 0
+
+    if shares_today >= 3:
+        conn.close()
+        return {
+            "success": True,
+            "earned": 0,
+            "shares_today": shares_today,
+            "max_daily_shares": 3,
+            "gold_coins": curr_coins,
+            "message": "आज के शेयर रिवॉर्ड (3/3) पूरे हो चुके हैं। कल पुनः शेयर करने पर कॉइन्स मिलेंगे! 🪙"
+        }
+
+    # Award +1 Gold Coin
+    c.execute("""
+        UPDATE profiles
+        SET gold_coins = COALESCE(gold_coins, 0) + 1,
+            total_gold_coins_earned = COALESCE(total_gold_coins_earned, 0) + 1
+        WHERE user_id = ?
+    """, (user_id,))
+
+    c.execute("""
+        INSERT INTO gold_coin_transactions (user_id, amount, type, description, created_at)
+        VALUES (?, 1, 'share_reward', ?, ?)
+    """, (user_id, f"ऐप/वेबसाइट शेयर करने पर मिला 1 गोल्ड कॉइन ({platform})", now_iso))
+
+    c.execute("""
+        INSERT INTO share_logs (user_id, platform, created_at)
+        VALUES (?, ?, ?)
+    """, (user_id, platform, now_iso))
+
+    c.execute("""
+        INSERT INTO notifications (user_id, title, message, type, is_read, created_at)
+        VALUES (?, '🪙 +1 गोल्ड कॉइन प्राप्त!', 'ऐप शेयर करने पर आपको 1 गोल्ड कॉइन (मूल्य ₹1) प्राप्त हुआ।', 'reward', 0, ?)
+    """, (user_id, now_iso))
+
+    conn.commit()
+    conn.close()
+
+    return {
+        "success": True,
+        "earned": 1,
+        "shares_today": shares_today + 1,
+        "max_daily_shares": 3,
+        "gold_coins": curr_coins + 1,
+        "message": f"बधाई! शेयर करने पर आपको +1 गोल्ड कॉइन (मूल्य ₹1) मिला! आज का कोटा: {shares_today + 1}/3 🪙"
+    }
+
+
+def award_purchase_commission(paying_user_id: int, amount: float, order_id: str):
+    """Awards 10% Real Cash Commission to the referrer when a referred student buys a course/plan."""
+    if not paying_user_id or amount <= 0:
+        return
+    conn = get_db()
+    c = conn.cursor()
+    now_iso = datetime.now().isoformat()
+
+    try:
+        # Find referrer
+        c.execute("SELECT referrer_user_id FROM referrals WHERE referred_user_id = ? LIMIT 1", (paying_user_id,))
+        ref_row = c.fetchone()
+        if not ref_row:
+            conn.close()
+            return
+
+        referrer_id = ref_row['referrer_user_id'] if isinstance(ref_row, dict) else ref_row[0]
+        if not referrer_id or referrer_id == paying_user_id:
+            conn.close()
+            return
+
+        # 10% commission in real rupees
+        comm = round(float(amount) * 0.10, 2)
+        if comm <= 0:
+            conn.close()
+            return
+
+        c.execute("""
+            UPDATE profiles
+            SET commission_balance = COALESCE(commission_balance, 0) + ?,
+                total_commission_earned = COALESCE(total_commission_earned, 0) + ?
+            WHERE user_id = ?
+        """, (comm, comm, referrer_id))
+
+        c.execute("""
+            INSERT INTO commission_transactions (user_id, amount, type, referred_user_id, order_id, description, created_at)
+            VALUES (?, ?, 'course_sale_commission', ?, ?, ?, ?)
+        """, (referrer_id, comm, paying_user_id, str(order_id), f"रेफर्ड छात्र की कोर्स खरीद (₹{amount:.2f}) पर 10% नकद कमीशन", now_iso))
+
+        c.execute("""
+            INSERT INTO notifications (user_id, title, message, type, is_read, created_at)
+            VALUES (?, '💰 +₹' || ? || ' नकद कमीशन प्राप्त!',
+                    'बधाई! आपके द्वारा रेफर्ड छात्र ने कोर्स खरीदा। आपको 10% (₹' || ? || ') नकद कमीशन प्राप्त हुआ! यह राशि आप सीधे UPI में निकाल सकते हैं।',
+                    'reward', 0, ?)
+        """, (referrer_id, str(comm), str(comm), now_iso))
+
+        conn.commit()
+        print(f"Awarded ₹{comm} 10% commission to referrer {referrer_id} for order {order_id}")
+    except Exception as e:
+        print(f"Error awarding purchase commission: {e}")
+    finally:
+        conn.close()
+
+
+def purchase_course_with_gold_coins(user_id: int, plan_id: str = None) -> Dict[str, Any]:
+    """Allows student to buy/unlock a Pro plan using Gold Coins (1 Gold Coin = ₹1)."""
+    conn = get_db()
+    c = conn.cursor()
+    now_iso = datetime.now().isoformat()
+
+    # Determine plan price and days
+    plan_prices = {
+        '1m': {'price': 100, 'days': 30, 'name': 'StenoMaster Pro — 1 माह (30 दिन)'},
+        '3m': {'price': 250, 'days': 90, 'name': 'StenoMaster Pro — 3 माह (90 दिन)'},
+        '6m': {'price': 450, 'days': 180, 'name': 'StenoMaster Pro — 6 माह (180 दिन)'},
+        '1y': {'price': 800, 'days': 365, 'name': 'StenoMaster Pro — 1 वर्ष (365 दिन)'}
+    }
+
+    selected = plan_prices.get(plan_id, plan_prices['1m'])
+    required_coins = selected['price']
+    plan_name = selected['name']
+    plan_days = selected['days']
+
+    c.execute("SELECT gold_coins FROM profiles WHERE user_id = ?", (user_id,))
+    p_row = c.fetchone()
+    user_coins = (p_row['gold_coins'] if isinstance(p_row, dict) else p_row[0]) if p_row else 0
+
+    if user_coins < required_coins:
+        conn.close()
+        return {
+            "success": False,
+            "fully_paid": False,
+            "error": f"अपर्याप्त गोल्ड कॉइन्स। इस प्लान हेतु {required_coins} कॉइन्स आवश्यक हैं, जबकि आपके पास {user_coins} कॉइन्स हैं।",
+            "available_coins": user_coins,
+            "required_coins": required_coins,
+            "shortfall": required_coins - user_coins
+        }
+
+    # Deduct coins
+    c.execute("UPDATE profiles SET gold_coins = gold_coins - ? WHERE user_id = ?", (required_coins, user_id))
+
+    c.execute("""
+        INSERT INTO gold_coin_transactions (user_id, amount, type, description, created_at)
+        VALUES (?, ?, 'course_purchase_full', ?, ?)
+    """, (user_id, -required_coins, f"{plan_name} कोर्स खरीद में {required_coins} गोल्ड कॉइन्स का उपयोग", now_iso))
+
+    # Grant subscription
+    now_dt = datetime.now()
+    exp_dt = now_dt + timedelta(days=plan_days)
+    c.execute("""
+        UPDATE users
+        SET subscription_status = 'active',
+            subscription_plan = ?,
+            subscription_start = ?,
+            subscription_end = ?
+        WHERE id = ?
+    """, (plan_name, now_dt.isoformat(), exp_dt.isoformat(), user_id))
+
+    c.execute("""
+        INSERT INTO notifications (user_id, title, message, type, is_read, created_at)
+        VALUES (?, '🎉 कोर्स 100% मुफ़्त अनलॉक!',
+                'आपके ' || ? || ' गोल्ड कॉइन्स का उपयोग करके ' || ? || ' सफलतापूर्वक सक्रिय हो गया है!',
+                'subscription', 0, ?)
+    """, (user_id, str(required_coins), plan_name, now_iso))
+
+    conn.commit()
+    conn.close()
+
+    return {
+        "success": True,
+        "fully_paid": True,
+        "coins_used": required_coins,
+        "remaining_coins": user_coins - required_coins,
+        "plan_name": plan_name,
+        "subscription_end": exp_dt.isoformat(),
+        "message": f"🎉 बधाई! आपके {required_coins} गोल्ड कॉइन्स से '{plan_name}' 100% मुफ़्त अनलॉक हो गया!"
+    }
+
+
+def create_withdrawal_request(user_id: int, amount: float, upi_id: str) -> Dict[str, Any]:
+    """Allows student to withdraw their 10% Cash Commission directly to UPI."""
+    clean_amount = round(float(amount), 2)
+    clean_upi = (upi_id or "").strip()
+
+    if clean_amount < 50:
+        return {"success": False, "error": "न्यूनतम निकासी राशि ₹50 है।"}
+    if not clean_upi or "@" not in clean_upi:
+        return {"success": False, "error": "कृपया एक वैध UPI आईडी दर्ज करें (उदा. mobile@upi या name@okaxis)"}
+
+    conn = get_db()
+    c = conn.cursor()
+    now_iso = datetime.now().isoformat()
+
+    c.execute("SELECT commission_balance FROM profiles WHERE user_id = ?", (user_id,))
+    p_row = c.fetchone()
+    balance = (p_row['commission_balance'] if isinstance(p_row, dict) else p_row[0]) if p_row else 0
+    balance = float(balance or 0)
+
+    if balance < clean_amount:
+        conn.close()
+        return {"success": False, "error": f"अपर्याप्त नकद बैलेंस। आपका उपलब्ध बैलेंस मात्र ₹{balance:.2f} है।"}
+
+    # Deduct from commission_balance
+    c.execute("UPDATE profiles SET commission_balance = commission_balance - ? WHERE user_id = ?", (clean_amount, user_id))
+
+    c.execute("""
+        INSERT INTO withdrawal_requests (user_id, amount, upi_id, status, created_at)
+        VALUES (?, ?, ?, 'pending', ?)
+    """, (user_id, clean_amount, clean_upi, now_iso))
+
+    c.execute("""
+        INSERT INTO commission_transactions (user_id, amount, type, description, created_at)
+        VALUES (?, ?, 'withdrawal_requested', ?, ?)
+    """, (user_id, -clean_amount, f"UPI ({clean_upi}) में ₹{clean_amount:.2f} निकासी अनुरोध दर्ज", now_iso))
+
+    c.execute("""
+        INSERT INTO notifications (user_id, title, message, type, is_read, created_at)
+        VALUES (?, '💸 निकासी अनुरोध दर्ज!',
+                'आपके ₹' || ? || ' का निकासी अनुरोध UPI (' || ? || ') हेतु दर्ज हो चुका है। शीघ्र ही राशि भेजी जाएगी।',
+                'payment', 0, ?)
+    """, (user_id, str(clean_amount), clean_upi, now_iso))
+
+    conn.commit()
+    conn.close()
+
+    return {
+        "success": True,
+        "amount": clean_amount,
+        "remaining_balance": round(balance - clean_amount, 2),
+        "message": f"₹{clean_amount:.2f} का निकासी अनुरोध दर्ज हो गया है! 24 घंटे में आपके UPI ({clean_upi}) पर राशि जमा कर दी जाएगी।"
+    }
+
+
+def get_user_wallet_data(user_id: int) -> Dict[str, Any]:
+    """Returns complete Dual-Wallet overview: Gold Coins, Cash Commission, and histories."""
+    conn = get_db()
+    c = conn.cursor()
+
+    c.execute("""
+        SELECT gold_coins, commission_balance, total_gold_coins_earned, total_commission_earned
+        FROM profiles WHERE user_id = ?
+    """, (user_id,))
+    p_row = c.fetchone()
+
+    gold_coins = 0
+    comm_balance = 0.0
+    total_gold = 0
+    total_comm = 0.0
+
+    if p_row:
+        if isinstance(p_row, dict):
+            gold_coins = p_row.get('gold_coins') or 0
+            comm_balance = float(p_row.get('commission_balance') or 0)
+            total_gold = p_row.get('total_gold_coins_earned') or gold_coins
+            total_comm = float(p_row.get('total_commission_earned') or comm_balance)
+        else:
+            gold_coins = p_row[0] or 0
+            comm_balance = float(p_row[1] or 0)
+            total_gold = p_row[2] or gold_coins
+            total_comm = float(p_row[3] or comm_balance)
+
+    # Gold transactions
+    c.execute("""
+        SELECT id, amount, type, description, created_at
+        FROM gold_coin_transactions
+        WHERE user_id = ?
+        ORDER BY id DESC LIMIT 30
+    """, (user_id,))
+    gold_txs = [dict(r) if isinstance(r, dict) else {'id':r[0], 'amount':r[1], 'type':r[2], 'description':r[3], 'created_at':r[4]} for r in c.fetchall()]
+
+    # Commission transactions
+    c.execute("""
+        SELECT id, amount, type, description, created_at
+        FROM commission_transactions
+        WHERE user_id = ?
+        ORDER BY id DESC LIMIT 30
+    """, (user_id,))
+    comm_txs = [dict(r) if isinstance(r, dict) else {'id':r[0], 'amount':r[1], 'type':r[2], 'description':r[3], 'created_at':r[4]} for r in c.fetchall()]
+
+    # Withdrawals
+    c.execute("""
+        SELECT id, amount, upi_id, status, admin_notes, created_at, reviewed_at
+        FROM withdrawal_requests
+        WHERE user_id = ?
+        ORDER BY id DESC LIMIT 20
+    """, (user_id,))
+    withdrawals = [dict(r) if isinstance(r, dict) else {'id':r[0], 'amount':r[1], 'upi_id':r[2], 'status':r[3], 'admin_notes':r[4], 'created_at':r[5], 'reviewed_at':r[6]} for r in c.fetchall()]
+
+    conn.close()
+
+    return {
+        "gold_coins": gold_coins,
+        "commission_balance": round(comm_balance, 2),
+        "total_gold_coins_earned": total_gold,
+        "total_commission_earned": round(total_comm, 2),
+        "gold_history": gold_txs,
+        "commission_history": comm_txs,
+        "withdrawals": withdrawals
+    }
+
+
+def get_admin_withdrawals() -> List[Dict[str, Any]]:
+    """Returns all withdrawal requests for admin review."""
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("""
+        SELECT w.id, w.user_id, w.amount, w.upi_id, w.status, w.admin_notes, w.created_at, w.reviewed_at,
+               u.username, u.email, u.phone, u.student_code, p.display_name
+        FROM withdrawal_requests w
+        JOIN users u ON w.user_id = u.id
+        LEFT JOIN profiles p ON u.id = p.user_id
+        ORDER BY w.id DESC LIMIT 100
+    """)
+    rows = c.fetchall()
+    conn.close()
+    result = []
+    for r in rows:
+        if isinstance(r, dict):
+            result.append(dict(r))
+        else:
+            result.append({
+                'id': r[0], 'user_id': r[1], 'amount': r[2], 'upi_id': r[3],
+                'status': r[4], 'admin_notes': r[5], 'created_at': r[6], 'reviewed_at': r[7],
+                'username': r[8], 'email': r[9], 'phone': r[10], 'student_code': r[11], 'display_name': r[12]
+            })
+    return result
+
+
+def admin_review_withdrawal(req_id: int, action: str, admin_id: int, notes: str = "") -> Dict[str, Any]:
+    """Allows admin to approve (mark paid) or reject (refund to wallet) a withdrawal."""
+    conn = get_db()
+    c = conn.cursor()
+    now_iso = datetime.now().isoformat()
+
+    c.execute("SELECT id, user_id, amount, upi_id, status FROM withdrawal_requests WHERE id = ?", (req_id,))
+    w_row = c.fetchone()
+    if not w_row:
+        conn.close()
+        return {"success": False, "error": "अनुरोध नहीं मिला।"}
+
+    user_id = w_row['user_id'] if isinstance(w_row, dict) else w_row[1]
+    amount = float(w_row['amount'] if isinstance(w_row, dict) else w_row[2])
+    upi_id = w_row['upi_id'] if isinstance(w_row, dict) else w_row[3]
+    curr_status = w_row['status'] if isinstance(w_row, dict) else w_row[4]
+
+    if curr_status != 'pending':
+        conn.close()
+        return {"success": False, "error": f"यह अनुरोध पहले से '{curr_status}' है।"}
+
+    if action == 'approve':
+        c.execute("""
+            UPDATE withdrawal_requests
+            SET status = 'approved', admin_notes = ?, reviewed_at = ?
+            WHERE id = ?
+        """, (notes or 'भुगतान सफल (Marked as Paid)', now_iso, req_id))
+
+        c.execute("""
+            INSERT INTO notifications (user_id, title, message, type, is_read, created_at)
+            VALUES (?, '💸 UPI भुगतान सफल!', 'आपका ₹' || ? || ' का निकासी भुगतान UPI (' || ? || ') पर भेज दिया गया है।', 'payment', 0, ?)
+        """, (user_id, str(amount), upi_id, now_iso))
+
+        conn.commit()
+        conn.close()
+        return {"success": True, "message": f"निकासी अनुरोध #{req_id} स्वीकृत एवं भुगतान संपन्न! ✅"}
+
+    else:
+        # Reject and refund
+        c.execute("""
+            UPDATE withdrawal_requests
+            SET status = 'rejected', admin_notes = ?, reviewed_at = ?
+            WHERE id = ?
+        """, (notes or 'अस्वीकृत (राशि वापस)', now_iso, req_id))
+
+        c.execute("UPDATE profiles SET commission_balance = commission_balance + ? WHERE user_id = ?", (amount, user_id))
+
+        c.execute("""
+            INSERT INTO commission_transactions (user_id, amount, type, description, created_at)
+            VALUES (?, ?, 'withdrawal_refunded', ?, ?)
+        """, (user_id, amount, f"निकासी अस्वीकृत होने पर ₹{amount:.2f} वॉलेट में वापस: {notes}", now_iso))
+
+        c.execute("""
+            INSERT INTO notifications (user_id, title, message, type, is_read, created_at)
+            VALUES (?, '⚠️ निकासी अस्वीकृत (राशि वापस जमा)',
+                    'आपका ₹' || ? || ' का निकासी अनुरोध अस्वीकृत कर दिया गया और राशि आपके वॉलेट में वापस जोड़ दी गई है। कारण: ' || ?,
+                    'payment', 0, ?)
+        """, (user_id, str(amount), notes or 'अमान्य UPI', now_iso))
+
+        conn.commit()
+        conn.close()
+        return {"success": True, "message": f"निकासी अनुरोध #{req_id} अस्वीकृत एवं ₹{amount:.2f} छात्र के वॉलेट में वापस जमा! 🔄"}

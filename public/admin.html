@@ -1,4 +1,41 @@
-<!DOCTYPE html>
+<!DOCTYPE
+
+          <!-- ===============================================================
+               SUB-PANEL: STUDENT WITHDRAWALS (10% CASH COMMISSION PAYOUTS)
+               =============================================================== -->
+          <section class="admin-sub-panel" id="adminWithdrawalsPanel">
+            <div class="admin-panel-header">
+              <div>
+                <h3 class="admin-panel-title">💸 छात्र UPI निकासी अनुरोध (10% Cash Commission Payouts)</h3>
+                <p class="admin-panel-subtitle">छात्रों द्वारा कोर्स रेफरल पर कमाए गए 10% रियल कैश कमीशन के निकासी अनुरोधों का सत्यापन करें और UPI पर भुगतान भेजकर मार्क पेड करें।</p>
+              </div>
+              <button type="button" class="btn-primary" onclick="stenoAdmin.loadWithdrawals()" style="padding:6px 14px; font-size:0.85rem;">
+                🔄 रिफ्रेश करें
+              </button>
+            </div>
+
+            <div class="admin-card" style="padding: 16px; margin-top: 14px;">
+              <div class="admin-table-wrap">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>#ID</th>
+                      <th>छात्र (Student)</th>
+                      <th>संपर्क (Email / Phone)</th>
+                      <th>निकासी राशि (Amount)</th>
+                      <th>छात्र का UPI ID</th>
+                      <th>स्थिति (Status)</th>
+                      <th>अनुरोध तिथि</th>
+                      <th>एडमिन एक्शन</th>
+                    </tr>
+                  </thead>
+                  <tbody id="adminWithdrawalsTableBody">
+                    <!-- Rendered by stenoAdmin.loadWithdrawals() -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </section> html>
 <html lang="hi" data-theme="light">
 <head>
   <meta charset="UTF-8">
@@ -273,6 +310,14 @@
                 <div class="admin-tab-info">
                   <span class="admin-tab-title">भुगतान सत्यापन</span>
                   <span class="admin-tab-sub">UPI UTR अनुमोदन</span>
+                </div>
+              </button>
+
+              <button type="button" class="admin-nav-tab" data-admin-tab="withdrawals" onclick="stenoAdmin.switchTab('withdrawals')">
+                <span class="admin-tab-icon">💸</span>
+                <div class="admin-tab-info">
+                  <span class="admin-tab-title">छात्र UPI निकासी</span>
+                  <span class="admin-tab-sub">10% कमीशन ट्रांसफर</span>
                 </div>
               </button>
 

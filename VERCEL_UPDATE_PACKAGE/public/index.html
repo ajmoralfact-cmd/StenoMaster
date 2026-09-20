@@ -12,7 +12,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Mukta:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/css/style.css?v=11.1">
+  <link rel="stylesheet" href="/css/style.css?v=11.2">
   <!-- Google Identity Services SDK -->
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   <script>
@@ -1762,6 +1762,20 @@
           </div>
 
           <!-- Subscription Mode Tabs: Month-wise (4 Boxes) vs Category-wise -->
+                    <!-- Gold Coins Course Redemption Banner -->
+          <div id="subGoldCoinsBanner" style="margin-bottom:16px; display:flex; justify-content:space-between; align-items:center; background:linear-gradient(135deg, rgba(245,158,11,0.12) 0%, rgba(251,191,36,0.22) 100%); border:1.5px solid rgba(245,158,11,0.45); border-radius:14px; padding:14px 18px; flex-wrap:wrap; gap:12px;">
+            <div style="display:flex; align-items:center; gap:12px;">
+              <span style="font-size:2.2rem;">🪙</span>
+              <div>
+                <div style="font-weight:800; font-size:1.02rem; color:#b45309;">आपके पास <span id="subAvailableCoins">0</span> गोल्ड कॉइन्स हैं! (1 कॉइन = ₹1 छूट)</div>
+                <div style="font-size:0.82rem; color:var(--text-secondary);">आप अपने अर्जित कॉइन्स से किसी भी प्रो प्लान को 100% मुफ़्त (0 रुपये) में अनलॉक कर सकते हैं।</div>
+              </div>
+            </div>
+            <button type="button" class="btn-primary" onclick="stenoApp.openGoldCoinRedeemModal()" style="background:linear-gradient(135deg, #d97706, #b45309); border:none; color:#fff; font-weight:800; padding:10px 18px; border-radius:10px; cursor:pointer; box-shadow:0 3px 10px rgba(217,119,6,0.3);">
+              🪙 कॉइन्स से मुफ़्त अनलॉक करें ⚡
+            </button>
+          </div>
+
           <div class="sub-mode-tabs" style="display:flex; gap:10px; margin-bottom:18px; background:var(--bg-subtle, #f1f5f9); padding:6px; border-radius:14px; border:1px solid var(--border);">
             <button type="button" id="subTabMonthBtn" onclick="stenoApp.switchSubPlanTab('month')" style="flex:1; padding:12px 16px; border-radius:10px; font-weight:800; font-size:0.92rem; border:none; cursor:pointer; background:var(--primary, #2563eb); color:#fff; display:flex; align-items:center; justify-content:center; gap:8px; box-shadow:0 2px 8px rgba(37,99,235,0.25); transition:all 0.2s;">
               <span>👑</span> <span>मासिक / ऑल-इन-वन प्लान (Month-wise Plans)</span>
@@ -2085,104 +2099,173 @@
       <!-- ===================================================================
            VIEW: REFER & EARN
            =================================================================== -->
+            <!-- ===================================================================
+           VIEW: REFER & DUAL-WALLET (GOLD COINS & 10% CASH COMMISSION)
+           =================================================================== -->
       <main class="page-view" id="view-refer">
         <div class="view-top-back-wrap" style="margin-bottom:14px;">
           <button type="button" class="view-back-strip-btn" onclick="stenoApp.goBack()" title="वापस जाएं">
             <span class="back-icon">←</span> <span>वापस जाएं (Back)</span>
           </button>
         </div>
-        <div class="section-header">
+        <div class="section-header" style="margin-bottom:20px;">
           <div>
-            <h2 class="section-title">रेफर करें और पॉइंट्स अर्जित करें (Refer & Earn)</h2>
-            <p class="section-subtitle">अपने साथी स्टेनो अभ्यर्थियों को आमंत्रित करें और प्रत्येक सफल रेफरल पर 100 रिवार्ड पॉइंट्स प्राप्त करें!</p>
+            <h2 class="section-title">🪙 गोल्ड कॉइन्स & 💰 10% नकद कमीशन वॉलेट</h2>
+            <p class="section-subtitle">शेयर करके गोल्ड कॉइन्स कमाएं (1 कॉइन = ₹1), 100% मुफ़्त कोर्स खरीदें एवं सीधे अपने UPI में नकद कमीशन प्राप्त करें!</p>
           </div>
         </div>
 
-        <div class="daily-target-card" style="margin-bottom: 24px;">
-          <h3>आपका अनूठा रेफरल कोड (Your Referral Code)</h3>
-          <div style="display:flex; align-items:center; gap:14px; margin: 16px 0;">
-            <div style="font-size:1.8rem; font-weight:800; letter-spacing:0.1em; background:rgba(255,255,255,0.2); padding:6px 18px; border-radius:var(--radius-md);" id="referralCodeDisplay">
+        <!-- 2-COL 3D CARDS: GOLD COINS & REAL CASH -->
+        <div class="wallet-grid-2col">
+          <!-- CARD 1: GOLD COINS (1 COIN = ₹1) -->
+          <div class="wallet-card-gold-3d">
+            <div class="wallet-card-inner">
+              <div>
+                <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                  <span class="wallet-badge-pill wallet-badge-gold">🪙 1 कॉइन = ₹1 (कोर्स खरीद मान्य)</span>
+                  <span style="font-size:1.8rem;">✨</span>
+                </div>
+                <div class="wallet-stat-number wallet-stat-gold">
+                  <span id="walletGoldCoins">0</span> <span style="font-size:1.6rem; vertical-align:middle;">🪙</span>
+                </div>
+                <div style="font-size:0.83rem; font-weight:700; color:var(--text-muted); margin-bottom:14px;">
+                  उपलब्ध गोल्ड कॉइन्स बैलेंस (कुल अर्जित: <span id="walletTotalGold">0</span> 🪙)
+                </div>
+
+                <div style="border-top:1px solid rgba(245,158,11,0.25); padding-top:12px; margin-top:8px;">
+                  <div class="wallet-perk-item">
+                    <span>📲</span>
+                    <div><strong>शेयर रिवॉर्ड:</strong> हर शेयर पर तुरंत +1 गोल्ड कॉइन (दैनिक कोटा 3 कॉइन्स)</div>
+                  </div>
+                  <div class="wallet-perk-item">
+                    <span>👥</span>
+                    <div><strong>साइन-अप रिवॉर्ड:</strong> नए छात्र के जुड़ने पर +5 गोल्ड कॉइन्स</div>
+                  </div>
+                  <div class="wallet-perk-item">
+                    <span>📚</span>
+                    <div><strong>100% मुफ़्त कोर्स:</strong> जितने कॉइन्स, उतने रुपये की छूट (पूरा कोर्स भी मुफ़्त!)</div>
+                  </div>
+                  <div class="wallet-perk-item" style="font-size:0.78rem; opacity:0.85;">
+                    <span>⚠️</span>
+                    <div><em>गोल्ड कॉइन्स केवल कोर्स/प्लान खरीदने हेतु मान्य हैं (रुपये में नहीं बदलेंगे)।</em></div>
+                  </div>
+                </div>
+              </div>
+
+              <button type="button" class="btn-wallet-action btn-wallet-gold" onclick="stenoApp.openGoldCoinRedeemModal()">
+                <span>🪙 कॉइन्स से कोर्स अनलॉक करें</span> <span>→</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- CARD 2: 10% REAL CASH COMMISSION (WITHDRAWABLE TO UPI) -->
+          <div class="wallet-card-cash-3d">
+            <div class="wallet-card-inner">
+              <div>
+                <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                  <span class="wallet-badge-pill wallet-badge-cash">💸 10% नकद कमीशन (Withdrawable)</span>
+                  <span style="font-size:1.8rem;">⚡</span>
+                </div>
+                <div class="wallet-stat-number wallet-stat-cash">
+                  ₹<span id="walletCommissionBalance">0.00</span>
+                </div>
+                <div style="font-size:0.83rem; font-weight:700; color:var(--text-muted); margin-bottom:14px;">
+                  उपलब्ध नकद बैलेंस (कुल कमाई: ₹<span id="walletTotalCommission">0.00</span>)
+                </div>
+
+                <div style="border-top:1px solid rgba(16,185,129,0.25); padding-top:12px; margin-top:8px;">
+                  <div class="wallet-perk-item">
+                    <span>🎓</span>
+                    <div><strong>10% कोर्स खरीद कमीशन:</strong> जब भी आपका रेफर्ड छात्र कोई कोर्स खरीदेगा, उसका 10% रियल कैश आपके वॉलेट में जुड़ेगा!</div>
+                  </div>
+                  <div class="wallet-perk-item">
+                    <span>⚡</span>
+                    <div><strong>सीधे UPI में विथड्रॉवल:</strong> न्यूनतम ₹50 होते ही सीधे PhonePe, GPay, Paytm या बैंक UPI में निकालें!</div>
+                  </div>
+                  <div class="wallet-perk-item">
+                    <span>🛡️</span>
+                    <div><strong>सुरक्षित व पारदर्शी:</strong> प्रत्येक भुगतान की लाइव स्थिति एवं रसीद रिकॉर्ड।</div>
+                  </div>
+                </div>
+              </div>
+
+              <button type="button" class="btn-wallet-action btn-wallet-cash" onclick="stenoApp.openWithdrawModal()">
+                <span>💸 UPI / बैंक में निकालें (Withdraw Cash)</span> <span>⚡</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- REFERRAL LINK & QUICK SHARE CARD -->
+        <div class="daily-target-card" style="margin-bottom: 24px; background:linear-gradient(135deg, #1e293b, #0f172a); border:1.5px solid #334155; border-radius:18px; padding:22px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+            <div>
+              <h3 style="margin:0; font-size:1.15rem; color:#f8fafc; display:flex; align-items:center; gap:8px;">
+                <span>🔗</span> <span>आपका पर्सनल रेफरल लिंक व कोड</span>
+              </h3>
+              <p style="margin:4px 0 0 0; font-size:0.84rem; color:#94a3b8;">
+                लिंक को दोस्तों के साथ साझा करें। आपके शेयर पर 1 कॉइन और साइन-अप पर 5 कॉइन्स मिलेंगे!
+              </p>
+            </div>
+            <div style="background:rgba(245,158,11,0.15); border:1px solid rgba(245,158,11,0.4); padding:6px 14px; border-radius:12px; font-size:0.8rem; font-weight:700; color:#fbbf24;">
+              आज का शेयर रिवॉर्ड: <span id="shareQuotaText">0/3</span> 🪙
+            </div>
+          </div>
+
+          <div style="display:flex; align-items:center; gap:12px; margin:16px 0; flex-wrap:wrap;">
+            <div style="font-size:1.6rem; font-weight:800; letter-spacing:0.1em; background:rgba(255,255,255,0.12); padding:8px 20px; border-radius:12px; color:#fff; border:1px dashed rgba(255,255,255,0.3);" id="referralCodeDisplay">
               STENO101
             </div>
-            <button class="btn-secondary" onclick="stenoApp.copyReferralCode()" style="background:#fff; color:var(--primary); font-weight:700;">
+            <button type="button" class="btn-secondary" onclick="stenoApp.copyReferralCode()" style="background:#fff; color:#0f172a; font-weight:700; padding:10px 16px; border-radius:10px; border:none; cursor:pointer;">
               📋 कोड कॉपी करें (Copy Code)
             </button>
+            <button type="button" class="btn-secondary" onclick="stenoApp.copyReferralLink()" style="background:rgba(255,255,255,0.15); color:#fff; font-weight:700; padding:10px 16px; border-radius:10px; border:1px solid rgba(255,255,255,0.25); cursor:pointer;">
+              🔗 लिंक कॉपी करें
+            </button>
           </div>
-          <div style="font-size:0.85rem; opacity:0.9;">
-            रेफरल लिंक: <code id="referralShareLink" style="background:rgba(0,0,0,0.25); padding:2px 8px; border-radius:4px;"></code>
-            <button onclick="stenoApp.copyReferralLink()" style="margin-left:8px; background:none; border:none; color:#fff; cursor:pointer; text-decoration:underline;">
-              लिंक कॉपी करें
+
+          <div style="font-size:0.85rem; color:#cbd5e1; margin-bottom:14px; word-break:break-all;">
+            रेफरल लिंक: <code id="referralShareLink" style="background:rgba(0,0,0,0.35); padding:4px 10px; border-radius:6px; color:#38bdf8;"></code>
+          </div>
+
+          <!-- Quick Share Buttons with Instant Live Gold Coin Callback -->
+          <div style="display:flex; gap:10px; flex-wrap:wrap;">
+            <button type="button" onclick="stenoApp.shareOnWhatsApp()" style="background:#25D366; border:none; color:#fff; display:inline-flex; align-items:center; gap:8px; padding:10px 18px; font-size:0.88rem; font-weight:700; border-radius:10px; cursor:pointer; box-shadow:0 4px 12px rgba(37,211,102,0.3);">
+              <span>💬 WhatsApp पर शेयर करें (+1 🪙)</span>
+            </button>
+            <button type="button" onclick="stenoApp.shareOnTelegram()" style="background:#0088cc; border:none; color:#fff; display:inline-flex; align-items:center; gap:8px; padding:10px 18px; font-size:0.88rem; font-weight:700; border-radius:10px; cursor:pointer; box-shadow:0 4px 12px rgba(0,136,204,0.3);">
+              <span>✈️ Telegram पर भेजें (+1 🪙)</span>
             </button>
           </div>
         </div>
 
-        <div class="stats-summary-grid">
-          <div class="stat-card">
-            <div class="stat-icon-wrap stat-icon-blue">👥</div>
-            <div>
-              <div class="stat-info-title">कुल रेफरल</div>
-              <div class="stat-info-num" id="referralTotalCount">0</div>
-            </div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-icon-wrap stat-icon-green">⭐</div>
-            <div>
-              <div class="stat-info-title">रेफरल से अर्जित पॉइंट्स</div>
-              <div class="stat-info-num" id="referralPointsEarned">0 Pts</div>
-            </div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-icon-wrap stat-icon-purple">💰</div>
-            <div>
-              <div class="stat-info-title">कुल रिवार्ड बैलेंस</div>
-              <div class="stat-info-num" id="referralTotalBalance">0 Pts</div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Referral Benefits & Quick Share Cards -->
-        <div style="margin-top: 24px; display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px;">
-          <div class="card" style="padding: 18px; border: 1px solid var(--border); border-radius: 12px; background: var(--card-bg);">
-            <div style="display:flex; align-items:center; gap: 10px; margin-bottom: 10px;">
-              <span style="font-size: 1.5rem;">🎁</span>
-              <h4 style="margin: 0; font-size: 1.05rem; color: var(--text-main);">रेफरल नियम (Referral Rules)</h4>
-            </div>
-            <ul style="margin: 0; padding-left: 20px; font-size: 0.85rem; color: var(--text-muted); line-height: 1.7;">
-              <li>अपने दोस्तों को अपना रेफरल लिंक या कोड शेयर करें।</li>
-              <li>जब आपका दोस्त जॉइन करता है, तो <strong>आपको तुरंत 100 रिवॉर्ड पॉइंट्स</strong> मिलते हैं।</li>
-              <li>आपके दोस्त को भी <strong>50 वेलकम बोनस पॉइंट्स</strong> तुरंत मिलते हैं।</li>
-              <li>अर्जित पॉइंट्स का उपयोग प्रो सब्सक्रिप्शन छूट और रिवॉर्ड अनलॉक करने में कर सकते हैं।</li>
-            </ul>
+        <!-- DUAL WALLET LEDGER TABS (GOLD COINS / COMMISSION & WITHDRAWALS / REFERRED STUDENTS) -->
+        <div class="card" style="padding:22px; border:1px solid var(--border); border-radius:16px; background:var(--card-bg);">
+          <div class="wallet-tabs-bar">
+            <button type="button" class="wallet-tab-btn active" id="wTabGold" onclick="stenoApp.switchWalletHistoryTab('gold')">
+              🪙 गोल्ड कॉइन्स लेनदेन (Gold Ledger)
+            </button>
+            <button type="button" class="wallet-tab-btn" id="wTabComm" onclick="stenoApp.switchWalletHistoryTab('comm')">
+              💸 10% नकद कमीशन व निकासी (Cash & UPI)
+            </button>
+            <button type="button" class="wallet-tab-btn" id="wTabStudents" onclick="stenoApp.switchWalletHistoryTab('students')">
+              👥 आपके द्वारा जुड़े छात्र (<span id="referralHistoryBadge">0</span>)
+            </button>
           </div>
 
-          <div class="card" style="padding: 18px; border: 1px solid var(--border); border-radius: 12px; background: var(--card-bg);">
-            <div style="display:flex; align-items:center; gap: 10px; margin-bottom: 10px;">
-              <span style="font-size: 1.5rem;">🚀</span>
-              <h4 style="margin: 0; font-size: 1.05rem; color: var(--text-main);">तुरंत शेयर करें (Quick Share)</h4>
-            </div>
-            <p style="font-size: 0.83rem; color: var(--text-muted); margin-bottom: 14px;">एक क्लिक में WhatsApp या Telegram पर अपने साथियों को आमंत्रित करें:</p>
-            <div style="display:flex; gap: 10px; flex-wrap: wrap;">
-              <button type="button" class="btn-primary" onclick="stenoApp.shareOnWhatsApp()" style="background:#25D366; border-color:#25D366; color:#fff; display:inline-flex; align-items:center; gap:6px; padding:8px 14px; font-size:0.85rem; font-weight:600; border-radius:8px; cursor:pointer;">
-                <span>💬 WhatsApp पर भेजें</span>
-              </button>
-              <button type="button" class="btn-secondary" onclick="stenoApp.shareOnTelegram()" style="background:#0088cc; border-color:#0088cc; color:#fff; display:inline-flex; align-items:center; gap:6px; padding:8px 14px; font-size:0.85rem; font-weight:600; border-radius:8px; cursor:pointer;">
-                <span>✈️ Telegram पर भेजें</span>
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <!-- Referral History Table -->
-        <div class="card" style="margin-top: 24px; padding: 20px; border: 1px solid var(--border); border-radius: 12px; background: var(--card-bg);">
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 14px; flex-wrap: wrap; gap: 8px;">
-            <h3 style="margin: 0; font-size: 1.05rem; color: var(--text-main); display:flex; align-items:center; gap:8px;">
-              <span>📋</span> आपके द्वारा आमंत्रित छात्र (Referral History)
-            </h3>
-            <span class="badge badge-info" id="referralHistoryBadge" style="font-size:0.75rem;">0 सफल रेफरल</span>
+          <!-- TAB CONTENT 1: GOLD COINS -->
+          <div id="walletTabPanel-gold" style="overflow-x:auto;">
+            <!-- Rendered by stenoApp.renderGoldHistory() -->
           </div>
 
-          <div id="referralHistoryContainer" style="overflow-x: auto;">
-            <!-- Rendered dynamically -->
+          <!-- TAB CONTENT 2: COMMISSION & WITHDRAWALS -->
+          <div id="walletTabPanel-comm" style="display:none; overflow-x:auto;">
+            <!-- Rendered by stenoApp.renderCommissionHistory() -->
+          </div>
+
+          <!-- TAB CONTENT 3: STUDENTS -->
+          <div id="walletTabPanel-students" style="display:none; overflow-x:auto;">
+            <div id="referralHistoryContainer"></div>
           </div>
         </div>
       </main>
@@ -3420,7 +3503,7 @@
   <script src="/js/keyboard_map.js?v=8.1"></script>
   <script src="/js/typing_engine.js?v=8.1"></script>
   <script src="/js/ocr_service.js?v=1.1"></script>
-  <script src="/js/app.js?v=11.1"></script>
+  <script src="/js/app.js?v=11.2"></script>
   <!-- Strict Exam Hall Anti-Cheat Warning Modal -->
   <div class="modal-overlay" id="examHallWarningModal" style="z-index:99999;">
     <div class="modal-card" style="max-width: 480px; text-align:center; border:2px solid #ef4444; box-shadow:0 10px 40px rgba(239,68,68,0.3);">
@@ -3586,6 +3669,108 @@
       }, 1000);
     })();
   </script>
+
+    <!-- Modal: Student UPI Cash Withdrawal -->
+    <div class="modal-overlay" id="modalWithdrawCash" style="display:none;" onclick="if(event.target===this)stenoApp.closeModal('modalWithdrawCash')">
+      <div class="modal-card" style="max-width:460px; border-radius:20px; padding:26px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+          <h3 style="margin:0; font-size:1.2rem; font-weight:800; display:flex; align-items:center; gap:8px;">
+            <span>💸</span> <span>नकद कमीशन निकासी (UPI Payout)</span>
+          </h3>
+          <button type="button" onclick="stenoApp.closeModal('modalWithdrawCash')" style="background:none; border:none; font-size:1.3rem; cursor:pointer; color:var(--text-muted);">✕</button>
+        </div>
+
+        <div style="background:rgba(16,185,129,0.12); border:1px solid rgba(16,185,129,0.3); border-radius:14px; padding:14px; margin-bottom:18px;">
+          <div style="font-size:0.8rem; color:var(--text-muted); font-weight:600;">उपलब्ध नकद बैलेंस:</div>
+          <div style="font-size:1.8rem; font-weight:900; color:#059669;" id="modalWithdrawAvailableBal">₹0.00</div>
+          <div style="font-size:0.75rem; color:var(--text-muted); margin-top:2px;">*न्यूनतम निकासी राशि ₹50 है। 24 घंटे में सीधे आपके UPI में जमा की जाएगी।</div>
+        </div>
+
+        <form onsubmit="stenoApp.submitWithdrawal(event)">
+          <div class="form-group" style="margin-bottom:14px;">
+            <label class="form-label" style="font-weight:700;">निकासी राशि (Amount in ₹):</label>
+            <input type="number" id="withdrawAmountInput" class="form-input" min="50" step="1" placeholder="न्यूनतम ₹50" required style="font-size:1.1rem; font-weight:700;">
+          </div>
+          <div class="form-group" style="margin-bottom:20px;">
+            <label class="form-label" style="font-weight:700;">आपकी UPI आईडी (UPI ID):</label>
+            <input type="text" id="withdrawUpiInput" class="form-input" placeholder="उदा. 9876543210@upi या yourname@okaxis" required>
+            <div style="font-size:0.75rem; color:var(--text-muted); margin-top:4px;">PhonePe / GPay / Paytm / BHIM किसी भी ऐप की UPI ID दर्ज करें।</div>
+          </div>
+          <div style="display:flex; gap:10px;">
+            <button type="button" class="btn-secondary" onclick="stenoApp.closeModal('modalWithdrawCash')" style="flex:1;">रद्द करें</button>
+            <button type="submit" class="btn-primary" style="flex:2; background:linear-gradient(135deg, #10b981, #059669); font-weight:800;" id="btnSubmitWithdrawal">
+              अनुरोध दर्ज करें 💸
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Modal: Redeem Gold Coins for Pro Courses -->
+    <div class="modal-overlay" id="modalRedeemGoldCoins" style="display:none;" onclick="if(event.target===this)stenoApp.closeModal('modalRedeemGoldCoins')">
+      <div class="modal-card" style="max-width:540px; border-radius:20px; padding:26px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+          <h3 style="margin:0; font-size:1.2rem; font-weight:800; display:flex; align-items:center; gap:8px;">
+            <span>🪙</span> <span>गोल्ड कॉइन्स से मुफ़्त कोर्स अनलॉक करें</span>
+          </h3>
+          <button type="button" onclick="stenoApp.closeModal('modalRedeemGoldCoins')" style="background:none; border:none; font-size:1.3rem; cursor:pointer; color:var(--text-muted);">✕</button>
+        </div>
+
+        <div style="background:rgba(245,158,11,0.12); border:1px solid rgba(245,158,11,0.3); border-radius:14px; padding:14px; margin-bottom:18px; display:flex; justify-content:space-between; align-items:center;">
+          <div>
+            <div style="font-size:0.8rem; color:var(--text-muted); font-weight:600;">उपलब्ध गोल्ड कॉइन्स:</div>
+            <div style="font-size:1.8rem; font-weight:900; color:#d97706;" id="modalRedeemAvailableCoins">0 🪙</div>
+          </div>
+          <div style="text-align:right;">
+            <span class="wallet-badge-pill wallet-badge-gold">1 कॉइन = ₹1</span>
+            <div style="font-size:0.75rem; color:var(--text-muted); margin-top:4px;">100% मुफ़्त एक्टिवेशन</div>
+          </div>
+        </div>
+
+        <div style="font-size:0.9rem; font-weight:700; margin-bottom:10px;">अपना पसंदीदा प्लान चुनें:</div>
+        <div style="display:flex; flex-direction:column; gap:10px; margin-bottom:20px;" id="redeemPlansList">
+          <div style="display:flex; justify-content:space-between; align-items:center; padding:12px 16px; border-radius:12px; border:1.5px solid var(--border); background:var(--bg-subtle);">
+            <div>
+              <div style="font-weight:700; font-size:0.95rem;">StenoMaster Pro — 1 माह (30 दिन)</div>
+              <div style="font-size:0.8rem; color:var(--text-muted);">मूल्य: ₹100 = 100 कॉइन्स</div>
+            </div>
+            <button type="button" class="btn-primary" onclick="stenoApp.purchaseWithCoins('1m')" style="padding:6px 14px; font-size:0.85rem; font-weight:700; background:#d97706;">
+              100 🪙 से अनलॉक
+            </button>
+          </div>
+
+          <div style="display:flex; justify-content:space-between; align-items:center; padding:12px 16px; border-radius:12px; border:1.5px solid var(--border); background:var(--bg-subtle);">
+            <div>
+              <div style="font-weight:700; font-size:0.95rem;">StenoMaster Pro — 3 माह (90 दिन)</div>
+              <div style="font-size:0.8rem; color:var(--text-muted);">मूल्य: ₹250 = 250 कॉइन्स</div>
+            </div>
+            <button type="button" class="btn-primary" onclick="stenoApp.purchaseWithCoins('3m')" style="padding:6px 14px; font-size:0.85rem; font-weight:700; background:#d97706;">
+              250 🪙 से अनलॉक
+            </button>
+          </div>
+
+          <div style="display:flex; justify-content:space-between; align-items:center; padding:12px 16px; border-radius:12px; border:1.5px solid var(--border); background:var(--bg-subtle);">
+            <div>
+              <div style="font-weight:700; font-size:0.95rem;">StenoMaster Pro — 6 माह (180 दिन)</div>
+              <div style="font-size:0.8rem; color:var(--text-muted);">मूल्य: ₹450 = 450 कॉइन्स</div>
+            </div>
+            <button type="button" class="btn-primary" onclick="stenoApp.purchaseWithCoins('6m')" style="padding:6px 14px; font-size:0.85rem; font-weight:700; background:#d97706;">
+              450 🪙 से अनलॉक
+            </button>
+          </div>
+
+          <div style="display:flex; justify-content:space-between; align-items:center; padding:12px 16px; border-radius:12px; border:1.5px solid var(--border); background:var(--bg-subtle);">
+            <div>
+              <div style="font-weight:700; font-size:0.95rem;">StenoMaster Pro — 1 वर्ष (365 दिन)</div>
+              <div style="font-size:0.8rem; color:var(--text-muted);">मूल्य: ₹800 = 800 कॉइन्स</div>
+            </div>
+            <button type="button" class="btn-primary" onclick="stenoApp.purchaseWithCoins('1y')" style="padding:6px 14px; font-size:0.85rem; font-weight:700; background:#d97706;">
+              800 🪙 से अनलॉक
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
 
 </body>
 </html>

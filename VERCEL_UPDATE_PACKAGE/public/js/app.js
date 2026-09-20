@@ -3701,45 +3701,98 @@ class StenoApp {
     }
   }
 
+  // =========================================================================
+  // DUAL-WALLET: GOLD COINS (1 COIN = ₹1) & 10% CASH COMMISSION SYSTEM
+  // =========================================================================
   async loadReferrals() {
     if (!this.user) {
       this.openModal('loginModal');
       return;
     }
     try {
-      const res = await this.apiCall('/api/referrals/stats');
-      const refCode = res.referral_code || this.user.referral_code || 'SMSTENO';
+      const [refRes, walletRes] = await Promise.all([
+        this.apiCall('/api/referrals/stats').catch(e => ({})),
+        this.apiCall('/api/wallet/details').catch(e => ({}))
+      ]);
+
+      const refCode = (refRes && refRes.referral_code) || this.user.referral_code || 'SMSTENO';
       const codeEl = document.getElementById('referralCodeDisplay');
       if (codeEl) codeEl.textContent = refCode;
       const linkEl = document.getElementById('referralShareLink');
       if (linkEl) linkEl.textContent = `${window.location.origin}/?ref=${refCode}`;
-      const totalEl = document.getElementById('referralTotalCount');
-      if (totalEl) totalEl.textContent = res.total_referrals || 0;
-      const ptsEl = document.getElementById('referralPointsEarned');
-      if (ptsEl) ptsEl.textContent = `${res.points_earned || 0} Pts`;
-      const balEl = document.getElementById('referralTotalBalance');
-      if (balEl) balEl.textContent = `${res.total_points || 0} Pts`;
 
+      // 1. Gold Coins
+      const goldCoins = (walletRes && walletRes.gold_coins !== undefined) ? walletRes.gold_coins : 0;
+      const totalGold = (walletRes && walletRes.total_gold_coins_earned !== undefined) ? walletRes.total_gold_coins_earned : goldCoins;
+      this.currentGoldCoins = goldCoins;
+
+      const goldEl = document.getElementById('walletGoldCoins');
+      if (goldEl) goldEl.textContent = goldCoins;
+      const totalGoldEl = document.getElementById('walletTotalGold');
+      if (totalGoldEl) totalGoldEl.textContent = totalGold;
+
+      // 2. 10% Real Cash Commission
+      const commBal = (walletRes && walletRes.commission_balance !== undefined) ? walletRes.commission_balance : 0.0;
+      const totalComm = (walletRes && walletRes.total_commission_earned !== undefined) ? walletRes.total_commission_earned : commBal;
+      this.currentCommissionBalance = commBal;
+
+      const commEl = document.getElementById('walletCommissionBalance');
+      if (commEl) commEl.textContent = Number(commBal).toFixed(2);
+      const totalCommEl = document.getElementById('walletTotalCommission');
+      if (totalCommEl) totalCommEl.textContent = Number(totalComm).toFixed(2);
+
+      // Modals balance elements
+      const modalBalEl = document.getElementById('modalWithdrawAvailableBal');
+      if (modalBalEl) modalBalEl.textContent = `₹${Number(commBal).toFixed(2)}`;
+      const modalCoinsEl = document.getElementById('modalRedeemAvailableCoins');
+      if (modalCoinsEl) modalCoinsEl.textContent = `${goldCoins} 🪙`;
+
+      // Subscription view live coins banner
+      const subCoinsEl = document.getElementById('subAvailableCoins');
+      if (subCoinsEl) subCoinsEl.textContent = goldCoins;
+
+      // Today's shares quota
+      const goldHistory = (walletRes && walletRes.gold_history) || [];
+      const todayStr = new Date().toISOString().split('T')[0];
+      const sharesToday = goldHistory.filter(h => h.type === 'share_reward' && (h.created_at || '').startsWith(todayStr)).length;
+      const quotaEl = document.getElementById('shareQuotaText');
+      if (quotaEl) quotaEl.textContent = `${Math.min(sharesToday, 3)}/3`;
+
+      // Referred students count badge
+      const referrals = (refRes && refRes.history) || [];
       const badge = document.getElementById('referralHistoryBadge');
-      if (badge) badge.textContent = `${res.total_referrals || 0} सफल रेफरल`;
+      if (badge) badge.textContent = referrals.length;
 
-      this.renderReferralHistory(res.history || []);
+      // Render tab contents
+      this.renderGoldHistory(goldHistory);
+      this.renderCommissionHistory((walletRes && walletRes.commission_history) || [], (walletRes && walletRes.withdrawals) || []);
+      this.renderReferralHistory(referrals);
+
     } catch (err) {
-      console.error('Failed to load referrals:', err);
+      console.error('Failed to load wallet & referrals:', err);
     }
   }
 
-  renderReferralHistory(history) {
-    const container = document.getElementById('referralHistoryContainer');
-    if (!container) return;
+  switchWalletHistoryTab(tab) {
+    const tabs = ['gold', 'comm', 'students'];
+    tabs.forEach(t => {
+      const btn = document.getElementById(`wTab${t === 'gold' ? 'Gold' : t === 'comm' ? 'Comm' : 'Students'}`);
+      const panel = document.getElementById(`walletTabPanel-${t}`);
+      if (btn) btn.classList.toggle('active', t === tab);
+      if (panel) panel.style.display = (t === tab) ? 'block' : 'none';
+    });
+  }
 
+  renderGoldHistory(history) {
+    const container = document.getElementById('walletTabPanel-gold');
+    if (!container) return;
     if (!history || history.length === 0) {
       container.innerHTML = `
         <div style="text-align: center; padding: 28px 16px; color: var(--text-muted);">
-          <div style="font-size: 2.2rem; margin-bottom: 8px;">👥</div>
-          <p style="font-weight: 600; margin-bottom: 4px; color: var(--text-main);">अभी तक कोई रेफरल नहीं हुआ है</p>
+          <div style="font-size: 2.2rem; margin-bottom: 8px;">🪙</div>
+          <p style="font-weight: 600; margin-bottom: 4px; color: var(--text-main);">अभी तक कोई गोल्ड कॉइन लेनदेन नहीं हुआ है</p>
           <p style="font-size: 0.85rem; max-width: 440px; margin: 0 auto; line-height:1.5;">
-            ऊपर दिए गए अपने रेफरल लिंक को दोस्तों के साथ साझा करें। जब भी कोई छात्र जुड़ेगा, आपको <strong>100 रिवॉर्ड अंक</strong> और उन्हें <strong>50 अंक</strong> तुरंत मिलेंगे!
+            ऐप को WhatsApp या Telegram पर शेयर करें और तुरंत <strong>1 गोल्ड कॉइन</strong> अर्जित करें! (1 कॉइन = ₹1)
           </p>
         </div>
       `;
@@ -3750,32 +3803,24 @@ class StenoApp {
       <table class="data-table" style="width: 100%; border-collapse: collapse; font-size: 0.88rem; margin-top: 6px;">
         <thead>
           <tr style="border-bottom: 2px solid var(--border); text-align: left; color: var(--text-muted);">
-            <th style="padding: 10px 12px;">#</th>
-            <th style="padding: 10px 12px;">छात्र का नाम (Student)</th>
-            <th style="padding: 10px 12px;">शामिल होने की तिथि</th>
-            <th style="padding: 10px 12px;">अर्जित अंक</th>
-            <th style="padding: 10px 12px;">स्थिति</th>
+            <th style="padding: 10px 12px;">विवरण (Description)</th>
+            <th style="padding: 10px 12px;">प्रकार</th>
+            <th style="padding: 10px 12px;">सिक्के (Coins)</th>
+            <th style="padding: 10px 12px;">तिथि (Date)</th>
           </tr>
         </thead>
         <tbody>
-          ${history.map((item, idx) => {
-            const dateStr = item.created_at ? new Date(item.created_at).toLocaleDateString('hi-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : 'हाल ही में';
-            const studentName = item.referred_display_name || item.referred_username || 'नया छात्र';
+          ${history.map(item => {
+            const isCredit = item.amount > 0;
+            const dateStr = item.created_at ? new Date(item.created_at).toLocaleDateString('hi-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : 'हाल ही में';
             return `
               <tr style="border-bottom: 1px solid var(--border-subtle);">
-                <td style="padding: 10px 12px; color: var(--text-muted);">${idx + 1}</td>
-                <td style="padding: 10px 12px; font-weight: 600; color: var(--text-main);">
-                  <span style="display:inline-flex; align-items:center; gap:6px;">
-                    <span>🎓</span> ${this.escapeHtml(studentName)}
-                  </span>
+                <td style="padding: 10px 12px; font-weight: 600; color: var(--text-main);">${this.escapeHtml(item.description || 'गोल्ड कॉइन लेनदेन')}</td>
+                <td style="padding: 10px 12px;"><span class="badge badge-info">${this.escapeHtml(item.type || 'reward')}</span></td>
+                <td style="padding: 10px 12px; font-weight: 800; color: ${isCredit ? '#d97706' : '#ef4444'};">
+                  ${isCredit ? '+' : ''}${item.amount} 🪙
                 </td>
-                <td style="padding: 10px 12px; color: var(--text-muted);">${dateStr}</td>
-                <td style="padding: 10px 12px; font-weight: 700; color: #10b981;">+${item.reward_points || 100} Pts</td>
-                <td style="padding: 10px 12px;">
-                  <span class="badge badge-success" style="background:#dcfce7; color:#15803d; font-size:0.75rem; padding:3px 8px; border-radius:12px;">
-                    ✓ सफल (Credited)
-                  </span>
-                </td>
+                <td style="padding: 10px 12px; color: var(--text-muted); font-size:0.8rem;">${dateStr}</td>
               </tr>
             `;
           }).join('')}
@@ -3784,32 +3829,210 @@ class StenoApp {
     `;
   }
 
+  renderCommissionHistory(commHistory, withdrawals) {
+    const container = document.getElementById('walletTabPanel-comm');
+    if (!container) return;
+
+    const hasComm = commHistory && commHistory.length > 0;
+    const hasWith = withdrawals && withdrawals.length > 0;
+
+    if (!hasComm && !hasWith) {
+      container.innerHTML = `
+        <div style="text-align: center; padding: 28px 16px; color: var(--text-muted);">
+          <div style="font-size: 2.2rem; margin-bottom: 8px;">💸</div>
+          <p style="font-weight: 600; margin-bottom: 4px; color: var(--text-main);">अभी कोई नकद कमीशन अथवा निकासी लेनदेन नहीं है</p>
+          <p style="font-size: 0.85rem; max-width: 440px; margin: 0 auto; line-height:1.5;">
+            जब भी आपका कोई रेफर्ड छात्र प्रो कोर्स खरीदेगा, आपको तुरंत <strong>10% नकद कमीशन (रुपये)</strong> मिलेगा जिसे आप सीधे अपने बैंक UPI में ट्रांसफर कर सकते हैं!
+          </p>
+        </div>
+      `;
+      return;
+    }
+
+    let html = '';
+    if (hasWith) {
+      html += `
+        <div style="font-weight:800; font-size:0.95rem; margin-bottom:8px; color:var(--text-main);">🏦 UPI निकासी अनुरोध (Payout Requests):</div>
+        <table class="data-table" style="width: 100%; border-collapse: collapse; font-size: 0.88rem; margin-bottom:20px;">
+          <thead>
+            <tr style="border-bottom: 2px solid var(--border); text-align: left; color: var(--text-muted);">
+              <th style="padding: 10px 12px;">निकासी राशि</th>
+              <th style="padding: 10px 12px;">UPI आईडी</th>
+              <th style="padding: 10px 12px;">स्थिति (Status)</th>
+              <th style="padding: 10px 12px;">अनुरोध तिथि</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${withdrawals.map(w => {
+              const dt = w.created_at ? new Date(w.created_at).toLocaleDateString('hi-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : '—';
+              let badge = '<span class="badge badge-warning">⏳ प्रक्रियाधीन (Pending)</span>';
+              if (w.status === 'approved') badge = '<span class="badge badge-success">✅ सफल (Paid)</span>';
+              if (w.status === 'rejected') badge = '<span class="badge badge-hard">❌ अस्वीकृत (वापस)</span>';
+              return `
+                <tr style="border-bottom: 1px solid var(--border-subtle);">
+                  <td style="padding: 10px 12px; font-weight:800; color:#059669;">₹${Number(w.amount).toFixed(2)}</td>
+                  <td style="padding: 10px 12px;"><code>${this.escapeHtml(w.upi_id)}</code></td>
+                  <td style="padding: 10px 12px;">${badge}</td>
+                  <td style="padding: 10px 12px; color:var(--text-muted); font-size:0.8rem;">${dt}</td>
+                </tr>
+              `;
+            }).join('')}
+          </tbody>
+        </table>
+      `;
+    }
+
+    if (hasComm) {
+      html += `
+        <div style="font-weight:800; font-size:0.95rem; margin-bottom:8px; color:var(--text-main);">💰 10% कोर्स कमीशन आय (Commission Earned):</div>
+        <table class="data-table" style="width: 100%; border-collapse: collapse; font-size: 0.88rem;">
+          <thead>
+            <tr style="border-bottom: 2px solid var(--border); text-align: left; color: var(--text-muted);">
+              <th style="padding: 10px 12px;">विवरण</th>
+              <th style="padding: 10px 12px;">कमीशन राशि</th>
+              <th style="padding: 10px 12px;">तिथि</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${commHistory.map(c => {
+              const dt = c.created_at ? new Date(c.created_at).toLocaleDateString('hi-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : '—';
+              const isCredit = c.amount > 0;
+              return `
+                <tr style="border-bottom: 1px solid var(--border-subtle);">
+                  <td style="padding: 10px 12px; font-weight:600; color:var(--text-main);">${this.escapeHtml(c.description || 'कोर्स खरीद कमीशन')}</td>
+                  <td style="padding: 10px 12px; font-weight:800; color:${isCredit ? '#059669' : '#ef4444'};">
+                    ${isCredit ? '+' : ''}₹${Number(c.amount).toFixed(2)}
+                  </td>
+                  <td style="padding: 10px 12px; color:var(--text-muted); font-size:0.8rem;">${dt}</td>
+                </tr>
+              `;
+            }).join('')}
+          </tbody>
+        </table>
+      `;
+    }
+
+    container.innerHTML = html;
+  }
+
+  async claimShareReward(platform = 'share') {
+    try {
+      const res = await this.apiCall('/api/wallet/share-reward', 'POST', { platform });
+      if (res && res.earned > 0) {
+        this.showToast(res.message, 'success');
+        this.loadReferrals();
+      } else if (res && res.message) {
+        this.showToast(res.message, 'info');
+      }
+    } catch (e) {
+      console.warn('Share reward notice:', e);
+    }
+  }
+
   shareOnWhatsApp() {
-    const refCode = document.getElementById('referralCodeDisplay')?.textContent?.trim() || 'STENO101';
+    const refCode = document.getElementById('referralCodeDisplay')?.textContent?.trim() || this.user?.referral_code || 'STENO101';
     const link = `${window.location.origin}/?ref=${refCode}`;
-    const text = `🎯 StenoMaster पर स्टेनोग्राफी और टाइपिंग की तैयारी करें! मेरे रेफरल कोड *${refCode}* से जुड़ें और पाएं 50 वेलकम बोनस अंक:\n${link}`;
+    const text = `🎯 StenoMaster पर स्टेनोग्राफी और टाइपिंग की सर्वश्रेष्ठ तैयारी करें! मेरे रेफरल कोड *${refCode}* से जुड़ें और तुरंत पाएं +5 गोल्ड कॉइन्स वेलकम बोनस (1 कॉइन = ₹1):
+${link}`;
     window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
+    this.claimShareReward('whatsapp');
   }
 
   shareOnTelegram() {
-    const refCode = document.getElementById('referralCodeDisplay')?.textContent?.trim() || 'STENO101';
+    const refCode = document.getElementById('referralCodeDisplay')?.textContent?.trim() || this.user?.referral_code || 'STENO101';
     const link = `${window.location.origin}/?ref=${refCode}`;
-    const text = `🎯 StenoMaster पर स्टेनोग्राफी और टाइपिंग की तैयारी करें! मेरे रेफरल कोड ${refCode} से जुड़ें और पाएं 50 वेलकम बोनस अंक!`;
+    const text = `🎯 StenoMaster पर स्टेनोग्राफी और टाइपिंग की तैयारी करें! मेरे रेफरल कोड ${refCode} से जुड़ें और पाएं +5 गोल्ड कॉइन्स वेलकम बोनस!`;
     window.open(`https://t.me/share/url?url=${encodeURIComponent(link)}&text=${encodeURIComponent(text)}`, '_blank');
-  }
-
-  copyReferralCode() {
-    const code = document.getElementById('referralCodeDisplay').textContent;
-    navigator.clipboard.writeText(code).then(() => {
-      this.showToast(`रेफरल कोड '${code}' कॉपी किया गया! 📋`, 'success');
-    });
+    this.claimShareReward('telegram');
   }
 
   copyReferralLink() {
-    const link = document.getElementById('referralShareLink').textContent;
+    const link = document.getElementById('referralShareLink')?.textContent || `${window.location.origin}/?ref=${this.user?.referral_code || ''}`;
     navigator.clipboard.writeText(link).then(() => {
-      this.showToast('रेफरल लिंक क्लिपबोर्ड में कॉपी किया गया! 🔗', 'success');
+      this.showToast('रेफरल लिंक कॉपी किया गया! 🔗', 'success');
+      this.claimShareReward('link_copy');
     });
+  }
+
+  openWithdrawModal() {
+    if (!this.user) {
+      this.openModal('loginModal');
+      return;
+    }
+    const bal = this.currentCommissionBalance || 0;
+    const modalBal = document.getElementById('modalWithdrawAvailableBal');
+    if (modalBal) modalBal.textContent = `₹${Number(bal).toFixed(2)}`;
+    const amtInput = document.getElementById('withdrawAmountInput');
+    if (amtInput) amtInput.value = bal >= 50 ? Math.floor(bal) : '';
+    this.openModal('modalWithdrawCash');
+  }
+
+  async submitWithdrawal(event) {
+    if (event) event.preventDefault();
+    const amt = parseFloat(document.getElementById('withdrawAmountInput')?.value || 0);
+    const upi = document.getElementById('withdrawUpiInput')?.value?.trim();
+
+    if (!amt || amt < 50) {
+      this.showToast('न्यूनतम निकासी राशि ₹50 है।', 'warning');
+      return;
+    }
+    if (!upi || !upi.includes('@')) {
+      this.showToast('कृपया एक वैध UPI आईडी दर्ज करें (उदा. mobile@upi)', 'warning');
+      return;
+    }
+
+    const btn = document.getElementById('btnSubmitWithdrawal');
+    if (btn) { btn.disabled = true; btn.textContent = 'अनुरोध दर्ज हो रहा है...'; }
+
+    try {
+      const res = await this.apiCall('/api/wallet/withdraw', 'POST', { amount: amt, upi_id: upi });
+      this.showToast(res.message || 'निकासी अनुरोध दर्ज हो गया!', 'success');
+      this.closeModal('modalWithdrawCash');
+      await this.loadReferrals();
+    } catch (err) {
+      this.showToast(err.message || 'निकासी अनुरोध विफल रहा', 'error');
+    } finally {
+      if (btn) { btn.disabled = false; btn.textContent = 'अनुरोध दर्ज करें 💸'; }
+    }
+  }
+
+  openGoldCoinRedeemModal() {
+    if (!this.user) {
+      this.openModal('loginModal');
+      return;
+    }
+    const coins = this.currentGoldCoins || 0;
+    const modalCoins = document.getElementById('modalRedeemAvailableCoins');
+    if (modalCoins) modalCoins.textContent = `${coins} 🪙`;
+    this.openModal('modalRedeemGoldCoins');
+  }
+
+  async purchaseWithCoins(planId) {
+    if (!this.user) {
+      this.openModal('loginModal');
+      return;
+    }
+    const planPrices = { '1m': 100, '3m': 250, '6m': 450, '1y': 800 };
+    const required = planPrices[planId] || 100;
+    const current = this.currentGoldCoins || 0;
+
+    if (current < required) {
+      this.showToast(`अपर्याप्त गोल्ड कॉइन्स! इस प्लान हेतु ${required} कॉइन्स चाहिए, जबकि आपके पास ${current} कॉइन्स हैं।`, 'warning');
+      return;
+    }
+
+    const conf = confirm(`क्या आप अपने ${required} गोल्ड कॉइन्स (मूल्य ₹${required}) का उपयोग करके इस प्रो प्लान को 100% मुफ़्त में अनलॉक करना चाहते हैं?`);
+    if (!conf) return;
+
+    try {
+      const res = await this.apiCall('/api/wallet/purchase-with-coins', 'POST', { plan_id: planId });
+      this.showToast(res.message || '🎉 प्रो प्लान सफलतापूर्वक अनलॉक हो गया!', 'success');
+      this.closeModal('modalRedeemGoldCoins');
+      await this.loadUserProfile();
+      await this.loadReferrals();
+    } catch (err) {
+      this.showToast(err.message || 'कोर्स अनलॉक विफल', 'error');
+    }
   }
 
   async loadNotifications() {
@@ -5446,6 +5669,102 @@ class StenoApp {
       }
     } catch (err) {
       this.showToast(`हटाने में त्रुटि: ${err.message}`, 'danger');
+    }
+  }
+
+
+  async loadSubscription() {
+    try {
+      const [subRes, walletRes] = await Promise.all([
+        this.apiCall('/api/subscription/details').catch(() => null),
+        this.apiCall('/api/wallet/details').catch(() => null)
+      ]);
+
+      if (walletRes && walletRes.gold_coins !== undefined) {
+        this.currentGoldCoins = walletRes.gold_coins;
+        const subCoinsEl = document.getElementById('subAvailableCoins');
+        if (subCoinsEl) subCoinsEl.textContent = walletRes.gold_coins;
+        const modalCoinsEl = document.getElementById('modalRedeemAvailableCoins');
+        if (modalCoinsEl) modalCoinsEl.textContent = `${walletRes.gold_coins} 🪙`;
+      }
+
+      if (subRes && subRes.subscription) {
+        const sub = subRes.subscription;
+        const statusBox = document.getElementById('subActivePlanBox');
+        if (sub.is_premium || sub.status === 'active') {
+          if (statusBox) {
+            statusBox.className = 'sub-active-bar bar-active';
+            statusBox.innerHTML = `
+              <div class="sub-active-bar-inner">
+                <div class="sub-active-bar-left">
+                  <span class="sub-active-lead">🟢 सक्रिय प्रो सदस्यता (${this.escapeHtml(sub.plan_name || 'StenoMaster Pro')})</span>
+                  <span class="sub-active-desc">— शेष दिन: <strong>${sub.days_left || 0} दिन</strong> (वैधता: ${new Date(sub.subscription_end).toLocaleDateString('hi-IN')})</span>
+                </div>
+                <div class="sub-active-bar-right">
+                  <span class="sub-active-pill-active">सक्रिय (Active)</span>
+                </div>
+              </div>
+            `;
+          }
+        }
+      }
+    } catch (err) {
+      console.warn('Subscription load notice:', err);
+    }
+  }
+
+  async initiateCashfreePayment(planId = '1m') {
+    if (!this.user) {
+      this.openModal('loginModal');
+      return;
+    }
+
+    const planPrices = { '1m': 100, '3m': 250, '6m': 450, '1y': 800 };
+    const planDays = { '1m': 30, '3m': 90, '6m': 180, '1y': 365 };
+    const coins = this.currentGoldCoins || 0;
+    const required = planPrices[planId] || 100;
+
+    // Check if user has enough coins to get it 100% free
+    if (coins >= required) {
+      const ask = confirm(`🎉 बधाई! आपके पास ${coins} गोल्ड कॉइन्स हैं! क्या आप इस ₹${required} के प्लान को 100% मुफ़्त (0 रुपये) में कॉइन्स से अनलॉक करना चाहते हैं?`);
+      if (ask) {
+        await this.purchaseWithCoins(planId);
+        return;
+      }
+    }
+
+    this.showToast('Cashfree पेमेंट लोड हो रहा है... 🔐', 'info');
+    try {
+      const returnUrl = `${window.location.origin}/?order_id={order_id}`;
+      const res = await this.apiCall('/api/payment/cashfree/create-order', 'POST', {
+        plan_id: planId,
+        plan_days: planDays[planId] || 30,
+        return_url: returnUrl
+      });
+
+      if (res && res.payment_session_id && window.Cashfree) {
+        const cashfree = window.Cashfree({
+          mode: res.cashfree_env === 'PRODUCTION' ? 'production' : 'sandbox'
+        });
+        cashfree.checkout({
+          paymentSessionId: res.payment_session_id,
+          redirectTarget: '_self'
+        });
+      } else if (res && res.payment_link) {
+        window.location.href = res.payment_link;
+      } else {
+        if (typeof this.openQrPaymentModal === 'function') {
+          this.openQrPaymentModal(planId);
+        } else {
+          this.showToast('भुगतान गेटवे आरंभ नहीं हो सका। कृपया पुनः प्रयास करें।', 'error');
+        }
+      }
+    } catch (err) {
+      if (typeof this.openQrPaymentModal === 'function') {
+        this.openQrPaymentModal(planId);
+      } else {
+        this.showToast('भुगतान आरंभ विफल: ' + (err.message || ''), 'error');
+      }
     }
   }
 

@@ -491,6 +491,15 @@ class StenoMasterHandler(http.server.SimpleHTTPRequestHandler):
             })
             return
 
+        # Dual-Wallet Details (Gold Coins & 10% Cash Commission)
+        if path == '/api/wallet/details':
+            if not user:
+                self._send_auth_required()
+                return
+            data = db.get_user_wallet_data(user['user_id'])
+            self._send_json(200, data)
+            return
+
         # Phase 3: Rewards History
         if path == '/api/rewards/history':
             if not user:
@@ -598,6 +607,11 @@ class StenoMasterHandler(http.server.SimpleHTTPRequestHandler):
             if path == '/api/admin/rewards':
                 txs = db.get_all_reward_transactions()
                 self._send_json(200, {"transactions": txs})
+                return
+
+            if path == '/api/admin/withdrawals':
+                withdrawals = db.get_admin_withdrawals()
+                self._send_json(200, {"withdrawals": withdrawals})
                 return
 
             if path == '/api/admin/referrals':
@@ -830,6 +844,54 @@ class StenoMasterHandler(http.server.SimpleHTTPRequestHandler):
                 return
             is_bookmarked = db.toggle_bookmark(user['user_id'], passage_id)
             self._send_json(200, {"is_bookmarked": is_bookmarked})
+            return
+
+        # Dual-Wallet: Share Reward (+1 Gold Coin)
+        if path == '/api/wallet/share-reward':
+            if not user:
+                self._send_auth_required()
+                return
+            data = self._read_json_body() or {}
+            platform = data.get('platform', 'share')
+            res = db.award_share_gold_coin(user['user_id'], platform)
+            self._send_json(200, res)
+            return
+
+        # Dual-Wallet: 100% Course Purchase with Gold Coins (1 Coin = ₹1)
+        if path == '/api/wallet/purchase-with-coins':
+            if not user:
+                self._send_auth_required()
+                return
+            data = self._read_json_body() or {}
+            plan_id = data.get('plan_id', '1m')
+            res = db.purchase_course_with_gold_coins(user['user_id'], plan_id)
+            if not res.get('success'):
+                self._send_json(400, res)
+            else:
+                self._send_json(200, res)
+            return
+
+        # Dual-Wallet: Cash Commission Withdrawal to UPI
+        if path == '/api/wallet/withdraw':
+            if not user:
+                self._send_auth_required()
+                return
+            data = self._read_json_body() or {}
+            amount = data.get('amount')
+            upi_id = data.get('upi_id', '').strip()
+            if not amount or not upi_id:
+                self._send_json(400, {'error': 'राशि एवं UPI ID आवश्यक है'})
+                return
+            try:
+                clean_amount = float(amount)
+            except ValueError:
+                self._send_json(400, {'error': 'अमान्य राशि दर्ज की गई है'})
+                return
+            res = db.create_withdrawal_request(user['user_id'], clean_amount, upi_id)
+            if not res.get('success'):
+                self._send_json(400, res)
+            else:
+                self._send_json(200, res)
             return
 
         # Phase 3: Subscription Payment Request Submission
@@ -1636,6 +1698,18 @@ class StenoMasterHandler(http.server.SimpleHTTPRequestHandler):
                     self._send_json(400, {"error": "मान्य request_id एवं action ('approve' अथवा 'reject') आवश्यक है"})
                     return
                 res = db.admin_review_payment(int(req_id), action, user['user_id'], notes)
+                self._send_json(200, res)
+                return
+
+            if path == '/api/admin/withdrawals/review':
+                data = self._read_json_body() or {}
+                req_id = data.get('request_id') or data.get('req_id')
+                action = data.get('action')
+                notes = data.get('notes', '')
+                if not req_id or action not in ('approve', 'reject'):
+                    self._send_json(400, {"error": "मान्य request_id एवं action ('approve' अथवा 'reject') आवश्यक है"})
+                    return
+                res = db.admin_review_withdrawal(int(req_id), action, user['user_id'], notes)
                 self._send_json(200, res)
                 return
 

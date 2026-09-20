@@ -7028,3 +7028,197 @@ body.dark-mode .ww-tip-row {
   opacity: 1;
   transform: translateY(-50%) scale(1.15);
 }
+
+
+/* ===================================================================
+   DUAL-WALLET: GOLD COINS (1 COIN = ₹1) & 10% CASH COMMISSION SYSTEM
+   =================================================================== */
+
+.wallet-grid-2col {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 22px;
+  margin-bottom: 24px;
+}
+
+/* 3D Gold Coins Wallet Card */
+.wallet-card-gold-3d {
+  position: relative;
+  border-radius: 24px;
+  padding: 3px;
+  background: linear-gradient(135deg, #f59e0b 0%, #fbbf24 35%, #d97706 70%, #fef08a 100%);
+  box-shadow: 0 16px 36px -6px rgba(245, 158, 11, 0.32), 0 6px 16px -2px rgba(0, 0, 0, 0.06);
+  transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.wallet-card-gold-3d:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 24px 44px -8px rgba(245, 158, 11, 0.44), 0 10px 22px -3px rgba(0, 0, 0, 0.1);
+}
+
+/* 3D Cash Commission Wallet Card */
+.wallet-card-cash-3d {
+  position: relative;
+  border-radius: 24px;
+  padding: 3px;
+  background: linear-gradient(135deg, #10b981 0%, #06b6d4 40%, #059669 75%, #a7f3d0 100%);
+  box-shadow: 0 16px 36px -6px rgba(16, 185, 129, 0.32), 0 6px 16px -2px rgba(0, 0, 0, 0.06);
+  transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.wallet-card-cash-3d:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 24px 44px -8px rgba(16, 185, 129, 0.44), 0 10px 22px -3px rgba(0, 0, 0, 0.1);
+}
+
+.wallet-card-inner {
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-radius: 21px;
+  padding: 24px 26px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 290px;
+  box-shadow: inset 0 1px 1px 0 rgba(255, 255, 255, 0.85);
+}
+
+[data-theme="dark"] .wallet-card-inner {
+  background: rgba(15, 23, 42, 0.88);
+  box-shadow: inset 0 1px 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.wallet-badge-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+}
+.wallet-badge-gold {
+  background: rgba(245, 158, 11, 0.16);
+  color: #b45309;
+  border: 1px solid rgba(245, 158, 11, 0.4);
+}
+[data-theme="dark"] .wallet-badge-gold {
+  background: rgba(245, 158, 11, 0.25);
+  color: #fef08a;
+  border-color: rgba(245, 158, 11, 0.5);
+}
+.wallet-badge-cash {
+  background: rgba(16, 185, 129, 0.16);
+  color: #047857;
+  border: 1px solid rgba(16, 185, 129, 0.4);
+}
+[data-theme="dark"] .wallet-badge-cash {
+  background: rgba(16, 185, 129, 0.25);
+  color: #a7f3d0;
+  border-color: rgba(16, 185, 129, 0.5);
+}
+
+.wallet-stat-number {
+  font-size: 2.5rem;
+  font-weight: 900;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  margin: 10px 0 6px 0;
+  font-family: 'Inter', system-ui, sans-serif;
+}
+.wallet-stat-gold {
+  background: linear-gradient(135deg, #d97706, #b45309);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+[data-theme="dark"] .wallet-stat-gold {
+  background: linear-gradient(135deg, #fbbf24, #fef08a);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.wallet-stat-cash {
+  background: linear-gradient(135deg, #059669, #0284c7);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+[data-theme="dark"] .wallet-stat-cash {
+  background: linear-gradient(135deg, #34d399, #38bdf8);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.wallet-perk-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: var(--text-secondary, #475569);
+  margin-bottom: 8px;
+}
+[data-theme="dark"] .wallet-perk-item {
+  color: #cbd5e1;
+}
+
+.btn-wallet-action {
+  width: 100%;
+  padding: 12px 18px;
+  border-radius: 12px;
+  font-weight: 800;
+  font-size: 0.95rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: none;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  margin-top: 14px;
+}
+.btn-wallet-gold {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  color: #ffffff;
+  box-shadow: 0 4px 14px rgba(217, 119, 6, 0.35);
+}
+.btn-wallet-gold:hover {
+  background: linear-gradient(135deg, #d97706, #b45309);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(217, 119, 6, 0.45);
+}
+.btn-wallet-cash {
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: #ffffff;
+  box-shadow: 0 4px 14px rgba(5, 150, 105, 0.35);
+}
+.btn-wallet-cash:hover {
+  background: linear-gradient(135deg, #059669, #047857);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(5, 150, 105, 0.45);
+}
+
+/* History Tabs within Wallet */
+.wallet-tabs-bar {
+  display: flex;
+  gap: 8px;
+  border-bottom: 2px solid var(--border-subtle, #e2e8f0);
+  margin-bottom: 16px;
+  overflow-x: auto;
+}
+.wallet-tab-btn {
+  padding: 10px 16px;
+  background: none;
+  border: none;
+  font-weight: 700;
+  font-size: 0.88rem;
+  color: var(--text-muted, #64748b);
+  cursor: pointer;
+  border-bottom: 3px solid transparent;
+  margin-bottom: -2px;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+.wallet-tab-btn.active {
+  color: var(--primary, #2563eb);
+  border-bottom-color: var(--primary, #2563eb);
+}

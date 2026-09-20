@@ -75,6 +75,7 @@ class StenoAdmin {
       'passages': 'आलेख प्रबंधन (Passages) — StenoMaster',
       'subscribers': 'छात्र व फ्री एक्सेस (Students) — StenoMaster',
       'payments': 'भुगतान सत्यापन (Payments) — StenoMaster',
+      'withdrawals': 'छात्र UPI निकासी (Withdrawals) — StenoMaster',
       'pricing': 'सब्सक्रिप्शन सेटिंग्स (Pricing) — StenoMaster',
       'scoring': 'परीक्षा मूल्यांकन नियम (Scoring) — StenoMaster',
       'branding': 'सिस्टम सेटिंग्स (Branding) — StenoMaster'
@@ -100,6 +101,7 @@ class StenoAdmin {
       'adminSubscribersPanel',
       'adminReferralsPanel',
       'adminPaymentsPanel',
+      'adminWithdrawalsPanel',
       'adminPricingPanel',
       'adminScoringPanel',
       'adminBrandingPanel',
@@ -122,6 +124,8 @@ class StenoAdmin {
       'subscribers': 'adminSubscribersPanel',
       'referrals': 'adminReferralsPanel',
       'payments': 'adminPaymentsPanel',
+      'withdrawals': 'adminWithdrawalsPanel',
+      'adminWithdrawalsPanel',
       'pricing': 'adminPricingPanel',
       'scoring': 'adminScoringPanel',
       'branding': 'adminBrandingPanel',
@@ -147,6 +151,9 @@ class StenoAdmin {
         this.loadPassages();
       } else if (tabId === 'payments') {
         this.loadPayments();
+      }
+      if (tabId === 'withdrawals') {
+        this.loadWithdrawals();
       } else if (tabId === 'pricing') {
         this.loadSubscriptionSettings();
         this.loadCategoryPricingTable();
@@ -2836,4 +2843,75 @@ if (typeof window !== 'undefined') {
     window.stenoAdmin.sendTestEmail = function() { return window.stenoApp.sendTestEmail(); };
     window.stenoAdmin.submitResetPassword = function() { return window.stenoApp.submitResetPassword(); };
   }
+
+  // =========================================================================
+  // STUDENT UPI WITHDRAWALS (10% REAL CASH COMMISSION PAYOUTS)
+  // =========================================================================
+  async loadWithdrawals() {
+    const tbody = document.getElementById('adminWithdrawalsTableBody');
+    if (!tbody) return;
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding:20px; color:var(--text-muted);">निकासी अनुरोध लोड हो रहे हैं...</td></tr>';
+    try {
+      const res = await stenoApp.apiCall('/api/admin/withdrawals');
+      const withdrawals = res.withdrawals || [];
+      if (withdrawals.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding:24px; color:var(--text-muted);">अभी कोई निकासी अनुरोध दर्ज नहीं है।</td></tr>';
+        return;
+      }
+      tbody.innerHTML = withdrawals.map(w => {
+        const dt = new Date(w.created_at).toLocaleDateString('hi-IN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+        let statusBadge = '<span class="badge badge-warning">⏳ Pending</span>';
+        if (w.status === 'approved') statusBadge = '<span class="badge badge-success">✅ Paid</span>';
+        if (w.status === 'rejected') statusBadge = '<span class="badge badge-hard">❌ Rejected</span>';
+
+        const actionBtns = w.status === 'pending' ? `
+          <div style="display:flex; gap:6px;">
+            <button class="btn-primary" style="padding:4px 10px; font-size:0.75rem; background:#10b981;" onclick="stenoAdmin.reviewWithdrawal(${w.id}, 'approve')">✓ Mark Paid</button>
+            <button class="btn-secondary" style="padding:4px 10px; font-size:0.75rem; color:#ef4444;" onclick="stenoAdmin.reviewWithdrawal(${w.id}, 'reject')">✕ Reject</button>
+          </div>
+        ` : `<span style="font-size:0.8rem; color:var(--text-muted);">${this.escapeHtml(w.admin_notes || 'संपन्न')}</span>`;
+
+        return `
+          <tr>
+            <td style="font-weight:700;">#${w.id}</td>
+            <td>
+              <div style="font-weight:600;">${this.escapeHtml(w.display_name || w.username)}</div>
+              <div style="font-size:0.75rem; color:var(--primary); font-weight:700;">${this.escapeHtml(w.student_code || '')}</div>
+            </td>
+            <td>
+              <div style="font-size:0.8rem;">${this.escapeHtml(w.email || '—')}</div>
+              <div style="font-size:0.75rem; color:var(--text-muted);">${this.escapeHtml(w.phone || '—')}</div>
+            </td>
+            <td><strong style="color:#059669; font-size:1.05rem;">₹${Number(w.amount).toFixed(2)}</strong></td>
+            <td>
+              <code style="font-size:0.9rem; font-weight:700; color:#2563eb; background:rgba(37,99,235,0.08); padding:3px 8px; border-radius:6px;">${this.escapeHtml(w.upi_id)}</code>
+            </td>
+            <td>${statusBadge}</td>
+            <td style="font-size:0.8rem; color:var(--text-muted);">${dt}</td>
+            <td>${actionBtns}</td>
+          </tr>
+        `;
+      }).join('');
+    } catch (err) {
+      tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; padding:20px; color:var(--accent-red);">त्रुटि: ${this.escapeHtml(err.message)}</td></tr>`;
+    }
+  }
+
+  async reviewWithdrawal(reqId, action) {
+    const notes = prompt(`टिप्पणी दर्ज करें (${action === 'approve' ? 'भुगतान सफल मार्क करें (Paid)' : 'अस्वीकार कर राशि छात्र के वॉलेट में वापस करें'}):`, action === 'approve' ? 'UPI भुगतान सफल (Marked as Paid)' : 'अमान्य UPI आईडी');
+    if (notes === null) return;
+
+    try {
+      const res = await stenoApp.apiCall('/api/admin/withdrawals/review', 'POST', {
+        request_id: reqId,
+        action,
+        notes
+      });
+      stenoApp.showToast(res.message || 'अनुरोध अद्यतित हुआ!', 'success');
+      await this.loadWithdrawals();
+    } catch (err) {
+      stenoApp.showToast('समीक्षा विफल: ' + err.message, 'error');
+    }
+  }
+
 }
