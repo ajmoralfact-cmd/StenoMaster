@@ -1479,6 +1479,18 @@ class StenoApp {
     this.user = null;
     localStorage.removeItem('stenomaster_token');
     localStorage.removeItem('stenomaster_user');
+
+    // Admin page: show the in-page admin login modal (do NOT redirect or touch student UI)
+    if (window.location.pathname.includes('admin')) {
+      if (showToast) this.showToast('लॉगआउट सफल। पुनः लॉगिन करें। (Logged out)', 'info');
+      if (typeof window.checkAdminStandaloneAuth === 'function') {
+        window.checkAdminStandaloneAuth(true); // forceShow = true
+      } else {
+        window.location.href = '/admin.html';
+      }
+      return;
+    }
+
     this.updateUserUI();
     this.showAuthGateway('student');
     if (showToast) this.showToast('लॉगआउट सफल। (Logged out successfully)', 'info');
