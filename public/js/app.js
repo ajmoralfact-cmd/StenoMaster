@@ -3763,6 +3763,80 @@ class StenoApp {
       const badge = document.getElementById('referralHistoryBadge');
       if (badge) badge.textContent = referrals.length;
 
+      // Dynamic Settings Binding from Admin Live Controls
+      const s = (walletRes && walletRes.settings) || {};
+      const commPct = s.commission_percent !== undefined ? s.commission_percent : 10.0;
+      const shareCoins = s.coins_per_share !== undefined ? s.coins_per_share : 1;
+      const maxShares = s.max_daily_shares !== undefined ? s.max_daily_shares : 3;
+      const refSignupCoins = s.coins_per_signup_referrer !== undefined ? s.coins_per_signup_referrer : 5;
+      const minWith = s.min_withdrawal_amount !== undefined ? s.min_withdrawal_amount : 50;
+      const coinVal = s.coin_value_inr !== undefined ? s.coin_value_inr : 1.0;
+      const goldEnabled = s.gold_coins_enabled !== false;
+      const commEnabled = s.commission_enabled !== false;
+      const withEnabled = s.withdrawals_enabled !== false;
+
+      // Save on instance
+      this.walletSettings = s;
+      this.currentMinWithdrawal = minWith;
+      this.currentCommissionPercent = commPct;
+
+      // Dynamic UI Updates
+      const badgeComm = document.getElementById('badgeCommPerk');
+      if (badgeComm) {
+        badgeComm.textContent = commEnabled ? `💸 ${commPct}% नकद कमीशन (Withdrawable)` : '🔴 नकद कमीशन सुविधा बंद है';
+        badgeComm.style.background = commEnabled ? '' : 'rgba(239,68,68,0.15)';
+        badgeComm.style.color = commEnabled ? '' : '#ef4444';
+      }
+
+      const badgeGold = document.getElementById('badgeGoldCoinsPerk');
+      if (badgeGold) {
+        badgeGold.textContent = goldEnabled ? `🪙 1 कॉइन = ₹${coinVal} (कोर्स खरीद मान्य)` : '🔴 गोल्ड कॉइन्स सुविधा बंद है';
+        badgeGold.style.background = goldEnabled ? '' : 'rgba(239,68,68,0.15)';
+        badgeGold.style.color = goldEnabled ? '' : '#ef4444';
+      }
+
+      const perkComm = document.getElementById('perkCourseCommText');
+      if (perkComm) {
+        perkComm.innerHTML = commEnabled 
+          ? `<strong>${commPct}% कोर्स खरीद कमीशन:</strong> जब भी आपका रेफर्ड छात्र कोई कोर्स खरीदेगा, उसका ${commPct}% रियल कैश आपके वॉलेट में जुड़ेगा!`
+          : `<strong>कोर्स खरीद कमीशन:</strong> वर्तमान में प्रशासनिक कारणों से कमीशन सुविधा रोक दी गई है।`;
+      }
+
+      const perkWith = document.getElementById('perkWithdrawText');
+      if (perkWith) {
+        perkWith.innerHTML = withEnabled
+          ? `<strong>सीधे UPI में विथड्रॉवल:</strong> न्यूनतम ₹${minWith} होते ही सीधे PhonePe, GPay, Paytm या बैंक UPI में निकालें!`
+          : `<strong>UPI विथड्रॉवल:</strong> वर्तमान में निकासी सुविधा रखरखाव हेतु अस्थायी रूप से बंद है।`;
+      }
+
+      const perkShare = document.getElementById('perkShareRewardText');
+      if (perkShare) {
+        perkShare.innerHTML = goldEnabled
+          ? `<strong>शेयर रिवॉर्ड:</strong> हर शेयर पर तुरंत +${shareCoins} गोल्ड कॉइन (दैनिक कोटा ${maxShares} कॉइन्स)`
+          : `<strong>शेयर रिवॉर्ड:</strong> गोल्ड कॉइन्स रिवॉर्ड सुविधा वर्तमान में बंद है।`;
+      }
+
+      const perkSignup = document.getElementById('perkSignupRewardText');
+      if (perkSignup) {
+        perkSignup.innerHTML = goldEnabled
+          ? `<strong>साइन-अप रिवॉर्ड:</strong> नए छात्र के जुड़ने पर +${refSignupCoins} गोल्ड कॉइन्स`
+          : `<strong>साइन-अप रिवॉर्ड:</strong> साइन-अप कॉइन्स सुविधा वर्तमान में बंद है।`;
+      }
+
+      const quotaEl2 = document.getElementById('shareQuotaText');
+      if (quotaEl2) quotaEl2.textContent = `${Math.min(sharesToday, maxShares)}/${maxShares} 🪙`;
+
+      const waBtn = document.getElementById('btnShareWhatsAppText');
+      if (waBtn) waBtn.textContent = `💬 WhatsApp पर शेयर करें (+${shareCoins} 🪙)`;
+      const tgBtn = document.getElementById('btnShareTelegramText');
+      if (tgBtn) tgBtn.textContent = `✈️ Telegram पर भेजें (+${shareCoins} 🪙)`;
+
+      const minWithInput = document.getElementById('withdrawAmountInput');
+      if (minWithInput) {
+        minWithInput.min = minWith;
+        minWithInput.placeholder = `न्यूनतम ₹${minWith}`;
+      }
+
       // Render tab contents
       this.renderGoldHistory(goldHistory);
       this.renderCommissionHistory((walletRes && walletRes.commission_history) || [], (walletRes && walletRes.withdrawals) || []);

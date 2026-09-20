@@ -2094,6 +2094,7 @@ class StenoAdmin {
   // Referrals & Rewards Audit Panel
   // -------------------------------------------------------------------------
   async loadReferralsAudit() {
+    this.loadWalletSettings();
     const topTbody = document.getElementById('adminTopReferrersTableBody');
     const allTbody = document.getElementById('adminReferralsTableBody');
     if (topTbody) topTbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:20px; color:var(--text-muted);"><div class="spinner-small" style="display:inline-block; margin-right:8px;"></div>रेफरल डेटा लोड हो रहा है...</td></tr>';
@@ -2911,6 +2912,73 @@ if (typeof window !== 'undefined') {
       await this.loadWithdrawals();
     } catch (err) {
       stenoApp.showToast('समीक्षा विफल: ' + err.message, 'error');
+    }
+  }
+
+
+  // =========================================================================
+  // WALLET & COMMISSION LIVE CONTROLS (ADMIN SETTINGS)
+  // =========================================================================
+  async loadWalletSettings() {
+    try {
+      const res = await stenoApp.apiCall('/api/settings');
+      const s = (res && res.settings) || {};
+
+      const gEnabled = document.getElementById('setGoldCoinsEnabled');
+      if (gEnabled) gEnabled.value = s.gold_coins_enabled !== undefined ? String(s.gold_coins_enabled) : '1';
+
+      const cPerShare = document.getElementById('setCoinsPerShare');
+      if (cPerShare) cPerShare.value = s.coins_per_share || '1';
+
+      const maxShares = document.getElementById('setMaxDailyShares');
+      if (maxShares) maxShares.value = s.max_daily_shares || '3';
+
+      const refCoins = document.getElementById('setCoinsPerSignupReferrer');
+      if (refCoins) refCoins.value = s.coins_per_signup_referrer || '5';
+
+      const welcomeCoins = document.getElementById('setCoinsWelcomeBonus');
+      if (welcomeCoins) welcomeCoins.value = s.coins_welcome_bonus || '5';
+
+      const coinVal = document.getElementById('setCoinValueInr');
+      if (coinVal) coinVal.value = s.coin_value_inr || '1.0';
+
+      const commEnabled = document.getElementById('setCommissionEnabled');
+      if (commEnabled) commEnabled.value = s.commission_enabled !== undefined ? String(s.commission_enabled) : '1';
+
+      const commPct = document.getElementById('setCommissionPercent');
+      if (commPct) commPct.value = s.course_commission_percent || '10.0';
+
+      const withEnabled = document.getElementById('setWithdrawalsEnabled');
+      if (withEnabled) withEnabled.value = s.withdrawals_enabled !== undefined ? String(s.withdrawals_enabled) : '1';
+
+      const minWith = document.getElementById('setMinWithdrawalAmount');
+      if (minWith) minWith.value = s.min_withdrawal_amount || '50';
+    } catch (err) {
+      console.warn('Failed to load wallet settings:', err);
+    }
+  }
+
+  async saveWalletSettings(e) {
+    if (e) e.preventDefault();
+    const payload = {
+      gold_coins_enabled: document.getElementById('setGoldCoinsEnabled')?.value || '1',
+      coins_per_share: document.getElementById('setCoinsPerShare')?.value || '1',
+      max_daily_shares: document.getElementById('setMaxDailyShares')?.value || '3',
+      coins_per_signup_referrer: document.getElementById('setCoinsPerSignupReferrer')?.value || '5',
+      coins_welcome_bonus: document.getElementById('setCoinsWelcomeBonus')?.value || '5',
+      coin_value_inr: document.getElementById('setCoinValueInr')?.value || '1.0',
+      commission_enabled: document.getElementById('setCommissionEnabled')?.value || '1',
+      course_commission_percent: document.getElementById('setCommissionPercent')?.value || '10.0',
+      withdrawals_enabled: document.getElementById('setWithdrawalsEnabled')?.value || '1',
+      min_withdrawal_amount: document.getElementById('setMinWithdrawalAmount')?.value || '50'
+    };
+
+    try {
+      await stenoApp.apiCall('/api/admin/settings/update', 'POST', payload);
+      stenoApp.showToast('गोल्ड कॉइन्स एवं नकद कमीशन सेटिंग्स सफलतापूर्वक लाइव सहेजी गईं! 🎉', 'success');
+      await this.loadWalletSettings();
+    } catch (err) {
+      stenoApp.showToast('सेटिंग्स सहेजने में त्रुटि: ' + err.message, 'error');
     }
   }
 

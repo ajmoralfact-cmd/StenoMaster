@@ -1043,41 +1043,48 @@ def create_user(username: str, email: str, password: str, display_name: str = No
             if referrer:
                 referrer_id = referrer['id'] if isinstance(referrer, dict) else referrer[0]
                 if referrer_id != user_id:
+                    ref_settings = get_admin_settings()
+                    gold_on = ref_settings.get('gold_coins_enabled', '1') == '1'
+                    ref_signup_coins = int(ref_settings.get('coins_per_signup_referrer', 5)) if gold_on else 0
+                    welcome_coins = int(ref_settings.get('coins_welcome_bonus', 5)) if gold_on else 0
+
                     # 1. Record referral
                     c.execute("""
                         INSERT INTO referrals (referrer_user_id, referred_user_id, referral_code, reward_points, status, created_at)
-                        VALUES (?, ?, ?, 5, 'completed', ?)
-                    """, (referrer_id, user_id, ref_code.strip().upper(), now))
+                        VALUES (?, ?, ?, ?, 'completed', ?)
+                    """, (referrer_id, user_id, ref_code.strip().upper(), ref_signup_coins, now))
 
-                    # 2. Award +5 Gold Coins to Referrer (1 Coin = ₹1)
-                    c.execute("""
-                        UPDATE profiles
-                        SET gold_coins = COALESCE(gold_coins, 0) + 5,
-                            total_gold_coins_earned = COALESCE(total_gold_coins_earned, 0) + 5
-                        WHERE user_id = ?
-                    """, (referrer_id,))
-                    c.execute("""
-                        INSERT INTO gold_coin_transactions (user_id, amount, type, description, created_at)
-                        VALUES (?, 5, 'signup_referral_reward', ?, ?)
-                    """, (referrer_id, f"नए छात्र ({username}) द्वारा साइन-अप करने पर +5 गोल्ड कॉइन्स", now))
-                    c.execute("""
-                        INSERT INTO notifications (user_id, title, message, type, is_read, created_at)
-                        VALUES (?, '🪙 +5 गोल्ड कॉइन्स प्राप्त!',
-                                'बधाई! आपके रेफरल लिंक से छात्र (' || ? || ') ने साइन-अप किया। आपको 5 गोल्ड कॉइन्स मिले!',
-                                'reward', 0, ?)
-                    """, (referrer_id, username, now))
+                    # 2. Award Gold Coins to Referrer (if > 0)
+                    if ref_signup_coins > 0:
+                        c.execute("""
+                            UPDATE profiles
+                            SET gold_coins = COALESCE(gold_coins, 0) + ?,
+                                total_gold_coins_earned = COALESCE(total_gold_coins_earned, 0) + ?
+                            WHERE user_id = ?
+                        """, (ref_signup_coins, ref_signup_coins, referrer_id))
+                        c.execute("""
+                            INSERT INTO gold_coin_transactions (user_id, amount, type, description, created_at)
+                            VALUES (?, ?, 'signup_referral_reward', ?, ?)
+                        """, (referrer_id, ref_signup_coins, f"नए छात्र ({username}) द्वारा साइन-अप करने पर +{ref_signup_coins} गोल्ड कॉइन्स", now))
+                        c.execute("""
+                            INSERT INTO notifications (user_id, title, message, type, is_read, created_at)
+                            VALUES (?, '🪙 +' || ? || ' गोल्ड कॉइन्स प्राप्त!',
+                                    'बधाई! आपके रेफरल लिंक से छात्र (' || ? || ') ने साइन-अप किया। आपको ' || ? || ' गोल्ड कॉइन्स मिले!',
+                                    'reward', 0, ?)
+                        """, (referrer_id, str(ref_signup_coins), username, str(ref_signup_coins), now))
 
-                    # 3. Award +5 Gold Coins Welcome Bonus to New Student
-                    c.execute("""
-                        UPDATE profiles
-                        SET gold_coins = COALESCE(gold_coins, 0) + 5,
-                            total_gold_coins_earned = COALESCE(total_gold_coins_earned, 0) + 5
-                        WHERE user_id = ?
-                    """, (user_id,))
-                    c.execute("""
-                        INSERT INTO gold_coin_transactions (user_id, amount, type, description, created_at)
-                        VALUES (?, 5, 'welcome_bonus', 'रेफरल लिंक से जुड़ने पर +5 गोल्ड कॉइन्स वेलकम बोनस', now)
-                    """, (user_id,))
+                    # 3. Award Gold Coins Welcome Bonus to New Student (if > 0)
+                    if welcome_coins > 0:
+                        c.execute("""
+                            UPDATE profiles
+                            SET gold_coins = COALESCE(gold_coins, 0) + ?,
+                                total_gold_coins_earned = COALESCE(total_gold_coins_earned, 0) + ?
+                            WHERE user_id = ?
+                        """, (welcome_coins, welcome_coins, user_id))
+                        c.execute("""
+                            INSERT INTO gold_coin_transactions (user_id, amount, type, description, created_at)
+                            VALUES (?, ?, 'welcome_bonus', 'रेफरल लिंक से जुड़ने पर +' || ? || ' गोल्ड कॉइन्स वेलकम बोनस', now)
+                        """, (user_id, welcome_coins, str(welcome_coins), now))
                     c.execute("""
                         INSERT INTO reward_transactions (user_id, points, type, reference_id, description, created_at)
                         VALUES (?, 50, 'welcome_bonus', ?, ?, ?)
@@ -2758,6 +2765,23 @@ def get_admin_settings() -> Dict[str, str]:
         settings['google_auth_enabled'] = '1'
     if 'google_client_id' not in settings:
         settings['google_client_id'] = ''
+    
+    # Wallet & Referral Dynamic Settings Defaults
+    defaults = {
+        'gold_coins_enabled': '1',
+        'coins_per_share': '1',
+        'max_daily_shares': '3',
+        'coins_per_signup_referrer': '5',
+        'coins_welcome_bonus': '5',
+        'coin_value_inr': '1.0',
+        'commission_enabled': '1',
+        'course_commission_percent': '10.0',
+        'min_withdrawal_amount': '50',
+        'withdrawals_enabled': '1'
+    }
+    for k, v in defaults.items():
+        if k not in settings:
+            settings[k] = v
     return settings
 
 
@@ -4547,7 +4571,21 @@ def change_user_password(user_id: int, current_password: str, new_password: str)
 # DUAL-WALLET SYSTEM: GOLD COINS (1 COIN = ₹1) & 10% CASH COMMISSION
 # -----------------------------------------------------------------------------
 def award_share_gold_coin(user_id: int, platform: str = "whatsapp") -> Dict[str, Any]:
-    """Awards +1 Gold Coin when user shares the app/link (Max 3 shares per day)."""
+    """Awards Gold Coins dynamically based on admin settings when user shares app/link."""
+    settings = get_admin_settings()
+    if settings.get('gold_coins_enabled', '1') != '1':
+        return {
+            "success": False,
+            "earned": 0,
+            "shares_today": 0,
+            "max_daily_shares": 0,
+            "gold_coins": 0,
+            "message": "गोल्ड कॉइन्स शेयर रिवॉर्ड सुविधा वर्तमान में बंद है। ⚠️"
+        }
+
+    coins_to_award = int(settings.get('coins_per_share', 1))
+    max_shares = int(settings.get('max_daily_shares', 3))
+
     conn = get_db()
     c = conn.cursor()
     now_iso = datetime.now().isoformat()
@@ -4565,29 +4603,29 @@ def award_share_gold_coin(user_id: int, platform: str = "whatsapp") -> Dict[str,
     p_row = c.fetchone()
     curr_coins = (p_row['gold_coins'] if isinstance(p_row, dict) else p_row[0]) if p_row else 0
 
-    if shares_today >= 3:
+    if shares_today >= max_shares:
         conn.close()
         return {
             "success": True,
             "earned": 0,
             "shares_today": shares_today,
-            "max_daily_shares": 3,
+            "max_daily_shares": max_shares,
             "gold_coins": curr_coins,
-            "message": "आज के शेयर रिवॉर्ड (3/3) पूरे हो चुके हैं। कल पुनः शेयर करने पर कॉइन्स मिलेंगे! 🪙"
+            "message": f"आज के शेयर रिवॉर्ड ({max_shares}/{max_shares}) पूरे हो चुके हैं। कल पुनः शेयर करने पर कॉइन्स मिलेंगे! 🪙"
         }
 
-    # Award +1 Gold Coin
+    # Award dynamic Gold Coins
     c.execute("""
         UPDATE profiles
-        SET gold_coins = COALESCE(gold_coins, 0) + 1,
-            total_gold_coins_earned = COALESCE(total_gold_coins_earned, 0) + 1
+        SET gold_coins = COALESCE(gold_coins, 0) + ?,
+            total_gold_coins_earned = COALESCE(total_gold_coins_earned, 0) + ?
         WHERE user_id = ?
-    """, (user_id,))
+    """, (coins_to_award, coins_to_award, user_id))
 
     c.execute("""
         INSERT INTO gold_coin_transactions (user_id, amount, type, description, created_at)
-        VALUES (?, 1, 'share_reward', ?, ?)
-    """, (user_id, f"ऐप/वेबसाइट शेयर करने पर मिला 1 गोल्ड कॉइन ({platform})", now_iso))
+        VALUES (?, ?, 'share_reward', ?, ?)
+    """, (user_id, coins_to_award, f"ऐप/वेबसाइट शेयर करने पर मिले +{coins_to_award} गोल्ड कॉइन्स ({platform})", now_iso))
 
     c.execute("""
         INSERT INTO share_logs (user_id, platform, created_at)
@@ -4596,26 +4634,34 @@ def award_share_gold_coin(user_id: int, platform: str = "whatsapp") -> Dict[str,
 
     c.execute("""
         INSERT INTO notifications (user_id, title, message, type, is_read, created_at)
-        VALUES (?, '🪙 +1 गोल्ड कॉइन प्राप्त!', 'ऐप शेयर करने पर आपको 1 गोल्ड कॉइन (मूल्य ₹1) प्राप्त हुआ।', 'reward', 0, ?)
-    """, (user_id, now_iso))
+        VALUES (?, '🪙 +' || ? || ' गोल्ड कॉइन्स प्राप्त!',
+                'ऐप शेयर करने पर आपको ' || ? || ' गोल्ड कॉइन्स प्राप्त हुए।', 'reward', 0, ?)
+    """, (user_id, str(coins_to_award), str(coins_to_award), now_iso))
 
     conn.commit()
     conn.close()
 
     return {
         "success": True,
-        "earned": 1,
+        "earned": coins_to_award,
         "shares_today": shares_today + 1,
-        "max_daily_shares": 3,
-        "gold_coins": curr_coins + 1,
-        "message": f"बधाई! शेयर करने पर आपको +1 गोल्ड कॉइन (मूल्य ₹1) मिला! आज का कोटा: {shares_today + 1}/3 🪙"
+        "max_daily_shares": max_shares,
+        "gold_coins": curr_coins + coins_to_award,
+        "message": f"बधाई! शेयर करने पर आपको +{coins_to_award} गोल्ड कॉइन्स मिले! आज का कोटा: {shares_today + 1}/{max_shares} 🪙"
     }
 
 
 def award_purchase_commission(paying_user_id: int, amount: float, order_id: str):
-    """Awards 10% Real Cash Commission to the referrer when a referred student buys a course/plan."""
+    """Awards Real Cash Commission dynamically based on admin settings when a referred student buys a course/plan."""
     if not paying_user_id or amount <= 0:
         return
+    settings = get_admin_settings()
+    if settings.get('commission_enabled', '1') != '1':
+        return
+    comm_pct = float(settings.get('course_commission_percent', 10.0))
+    if comm_pct <= 0:
+        return
+
     conn = get_db()
     c = conn.cursor()
     now_iso = datetime.now().isoformat()
@@ -4633,8 +4679,8 @@ def award_purchase_commission(paying_user_id: int, amount: float, order_id: str)
             conn.close()
             return
 
-        # 10% commission in real rupees
-        comm = round(float(amount) * 0.10, 2)
+        # Dynamic commission in real rupees
+        comm = round(float(amount) * (comm_pct / 100.0), 2)
         if comm <= 0:
             conn.close()
             return
@@ -4667,7 +4713,14 @@ def award_purchase_commission(paying_user_id: int, amount: float, order_id: str)
 
 
 def purchase_course_with_gold_coins(user_id: int, plan_id: str = None) -> Dict[str, Any]:
-    """Allows student to buy/unlock a Pro plan using Gold Coins (1 Gold Coin = ₹1)."""
+    """Allows student to buy/unlock a Pro plan using Gold Coins based on live settings."""
+    settings = get_admin_settings()
+    if settings.get('gold_coins_enabled', '1') != '1':
+        return {"success": False, "error": "गोल्ड कॉइन्स से कोर्स अनलॉक सुविधा वर्तमान में बंद है। ⚠️"}
+
+    coin_val = float(settings.get('coin_value_inr', 1.0))
+    if coin_val <= 0: coin_val = 1.0
+
     conn = get_db()
     c = conn.cursor()
     now_iso = datetime.now().isoformat()
@@ -4761,12 +4814,17 @@ def purchase_course_with_gold_coins(user_id: int, plan_id: str = None) -> Dict[s
 
 
 def create_withdrawal_request(user_id: int, amount: float, upi_id: str) -> Dict[str, Any]:
-    """Allows student to withdraw their 10% Cash Commission directly to UPI."""
+    """Allows student to withdraw their Cash Commission directly to UPI based on live settings."""
+    settings = get_admin_settings()
+    if settings.get('withdrawals_enabled', '1') != '1':
+        return {"success": False, "error": "UPI निकासी सुविधा वर्तमान में रखरखाव हेतु अस्थायी रूप से बंद है।"}
+
+    min_w = float(settings.get('min_withdrawal_amount', 50.0))
     clean_amount = round(float(amount), 2)
     clean_upi = (upi_id or "").strip()
 
-    if clean_amount < 50:
-        return {"success": False, "error": "न्यूनतम निकासी राशि ₹50 है।"}
+    if clean_amount < min_w:
+        return {"success": False, "error": f"न्यूनतम निकासी राशि ₹{min_w:.0f} है।"}
     if not clean_upi or "@" not in clean_upi:
         return {"success": False, "error": "कृपया एक वैध UPI आईडी दर्ज करें (उदा. mobile@upi या name@okaxis)"}
 
@@ -4870,6 +4928,7 @@ def get_user_wallet_data(user_id: int) -> Dict[str, Any]:
     withdrawals = [dict(r) if isinstance(r, dict) else {'id':r[0], 'amount':r[1], 'upi_id':r[2], 'status':r[3], 'admin_notes':r[4], 'created_at':r[5], 'reviewed_at':r[6]} for r in c.fetchall()]
 
     conn.close()
+    settings = get_admin_settings()
 
     return {
         "gold_coins": gold_coins,
@@ -4878,7 +4937,19 @@ def get_user_wallet_data(user_id: int) -> Dict[str, Any]:
         "total_commission_earned": round(total_comm, 2),
         "gold_history": gold_txs,
         "commission_history": comm_txs,
-        "withdrawals": withdrawals
+        "withdrawals": withdrawals,
+        "settings": {
+            "gold_coins_enabled": settings.get("gold_coins_enabled", "1") == "1",
+            "coins_per_share": int(settings.get("coins_per_share", 1)),
+            "max_daily_shares": int(settings.get("max_daily_shares", 3)),
+            "coins_per_signup_referrer": int(settings.get("coins_per_signup_referrer", 5)),
+            "coins_welcome_bonus": int(settings.get("coins_welcome_bonus", 5)),
+            "coin_value_inr": float(settings.get("coin_value_inr", 1.0)),
+            "commission_enabled": settings.get("commission_enabled", "1") == "1",
+            "commission_percent": float(settings.get("course_commission_percent", 10.0)),
+            "min_withdrawal_amount": float(settings.get("min_withdrawal_amount", 50.0)),
+            "withdrawals_enabled": settings.get("withdrawals_enabled", "1") == "1"
+        }
     }
 
 

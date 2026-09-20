@@ -4,7 +4,7 @@
  * Ensures all users get fresh updates immediately without manual hard refresh or cache clear.
  */
 
-const CACHE_NAME = 'stenomaster-v11.2-shell';
+const CACHE_NAME = 'stenomaster-v11.3-shell';
 
 self.addEventListener('install', (event) => {
   self.skipWaiting();

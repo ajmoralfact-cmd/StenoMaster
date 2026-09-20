@@ -608,6 +608,103 @@
                 </div>
               </div>
 
+                            <!-- WALLET & COMMISSION LIVE CONTROLS CARD -->
+              <div class="card" style="padding:22px; border:1.5px solid var(--border); border-radius:18px; background:var(--card-bg); margin-bottom:24px; box-shadow:0 4px 18px rgba(0,0,0,0.04);">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:18px; flex-wrap:wrap; gap:10px;">
+                  <div>
+                    <h3 style="margin:0; font-size:1.15rem; font-weight:800; color:var(--text-main); display:flex; align-items:center; gap:8px;">
+                      <span>⚙️</span> <span>गोल्ड कॉइन्स एवं नकद कमीशन लाइव सेटिंग्स (Live Controls)</span>
+                    </h3>
+                    <p style="margin:4px 0 0 0; font-size:0.82rem; color:var(--text-muted);">
+                      यहाँ से कॉइन्स की मात्रा, कमीशन प्रतिशत व विथड्रॉवल नियम कभी भी बदलें या सुविधा चालू/बंद करें। सभी बदलाव तुरंत लाइव लागू होते हैं।
+                    </p>
+                  </div>
+                  <button type="button" class="btn-primary" onclick="stenoAdmin.saveWalletSettings(event)" style="background:linear-gradient(135deg, #10b981, #059669); font-weight:800; padding:9px 20px; border-radius:10px; border:none; cursor:pointer; box-shadow:0 4px 12px rgba(16,185,129,0.3);">
+                    💾 सेटिंग्स सहेजें (Save Live Changes)
+                  </button>
+                </div>
+
+                <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap:20px;">
+                  <!-- SECTION 1: GOLD COINS -->
+                  <div style="background:rgba(245,158,11,0.06); border:1.5px solid rgba(245,158,11,0.25); border-radius:14px; padding:18px;">
+                    <div style="font-weight:800; font-size:0.95rem; color:#b45309; margin-bottom:14px; display:flex; align-items:center; gap:6px;">
+                      <span>🪙</span> <span>गोल्ड कॉइन्स सेटिंग्स (Course Discount)</span>
+                    </div>
+
+                    <div class="form-group" style="margin-bottom:12px;">
+                      <label class="form-label" style="font-weight:700; font-size:0.83rem;">गोल्ड कॉइन्स सिस्टम स्थिति:</label>
+                      <select id="setGoldCoinsEnabled" class="form-select" style="font-weight:700;">
+                        <option value="1">🟢 सक्रिय (Enabled — कॉइन्स मिलेंगे व उपयोग होंगे)</option>
+                        <option value="0">🔴 बंद (Disabled — रिवॉर्ड्स अस्थायी रोकें)</option>
+                      </select>
+                    </div>
+
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px;">
+                      <div class="form-group" style="margin:0;">
+                        <label class="form-label" style="font-weight:700; font-size:0.82rem;">प्रति शेयर रिवॉर्ड (Coins):</label>
+                        <input type="number" id="setCoinsPerShare" class="form-input" min="0" max="100" step="1" value="1" style="font-weight:700;">
+                      </div>
+                      <div class="form-group" style="margin:0;">
+                        <label class="form-label" style="font-weight:700; font-size:0.82rem;">दैनिक अधिकतम शेयर कोटा:</label>
+                        <input type="number" id="setMaxDailyShares" class="form-input" min="1" max="50" step="1" value="3" style="font-weight:700;">
+                      </div>
+                    </div>
+
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px;">
+                      <div class="form-group" style="margin:0;">
+                        <label class="form-label" style="font-weight:700; font-size:0.82rem;">रेफरल साइन-अप कॉइन्स:</label>
+                        <input type="number" id="setCoinsPerSignupReferrer" class="form-input" min="0" max="500" step="1" value="5" style="font-weight:700;">
+                      </div>
+                      <div class="form-group" style="margin:0;">
+                        <label class="form-label" style="font-weight:700; font-size:0.82rem;">छात्र वेलकम बोनस कॉइन्स:</label>
+                        <input type="number" id="setCoinsWelcomeBonus" class="form-input" min="0" max="500" step="1" value="5" style="font-weight:700;">
+                      </div>
+                    </div>
+
+                    <div class="form-group" style="margin:0;">
+                      <label class="form-label" style="font-weight:700; font-size:0.82rem;">1 कॉइन का छूट मूल्य (₹ में):</label>
+                      <input type="number" id="setCoinValueInr" class="form-input" min="0.1" max="10" step="0.1" value="1.0" style="font-weight:700;">
+                      <div style="font-size:0.73rem; color:var(--text-muted); margin-top:3px;">डिफ़ॉल्ट 1.0 (1 कॉइन = ₹1 की कोर्स छूट)</div>
+                    </div>
+                  </div>
+
+                  <!-- SECTION 2: REAL CASH COMMISSION -->
+                  <div style="background:rgba(16,185,129,0.06); border:1.5px solid rgba(16,185,129,0.25); border-radius:14px; padding:18px;">
+                    <div style="font-weight:800; font-size:0.95rem; color:#047857; margin-bottom:14px; display:flex; align-items:center; gap:6px;">
+                      <span>💰</span> <span>नकद कमीशन व विथड्रॉवल सेटिंग्स (Real Cash)</span>
+                    </div>
+
+                    <div class="form-group" style="margin-bottom:12px;">
+                      <label class="form-label" style="font-weight:700; font-size:0.83rem;">कोर्स खरीद कमीशन सुविधा:</label>
+                      <select id="setCommissionEnabled" class="form-select" style="font-weight:700;">
+                        <option value="1">🟢 सक्रिय (Enabled — खरीद पर कमीशन जुड़ेगा)</option>
+                        <option value="0">🔴 बंद (Disabled — कमीशन रोकें)</option>
+                      </select>
+                    </div>
+
+                    <div class="form-group" style="margin-bottom:12px;">
+                      <label class="form-label" style="font-weight:700; font-size:0.83rem;">कोर्स खरीद पर कमीशन प्रतिशत (%):</label>
+                      <input type="number" id="setCommissionPercent" class="form-input" min="0" max="100" step="0.5" value="10.0" style="font-weight:700; font-size:1.1rem; color:#059669;">
+                      <div style="font-size:0.73rem; color:var(--text-muted); margin-top:3px;">छात्र की कोर्स फीस पर आमंत्रक को मिलने वाला नकद कमीशन प्रतिशत (उदा. 10%, 15%, 5% आदि)।</div>
+                    </div>
+
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                      <div class="form-group" style="margin:0;">
+                        <label class="form-label" style="font-weight:700; font-size:0.82rem;">UPI निकासी सुविधा:</label>
+                        <select id="setWithdrawalsEnabled" class="form-select" style="font-weight:700;">
+                          <option value="1">🟢 चालू (Allow Payouts)</option>
+                          <option value="0">🔴 रोकें (Pause Payouts)</option>
+                        </select>
+                      </div>
+                      <div class="form-group" style="margin:0;">
+                        <label class="form-label" style="font-weight:700; font-size:0.82rem;">न्यूनतम निकासी सीमा (₹):</label>
+                        <input type="number" id="setMinWithdrawalAmount" class="form-input" min="10" max="10000" step="5" value="50" style="font-weight:700;">
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               <!-- Key Metrics Grid -->
               <div class="stats-summary-grid" style="margin-bottom: 24px;">
                 <div class="stat-card">
