@@ -3421,37 +3421,165 @@ class StenoApp {
   // -------------------------------------------------------------------------
   // Profile, Subscription, Refer & Earn, Notifications, Settings
   // -------------------------------------------------------------------------
-  renderProfile() {
+  async renderProfile() {
     if (!this.user) {
       this.openModal('loginModal');
       return;
     }
-    const stuCodeEl = document.getElementById('profileStudentCodeDisplay');
-    const emailEl = document.getElementById('profileEmailDisplay');
-    const phoneEl = document.getElementById('profilePhoneDisplay');
+
+    const stuCode = this.user.student_code || `STM-2026-${String(this.user.user_id || this.user.id || 1).padStart(6, '0')}`;
+    const displayName = (this.user.display_name || this.user.username || 'Student').trim();
+    const email = this.user.email || 'ईमेल दर्ज नहीं है';
+    const phone = this.user.phone ? `📱 +91 ${String(this.user.phone).replace('+91', '').trim()}` : 'फ़ोन दर्ज नहीं है';
+
+    // 1. Hero Header Elements
+    const heroName = document.getElementById('profileHeroName');
+    const heroAvatar = document.getElementById('profileHeroAvatar');
+    const heroStuCode = document.getElementById('profileHeroStudentCode');
+    const heroEmail = document.getElementById('profileHeroEmailDisplay');
+
+    if (heroName) heroName.textContent = displayName;
+    if (heroAvatar) {
+      const initial = displayName.charAt(0).toUpperCase();
+      heroAvatar.textContent = initial || '🎓';
+    }
+    if (heroStuCode) heroStuCode.textContent = stuCode;
+    if (heroEmail) heroEmail.textContent = email;
+
+    // 2. Subscription & Remaining Days
+    const isPremium = Boolean(this.user.subscription_status === 'active' || this.user.is_premium || this.user.is_free_access);
+    const daysLeft = typeof this.user.subscription_days_left === 'number'
+      ? this.user.subscription_days_left
+      : (this.user.days_left !== undefined ? this.user.days_left : 0);
+    const expStr = this.user.subscription_end
+      ? new Date(this.user.subscription_end).toLocaleDateString('hi-IN', { day:'numeric', month:'short', year:'numeric' })
+      : (isPremium ? 'सक्रिय' : 'समाप्त');
+
+    const heroDaysLeft = document.getElementById('profileHeroDaysLeft');
+    const heroPlanStatus = document.getElementById('profileHeroPlanStatus');
     const badgeEl = document.getElementById('profileSubscriptionBadge');
+    const daysBadge = document.getElementById('profileDaysRemainingBadge');
+    const planTitle = document.getElementById('profilePlanTitle');
+    const expiryEl = document.getElementById('profileExpiryDisplay');
 
-    if (stuCodeEl) stuCodeEl.textContent = this.user.student_code || `STM-2026-${String(this.user.user_id || 1).padStart(6, '0')}`;
-    if (emailEl) emailEl.textContent = this.user.email || 'student@stenomaster.com';
-    if (phoneEl) phoneEl.textContent = this.user.phone ? `📱 ${this.user.phone}` : 'फ़ोन नंबर दर्ज नहीं है';
+    const activePlanInfo = typeof this.getActivePlanDisplay === 'function' ? this.getActivePlanDisplay(this.user) : { name: 'StenoMaster Pro' };
 
-    if (badgeEl) {
-      if (this.user.subscription_status === 'active') {
-        const expStr = this.user.subscription_end ? new Date(this.user.subscription_end).toLocaleDateString('hi-IN') : 'सक्रिय';
+    if (isPremium) {
+      const daysText = daysLeft > 0 ? `${daysLeft} दिन शेष` : 'सक्रिय';
+      if (heroDaysLeft) heroDaysLeft.textContent = `👑 Pro Active • ${daysText}`;
+      if (heroPlanStatus) heroPlanStatus.textContent = `वैधता: ${expStr}`;
+      if (badgeEl) {
         badgeEl.className = 'badge badge-success';
-        badgeEl.textContent = `👑 Pro Active (वैधता: ${expStr})`;
-      } else {
+        badgeEl.textContent = '👑 PRO ACTIVE';
+      }
+      if (daysBadge) daysBadge.textContent = `⏳ ${daysText}`;
+      if (planTitle) planTitle.textContent = activePlanInfo.name || 'StenoMaster Pro';
+      if (expiryEl) expiryEl.textContent = `📅 सदस्यता समाप्ति तिथि: ${expStr}`;
+    } else {
+      if (heroDaysLeft) heroDaysLeft.textContent = 'मुफ़्त प्लान (Free Plan)';
+      if (heroPlanStatus) heroPlanStatus.textContent = 'प्रो अपग्रेड उपलब्ध';
+      if (badgeEl) {
         badgeEl.className = 'badge badge-secondary';
         badgeEl.textContent = 'Free Plan';
       }
+      if (daysBadge) daysBadge.textContent = '⚠️ प्रो लॉक';
+      if (planTitle) planTitle.textContent = 'निःशुल्क परीक्षण (Free)';
+      if (expiryEl) expiryEl.textContent = '📅 कोई सक्रिय सदस्यता नहीं';
     }
 
-    document.getElementById('profileDisplayNameInput').value = this.user.display_name || '';
-    document.getElementById('profileTargetExamSelect').value = this.user.target_exam || 'SSC Stenographer';
-    document.getElementById('profileLanguageSelect').value = this.user.preferred_language || 'hindi';
-    document.getElementById('profileTypingModeSelect').value = this.user.preferred_typing_mode || 'mangal';
-    document.getElementById('profileTargetWpmInput').value = this.user.target_wpm || 50;
-    document.getElementById('profileLeaderboardVisibility').checked = !!this.user.show_on_leaderboard;
+    // 3. Credentials Box (Box 1)
+    const stuCodeEl = document.getElementById('profileStudentCodeDisplay');
+    const emailEl = document.getElementById('profileEmailDisplay');
+    const phoneEl = document.getElementById('profilePhoneDisplay');
+    if (stuCodeEl) stuCodeEl.textContent = stuCode;
+    if (emailEl) emailEl.textContent = email;
+    if (phoneEl) phoneEl.textContent = phone;
+
+    // 4. Form Inputs (Box 3)
+    const nameInput = document.getElementById('profileDisplayNameInput');
+    const examSelect = document.getElementById('profileTargetExamSelect');
+    const langSelect = document.getElementById('profileLanguageSelect');
+    const modeSelect = document.getElementById('profileTypingModeSelect');
+    const wpmInput = document.getElementById('profileTargetWpmInput');
+    const lbVis = document.getElementById('profileLeaderboardVisibility');
+
+    if (nameInput) nameInput.value = this.user.display_name || '';
+    if (examSelect) examSelect.value = this.user.target_exam || 'SSC Stenographer';
+    if (langSelect) langSelect.value = this.user.preferred_language || 'hindi';
+    if (modeSelect) modeSelect.value = this.user.preferred_typing_mode || 'mangal';
+    if (wpmInput) wpmInput.value = this.user.target_wpm || 80;
+    if (lbVis) lbVis.checked = !!this.user.show_on_leaderboard;
+
+    // 5. Asynchronously fetch Rank, Points & Performance Analytics
+    try {
+      const [progRes, lbRes] = await Promise.all([
+        this.apiCall('/api/progress/summary').catch(() => null),
+        this.apiCall('/api/leaderboard?period=all').catch(() => null)
+      ]);
+
+      const stats = (progRes && progRes.stats) ? progRes.stats : {};
+
+      // Reward Points
+      const points = (stats.points !== undefined && stats.points !== null)
+        ? stats.points
+        : (this.user.reward_points || 0);
+      const heroPoints = document.getElementById('profileHeroPoints');
+      if (heroPoints) heroPoints.textContent = `${points} Pts`;
+
+      // Streak & Practices
+      const streak = stats.streak_days || 0;
+      const heroStreak = document.getElementById('profileHeroStreak');
+      if (heroStreak) heroStreak.textContent = `${streak} दिन लगातार 🔥`;
+
+      const practices = stats.total_practices || 0;
+      const heroTotalPrac = document.getElementById('profileHeroTotalPractices');
+      if (heroTotalPrac) heroTotalPrac.textContent = `${practices} डिक्टेशन पूर्ण`;
+
+      // All India Leaderboard Rank
+      const heroRank = document.getElementById('profileHeroRank');
+      if (lbRes && lbRes.leaderboard && Array.isArray(lbRes.leaderboard)) {
+        const myEntry = lbRes.leaderboard.find(e =>
+          (this.user.user_id && e.user_id === this.user.user_id) ||
+          (this.user.id && e.user_id === this.user.id) ||
+          (this.user.username && e.username === this.user.username)
+        );
+        if (myEntry && myEntry.rank) {
+          if (heroRank) heroRank.textContent = `रैंक #${myEntry.rank} 🏆`;
+        } else {
+          if (heroRank) heroRank.textContent = `शीर्ष 100 में`;
+        }
+      } else {
+        if (heroRank) heroRank.textContent = `रैंक #1`;
+      }
+
+      // Performance Box Highlights (Box 4)
+      const bestWpmEl = document.getElementById('profileStatBestWpm');
+      const avgAccEl = document.getElementById('profileStatAvgAcc');
+      const totalPracEl = document.getElementById('profileStatPractices');
+      const totalTimeEl = document.getElementById('profileStatTotalTime');
+
+      if (bestWpmEl) bestWpmEl.textContent = `${stats.best_wpm || 0} WPM`;
+      if (avgAccEl) avgAccEl.textContent = `${stats.avg_accuracy || 0}%`;
+      if (totalPracEl) totalPracEl.textContent = String(practices);
+      if (totalTimeEl) totalTimeEl.textContent = stats.total_time_formatted || '0 mins';
+
+    } catch (err) {
+      console.warn('Could not load extra profile stats:', err);
+    }
+  }
+
+  copyStudentId() {
+    const code = this.user ? (this.user.student_code || `STM-2026-${String(this.user.user_id || this.user.id || 1).padStart(6, '0')}`) : '';
+    if (!code) return;
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(code).then(() => {
+        this.showToast(`छात्र पहचान कोड ${code} क्लिपबोर्ड पर कॉपी हो गया! 📋`, 'success');
+      }).catch(() => {
+        this.showToast(`कोड: ${code}`, 'info');
+      });
+    } else {
+      this.showToast(`कोड: ${code}`, 'info');
+    }
   }
 
   // -------------------------------------------------------------------------
