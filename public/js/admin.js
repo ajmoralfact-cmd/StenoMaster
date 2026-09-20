@@ -125,7 +125,6 @@ class StenoAdmin {
       'referrals': 'adminReferralsPanel',
       'payments': 'adminPaymentsPanel',
       'withdrawals': 'adminWithdrawalsPanel',
-      'adminWithdrawalsPanel',
       'pricing': 'adminPricingPanel',
       'scoring': 'adminScoringPanel',
       'branding': 'adminBrandingPanel',
