@@ -762,11 +762,13 @@
                     <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
                       <div class="form-group">
                         <label class="form-label" style="font-size:0.8rem;">Cashfree App ID (Client ID):</label>
-                        <input type="text" id="adminCashfreeAppIdInput" class="form-input" placeholder="TEST123456... or Live App ID">
+                        <input type="text" id="adminCashfreeAppIdInput" class="form-input" autocomplete="off" placeholder="TEST123456... or Live App ID">
+                        <small style="color:var(--text-muted); font-size:0.75rem; display:block; margin-top:3px;">⚠️ Cashfree मर्चेंट पोर्टल का Client ID (ईमेल न डालें)</small>
                       </div>
                       <div class="form-group">
                         <label class="form-label" style="font-size:0.8rem;">Cashfree Secret Key:</label>
-                        <input type="password" id="adminCashfreeSecretInput" class="form-input" placeholder="cfsk_ma_test_... or Live Secret">
+                        <input type="password" id="adminCashfreeSecretInput" class="form-input" autocomplete="new-password" placeholder="cfsk_ma_test_... or Live Secret">
+                        <small style="color:var(--text-muted); font-size:0.75rem; display:block; margin-top:3px;">⚠️ Cashfree Secret Key (cfsk_ma_...)</small>
                       </div>
                     </div>
                     <div class="form-group" style="margin-top:8px;">
