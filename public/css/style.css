@@ -1997,6 +1997,7 @@ body {
   -webkit-backdrop-filter: blur(6px) !important;
   z-index: 999999 !important;
   display: none;
+  pointer-events: none !important;
   align-items: center !important;
   justify-content: center !important;
   padding: 16px !important;
@@ -2004,6 +2005,7 @@ body {
 
 .modal-overlay.active {
   display: flex !important;
+  pointer-events: auto !important;
 }
 
 .modal-card {
