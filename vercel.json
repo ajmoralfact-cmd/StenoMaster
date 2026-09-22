@@ -16,14 +16,6 @@
     {
       "source": "/admin/(.*)",
       "destination": "/admin.html"
-    },
-    {
-      "source": "/subscription",
-      "destination": "/plans.html"
-    },
-    {
-      "source": "/subscription/(.*)",
-      "destination": "/plans.html"
     }
   ],
   "headers": [
