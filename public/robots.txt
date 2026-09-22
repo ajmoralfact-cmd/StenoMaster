@@ -1,0 +1,15 @@
+﻿# StenoMaster Robots.txt - Optimized for Googlebot, Bingbot & Search Crawlers
+User-agent: *
+Allow: /
+Allow: /assets/
+Allow: /css/
+Allow: /js/
+
+# Disallow private API endpoints, uploads, and admin portal
+Disallow: /api/
+Disallow: /admin.html
+Disallow: /admin/
+Disallow: /uploads/
+
+# Sitemap location
+Sitemap: https://steno-master-9ngn.vercel.app/sitemap.xml
