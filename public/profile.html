@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="hi" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>मेरी प्रोफ़ाइल एवं सेटिंग्स (My Profile) — StenoMaster</title>
+  <meta name="description" content="StenoMaster Student Profile — Manage your target exam, shorthand language, typing preferences, and account security.">
+  <meta name="robots" content="noindex, nofollow">
+
+  <!-- PWA -->
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#2563eb">
+  <link rel="icon" type="image/png" sizes="256x256" href="/assets/logo.png">
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Mukta:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css?v=11.6">
+
+  <!-- Font Preloads for Instant Hindi Typography -->
+  <link rel="preload" href="/assets/fonts/Mangal.ttf" as="font" type="font/ttf" crossorigin>
+  <link rel="preload" href="/assets/fonts/Kruti_Dev_010.ttf" as="font" type="font/ttf" crossorigin>
+
+  <!-- Auth Guard: redirect immediately if no token -->
+  <script>
+    (function() {
+      var token = localStorage.getItem('stenomaster_token');
+      if (!token) {
+        window.location.replace('/?auth=login&redirect=profile');
+      }
+    })();
+  </script>
+
+  <!-- Theme flash prevention -->
+  <script>
+    (function() {
+      var t = localStorage.getItem('stenomaster_theme') || 'light';
+      document.documentElement.setAttribute('data-theme', t);
+    })();
+  </script>
+
+  <!-- Profile Page Layout Rules -->
+  <style>
+    #appContainer { display: flex !important; min-height: 100vh; }
+    #view-profile { display: block !important; opacity: 1; }
+    #authGatewayView { display: none !important; }
+    .profile-page-container { max-width: 1040px; margin: 0 auto; padding: 20px 16px 60px; }
+  </style>
+</head>
+<body>
+
+  <!-- Sleek Top Loading Progress Bar -->
+  <div id="topLoadingProgressBar" class="top-loading-bar" aria-hidden="true"></div>
+
+  <!-- ====================================================
+       APP CONTAINER
+       ==================================================== -->
+  <div class="app-container" id="appContainer">
+
+    <!-- Sidebar Backdrop Overlay -->
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="stenoApp.closeSidebar()"></div>
+
+    <!-- Slide-Out Left Navigation Drawer -->
+    <aside class="sidebar slide-drawer" id="appSidebar" role="navigation" aria-label="Sidebar Navigation">
+      <div class="sidebar-header">
+        <a href="/" class="brand-logo" title="StenoMaster — मुख्य पृष्ठ">
+          <img src="/assets/logo.png" alt="StenoMaster Logo" class="brand-logo-img" width="36" height="36" loading="lazy">
+          <div>
+            <div class="brand-name-text">StenoMaster</div>
+            <div class="brand-tagline-text" style="font-size:0.65rem; color:var(--text-muted); font-weight:500;">Listen. Type. Improve.</div>
+          </div>
+        </a>
+        <button class="sidebar-close-btn" id="sidebarCloseBtn" onclick="stenoApp.closeSidebar()" aria-label="Close navigation menu">✕</button>
+      </div>
+      <nav class="sidebar-nav" id="sidebarNavItems"></nav>
+      <div class="sidebar-footer" id="sidebarFooter"></div>
+    </aside>
+
+    <!-- Main Content Wrapper -->
+    <div class="main-wrapper">
+
+      <!-- Compact Top Header -->
+      <header class="top-header">
+        <div class="header-left">
+          <button class="header-back-btn" id="headerBackBtn" onclick="window.history.length > 1 ? window.history.back() : window.location.href = '/'" style="display:inline-flex;" title="वापस जाएं (Go Back)" aria-label="Go Back">
+            <span class="back-arrow">←</span>
+            <span class="back-text">वापस</span>
+          </button>
+          <button class="three-dot-btn" id="navToggleBtn" onclick="stenoApp.toggleSidebar()" aria-label="Open navigation menu" aria-expanded="false">
+            <span class="three-dots-icon">⋮</span>
+          </button>
+          <a href="/" class="header-brand-link" title="StenoMaster">
+            <img src="/assets/logo.png" alt="StenoMaster" class="header-brand-logo" width="34" height="34">
+            <span class="header-brand-name">StenoMaster</span>
+            <span class="header-view-badge" id="activeViewBadge">My Profile</span>
+          </a>
+        </div>
+        <div class="header-right">
+          <div class="plan-validity-pill" id="headerPlanValidityBadge" onclick="window.location.href='/plans'" title="प्लान स्थिति">
+            <span class="validity-icon" id="headerPlanValidityIcon">👑</span>
+            <span class="validity-text" id="headerPlanValidityText">2 फ्री कक्षाएं</span>
+          </div>
+          <div class="streak-badge" id="streakBadge" title="आपकी दैनिक अभ्यास स्ट्रीक">
+            <span>🔥</span>
+            <span id="userStreakCount">0 Day Streak</span>
+          </div>
+          <button class="theme-toggle-btn" id="themeToggleBtn" onclick="stenoApp.toggleTheme()" title="थीम बदलें (Light/Dark)">🌙</button>
+          <button class="user-profile-btn" id="headerUserBtn" onclick="window.location.href='/profile'" title="मेरी प्रोफ़ाइल">
+            <div class="user-avatar" id="headerUserAvatar">S</div>
+            <div class="header-user-meta hide-mobile">
+              <span class="header-user-name" id="headerUserName">Student</span>
+              <span class="header-user-role role-student" id="headerUserRole">Student</span>
+            </div>
+          </button>
+          <button class="btn-secondary header-logout-btn" id="headerLogoutBtn" onclick="stenoApp.logout()" title="लॉगआउट करें">
+            <span>🚪</span> <span class="hide-mobile">लॉगआउट</span>
+          </button>
+        </div>
+      </header>
+
+      <!-- ==============================================================
+           VIEW: MY PROFILE
+           ============================================================== -->
+      <main class="page-view active" id="view-profile">
+        <div class="profile-page-container">
+          <div class="view-top-back-wrap" style="margin-bottom:16px;">
+            <button type="button" class="view-back-strip-btn" onclick="window.history.length > 1 ? window.history.back() : window.location.href='/'" title="वापस जाएं">
+              <span class="back-icon">←</span> <span>वापस डैशबोर्ड पर जाएं (Back to Dashboard)</span>
+            </button>
+          </div>
+
+          <!-- 1. ULTRA-PREMIUM 3D HERO HEADER CARD -->
+          <div class="profile-hero-card-3d">
+            <div class="profile-hero-inner">
+              <div class="profile-hero-top-row">
+                <div class="profile-hero-user-info">
+                  <div class="profile-hero-avatar" id="profileHeroAvatar">
+                    🎓
+                  </div>
+                  <div>
+                    <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                      <h1 class="profile-hero-name" id="profileHeroName">StenoStudent</h1>
+                      <span class="profile-verified-badge">✓ प्रमाणित छात्र (Verified)</span>
+                    </div>
+                    <div class="profile-hero-sub-meta">
+                      <span class="profile-id-chip">
+                        <span>🆔 छात्र कोड:</span> <strong id="profileHeroStudentCode">STM-2026-000008</strong>
+                        <button type="button" class="profile-copy-btn" onclick="stenoApp.copyStudentId()" title="छात्र कोड कॉपी करें">📋</button>
+                      </span>
+                      <span class="profile-meta-separator">•</span>
+                      <span id="profileHeroEmailDisplay" style="color:var(--text-secondary); font-size:0.85rem;">student@stenomaster.com</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="profile-hero-actions">
+                  <button type="button" class="btn-profile-logout" onclick="stenoApp.logout()" title="लॉगआउट करें">
+                    <span>🚪</span> <span>लॉगआउट (Logout)</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- 4 Glowing Highlight Stat Pills -->
+              <div class="profile-hero-stats-grid">
+                <div class="profile-stat-pill pill-gold" onclick="window.location.href='/plans'" title="सदस्यता विवरण देखें" style="cursor:pointer;">
+                  <div class="profile-stat-icon">👑</div>
+                  <div class="profile-stat-content">
+                    <div class="profile-stat-label">प्रो सदस्यता एवं वैधता</div>
+                    <div class="profile-stat-value" id="profileHeroDaysLeft">लोड हो रहा है...</div>
+                    <div class="profile-stat-sub" id="profileHeroPlanStatus">StenoMaster Pro</div>
+                  </div>
+                  <div class="profile-stat-arrow">→</div>
+                </div>
+
+                <div class="profile-stat-pill pill-purple" onclick="window.location.href='/#leaderboard'" title="लीडरबोर्ड देखें" style="cursor:pointer;">
+                  <div class="profile-stat-icon">🏆</div>
+                  <div class="profile-stat-content">
+                    <div class="profile-stat-label">ऑल इंडिया रैंक</div>
+                    <div class="profile-stat-value" id="profileHeroRank">रैंक #1</div>
+                    <div class="profile-stat-sub">साप्ताहिक लीडरबोर्ड</div>
+                  </div>
+                  <div class="profile-stat-arrow">→</div>
+                </div>
+
+                <div class="profile-stat-pill pill-emerald" onclick="window.location.href='/wallet'" title="रिवॉर्ड्स व वॉलेट देखें" style="cursor:pointer;">
+                  <div class="profile-stat-icon">🪙</div>
+                  <div class="profile-stat-content">
+                    <div class="profile-stat-label">कुल रिवॉर्ड पॉइंट्स</div>
+                    <div class="profile-stat-value" id="profileHeroPoints">0 Pts</div>
+                    <div class="profile-stat-sub">सक्रिय स्टेनो कॉइन्स</div>
+                  </div>
+                  <div class="profile-stat-arrow">→</div>
+                </div>
+
+                <div class="profile-stat-pill pill-cyan" onclick="window.location.href='/#progress'" title="प्रगति रिपोर्ट देखें" style="cursor:pointer;">
+                  <div class="profile-stat-icon">🔥</div>
+                  <div class="profile-stat-content">
+                    <div class="profile-stat-label">अभ्यास स्ट्रीक</div>
+                    <div class="profile-stat-value" id="profileHeroStreak">0 दिन</div>
+                    <div class="profile-stat-sub" id="profileHeroTotalPractices">0 टेस्ट पूर्ण</div>
+                  </div>
+                  <div class="profile-stat-arrow">→</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 2. MAIN PROFILE EDITABLE FORM -->
+          <form onsubmit="stenoApp.saveProfile(event)" id="profileFullForm">
+            <div class="profile-boxes-grid" style="margin-bottom: 22px;">
+              
+              <!-- BOX 1: व्यक्तिगत पहचान व खाता विवरण -->
+              <div class="profile-3d-box profile-theme-blue">
+                <div class="profile-3d-inner">
+                  <div>
+                    <div class="profile-box-header">
+                      <div class="profile-box-icon-wrap icon-blue">👤</div>
+                      <div>
+                        <h3 class="profile-box-title">व्यक्तिगत पहचान व खाता विवरण</h3>
+                        <p class="profile-box-subtitle">नाम, यूज़रनेम, ईमेल एवं फ़ोन नंबर अपडेट करें</p>
+                      </div>
+                    </div>
+
+                    <div style="display:flex; flex-direction:column; gap:14px;">
+                      <div class="form-group" style="margin:0;">
+                        <label class="form-label" style="font-size:0.82rem; font-weight:700;">
+                          📝 पूरा नाम / प्रदर्शित नाम (Display Name):
+                        </label>
+                        <input type="text" id="profileDisplayNameInput" class="form-input" required placeholder="उदा. राहुल शर्मा">
+                      </div>
+
+                      <div class="form-group" style="margin:0;">
+                        <label class="form-label" style="font-size:0.82rem; font-weight:700;">
+                          🏷️ यूज़रनेम / लॉगिन आईडी (Username):
+                        </label>
+                        <input type="text" id="profileUsernameInput" class="form-input" required placeholder="उदा. rahul_steno" autocomplete="username">
+                        <small style="color:var(--text-muted); font-size:0.75rem; display:block; margin-top:3px;">
+                          ⚠️ यह आपका लॉगिन यूज़रनेम है (अक्षर, अंक और _ मान्य)
+                        </small>
+                      </div>
+
+                      <div class="form-group" style="margin:0;">
+                        <label class="form-label" style="font-size:0.82rem; font-weight:700;">
+                          📧 पंजीकृत ईमेल आईडी (Email Address):
+                        </label>
+                        <input type="email" id="profileEmailInput" class="form-input" required placeholder="student@example.com" autocomplete="email">
+                      </div>
+
+                      <div class="form-group" style="margin:0;">
+                        <label class="form-label" style="font-size:0.82rem; font-weight:700;">
+                          📱 मोबाइल नंबर (Mobile Number):
+                        </label>
+                        <input type="tel" id="profilePhoneInput" class="form-input" placeholder="10-अंकीय मोबाइल नंबर" maxlength="13">
+                      </div>
+
+                      <div class="profile-info-item" style="margin-top:4px;">
+                        <span class="profile-info-label">🎓 आधिकारिक रोल कोड (Student ID):</span>
+                        <div class="profile-info-val-wrap">
+                          <span class="profile-highlight-code" id="profileStudentCodeDisplay">STM-2026-000008</span>
+                          <button type="button" class="btn-micro-copy" onclick="stenoApp.copyStudentId()" title="कॉपी करें">📋 कॉपी</button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- BOX 2: परीक्षा लक्ष्य व टंकण वरीयताएँ -->
+              <div class="profile-3d-box profile-theme-purple">
+                <div class="profile-3d-inner">
+                  <div>
+                    <div class="profile-box-header">
+                      <div class="profile-box-icon-wrap icon-purple">🎯</div>
+                      <div>
+                        <h3 class="profile-box-title">परीक्षा लक्ष्य व टंकण वरीयताएँ</h3>
+                        <p class="profile-box-subtitle">अपनी तैयारी अनुसार लक्ष्य परीक्षा, भाषा, फॉन्ट व गति चुनें</p>
+                      </div>
+                    </div>
+
+                    <div style="display:flex; flex-direction:column; gap:14px;">
+                      <div class="form-group" style="margin:0;">
+                        <label class="form-label" style="font-size:0.82rem; font-weight:700;">
+                          🏛️ लक्ष्य परीक्षा (Target Exam):
+                        </label>
+                        <select id="profileTargetExamSelect" class="form-select">
+                          <option value="SSC Stenographer">SSC Stenographer Grade C & D</option>
+                          <option value="UPSSSC Stenographer">UPSSSC आशुलिपिक परीक्षा</option>
+                          <option value="High Court Stenographer">उच्च न्यायालय / जिला न्यायालय स्टेनो</option>
+                          <option value="State PSC Steno">राज्य लोक सेवा आयोग स्टेनो</option>
+                          <option value="Parliamentary Reporter">संसदीय रिपोर्टर / विधानसभा</option>
+                        </select>
+                      </div>
+
+                      <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                        <div class="form-group" style="margin:0;">
+                          <label class="form-label" style="font-size:0.82rem; font-weight:700;">
+                            🌐 प्राथमिक भाषा:
+                          </label>
+                          <select id="profileLanguageSelect" class="form-select">
+                            <option value="hindi">हिंदी आशुलिपि (Hindi)</option>
+                            <option value="english">अंग्रेजी आशुलिपि (English)</option>
+                          </select>
+                        </div>
+
+                        <div class="form-group" style="margin:0;">
+                          <label class="form-label" style="font-size:0.82rem; font-weight:700;">
+                            ⚡ लक्ष्य गति (WPM):
+                          </label>
+                          <input type="number" id="profileTargetWpmInput" class="form-input" min="20" max="160" value="80" step="5">
+                        </div>
+                      </div>
+
+                      <div class="form-group" style="margin:0;">
+                        <label class="form-label" style="font-size:0.82rem; font-weight:700;">
+                          ⌨️ डिफ़ॉल्ट टंकण फॉन्ट/कीबोर्ड (Typing Mode):
+                        </label>
+                        <select id="profileTypingModeSelect" class="form-select">
+                          <option value="mangal">Mangal / Unicode Hindi</option>
+                          <option value="krutidev">Kruti Dev 010</option>
+                          <option value="inscript">Inscript</option>
+                          <option value="remington">Remington-Style</option>
+                        </select>
+                      </div>
+
+                      <div class="form-group" style="display:flex; align-items:center; gap:8px; margin:4px 0 0 0; background:rgba(99,102,241,0.06); padding:10px 14px; border-radius:12px; border:1px solid rgba(99,102,241,0.18);">
+                        <input type="checkbox" id="profileLeaderboardVisibility" style="width:18px; height:18px; cursor:pointer;">
+                        <label for="profileLeaderboardVisibility" style="font-size:0.82rem; font-weight:600; cursor:pointer; margin:0;">
+                          🏆 लीडरबोर्ड पर मेरा नाम सार्वजनिक रूप से दिखाएं (Public Leaderboard)
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="profile-box-footer" style="margin-top:16px;">
+                    <button type="submit" class="btn-box-action btn-purple" id="btnSaveProfile">
+                      <span>💾</span> <span>प्रोफ़ाइल विवरण सहेजें (Save Changes)</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </form>
+
+          <!-- 3. BOX 3: सुरक्षा एवं पासवर्ड बदलें -->
+          <div class="profile-3d-box profile-theme-rose" style="max-width: 620px; margin: 0 auto 30px auto;">
+            <div class="profile-3d-inner">
+              <div>
+                <div class="profile-box-header">
+                  <div class="profile-box-icon-wrap icon-rose">🔐</div>
+                  <div>
+                    <h3 class="profile-box-title">सुरक्षा एवं पासवर्ड बदलें</h3>
+                    <p class="profile-box-subtitle">Change Account Password Securely</p>
+                  </div>
+                </div>
+
+                <form onsubmit="stenoApp.changePassword(event)" id="profileChangePasswordForm">
+                  <div style="display:flex; flex-direction:column; gap:12px;">
+                    <div class="form-group" style="margin:0;">
+                      <label class="form-label" style="font-size:0.82rem; font-weight:700;">
+                        🔒 वर्तमान पासवर्ड (Current Password):
+                      </label>
+                      <div style="position:relative;">
+                        <input type="password" id="profileCurrentPasswordInput" class="form-input" required placeholder="अपना पुराना पासवर्ड दर्ज करें" autocomplete="current-password" style="padding-right:40px;">
+                        <button type="button" class="btn-toggle-pwd" onclick="stenoApp.togglePasswordVisibility('profileCurrentPasswordInput', this)" title="पासवर्ड देखें/छिपाएं">👁️</button>
+                      </div>
+                    </div>
+
+                    <div class="form-group" style="margin:0;">
+                      <label class="form-label" style="font-size:0.82rem; font-weight:700;">
+                        🔑 नया पासवर्ड (New Password):
+                      </label>
+                      <div style="position:relative;">
+                        <input type="password" id="profileNewPasswordInput" class="form-input" required placeholder="कम से कम 4-6 अक्षर" autocomplete="new-password" style="padding-right:40px;">
+                        <button type="button" class="btn-toggle-pwd" onclick="stenoApp.togglePasswordVisibility('profileNewPasswordInput', this)" title="पासवर्ड देखें/छिपाएं">👁️</button>
+                      </div>
+                    </div>
+
+                    <div class="form-group" style="margin:0;">
+                      <label class="form-label" style="font-size:0.82rem; font-weight:700;">
+                        ✅ नया पासवर्ड पुनः दर्ज करें (Confirm New Password):
+                      </label>
+                      <input type="password" id="profileConfirmPasswordInput" class="form-input" required placeholder="नया पासवर्ड दोबारा लिखें" autocomplete="new-password">
+                    </div>
+                  </div>
+
+                  <div class="profile-box-footer" style="margin-top:16px;">
+                    <button type="submit" class="btn-box-action btn-rose" id="btnChangePassword">
+                      <span>🔑</span> <span>नया पासवर्ड सेट करें (Update Password)</span>
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+
+          <!-- 4. PLATFORM SETTINGS COLLAPSIBLE DRAWER -->
+          <div class="card" style="max-width: 620px; margin: 0 auto; padding: 20px; border-radius: 16px; border: 1px solid var(--border);">
+            <details>
+              <summary style="font-weight: 800; font-size: 0.95rem; cursor: pointer; color: var(--text-main); display: flex; align-items: center; gap: 8px;">
+                <span>⚙️</span> <span>अतिरिक्त प्लेटफ़ॉर्म सेटिंग्स (Theme & Audio Settings)</span>
+              </summary>
+              <form onsubmit="stenoApp.saveSettings(event)" style="margin-top: 16px;">
+                <div class="form-group">
+                  <label class="form-label">स्क्रीन थीम (Appearance Theme):</label>
+                  <select id="settingsThemeSelect" class="form-select">
+                    <option value="light">लाइट थीम (Light Mode)</option>
+                    <option value="dark">डार्क थीम (Dark Mode)</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">डिफ़ॉल्ट ऑडियो गति (Default Playback Speed):</label>
+                  <select id="settingsAudioSpeedSelect" class="form-select">
+                    <option value="0.75">0.75x</option>
+                    <option value="1.0">1.0x (सामान्य)</option>
+                    <option value="1.25">1.25x</option>
+                    <option value="1.5">1.5x</option>
+                  </select>
+                </div>
+                <button type="submit" class="btn-primary" style="margin-top: 10px;">सेटिंग्स सहेजें (Save Platform Settings)</button>
+              </form>
+            </details>
+          </div>
+
+        </div>
+      </main>
+
+    </div><!-- end .main-wrapper -->
+  </div><!-- end #appContainer -->
+
+
+  <!-- ==============================================================
+       MODALS
+       ============================================================== -->
+
+  <!-- Concurrent Login Modal -->
+  <div id="concurrentLoginModal" class="concurrent-modal-overlay" style="display:none;" role="dialog" aria-modal="true">
+    <div class="concurrent-backdrop"></div>
+    <div class="concurrent-card">
+      <div class="concurrent-header">
+        <div class="concurrent-icon-badge"><span class="shield-pulse"></span>🛡️</div>
+        <span class="security-tag">SINGLE DEVICE SECURITY</span>
+      </div>
+      <h2 class="concurrent-title">सुरक्षा चेतावनी: अन्य डिवाइस पर नया लॉगिन डिटेक्ट हुआ</h2>
+      <p class="concurrent-subtitle">यह खाता अभी किसी अन्य कंप्यूटर अथवा मोबाइल पर खोला गया है।</p>
+      <div class="concurrent-actions" style="margin-top:16px;">
+        <button type="button" class="btn-primary concurrent-relogin-btn" onclick="window.location.href='/'">🔑 पुनः लॉगिन करें →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- Core Lightweight Scripts -->
+  <script src="/js/audio_player.js?v=8.1"></script>
+  <script src="/js/keyboard_map.js?v=8.1"></script>
+  <script src="/js/typing_engine.js?v=8.1"></script>
+  <script src="/js/ocr_service.js?v=1.1"></script>
+  <script src="/js/app.js?v=11.3"></script>
+
+  <!-- Profile Page Bootstrap Script -->
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      function tryInitProfile(attempt) {
+        if (typeof window.stenoApp === 'undefined') {
+          if (attempt < 60) { setTimeout(function() { tryInitProfile(attempt + 1); }, 100); }
+          return;
+        }
+
+        window.stenoApp.activeView = 'profile';
+
+        // Load profile and settings data
+        if (window.stenoApp.token) {
+          window.stenoApp.renderProfile();
+          if (typeof window.stenoApp.renderSettings === 'function') {
+            window.stenoApp.renderSettings();
+          }
+        }
+      }
+      tryInitProfile(0);
+    });
+  </script>
+
+</body>
+</html>
