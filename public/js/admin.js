@@ -150,6 +150,8 @@ class StenoAdmin {
         this.loadPassages();
       } else if (tabId === 'payments') {
         this.loadPayments();
+      } else if (tabId === 'customclasses') {
+        this.loadCustomClasses();
       }
       if (tabId === 'withdrawals') {
         this.loadWithdrawals();
@@ -2653,110 +2655,157 @@ class StenoAdmin {
   // -------------------------------------------------------------------------
   // Student Custom Classes & 1-Click Publishing Workflow
   // -------------------------------------------------------------------------
-  async loadCustomClasses() {
+  async loadCustomClasses(force = false) {
+    const loadingEl = document.getElementById('adminCustomLoading');
+    const emptyEl = document.getElementById('adminCustomEmpty');
+    const tableWrap = document.getElementById('adminCustomTableWrap');
+
+    // 1. Instant Cache Render: If already in memory or cached, render in 0ms!
+    if (!force && this.customClassesList && this.customClassesList.length > 0) {
+      this.renderCustomClassesTable(this.customClassesList);
+      if (loadingEl) loadingEl.style.display = 'none';
+    } else {
+      // Show smooth modern loading spinner
+      if (loadingEl) {
+        loadingEl.innerHTML = `
+          <div style="display:flex; align-items:center; justify-content:center; gap:10px; padding:24px; color:var(--primary); font-weight:600;">
+            <span style="width:22px; height:22px; border:3px solid var(--primary); border-right-color:transparent; border-radius:50%; display:inline-block; animation:spin 0.75s linear infinite;"></span>
+            <span>कस्टम क्लासेस लोड हो रही हैं...</span>
+          </div>
+        `;
+        loadingEl.style.display = 'block';
+      }
+      if (emptyEl) emptyEl.style.display = 'none';
+      if (!this.customClassesList && tableWrap) tableWrap.style.display = 'none';
+    }
+
+    try {
+      const url = force ? '/api/admin/custom-classes?refresh=1' : '/api/admin/custom-classes';
+      const res = await stenoApp.apiCall(url);
+      this.customClassesList = res.custom_classes || [];
+      this.renderCustomClassesTable(this.customClassesList);
+    } catch (err) {
+      if (loadingEl) loadingEl.style.display = 'none';
+      stenoApp.showToast(`कस्टम क्लासेस लोड करने में त्रुटि: ${err.message}`, 'danger');
+    }
+  }
+
+  renderCustomClassesTable(list) {
     const loadingEl = document.getElementById('adminCustomLoading');
     const emptyEl = document.getElementById('adminCustomEmpty');
     const tableWrap = document.getElementById('adminCustomTableWrap');
     const tbody = document.getElementById('adminCustomTbody');
 
-    if (loadingEl) loadingEl.style.display = 'block';
-    if (emptyEl) emptyEl.style.display = 'none';
-    if (tableWrap) tableWrap.style.display = 'none';
+    if (loadingEl) loadingEl.style.display = 'none';
 
-    try {
-      const res = await stenoApp.apiCall('/api/admin/custom-classes');
-      this.customClassesList = res.custom_classes || [];
+    // Update counters
+    const total = list.length;
+    const published = list.filter(x => x.status === 'published').length;
+    const pending = total - published;
 
-      // Update counters
-      const total = this.customClassesList.length;
-      const published = this.customClassesList.filter(x => x.status === 'published').length;
-      const pending = total - published;
+    const totalEl = document.getElementById('adminCustomTotalCount');
+    const pendEl = document.getElementById('adminCustomPendingCount');
+    const pubEl = document.getElementById('adminCustomPublishedCount');
+    if (totalEl) totalEl.textContent = total;
+    if (pendEl) pendEl.textContent = pending;
+    if (pubEl) pubEl.textContent = published;
 
-      const totalEl = document.getElementById('adminCustomTotalCount');
-      const pendEl = document.getElementById('adminCustomPendingCount');
-      const pubEl = document.getElementById('adminCustomPublishedCount');
-      if (totalEl) totalEl.textContent = total;
-      if (pendEl) pendEl.textContent = pending;
-      if (pubEl) pubEl.textContent = published;
-
-      if (loadingEl) loadingEl.style.display = 'none';
-
-      if (!this.customClassesList.length) {
-        if (emptyEl) emptyEl.style.display = 'block';
-        return;
-      }
-
-      if (tableWrap) tableWrap.style.display = 'block';
-      if (tbody) {
-        tbody.innerHTML = this.customClassesList.map(item => {
-          const isPub = item.status === 'published';
-          const studentName = stenoApp.escapeHtml(item.student_display || item.username || 'विद्यार्थी');
-          const studentCode = item.student_code ? `<span style="font-size:0.7rem; color:var(--text-muted); font-family:monospace;">${item.student_code}</span>` : '';
-          const phone = item.phone ? `<div style="font-size:0.7rem; color:var(--text-muted);">📞 ${item.phone}</div>` : '';
-          const dateStr = item.created_at ? new Date(item.created_at).toLocaleDateString('hi-IN', { day:'numeric', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' }) : '';
-          const textExcerpt = (item.official_text || '').substring(0, 70) + (item.official_text?.length > 70 ? '...' : '');
-
-          return `
-            <tr style="border-bottom:1px solid var(--border-subtle, #e2e8f0);">
-              <td style="padding:10px 12px; vertical-align:top;">
-                <div style="font-weight:700; font-size:0.88rem; color:var(--text-main);">${studentName}</div>
-                ${studentCode}
-                ${phone}
-              </td>
-              <td style="padding:10px 12px; vertical-align:top;">
-                <div style="font-weight:700; font-size:0.86rem; color:var(--text-main);">${stenoApp.escapeHtml(item.title)}</div>
-                <div style="font-size:0.72rem; color:var(--text-muted); margin-top:2px;">
-                  <span>📝 ${item.word_count || 0} शब्द</span>
-                  ${dateStr ? `<span style="margin-left:8px;">📅 ${dateStr}</span>` : ''}
-                </div>
-              </td>
-              <td style="padding:10px 12px; vertical-align:top;">
-                <span class="badge badge-primary" style="font-size:0.75rem; font-weight:700;">${item.target_wpm || 80} WPM</span>
-                <div style="font-size:0.7rem; color:var(--text-muted); margin-top:4px;">
-                  ${item.typing_system === 'kruti_dev_010' ? 'कृति देव' : 'मंगल'}
-                </div>
-              </td>
-              <td style="padding:10px 12px; vertical-align:top; min-width:180px;">
-                ${item.audio_url ? `
-                  <audio controls src="${item.audio_url}" style="width:100%; height:32px;" preload="none"></audio>
-                ` : `<span style="font-size:0.75rem; color:var(--text-muted);">साइलेंट (कोई ऑडियो नहीं)</span>`}
-              </td>
-              <td style="padding:10px 12px; vertical-align:top; max-width:220px;">
-                <div style="font-size:0.78rem; line-height:1.4; color:var(--text-secondary); max-height:45px; overflow:hidden; text-overflow:ellipsis;">
-                  ${stenoApp.escapeHtml(textExcerpt)}
-                </div>
-                <button type="button" class="btn-link" style="font-size:0.7rem; padding:0; margin-top:2px; color:var(--primary);" onclick="alert(${JSON.stringify(item.official_text || '')})">
-                  पूरा आलेख देखें
-                </button>
-              </td>
-              <td style="padding:10px 12px; vertical-align:top;">
-                <span class="badge ${isPub ? 'badge-success' : 'badge-warning'}" style="font-size:0.72rem; padding:4px 8px; border-radius:12px; font-weight:700; white-space:nowrap;">
-                  ${isPub ? '🟢 सभी के लिए सक्रिय' : '🟡 समीक्षाधीन'}
-                </span>
-                ${item.category_name ? `<div style="font-size:0.7rem; color:var(--text-muted); margin-top:4px;">📂 ${item.category_name}</div>` : ''}
-              </td>
-              <td style="padding:10px 12px; vertical-align:top; text-align:center;">
-                <div style="display:flex; flex-direction:column; gap:6px; align-items:center;">
-                  ${!isPub ? `
-                    <button type="button" class="btn-sm btn-success" style="padding:6px 14px; font-size:0.78rem; font-weight:700; background:linear-gradient(135deg, #10b981, #059669); color:#fff; border:none; border-radius:20px; box-shadow:0 2px 8px rgba(16,185,129,0.3); cursor:pointer; display:inline-flex; align-items:center; gap:4px; white-space:nowrap;" onclick="stenoAdmin.openPublishCustomModal(${item.id})">
-                      <span>🚀</span> <span>सभी को भेजें</span>
-                    </button>
-                  ` : `
-                    <span style="font-size:0.75rem; color:#059669; font-weight:700;">✓ प्रकाशित</span>
-                  `}
-                  <button type="button" class="btn-sm btn-secondary" style="padding:4px 10px; font-size:0.72rem; color:#ef4444; border-color:rgba(239,68,68,0.2);" onclick="stenoAdmin.deleteCustomSubmission(${item.id})" title="क्लास हटाएं">
-                    <span>🗑️ हटाएं</span>
-                  </button>
-                </div>
-              </td>
-            </tr>
-          `;
-        }).join('');
-      }
-    } catch (err) {
-      if (loadingEl) loadingEl.style.display = 'none';
-      stenoApp.showToast(`कस्टम क्लासेस लोड करने में त्रुटि: ${err.message}`, 'danger');
+    if (!list.length) {
+      if (tableWrap) tableWrap.style.display = 'none';
+      if (emptyEl) emptyEl.style.display = 'block';
+      return;
     }
+
+    if (emptyEl) emptyEl.style.display = 'none';
+    if (tableWrap) tableWrap.style.display = 'block';
+
+    if (tbody) {
+      tbody.innerHTML = list.map(item => {
+        const isPub = item.status === 'published';
+        const studentName = stenoApp.escapeHtml(item.student_display || item.username || 'विद्यार्थी');
+        const studentCode = item.student_code ? `<span style="font-size:0.7rem; color:var(--text-muted); font-family:monospace;">${item.student_code}</span>` : '';
+        const phone = item.phone ? `<div style="font-size:0.7rem; color:var(--text-muted);">📞 ${item.phone}</div>` : '';
+        const dateStr = item.created_at ? new Date(item.created_at).toLocaleDateString('hi-IN', { day:'numeric', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' }) : '';
+        const rawText = item.official_text || '';
+        const textExcerpt = rawText.substring(0, 70) + (rawText.length > 70 ? '...' : '');
+
+        return `
+          <tr style="border-bottom:1px solid var(--border-subtle, #e2e8f0);">
+            <td style="padding:10px 12px; vertical-align:top;">
+              <div style="font-weight:700; font-size:0.88rem; color:var(--text-main);">${studentName}</div>
+              ${studentCode}
+              ${phone}
+            </td>
+            <td style="padding:10px 12px; vertical-align:top;">
+              <div style="font-weight:700; font-size:0.86rem; color:var(--text-main);">${stenoApp.escapeHtml(item.title)}</div>
+              <div style="font-size:0.72rem; color:var(--text-muted); margin-top:2px;">
+                <span>📝 ${item.word_count || 0} शब्द</span>
+                ${dateStr ? `<span style="margin-left:8px;">📅 ${dateStr}</span>` : ''}
+              </div>
+            </td>
+            <td style="padding:10px 12px; vertical-align:top;">
+              <span class="badge badge-primary" style="font-size:0.75rem; font-weight:700;">${item.target_wpm || 80} WPM</span>
+              <div style="font-size:0.7rem; color:var(--text-muted); margin-top:4px;">
+                ${item.typing_system === 'kruti_dev_010' ? 'कृति देव' : 'मंगल'}
+              </div>
+            </td>
+            <td style="padding:10px 12px; vertical-align:top; min-width:180px;">
+              ${item.audio_url ? `
+                <audio controls src="${item.audio_url}" style="width:100%; height:32px;" preload="none"></audio>
+              ` : `<span style="font-size:0.75rem; color:var(--text-muted);">साइलेंट (कोई ऑडियो नहीं)</span>`}
+            </td>
+            <td style="padding:10px 12px; vertical-align:top; max-width:220px;">
+              <div style="font-size:0.78rem; line-height:1.4; color:var(--text-secondary); max-height:45px; overflow:hidden; text-overflow:ellipsis;">
+                ${stenoApp.escapeHtml(textExcerpt)}
+              </div>
+              <button type="button" class="btn-link" style="font-size:0.75rem; padding:0; margin-top:4px; color:var(--primary); font-weight:700; cursor:pointer; background:none; border:none;" onclick="stenoAdmin.viewFullCustomText(${item.id})">
+                👁️ पूरा आलेख देखें
+              </button>
+            </td>
+            <td style="padding:10px 12px; vertical-align:top;">
+              <span class="badge ${isPub ? 'badge-success' : 'badge-warning'}" style="font-size:0.72rem; padding:4px 8px; border-radius:12px; font-weight:700; white-space:nowrap;">
+                ${isPub ? '🟢 सभी के लिए सक्रिय' : '🟡 समीक्षाधीन'}
+              </span>
+              ${item.category_name ? `<div style="font-size:0.7rem; color:var(--text-muted); margin-top:4px;">📂 ${item.category_name}</div>` : ''}
+            </td>
+            <td style="padding:10px 12px; vertical-align:top; text-align:center;">
+              <div style="display:flex; flex-direction:column; gap:6px; align-items:center;">
+                ${!isPub ? `
+                  <button type="button" class="btn-sm btn-success" style="padding:6px 14px; font-size:0.78rem; font-weight:700; background:linear-gradient(135deg, #10b981, #059669); color:#fff; border:none; border-radius:20px; box-shadow:0 2px 8px rgba(16,185,129,0.3); cursor:pointer; display:inline-flex; align-items:center; gap:4px; white-space:nowrap;" onclick="stenoAdmin.openPublishCustomModal(${item.id})">
+                    <span>🚀</span> <span>सभी को भेजें</span>
+                  </button>
+                ` : `
+                  <span style="font-size:0.75rem; color:#059669; font-weight:700;">✓ प्रकाशित</span>
+                `}
+                <button type="button" class="btn-sm btn-secondary" style="padding:4px 10px; font-size:0.72rem; color:#ef4444; border-color:rgba(239,68,68,0.2); cursor:pointer;" onclick="stenoAdmin.deleteCustomSubmission(${item.id})" title="क्लास हटाएं">
+                  <span>🗑️ हटाएं</span>
+                </button>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+  }
+
+  viewFullCustomText(passageId) {
+    const item = (this.customClassesList || []).find(x => x.id === passageId);
+    if (!item) return;
+    const modal = document.getElementById('adminViewCustomTextModal');
+    const titleEl = document.getElementById('adminViewCustomTextTitle');
+    const bodyEl = document.getElementById('adminViewCustomTextBody');
+    if (modal && titleEl && bodyEl) {
+      titleEl.textContent = item.title || 'कस्टम आलेख';
+      bodyEl.textContent = item.official_text || '';
+      modal.style.display = 'flex';
+    } else {
+      alert(`[${item.title}]\n\n${item.official_text || ''}`);
+    }
+  }
+
+  closeViewCustomTextModal() {
+    const modal = document.getElementById('adminViewCustomTextModal');
+    if (modal) modal.style.display = 'none';
   }
 
   openPublishCustomModal(passageId) {

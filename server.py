@@ -588,7 +588,8 @@ class StenoMasterHandler(http.server.SimpleHTTPRequestHandler):
                 return
 
             if path == '/api/admin/custom-classes':
-                custom_submissions = db.admin_get_custom_submissions()
+                force = bool(params.get('refresh', [None])[0] or params.get('force', [None])[0])
+                custom_submissions = db.admin_get_custom_submissions(force_refresh=force)
                 self._send_json(200, {"custom_classes": custom_submissions})
                 return
 

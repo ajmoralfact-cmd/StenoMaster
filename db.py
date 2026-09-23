@@ -802,6 +802,8 @@ def init_db():
     c.execute("CREATE INDEX IF NOT EXISTS idx_bookmarks_user_passage ON bookmarks(user_id, passage_id)")
     c.execute("CREATE INDEX IF NOT EXISTS idx_passages_status_id ON passages(status, id)")
     c.execute("CREATE INDEX IF NOT EXISTS idx_passages_cat_lang ON passages(category_id, language, difficulty)")
+    c.execute("CREATE INDEX IF NOT EXISTS idx_passages_is_custom ON passages(is_custom, id DESC)")
+    c.execute("CREATE INDEX IF NOT EXISTS idx_passages_user_id ON passages(user_id)")
     c.execute("CREATE INDEX IF NOT EXISTS idx_sessions_token ON sessions(token)")
 
     conn.commit()
@@ -3814,6 +3816,8 @@ def save_student_custom_passage(user_id: int, data: Dict[str, Any]) -> int:
         ))
         passage_id = c.lastrowid
         conn.commit()
+        global _custom_submissions_cache
+        _custom_submissions_cache = None
         return passage_id
     finally:
         conn.close()
@@ -3860,16 +3864,25 @@ def delete_student_custom_passage(user_id: int, passage_id: int) -> bool:
         conn.close()
 
 
-def admin_get_custom_submissions() -> List[Dict[str, Any]]:
+_custom_submissions_cache = None
+_custom_submissions_cache_time = 0.0
+
+def admin_get_custom_submissions(force_refresh: bool = False) -> List[Dict[str, Any]]:
     """
     Fetches all student custom submissions for admin review, including student details and audio.
+    Includes in-memory TTL cache for lightning-fast responses.
     """
+    global _custom_submissions_cache, _custom_submissions_cache_time
+    now = time.time()
+    if not force_refresh and _custom_submissions_cache is not None and (now - _custom_submissions_cache_time < 30.0):
+        return _custom_submissions_cache
+
     conn = get_db()
     c = conn.cursor()
     try:
         c.execute("""
             SELECT p.id, p.title, p.category_id, p.language, p.difficulty, p.official_text,
-                   p.official_text_krutidev, p.typing_system, p.target_wpm, p.duration_seconds,
+                   p.typing_system, p.target_wpm, p.duration_seconds,
                    p.audio_url, p.status, p.is_custom, p.is_approved, p.submitter_name,
                    p.created_at, p.updated_at,
                    u.username, u.email, u.phone, u.student_code,
@@ -3890,6 +3903,8 @@ def admin_get_custom_submissions() -> List[Dict[str, Any]]:
             d["word_count"] = len(txt.split())
             d["student_display"] = d.get("display_name") or d.get("submitter_name") or d.get("username") or "विद्यार्थी"
             result.append(d)
+        _custom_submissions_cache = result
+        _custom_submissions_cache_time = now
         return result
     finally:
         conn.close()
@@ -3900,6 +3915,8 @@ def admin_publish_custom_to_all(passage_id: int, category_id: int = 1, title: Op
     Publishes a student custom submission for ALL users on the platform in 1-Click!
     Updates status to 'published' and is_approved to 1.
     """
+    global _custom_submissions_cache
+    _custom_submissions_cache = None
     conn = get_db()
     c = conn.cursor()
     now_iso = datetime.now().isoformat()
@@ -3926,6 +3943,8 @@ def admin_delete_custom_submission(passage_id: int) -> bool:
     """
     Deletes a student custom submission.
     """
+    global _custom_submissions_cache
+    _custom_submissions_cache = None
     conn = get_db()
     c = conn.cursor()
     try:

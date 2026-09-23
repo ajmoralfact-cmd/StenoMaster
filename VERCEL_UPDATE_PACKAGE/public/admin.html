@@ -1,51 +1,15 @@
-<!DOCTYPE
-
-          <!-- ===============================================================
-               SUB-PANEL: STUDENT WITHDRAWALS (10% CASH COMMISSION PAYOUTS)
-               =============================================================== -->
-          <section class="admin-sub-panel" id="adminWithdrawalsPanel">
-            <div class="admin-panel-header">
-              <div>
-                <h3 class="admin-panel-title">💸 छात्र UPI निकासी अनुरोध (10% Cash Commission Payouts)</h3>
-                <p class="admin-panel-subtitle">छात्रों द्वारा कोर्स रेफरल पर कमाए गए 10% रियल कैश कमीशन के निकासी अनुरोधों का सत्यापन करें और UPI पर भुगतान भेजकर मार्क पेड करें।</p>
-              </div>
-              <button type="button" class="btn-primary" onclick="stenoAdmin.loadWithdrawals()" style="padding:6px 14px; font-size:0.85rem;">
-                🔄 रिफ्रेश करें
-              </button>
-            </div>
-
-            <div class="admin-card" style="padding: 16px; margin-top: 14px;">
-              <div class="admin-table-wrap">
-                <table class="data-table">
-                  <thead>
-                    <tr>
-                      <th>#ID</th>
-                      <th>छात्र (Student)</th>
-                      <th>संपर्क (Email / Phone)</th>
-                      <th>निकासी राशि (Amount)</th>
-                      <th>छात्र का UPI ID</th>
-                      <th>स्थिति (Status)</th>
-                      <th>अनुरोध तिथि</th>
-                      <th>एडमिन एक्शन</th>
-                    </tr>
-                  </thead>
-                  <tbody id="adminWithdrawalsTableBody">
-                    <!-- Rendered by stenoAdmin.loadWithdrawals() -->
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </section> html>
+<!DOCTYPE html>
 <html lang="hi" data-theme="light">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
   <title>StenoMaster — प्रशासनिक नियंत्रण (Admin Control Center)</title>
   <link rel="icon" type="image/png" href="/assets/logo.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Devanagari:wght@400;500;600;700;800&family=Rozha+One&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/css/style.css?v=8.5">
+  <link rel="stylesheet" href="/css/style.css?v=11.4">
 
   <!-- Smooth Admin Auth Guard (Shows In-Page Modal without broken redirect) -->
   <script>
@@ -841,7 +805,41 @@
               </div>
             </div>
 
-            <!-- TAB 5: PRICING & UPI QR SETTINGS PANEL -->
+            <!-- TAB 5: STUDENT UPI WITHDRAWALS PANEL -->
+            <div class="admin-sub-panel" id="adminWithdrawalsPanel" style="display:none;">
+              <div class="admin-panel-header">
+                <div>
+                  <h3 class="admin-panel-title">💸 छात्र UPI निकासी अनुरोध (10% Cash Commission Payouts)</h3>
+                  <p class="admin-panel-subtitle">छात्रों द्वारा कोर्स रेफरल पर कमाए गए 10% रियल कैश कमीशन के निकासी अनुरोधों का सत्यापन करें और UPI पर भुगतान भेजकर मार्क पेड करें।</p>
+                </div>
+                <button type="button" class="btn-primary" onclick="stenoAdmin.loadWithdrawals()" style="padding:6px 14px; font-size:0.85rem;">
+                  🔄 रिफ्रेश करें
+                </button>
+              </div>
+              <div class="admin-card" style="padding: 16px; margin-top: 14px;">
+                <div class="admin-table-wrap">
+                  <table class="data-table">
+                    <thead>
+                      <tr>
+                        <th>#ID</th>
+                        <th>छात्र (Student)</th>
+                        <th>संपर्क (Email / Phone)</th>
+                        <th>निकासी राशि (Amount)</th>
+                        <th>छात्र का UPI ID</th>
+                        <th>स्थिति (Status)</th>
+                        <th>अनुरोध तिथि</th>
+                        <th>एडमिन एक्शन</th>
+                      </tr>
+                    </thead>
+                    <tbody id="adminWithdrawalsTableBody">
+                      <!-- Rendered by stenoAdmin.loadWithdrawals() -->
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            <!-- TAB 6: PRICING & UPI QR SETTINGS PANEL -->
             <div class="admin-sub-panel" id="adminPricingPanel">
               <div class="chart-card" id="adminSubscriptionConfigSection" style="margin-bottom:28px;">
                 <h3 style="font-size:1.1rem; font-weight:700; margin-bottom:12px;">📱 UPI QR कोड एवं सदस्यता मूल्य सेटिंग्स</h3>
@@ -2030,10 +2028,10 @@
   <script src="/js/charts.js?v=8.1"></script>
   <script src="/js/comparison_view.js?v=8.1"></script>
   <script src="/js/ocr_service.js?v=1.1"></script>
-  <script src="/js/admin.js?v=10.6"></script>
+  <script src="/js/admin.js?v=11.7"></script>
 
   <!-- Standalone In-Page Admin Login Modal (Never redirects away) -->
-  <div id="adminStandaloneAuthModal" class="modal-overlay" style="display:none; z-index:999999; background:rgba(15, 23, 42, 0.85); backdrop-filter:blur(8px);">
+  <div id="adminStandaloneAuthModal" class="modal-overlay" style="display:none; pointer-events:none; z-index:999999; background:rgba(15, 23, 42, 0.85); backdrop-filter:blur(8px);">
     <div class="modal-card" style="max-width:440px; border:2px solid #ef4444; box-shadow:0 20px 50px rgba(0,0,0,0.5); border-radius:16px; padding:28px;">
       <div style="text-align:center; margin-bottom:18px;">
         <div style="font-size:2.8rem; margin-bottom:8px;">🛡️</div>
@@ -2082,12 +2080,14 @@
         if (forceShow || !token || !user || user.role !== 'admin') {
           if (modal) {
             modal.style.display = 'flex';
+            modal.style.pointerEvents = 'auto';
             modal.classList.add('active');
           }
           return false;
         } else {
           if (modal) {
             modal.style.display = 'none';
+            modal.style.pointerEvents = 'none';
             modal.classList.remove('active');
           }
           return true;
@@ -2096,6 +2096,7 @@
         var modal = document.getElementById('adminStandaloneAuthModal');
         if (modal) {
           modal.style.display = 'flex';
+          modal.style.pointerEvents = 'auto';
           modal.classList.add('active');
         }
         return false;
@@ -2187,6 +2188,27 @@
       }
     });
   </script>
+
+  <!-- Modal: View Full Custom Passage Text -->
+  <div id="adminViewCustomTextModal" class="modal-backdrop" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.65); z-index:99999; align-items:center; justify-content:center; padding:16px;">
+    <div style="background:var(--bg-card); max-width:640px; width:100%; border-radius:16px; padding:24px; box-shadow:0 25px 50px rgba(0,0,0,0.3); border:1px solid var(--border); max-height:85vh; display:flex; flex-direction:column;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; border-bottom:1px solid var(--border); padding-bottom:10px;">
+        <h3 id="adminViewCustomTextTitle" style="margin:0; font-size:1.15rem; color:var(--text-main); font-weight:800;">
+          कस्टम आलेख
+        </h3>
+        <button type="button" onclick="stenoAdmin.closeViewCustomTextModal()" style="background:none; border:none; font-size:1.3rem; cursor:pointer; color:var(--text-muted);">✕</button>
+      </div>
+      <div id="adminViewCustomTextBody" style="font-size:0.95rem; line-height:1.7; color:var(--text-main); overflow-y:auto; flex:1; max-height:55vh; padding:12px; background:var(--bg-subtle, #f8fafc); border-radius:10px; border:1px solid var(--border-subtle); white-space:pre-wrap; font-family:'Noto Sans Devanagari', 'Mukta', sans-serif;"></div>
+      <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:16px;">
+        <button type="button" class="btn-secondary" onclick="navigator.clipboard.writeText(document.getElementById('adminViewCustomTextBody').textContent); stenoApp.showToast('आलेख कॉपी हो गया!', 'success');" style="padding:8px 16px; border-radius:8px;">
+          📋 टेक्स्ट कॉपी करें
+        </button>
+        <button type="button" class="btn-primary" onclick="stenoAdmin.closeViewCustomTextModal()" style="padding:8px 20px; border-radius:8px;">
+          बंद करें
+        </button>
+      </div>
+    </div>
+  </div>
 
   <!-- Modal: Publish Custom Class for All Users -->
   <div id="publishCustomModal" class="modal-backdrop" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:9999; align-items:center; justify-content:center;">
