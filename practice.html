@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="hi" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>स्टेनो टंकण अभ्यास — StenoMaster</title>
+  <meta name="description" content="StenoMaster Live Dictation Practice Room — 80/100 WPM Audio Dictation with real-time scoring.">
+  <meta name="robots" content="noindex, nofollow">
+
+  <!-- PWA -->
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#2563eb">
+  <link rel="icon" type="image/png" sizes="256x256" href="/assets/logo.png">
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Mukta:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css?v=11.6">
+
+  <!-- Font Preloads for Instant Hindi Typography -->
+  <link rel="preload" href="/assets/fonts/Mangal.ttf" as="font" type="font/ttf" crossorigin>
+  <link rel="preload" href="/assets/fonts/Kruti_Dev_010.ttf" as="font" type="font/ttf" crossorigin>
+
+  <!-- Auth Guard: redirect immediately if no token -->
+  <script>
+    (function() {
+      var token = localStorage.getItem('stenomaster_token');
+      if (!token) {
+        var returnId = new URLSearchParams(window.location.search).get('id');
+        window.location.replace(returnId ? ('/?practice=' + returnId) : '/');
+      }
+    })();
+  </script>
+
+  <!-- Theme flash prevention -->
+  <script>
+    (function() {
+      var t = localStorage.getItem('stenomaster_theme') || 'light';
+      document.documentElement.setAttribute('data-theme', t);
+    })();
+  </script>
+
+  <!-- Prevent view flash: Keep practice view active until app re-navigates -->
+  <style>
+    /* On practice page, always keep #view-practice visible by default.
+       The page-view.active class is toggled by app.js navigate() — our bootstrap
+       will call openPractice() which re-activates it after app initializes. */
+    #view-practice { display: block !important; opacity: 1; }
+    /* Hide auth gateway elements that don't exist on this page */
+    #authGatewayView { display: none !important; }
+  </style>
+</head>
+<body>
+
+  <!-- Sleek Top Loading Progress Bar -->
+  <div id="topLoadingProgressBar" class="top-loading-bar" aria-hidden="true"></div>
+
+  <!-- ====================================================
+       APP CONTAINER
+       ==================================================== -->
+  <div class="app-container" id="appContainer">
+
+    <!-- Sidebar Backdrop Overlay -->
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="stenoApp.closeSidebar()"></div>
+
+    <!-- Slide-Out Left Navigation Drawer -->
+    <aside class="sidebar slide-drawer" id="appSidebar" role="navigation" aria-label="Sidebar Navigation">
+      <div class="sidebar-header">
+        <a href="/" class="brand-logo" title="StenoMaster — मुख्य पृष्ठ">
+          <img src="/assets/logo.png" alt="StenoMaster Logo" class="brand-logo-img" width="36" height="36" loading="lazy">
+          <div>
+            <div class="brand-name-text">StenoMaster</div>
+            <div class="brand-tagline-text" style="font-size:0.65rem; color:var(--text-muted); font-weight:500;">Listen. Type. Improve.</div>
+          </div>
+        </a>
+        <button class="sidebar-close-btn" id="sidebarCloseBtn" onclick="stenoApp.closeSidebar()" aria-label="Close navigation menu">✕</button>
+      </div>
+      <nav class="sidebar-nav" id="sidebarNavItems"></nav>
+      <div class="sidebar-footer" id="sidebarFooter"></div>
+    </aside>
+
+    <!-- Main Content Wrapper -->
+    <div class="main-wrapper">
+
+      <!-- Compact Top Header -->
+      <header class="top-header">
+        <div class="header-left">
+          <button class="header-back-btn" id="headerBackBtn" onclick="window.history.length > 1 ? window.history.back() : window.location.href = '/'" style="display:inline-flex;" title="वापस जाएं (Go Back)" aria-label="Go Back">
+            <span class="back-arrow">←</span>
+            <span class="back-text">वापस</span>
+          </button>
+          <button class="three-dot-btn" id="navToggleBtn" onclick="stenoApp.toggleSidebar()" aria-label="Open navigation menu" aria-expanded="false">
+            <span class="three-dots-icon">⋮</span>
+          </button>
+          <a href="/" class="header-brand-link" title="StenoMaster">
+            <img src="/assets/logo.png" alt="StenoMaster" class="header-brand-logo" width="34" height="34">
+            <span class="header-brand-name">StenoMaster</span>
+            <span class="header-view-badge" id="activeViewBadge" style="display:none;">Practice</span>
+          </a>
+        </div>
+        <div class="header-right">
+          <div class="plan-validity-pill" id="headerPlanValidityBadge" onclick="window.location.href='/plans'" title="प्लान स्थिति देखें">
+            <span class="validity-icon" id="headerPlanValidityIcon">👑</span>
+            <span class="validity-text" id="headerPlanValidityText">2 फ्री कक्षाएं</span>
+          </div>
+          <div class="streak-badge" id="streakBadge" title="आपकी दैनिक अभ्यास स्ट्रीक">
+            <span>🔥</span>
+            <span id="userStreakCount">0 Day Streak</span>
+          </div>
+          <button class="theme-toggle-btn" id="themeToggleBtn" onclick="stenoApp.toggleTheme()" title="थीम बदलें (Light/Dark)">🌙</button>
+          <button class="user-profile-btn" onclick="window.location.href='/#/profile'" title="मेरी प्रोफ़ाइल">
+            <div class="user-avatar" id="headerUserAvatar">S</div>
+            <div class="header-user-meta hide-mobile">
+              <span class="header-user-name" id="headerUserName">Student</span>
+              <span class="header-user-role role-student" id="headerUserRole">Student</span>
+            </div>
+          </button>
+          <button class="btn-secondary header-logout-btn" onclick="stenoApp.logout()" title="लॉगआउट करें">
+            <span>🚪</span> <span class="hide-mobile">लॉगआउट</span>
+          </button>
+        </div>
+      </header>
+
+      <!-- ==============================================================
+           VIEW: PRACTICE ROOM
+           ============================================================== -->
+      <main class="page-view active" id="view-practice">
+        <div class="practice-container">
+          <div class="practice-header-bar">
+            <button class="back-btn" onclick="window.history.length > 1 ? window.history.back() : window.location.href = '/'">
+              ← वापस कक्षाओं पर जाएं (Back)
+            </button>
+            <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+              <button type="button" id="practiceStenoNotesBtn" class="btn-sm" onclick="stenoApp.openCurrentPassageStenoNotes()" style="display:none; background:#e0e7ff; color:#4338ca; border:1px solid #c7d2fe; font-weight:700; font-size:0.75rem; border-radius:6px; cursor:pointer; padding:4px 10px;">
+                📝 स्टेनो आउटलाइन देखें
+              </button>
+              <button type="button" id="toggleExamModeBtn" class="btn-sm" onclick="stenoTypingEngine.toggleExamMode()" style="background:#fef2f2; color:#b91c1c; border:1px solid #fecaca; font-weight:700; font-size:0.75rem; border-radius:6px; cursor:pointer; padding:4px 10px;" title="सख्त परीक्षा हॉल मोड ऑन/ऑफ">
+                🔒 परीक्षा मोड: OFF
+              </button>
+              <span class="badge" id="practiceLanguageBadge">HINDI</span>
+              <span class="badge" id="practiceDifficultyBadge">MEDIUM</span>
+              <span class="badge" id="practiceTargetWpm" style="background:var(--primary-subtle); color:var(--primary);">40 WPM</span>
+            </div>
+          </div>
+
+          <!-- Audio Player Card -->
+          <div class="audio-player-card">
+            <div class="audio-title-bar">
+              <div class="audio-passage-info">
+                <h3 id="practicePassageTitle" class="hindi-text notranslate" translate="no">आलेख शीर्षक</h3>
+                <p id="practiceCategoryName">श्रेणी नाम</p>
+              </div>
+              <div style="font-size:0.8rem; color:var(--text-muted);">
+                आदेश: <span id="practiceInstructions">ऑडियो सुनें और टाइप करें</span>
+              </div>
+            </div>
+
+            <!-- WPM Speed Controller -->
+            <div class="wpm-speeder-card" id="wpmTopSpeederCard">
+              <div class="wpm-speeder-top">
+                <div class="wpm-title-group">
+                  <span class="wpm-speed-icon">⚡</span>
+                  <span class="wpm-label">डिक्टेशन गति (Speed):</span>
+                  <strong id="wpmSpeederValue" class="wpm-val-badge">80 WPM</strong>
+                  <span id="wpmMultiplierBadge" class="wpm-mult-badge">(1.00x • मूल 80 WPM)</span>
+                </div>
+              </div>
+              <div class="wpm-chips-row" id="wpmPresetChips">
+                <button type="button" class="wpm-chip" data-wpm="40" onclick="stenoAudioPlayer.setWpm(40)"><span class="chip-num">40</span> <span class="chip-unit">WPM</span></button>
+                <button type="button" class="wpm-chip" data-wpm="50" onclick="stenoAudioPlayer.setWpm(50)"><span class="chip-num">50</span> <span class="chip-unit">WPM</span></button>
+                <button type="button" class="wpm-chip" data-wpm="60" onclick="stenoAudioPlayer.setWpm(60)"><span class="chip-num">60</span> <span class="chip-unit">WPM</span></button>
+                <button type="button" class="wpm-chip" data-wpm="70" onclick="stenoAudioPlayer.setWpm(70)"><span class="chip-num">70</span> <span class="chip-unit">WPM</span></button>
+                <button type="button" class="wpm-chip active" data-wpm="80" onclick="stenoAudioPlayer.setWpm(80)"><span class="chip-num">80</span> <span class="chip-unit">WPM</span></button>
+                <button type="button" class="wpm-chip" data-wpm="90" onclick="stenoAudioPlayer.setWpm(90)"><span class="chip-num">90</span> <span class="chip-unit">WPM</span></button>
+                <button type="button" class="wpm-chip" data-wpm="100" onclick="stenoAudioPlayer.setWpm(100)"><span class="chip-num">100</span> <span class="chip-unit">WPM</span></button>
+                <button type="button" class="wpm-chip" data-wpm="110" onclick="stenoAudioPlayer.setWpm(110)"><span class="chip-num">110</span> <span class="chip-unit">WPM</span></button>
+                <button type="button" class="wpm-chip" data-wpm="120" onclick="stenoAudioPlayer.setWpm(120)"><span class="chip-num">120</span> <span class="chip-unit">WPM</span></button>
+              </div>
+            </div>
+
+            <!-- Audio Controls -->
+            <div class="audio-controls-row">
+              <button class="audio-btn audio-btn-seek" onclick="stenoAudioPlayer.seekRelative(-5)" title="5 सेकंड पीछे">-5s</button>
+              <button class="audio-btn audio-btn-play" id="audioPlayBtn" onclick="stenoAudioPlayer.togglePlay();" title="चलाएं / रोकें">▶️</button>
+              <button class="audio-btn audio-btn-seek" onclick="stenoAudioPlayer.seekRelative(5)" title="5 सेकंड आगे">+5s</button>
+              <div class="volume-control-wrap" style="margin-left: 14px;">
+                <span style="font-size:0.95rem; cursor:pointer;" onclick="const m = stenoAudioPlayer.toggleMute(); this.textContent = m ? '🔇' : '🔊';" title="म्यूट / अनम्यूट">🔊</span>
+                <input type="range" class="volume-slider" min="0" max="1" step="0.05" value="1" oninput="stenoAudioPlayer.setVolume(this.value)" title="आवाज़ स्तर">
+              </div>
+            </div>
+
+            <!-- Timeline Scrubber -->
+            <div class="audio-progress-wrap">
+              <span class="audio-time-label" id="audioCurrentTime">00:00</span>
+              <div class="scrubber-track" id="scrubberTrack">
+                <div class="scrubber-fill" id="scrubberFill">
+                  <div class="scrubber-handle"></div>
+                </div>
+              </div>
+              <span class="audio-time-label" id="audioRemainingTime">00:00</span>
+            </div>
+          </div>
+
+          <!-- 1-Minute Alert Banner -->
+          <div id="practiceExamAlertBanner" style="display:none; margin-bottom:14px; padding:12px 16px; border-radius:10px; background:linear-gradient(135deg, rgba(239, 68, 68, 0.12), rgba(245, 158, 11, 0.12)); border:1.5px solid #ef4444; color:#b91c1c; font-weight:700; font-size:0.92rem; align-items:center; justify-content:space-between; animation:alertPulse 1.5s infinite;">
+            <div style="display:flex; align-items:center; gap:10px;">
+              <span style="font-size:1.4rem;">⚠️</span>
+              <span id="practiceExamAlertBannerText">चेतावनी: केवल 1 मिनट शेष है! अपनी आशुलिपि आउटलाइन से टंकण शीघ्र पूर्ण करें।</span>
+            </div>
+            <button type="button" class="btn-sm" onclick="this.parentElement.style.display='none'" style="background:none; border:none; color:#b91c1c; font-size:1rem; cursor:pointer;">✕</button>
+          </div>
+
+          <!-- Typing Editor Card -->
+          <div class="typing-editor-card">
+            <div class="editor-toolbar">
+              <!-- Exam Rule Selector -->
+              <div class="exam-rule-group" style="display:flex; align-items:center; gap:8px; background:var(--bg-subtle); padding:4px 10px; border-radius:var(--radius-md); border:1px solid var(--border-subtle);">
+                <label class="mode-label" style="margin:0; font-weight:700; font-size:0.82rem;">🎯 परीक्षा नियम:</label>
+                <div style="display:flex; gap:4px;">
+                  <button type="button" id="examRuleSscBtn" class="btn-sm" onclick="stenoApp.setExamRule('ssc_steno')" style="font-size:0.75rem; padding:4px 10px; font-weight:700; border-radius:6px; background:#0284c7; color:#fff; border:1px solid #0284c7; cursor:pointer;">🎯 SSC Steno (5%/7%)</button>
+                  <button type="button" id="examRuleUpssscBtn" class="btn-sm" onclick="stenoApp.setExamRule('upsssc')" style="font-size:0.75rem; padding:4px 10px; font-weight:700; border-radius:6px; background:transparent; color:var(--text-secondary); border:1px solid var(--border); cursor:pointer;">🏛️ UPSSSC (25 WPM + 5%)</button>
+                </div>
+              </div>
+
+              <!-- Typing Mode Selector -->
+              <div class="typing-mode-group">
+                <label class="mode-label" for="typingModeSelect">Typing Mode:</label>
+                <select id="typingModeSelect" class="select-typing-mode">
+                  <option value="mangal">Mangal / Unicode Hindi (मंगल/यूनिकोड)</option>
+                  <option value="krutidev">Kruti Dev 010 (कृति देव 010)</option>
+                  <option value="inscript">Inscript Hindi (इन्स्क्रिप्ट)</option>
+                  <option value="remington">Remington-Style Hindi (रेमिंगटन)</option>
+                </select>
+              </div>
+
+              <!-- Extra Controls -->
+              <div class="editor-controls-row">
+                <div class="font-size-btn-group" title="फ़ॉन्ट आकार">
+                  <button type="button" class="font-size-btn" data-size="sm" onclick="stenoTypingEngine.setFontSize('sm')">A-</button>
+                  <button type="button" class="font-size-btn active" data-size="md" onclick="stenoTypingEngine.setFontSize('md')">18</button>
+                  <button type="button" class="font-size-btn" data-size="lg" onclick="stenoTypingEngine.setFontSize('lg')">22</button>
+                  <button type="button" class="font-size-btn" data-size="xl" onclick="stenoTypingEngine.setFontSize('xl')">A+</button>
+                </div>
+                <button type="button" id="togglePracticeKeyboardBtn" class="btn-secondary" onclick="stenoApp.togglePracticeKeyboard()" style="padding:5px 10px; font-size:0.78rem; font-weight:700;">⌨️ कीबोर्ड: OFF</button>
+                <button type="button" id="toggleBackspaceBtn" class="btn-secondary" onclick="stenoTypingEngine.toggleBackspaceLock()" style="padding:5px 10px; font-size:0.78rem;">🔓 Backspace: ON</button>
+                <button type="button" class="btn-secondary" onclick="stenoApp.openModal('altCodesModal')" style="padding:5px 10px; font-size:0.78rem;">⌨️ Alt Codes</button>
+              </div>
+
+              <!-- Live Word & Char Counters -->
+              <div class="editor-live-stats">
+                <div class="stat-pill">शब्द (Words): <strong id="liveWordCount">0</strong></div>
+                <div class="stat-pill">वर्ण (Chars): <strong id="liveCharCount">0</strong></div>
+                <div class="stat-pill" style="color:var(--primary);">समय: <strong id="liveTimerText">00:00</strong></div>
+              </div>
+            </div>
+
+            <!-- Typing Textarea -->
+            <textarea id="typingTextarea" class="typing-textarea font-mangal notranslate" translate="no"
+                      spellcheck="false" autocomplete="off" autocorrect="off" autocapitalize="off"
+                      placeholder="डिक्टेशन सुनकर यहाँ टाइप करना प्रारंभ करें... (Start typing the dictated passage here)"></textarea>
+
+            <!-- Visual Keyboard Drawer -->
+            <div id="practiceKeyboardDrawer" style="display:none; margin:14px 0; background:var(--bg-surface); border:1px solid var(--border-subtle); border-radius:var(--radius-lg); padding:14px; box-shadow:0 4px 14px rgba(0,0,0,0.06);"></div>
+
+            <div class="editor-footer-actions">
+              <div class="draft-indicator" id="draftStatusText">सहेजा गया</div>
+              <div style="display:flex; gap:12px;">
+                <button class="btn-secondary" onclick="if(confirm('क्या आप टेक्स्ट खाली करना चाहते हैं?')) stenoTypingEngine.clearDraft();">🗑️ साफ़ करें</button>
+                <button class="btn-primary" id="submitPracticeBtn" onclick="stenoApp.submitPractice()" style="padding:10px 28px; font-size:1rem;">🚀 सबमिट करें (Submit)</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+
+      <!-- ==============================================================
+           VIEW: RESULT REPORT CARD
+           ============================================================== -->
+      <main class="page-view" id="view-result">
+        <div class="view-top-back-wrap" style="margin-bottom:14px;">
+          <button type="button" class="view-back-strip-btn" onclick="stenoApp.goBack()" title="वापस जाएं">
+            <span class="back-icon">←</span> <span>वापस जाएं (Back)</span>
+          </button>
+        </div>
+        <div class="practice-container" id="resultReportContainer">
+          <div style="text-align:center; padding: 60px 20px; max-width: 500px; margin: 40px auto; background: var(--surface); border: 1px solid var(--border); border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.05);">
+            <div style="font-size: 3rem; margin-bottom: 16px;">📊</div>
+            <h3 style="margin-bottom: 8px; font-size: 1.3rem;">कोई सक्रिय परिणाम नहीं मिला</h3>
+            <p style="color: var(--text-secondary); margin-bottom: 24px; font-size: 0.95rem;">नया डिक्टेशन अभ्यास शुरू करें और अपनी गति एवं सटीकता का विस्तृत रिपोर्ट कार्ड देखें।</p>
+            <button class="btn-primary" onclick="window.location.href='/'" style="padding: 10px 24px; font-size: 1rem; border-radius: 8px; cursor:pointer;">
+              🏠 मुख्य पेज (Dashboard) पर जाएं
+            </button>
+          </div>
+        </div>
+      </main>
+
+    </div><!-- end .main-wrapper -->
+  </div><!-- end #appContainer -->
+
+
+  <!-- ==============================================================
+       MODALS (Only practice-relevant ones)
+       ============================================================== -->
+
+  <!-- Steno Notes Lightbox -->
+  <div class="modal-overlay" id="stenoAttachmentLightboxModal" style="z-index: 10000;">
+    <div class="modal-card" style="max-width: 900px; width: 95%; max-height: 92vh; display: flex; flex-direction: column;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; border-bottom:1px solid var(--border); padding-bottom:10px;">
+        <h3 class="modal-title" id="stenoLightboxTitle" style="margin:0; font-size:1.15rem;">📝 स्टेनो आउटलाइन व नोट्स (Shorthand Notes)</h3>
+        <div style="display:flex; gap:8px; align-items:center;">
+          <a id="stenoLightboxDownloadBtn" href="#" download class="btn-sm btn-secondary" style="font-size:0.8rem; padding:4px 10px; text-decoration:none;">⬇️ डाउनलोड</a>
+          <button class="modal-close-btn" onclick="stenoApp.closeModal('stenoAttachmentLightboxModal')" style="position:static;">✕</button>
+        </div>
+      </div>
+      <div id="stenoLightboxContent" style="flex:1; overflow:auto; text-align:center; min-height:300px; max-height:calc(90vh - 120px); background:#f8fafc; border-radius:8px; display:flex; align-items:center; justify-content:center; padding:10px;"></div>
+    </div>
+  </div>
+
+  <!-- Dual Typing Font Selection Modal -->
+  <div class="modal-overlay" id="dualModeSelectModal" style="z-index:10000;" onclick="if(event.target===this) stenoApp.closeModal('dualModeSelectModal')">
+    <div class="modal-card" style="max-width: 460px; text-align:center; padding:28px 22px;">
+      <div style="font-size:44px; margin-bottom:8px;">⌨️</div>
+      <h3 class="modal-title" style="font-size:1.3rem; margin-bottom:6px;">टाइपिंग फ़ॉन्ट चुनें (Select Typing Font)</h3>
+      <p style="color:var(--text-secondary); font-size:0.88rem; margin-bottom:18px;">
+        इस आलेख में <strong>मंगल (Unicode)</strong> और <strong>कृति देव 010</strong> दोनों उपलब्ध हैं। आप किस फ़ॉन्ट में टेस्ट देना चाहते हैं?
+      </p>
+      <div style="display:flex; flex-direction:column; gap:12px; margin-bottom:18px;">
+        <button type="button" class="btn-primary" onclick="stenoApp.confirmDualModeSelection('mangal_unicode')" style="padding:14px 16px; font-size:1rem; font-weight:700; background:#0284c7; border-color:#0284c7; display:flex; justify-content:space-between; align-items:center;">
+          <span>🅰️ मंगल / यूनिकोड (Mangal / Unicode)</span><span style="font-size:0.85rem; font-weight:normal; opacity:0.9;">Inscript / Gail →</span>
+        </button>
+        <button type="button" class="btn-primary" onclick="stenoApp.confirmDualModeSelection('kruti_dev_010')" style="padding:14px 16px; font-size:1rem; font-weight:700; background:#d97706; border-color:#d97706; display:flex; justify-content:space-between; align-items:center;">
+          <span>⌨️ कृति देव 010 (Kruti Dev 010)</span><span style="font-size:0.85rem; font-weight:normal; opacity:0.9;">Remington →</span>
+        </button>
+      </div>
+      <button type="button" class="btn-secondary" onclick="stenoApp.closeModal('dualModeSelectModal')" style="width:100%;">रद्द करें (Cancel)</button>
+      <div style="font-size:0.8rem; color:var(--text-muted); margin-top:10px;">💡 <em>आपकी पसंद अपने आप सुरक्षित हो जाएगी।</em></div>
+    </div>
+  </div>
+
+  <!-- Alt Codes Modal -->
+  <div class="modal-overlay" id="altCodesModal" onclick="if(event.target===this) stenoApp.closeModal('altCodesModal')">
+    <div class="modal-card" style="max-width: 680px; max-height:85vh; overflow-y:auto;">
+      <button class="modal-close-btn" onclick="stenoApp.closeModal('altCodesModal')">✕</button>
+      <h3 class="modal-title">⌨️ कृति देव 010 / रेमिंगटन विशेष कोड्स (Alt Codes)</h3>
+      <p class="modal-subtitle">टाइप करते समय Numpad पर `Alt` दबाकर अंक कोड टाइप करें:</p>
+      <div style="display:grid; grid-template-columns: 1fr 1fr; gap:16px; margin-top:14px; font-size:0.88rem;">
+        <div style="background:var(--bg-card-hover); padding:12px; border-radius:8px;">
+          <h4 style="font-size:0.85rem; color:var(--primary); margin-bottom:8px; font-weight:700;">संयुक्त अक्षर (Conjuncts)</h4>
+          <table style="width:100%; border-collapse:collapse; font-size:0.85rem;">
+            <tr style="border-bottom:1px solid var(--border-subtle);"><td style="padding:4px 0;"><strong>क्र</strong></td><td style="text-align:right;"><code style="background:var(--bg-surface); padding:2px 6px; border-radius:4px;">Alt + 0216</code></td></tr>
+            <tr style="border-bottom:1px solid var(--border-subtle);"><td style="padding:4px 0;"><strong>त्र</strong></td><td style="text-align:right;"><code style="background:var(--bg-surface); padding:2px 6px; border-radius:4px;">= / «</code></td></tr>
+            <tr style="border-bottom:1px solid var(--border-subtle);"><td style="padding:4px 0;"><strong>ज्ञ</strong></td><td style="text-align:right;"><code style="background:var(--bg-surface); padding:2px 6px; border-radius:4px;">Shift + K</code></td></tr>
+            <tr style="border-bottom:1px solid var(--border-subtle);"><td style="padding:4px 0;"><strong>श्र</strong></td><td style="text-align:right;"><code style="background:var(--bg-surface); padding:2px 6px; border-radius:4px;">Shift + J</code></td></tr>
+            <tr style="border-bottom:1px solid var(--border-subtle);"><td style="padding:4px 0;"><strong>ट्र</strong></td><td style="text-align:right;"><code style="background:var(--bg-surface); padding:2px 6px; border-radius:4px;">Alt + 0227</code></td></tr>
+            <tr style="border-bottom:1px solid var(--border-subtle);"><td style="padding:4px 0;"><strong>ड्र</strong></td><td style="text-align:right;"><code style="background:var(--bg-surface); padding:2px 6px; border-radius:4px;">Alt + 0228</code></td></tr>
+            <tr style="border-bottom:1px solid var(--border-subtle);"><td style="padding:4px 0;"><strong>क्त</strong></td><td style="text-align:right;"><code style="background:var(--bg-surface); padding:2px 6px; border-radius:4px;">Alt + 0163</code></td></tr>
+            <tr style="border-bottom:1px solid var(--border-subtle);"><td style="padding:4px 0;"><strong>त्त</strong></td><td style="text-align:right;"><code style="background:var(--bg-surface); padding:2px 6px; border-radius:4px;">Alt + 0204</code></td></tr>
+            <tr><td style="padding:4px 0;"><strong>ष्ट</strong></td><td style="text-align:right;"><code style="background:var(--bg-surface); padding:2px 6px; border-radius:4px;">Alt + 0205</code></td></tr>
+          </table>
+        </div>
+        <div style="background:var(--bg-card-hover); padding:12px; border-radius:8px;">
+          <h4 style="font-size:0.85rem; color:var(--primary); margin-bottom:8px; font-weight:700;">'द' एवं 'ह' वर्ग</h4>
+          <table style="width:100%; border-collapse:collapse; font-size:0.85rem;">
+            <tr style="border-bottom:1px solid var(--border-subtle);"><td style="padding:4px 0;"><strong>द्य</strong></td><td style="text-align:right;"><code style="background:var(--bg-surface); padding:2px 6px; border-radius:4px;">Alt + 0161</code></td></tr>
+            <tr style="border-bottom:1px solid var(--border-subtle);"><td style="padding:4px 0;"><strong>द्द</strong></td><td style="text-align:right;"><code style="background:var(--bg-surface); padding:2px 6px; border-radius:4px;">Alt + 0170</code></td></tr>
+            <tr style="border-bottom:1px solid var(--border-subtle);"><td style="padding:4px 0;"><strong>द्ध</strong></td><td style="text-align:right;"><code style="background:var(--bg-surface); padding:2px 6px; border-radius:4px;">Alt + 0188</code></td></tr>
+            <tr style="border-bottom:1px solid var(--border-subtle);"><td style="padding:4px 0;"><strong>द्व</strong></td><td style="text-align:right;"><code style="background:var(--bg-surface); padding:2px 6px; border-radius:4px;">Alt + 0197</code></td></tr>
+            <tr style="border-bottom:1px solid var(--border-subtle);"><td style="padding:4px 0;"><strong>द्भ</strong></td><td style="text-align:right;"><code style="background:var(--bg-surface); padding:2px 6px; border-radius:4px;">Alt + 0182</code></td></tr>
+            <tr style="border-bottom:1px solid var(--border-subtle);"><td style="padding:4px 0;"><strong>ट्ट</strong></td><td style="text-align:right;"><code style="background:var(--bg-surface); padding:2px 6px; border-radius:4px;">Alt + 0179</code></td></tr>
+            <tr style="border-bottom:1px solid var(--border-subtle);"><td style="padding:4px 0;"><strong>ट्ठ</strong></td><td style="text-align:right;"><code style="background:var(--bg-surface); padding:2px 6px; border-radius:4px;">Alt + 0180</code></td></tr>
+            <tr style="border-bottom:1px solid var(--border-subtle);"><td style="padding:4px 0;"><strong>ह्न</strong></td><td style="text-align:right;"><code style="background:var(--bg-surface); padding:2px 6px; border-radius:4px;">Alt + 0165</code></td></tr>
+            <tr><td style="padding:4px 0;"><strong>ह्य</strong></td><td style="text-align:right;"><code style="background:var(--bg-surface); padding:2px 6px; border-radius:4px;">Alt + 0224</code></td></tr>
+          </table>
+        </div>
+      </div>
+      <div style="margin-top:16px; text-align:center;">
+        <button type="button" class="btn-primary" onclick="stenoApp.closeModal('altCodesModal')" style="padding:6px 20px;">समझ गए (Close)</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Locked Class / Pro Upgrade Modal -->
+  <div class="modal-overlay" id="lockedClassProModal" onclick="if(event.target===this) stenoApp.closeModal('lockedClassProModal')">
+    <div class="modal-card" style="max-width: 580px; text-align:center; padding:32px 24px;">
+      <button class="modal-close-btn" onclick="stenoApp.closeModal('lockedClassProModal')">✕</button>
+      <div style="width:68px; height:68px; background:linear-gradient(135deg, #fef3c7, #fde68a); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:2.2rem; margin:0 auto 16px auto; box-shadow:0 8px 20px rgba(245, 158, 11, 0.25);">🔒</div>
+      <h3 style="font-size:1.45rem; font-weight:800; margin-bottom:8px; color:var(--text-main);">प्रीमियम डिक्टेशन अनलॉक करें</h3>
+      <p style="font-size:0.88rem; color:var(--text-secondary); max-width:440px; margin:0 auto 20px auto; line-height:1.55;">यह डिक्टेशन <strong>StenoMaster Pro</strong> सदस्यों के लिए है।</p>
+      <div style="display:grid; grid-template-columns: repeat(2, 1fr); gap:12px; margin-bottom:22px; text-align:left;">
+        <div style="background:var(--bg-subtle); border:1px solid var(--border-subtle); border-radius:10px; padding:12px 14px; cursor:pointer;" onclick="stenoApp.closeModal('lockedClassProModal'); window.location.href='/plans?plan=1m'">
+          <div style="font-size:0.75rem; color:var(--text-muted); font-weight:700;">1 माह प्लान</div>
+          <div style="font-size:1.3rem; font-weight:900; color:var(--primary);">₹100</div>
+          <div style="font-size:0.72rem; color:var(--text-secondary); margin-top:2px;">30 दिन</div>
+        </div>
+        <div style="background:rgba(245, 158, 11, 0.08); border:2px solid #f59e0b; border-radius:10px; padding:12px 14px; cursor:pointer; position:relative;" onclick="stenoApp.closeModal('lockedClassProModal'); window.location.href='/plans?plan=3m'">
+          <span style="position:absolute; top:-9px; right:10px; background:#f59e0b; color:#fff; font-size:0.62rem; font-weight:800; padding:2px 8px; border-radius:10px;">POPULAR</span>
+          <div style="font-size:0.75rem; color:#b45309; font-weight:700;">3 माह प्लान</div>
+          <div style="font-size:1.3rem; font-weight:900; color:#b45309;">₹250</div>
+          <div style="font-size:0.72rem; color:#b45309; margin-top:2px;">₹50 बचत</div>
+        </div>
+      </div>
+      <div style="display:flex; flex-direction:column; gap:10px;">
+        <button type="button" class="btn-primary" style="padding:14px; font-size:1.05rem; font-weight:800; border-radius:12px;" onclick="stenoApp.closeModal('lockedClassProModal'); window.location.href='/plans'">⚡ सभी प्लान्स देखें →</button>
+        <button type="button" class="btn-secondary" style="border:none; color:var(--text-muted); font-size:0.82rem;" onclick="stenoApp.closeModal('lockedClassProModal')">बाद में देखें (Close)</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Concurrent Login Modal -->
+  <div id="concurrentLoginModal" class="concurrent-modal-overlay" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="concurrentModalTitle">
+    <div class="concurrent-backdrop"></div>
+    <div class="concurrent-card">
+      <div class="concurrent-header">
+        <div class="concurrent-icon-badge"><span class="shield-pulse"></span>🛡️</div>
+        <span class="security-tag">SINGLE DEVICE SECURITY</span>
+      </div>
+      <h2 class="concurrent-title" id="concurrentModalTitle">सुरक्षा चेतावनी: अन्य डिवाइस पर नया लॉगिन डिटेक्ट हुआ</h2>
+      <p class="concurrent-subtitle">यह खाता अभी किसी अन्य कंप्यूटर, मोबाइल अथवा ब्राउज़र पर लॉगिन किया गया है।</p>
+      <div class="concurrent-details-box">
+        <div class="detail-row"><span class="detail-label">📍 नया लॉगिन IP:</span><span class="detail-value ip-code" id="concurrentLoginIp">--.--.--.--</span></div>
+        <div class="detail-row"><span class="detail-label">🕒 लॉगिन समय:</span><span class="detail-value" id="concurrentLoginTime">--:--</span></div>
+        <div class="detail-row"><span class="detail-label">💻 नया डिवाइस:</span><span class="detail-value" id="concurrentLoginDevice">Computer / Browser</span></div>
+      </div>
+      <div class="concurrent-policy-note">
+        <span class="policy-icon">⚠️</span>
+        <div><strong>Single-Device Access:</strong> एक समय में केवल एक ही डिवाइस पर सक्रिय रहने की अनुमति है। इस डिवाइस का सत्र समाप्त कर दिया गया है।</div>
+      </div>
+      <div class="concurrent-actions">
+        <button type="button" class="btn-primary concurrent-relogin-btn" onclick="window.location.href='/'">🔑 इस डिवाइस पर पुनः लॉगिन करें →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- Exam Hall Anti-Cheat Warning Modal -->
+  <div class="modal-overlay" id="examHallWarningModal" style="z-index:99999;">
+    <div class="modal-card" style="max-width: 480px; text-align:center; border:2px solid #ef4444; box-shadow:0 10px 40px rgba(239,68,68,0.3);">
+      <div style="font-size:3rem; margin-bottom:10px;">🚨</div>
+      <h3 class="modal-title" style="color:#b91c1c; font-size:1.25rem; margin-bottom:6px;">परीक्षा हॉल सुरक्षा चेतावनी</h3>
+      <p id="examWarningModalSubtitle" style="font-weight:700; color:#dc2626; font-size:0.95rem; margin-bottom:12px;">आपने परीक्षा विंडो से बाहर स्विच किया है!</p>
+      <div id="examWarningStrikeBadge" style="display:inline-block; background:rgba(239,68,68,0.1); color:#b91c1c; font-weight:800; font-size:0.85rem; padding:4px 14px; border-radius:20px; border:1px solid rgba(239,68,68,0.3); margin-bottom:14px;">चेतावनी स्ट्राइक: 1 / 3</div>
+      <p style="font-size:0.82rem; color:var(--text-muted); line-height:1.5; margin-bottom:20px;">SSC एवं UPSSSC आशुलिपिक परीक्षा नियमों के अनुसार टाइपिंग सत्र के दौरान टैब बदलना सख्त वर्जित है।</p>
+      <div style="display:flex; justify-content:center; gap:10px;">
+        <button type="button" class="btn-primary" onclick="stenoTypingEngine.resumeExamFullScreen()" style="background:#dc2626; border-color:#dc2626; padding:10px 24px; font-weight:700; font-size:0.9rem;">📺 फुल-स्क्रीन करें और परीक्षा जारी रखें →</button>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- Scripts (same as index.html) -->
+  <script defer src="https://sdk.cashfree.com/js/v3/cashfree.js"></script>
+  <script src="/js/audio_player.js?v=8.1"></script>
+  <script src="/js/keyboard_map.js?v=8.1"></script>
+  <script src="/js/typing_engine.js?v=8.1"></script>
+  <script src="/js/ocr_service.js?v=1.1"></script>
+  <script src="/js/app.js?v=11.3"></script>
+
+  <!-- Practice Page Bootstrap -->
+  <script>
+    // app.js instantiates window.stenoApp synchronously at load time.
+    // We just wait until the scripts finish executing (DOMContentLoaded fires after).
+    // Then call openPractice(id) from URL param.
+    document.addEventListener('DOMContentLoaded', function() {
+      function tryOpenPractice(attempt) {
+        if (typeof window.stenoApp === 'undefined' || typeof window.stenoApp.openPractice !== 'function') {
+          if (attempt < 60) { setTimeout(function() { tryOpenPractice(attempt + 1); }, 100); }
+          return;
+        }
+        var passageId = new URLSearchParams(window.location.search).get('id');
+        if (passageId) {
+          window.stenoApp.openPractice(parseInt(passageId, 10));
+        } else {
+          // No id — go home
+          window.location.href = '/';
+        }
+      }
+      tryOpenPractice(0);
+    });
+  </script>
+
+</body>
+</html>
