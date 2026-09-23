@@ -2,7 +2,7 @@
 <html lang="hi" data-theme="light">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, interactive-widget=resizes-content">
   <title>StenoMaster — #1 Shorthand & Typing Practice Platform | SSC, UPSSSC, Court Steno</title>
   <meta name="description" content="भारत का #1 ऑनलाइन स्टेनोग्राफी एवं टाइपिंग प्रैक्टिस प्लेटफॉर्म। SSC Steno Grade C & D, UPSSSC व कोर्ट परीक्षा हेतु 80 व 100 WPM ऑडियो डिक्टेशन, लाइव रिजल्ट और मिस्टेक एनालिसिस।">
   <meta name="keywords" content="StenoMaster, SSC Stenographer, Hindi Shorthand, English Shorthand, हिंदी आशुलिपि, रामधारी गुप्ता खंड 1, रामधारी गुप्ता खंड 2, Ramdhari Gupta Dictation, 80 WPM Audio Dictation, 100 WPM Steno, UPSSSC Steno, High Court Steno, Mangal Font Typing, Kruti Dev 010, Shorthand Speed Test, Shorthand Online Practice">
@@ -45,7 +45,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Mukta:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/css/style.css?v=11.8">
+  <link rel="stylesheet" href="/css/style.css?v=11.9">
 
   <!-- Google Schema.org JSON-LD Structured Data -->
   <script type="application/ld+json">
@@ -1106,6 +1106,9 @@
                             <button type="button" id="toggleExamModeBtn" class="btn-sm" onclick="stenoTypingEngine.toggleExamMode()" style="background:#fef2f2; color:#b91c1c; border:1px solid #fecaca; font-weight:700; font-size:0.75rem; border-radius:6px; cursor:pointer; padding:4px 10px;" title="सख्त परीक्षा हॉल मोड ऑन/ऑफ करें (फुल-स्क्रीन, एंटी-चीट व बीप)">
                 🔒 परीक्षा मोड: OFF
               </button>
+              <button type="button" id="practiceFullscreenBtn" class="btn-sm" onclick="stenoTypingEngine.toggleFullScreen()" style="font-weight:700; font-size:0.75rem; border-radius:6px; cursor:pointer; padding:4px 10px; background:var(--bg-subtle); border:1px solid var(--border-subtle); color:var(--text-secondary);" title="फुल-स्क्रीन मोड ऑन/ऑफ करें">
+                📺 फुल-स्क्रीन
+              </button>
               <span class="badge" id="practiceLanguageBadge">HINDI</span>
               <span class="badge" id="practiceDifficultyBadge">MEDIUM</span>
               <span class="badge" id="practiceTargetWpm" style="background:var(--primary-subtle); color:var(--primary);">40 WPM</span>
@@ -1119,8 +1122,13 @@
                 <h3 id="practicePassageTitle" class="hindi-text notranslate" translate="no">आलेख शीर्षक</h3>
                 <p id="practiceCategoryName">श्रेणी नाम</p>
               </div>
-              <div style="font-size:0.8rem; color:var(--text-muted);">
-                आदेश: <span id="practiceInstructions">ऑडियो सुनें और टाइप करें</span>
+              <div style="display:flex; align-items:center; gap:8px;">
+                <div style="font-size:0.8rem; color:var(--text-muted);" class="hide-mobile">
+                  आदेश: <span id="practiceInstructions">ऑडियो सुनें और टाइप करें</span>
+                </div>
+                <button type="button" id="toggleMobilePlayerBtn" class="btn-sm" onclick="stenoTypingEngine.toggleMobilePlayer()" style="font-size:0.75rem; padding:4px 10px; font-weight:700; border-radius:6px; background:var(--bg-subtle); border:1px solid var(--border-subtle); color:var(--text-secondary); cursor:pointer;" title="ऑडियो प्लेयर को संक्षिप्त या विस्तृत करें">
+                  🔼 संक्षिप्त
+                </button>
               </div>
             </div>
 
@@ -1244,6 +1252,7 @@
                     <button type="button" class="font-size-btn" data-size="lg" onclick="stenoTypingEngine.setFontSize('lg')">22</button>
                     <button type="button" class="font-size-btn" data-size="xl" onclick="stenoTypingEngine.setFontSize('xl')">A+</button>
                   </div>
+                  <button type="button" id="toggleOtgModeBtn" class="btn-secondary" onclick="stenoTypingEngine.toggleOtgMode()" style="padding:5px 10px; font-size:0.78rem; font-weight:700;" title="OTG फिजिकल कीबोर्ड से टाइप करते समय ऑन-स्क्रीन कीबोर्ड छिपाएं">⌨️ OTG: OFF</button>
                   <button type="button" id="togglePracticeKeyboardBtn" class="btn-secondary" onclick="stenoApp.togglePracticeKeyboard()" style="padding:5px 10px; font-size:0.78rem; font-weight:700;" title="टाइपिंग करते समय कीबोर्ड विजुअल ऑन/ऑफ करें">⌨️ कीबोर्ड: OFF</button>
                   <button type="button" id="toggleBackspaceBtn" class="btn-secondary" onclick="stenoTypingEngine.toggleBackspaceLock()" style="padding:5px 10px; font-size:0.78rem;">
                     🔓 Backspace: ON
@@ -2804,9 +2813,9 @@
   <!-- Core Lightweight Scripts (charts.js & comparison_view.js?v=9.7 are lazy-loaded on demand for 50% faster startup) -->
   <script src="/js/audio_player.js?v=8.1"></script>
   <script src="/js/keyboard_map.js?v=8.1"></script>
-  <script src="/js/typing_engine.js?v=8.2"></script>
+  <script src="/js/typing_engine.js?v=8.3"></script>
   <script src="/js/ocr_service.js?v=1.1"></script>
-  <script src="/js/app.js?v=11.8"></script>
+  <script src="/js/app.js?v=11.9"></script>
   <!-- Strict Exam Hall Anti-Cheat Warning Modal -->
   <div class="modal-overlay" id="examHallWarningModal" style="z-index:99999;">
     <div class="modal-card" style="max-width: 480px; text-align:center; border:2px solid #ef4444; box-shadow:0 10px 40px rgba(239,68,68,0.3);">

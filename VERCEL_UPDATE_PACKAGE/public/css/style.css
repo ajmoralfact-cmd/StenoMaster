@@ -7270,3 +7270,186 @@ body.dark-mode .ww-tip-row {
   color: var(--primary, #2563eb);
   border-bottom-color: var(--primary, #2563eb);
 }
+
+/* ==========================================================================
+   Mobile & OTG Physical Keyboard Studio Enhancements
+   ========================================================================== */
+
+/* OTG Physical Keyboard Active State */
+#toggleOtgModeBtn.active {
+  background: #10b981 !important;
+  color: #ffffff !important;
+  border-color: #059669 !important;
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.45);
+}
+
+#practiceFullscreenBtn.active {
+  background: #0284c7 !important;
+  color: #ffffff !important;
+  border-color: #0284c7 !important;
+}
+
+/* When OTG Mode is active on mobile devices, give maximum vertical height to textarea */
+@media (max-width: 900px) {
+  .otg-mode-active .typing-textarea {
+    min-height: 48vh;
+    height: 58vh;
+    max-height: 75vh;
+  }
+}
+
+/* Compact Mobile Audio Player Strip */
+.audio-player-card.audio-player-compact {
+  padding: 10px 14px;
+  margin-bottom: 10px;
+}
+
+.audio-player-card.audio-player-compact .wpm-speeder-card {
+  display: none !important;
+}
+
+.audio-player-card.audio-player-compact .audio-title-bar {
+  margin-bottom: 6px;
+}
+
+.audio-player-card.audio-player-compact .audio-controls-row {
+  margin: 6px 0;
+}
+
+.audio-player-card.audio-player-compact .audio-progress-wrap {
+  margin-top: 4px;
+}
+
+/* Mobile Practice View Responsiveness (<= 768px) */
+@media (max-width: 768px) {
+  .practice-container {
+    padding: 8px 10px;
+  }
+
+  .practice-header-bar {
+    gap: 6px;
+    padding: 6px 10px;
+    flex-wrap: wrap;
+  }
+
+  .practice-header-bar .back-btn {
+    font-size: 0.78rem;
+    padding: 4px 8px;
+  }
+
+  .editor-toolbar {
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+
+  .editor-toolbar-row-top {
+    gap: 8px;
+  }
+
+  .editor-toolbar-row-bottom {
+    gap: 8px;
+    padding-top: 8px;
+  }
+
+  .editor-controls-row {
+    flex-wrap: wrap;
+    gap: 5px;
+  }
+
+  .editor-live-stats {
+    gap: 5px;
+  }
+
+  .stat-pill {
+    padding: 4px 8px;
+    font-size: 0.78rem;
+    min-height: 26px;
+  }
+
+  .typing-textarea {
+    min-height: 220px;
+    height: 36vh;
+    padding: 12px 14px;
+    font-size: 1.15rem;
+  }
+}
+
+/* Mobile Landscape Optimization (Phone placed on horizontal stand for OTG typing) */
+@media (max-height: 520px) and (orientation: landscape) {
+  .app-header {
+    display: none !important;
+  }
+
+  .practice-container {
+    padding: 4px 8px;
+    max-width: 100%;
+  }
+
+  .practice-header-bar {
+    padding: 3px 6px;
+    margin-bottom: 4px;
+    gap: 4px;
+  }
+
+  .practice-header-bar .badge {
+    display: none;
+  }
+
+  .audio-player-card {
+    padding: 6px 10px;
+    margin-bottom: 6px;
+  }
+
+  .audio-player-card .wpm-speeder-card {
+    display: none !important;
+  }
+
+  .audio-player-card .audio-title-bar {
+    margin-bottom: 4px;
+  }
+
+  .audio-player-card .audio-controls-row {
+    margin: 4px 0;
+  }
+
+  .editor-toolbar {
+    margin-bottom: 4px;
+    gap: 4px;
+  }
+
+  .editor-toolbar-row-bottom {
+    padding-top: 4px;
+  }
+
+  .typing-textarea {
+    min-height: 180px;
+    height: calc(100vh - 125px) !important;
+    max-height: none !important;
+    font-size: 1.2rem;
+    padding: 10px 14px;
+    line-height: 1.6;
+  }
+
+  .editor-footer-actions {
+    padding-top: 6px;
+    margin-top: 6px;
+  }
+}
+
+/* Fullscreen Immersive Mode */
+:fullscreen .app-header,
+:-webkit-full-screen .app-header {
+  display: none !important;
+}
+
+:fullscreen .practice-container,
+:-webkit-full-screen .practice-container {
+  max-width: 100%;
+  padding: 10px 18px;
+}
+
+:fullscreen .typing-textarea,
+:-webkit-full-screen .typing-textarea {
+  min-height: 45vh;
+  height: 55vh;
+}

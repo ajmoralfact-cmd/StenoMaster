@@ -60,6 +60,11 @@ class StenoTypingEngine {
     this.targetDurationSeconds = 300;
     this._antiCheatInitialized = false;
 
+    // OTG Physical Keyboard, Screen WakeLock & Mobile Optimization
+    this.otgMode = localStorage.getItem('stenomaster_otg_mode') === 'true';
+    this.wakeLock = null;
+    this.mobilePlayerCompact = localStorage.getItem('stenomaster_mobile_player_compact') === 'true';
+
     this.startTime = null;
     this.elapsedSeconds = 0;
     this.timerInterval = null;
@@ -129,6 +134,17 @@ class StenoTypingEngine {
     this.updateBackspaceUI();
     this.updateExamModeUI();
     this.initExamAntiCheat();
+    this.initOtgMode();
+    this.initMobilePlayerState();
+    this.updateFullscreenUI();
+
+    document.addEventListener('fullscreenchange', () => this.updateFullscreenUI());
+    document.addEventListener('webkitfullscreenchange', () => this.updateFullscreenUI());
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible' && this.isPracticeActive && !this.hasSubmitted) {
+        this.acquireWakeLock();
+      }
+    });
 
     // Auto-save interval every 5 seconds
     if (this.autoSaveTimer) clearInterval(this.autoSaveTimer);
@@ -173,6 +189,11 @@ class StenoTypingEngine {
     if (timerPill) {
       timerPill.classList.remove('timer-active', 'timer-one-minute-alert');
     }
+
+    // Apply OTG Mode, Compact Mobile Player & Screen Wake Lock
+    this.applyOtgMode();
+    this.initMobilePlayerState();
+    this.acquireWakeLock();
 
     // Enter Full Screen if Exam Mode is active
     if (this.examModeEnabled) {
@@ -335,13 +356,155 @@ class StenoTypingEngine {
 
   exitFullScreen() {
     try {
-      if (document.fullscreenElement) {
+      if (document.fullscreenElement || document.webkitFullscreenElement) {
         if (document.exitFullscreen) document.exitFullscreen().catch(() => {});
         else if (document.mozCancelFullScreen) document.mozCancelFullScreen();
         else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
         else if (document.msExitFullscreen) document.msExitFullscreen();
       }
     } catch (e) {}
+    setTimeout(() => this.updateFullscreenUI(), 100);
+  }
+
+  toggleFullScreen() {
+    try {
+      const isFull = Boolean(document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement);
+      if (!isFull) {
+        this.enterFullScreen();
+      } else {
+        this.exitFullScreen();
+      }
+    } catch (e) {}
+    setTimeout(() => this.updateFullscreenUI(), 100);
+  }
+
+  updateFullscreenUI() {
+    const btn = document.getElementById('practiceFullscreenBtn');
+    if (!btn) return;
+    const isFull = Boolean(document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement);
+    btn.innerHTML = isFull ? '✕ सामान्य स्क्रीन' : '📺 फुल-स्क्रीन';
+    btn.classList.toggle('active', isFull);
+    if (isFull) {
+      btn.style.background = '#0284c7';
+      btn.style.color = '#ffffff';
+      btn.style.borderColor = '#0284c7';
+    } else {
+      btn.style.background = '';
+      btn.style.color = '';
+      btn.style.borderColor = '';
+    }
+  }
+
+  // -------------------------------------------------------------------------
+  // OTG & Hardware Keyboard Optimization (inputmode="none")
+  // -------------------------------------------------------------------------
+  initOtgMode() {
+    this.otgMode = localStorage.getItem('stenomaster_otg_mode') === 'true';
+    this.applyOtgMode();
+  }
+
+  toggleOtgMode() {
+    this.otgMode = !this.otgMode;
+    localStorage.setItem('stenomaster_otg_mode', this.otgMode ? 'true' : 'false');
+    this.applyOtgMode();
+    if (this.otgMode) {
+      if (window.stenoApp && typeof window.stenoApp.showToast === 'function') {
+        window.stenoApp.showToast('⌨️ OTG कीबोर्ड मोड ON: ऑन-स्क्रीन कीबोर्ड छुपा दिया गया है। अपने फिजिकल कीबोर्ड से टाइप करें!', 'success');
+      }
+    } else {
+      if (window.stenoApp && typeof window.stenoApp.showToast === 'function') {
+        window.stenoApp.showToast('📱 ऑन-स्क्रीन टच कीबोर्ड सक्रिय है।', 'info');
+      }
+    }
+  }
+
+  applyOtgMode() {
+    const btn = document.getElementById('toggleOtgModeBtn');
+    const container = document.getElementById('view-practice') || document.querySelector('.practice-container');
+
+    if (this.textarea) {
+      if (this.otgMode) {
+        this.textarea.setAttribute('inputmode', 'none');
+      } else {
+        this.textarea.removeAttribute('inputmode');
+      }
+    }
+
+    if (btn) {
+      if (this.otgMode) {
+        btn.classList.add('active');
+        btn.innerHTML = '⌨️ OTG: ON';
+        btn.style.background = '#10b981';
+        btn.style.color = '#ffffff';
+        btn.style.borderColor = '#059669';
+        btn.title = 'OTG फिजिकल कीबोर्ड मोड चालू है (सॉफ्ट कीबोर्ड छिपा है)';
+      } else {
+        btn.classList.remove('active');
+        btn.innerHTML = '⌨️ OTG: OFF';
+        btn.style.background = '';
+        btn.style.color = '';
+        btn.style.borderColor = '';
+        btn.title = 'OTG फिजिकल कीबोर्ड मोड चालू करने के लिए क्लिक करें';
+      }
+    }
+
+    if (container) {
+      container.classList.toggle('otg-mode-active', this.otgMode);
+    }
+    document.body.classList.toggle('otg-mode-active', this.otgMode);
+  }
+
+  // -------------------------------------------------------------------------
+  // Screen Wake Lock API (Prevents mobile screen from dimming/sleeping)
+  // -------------------------------------------------------------------------
+  async acquireWakeLock() {
+    if ('wakeLock' in navigator && !this.wakeLock) {
+      try {
+        this.wakeLock = await navigator.wakeLock.request('screen');
+        this.wakeLock.addEventListener('release', () => {
+          this.wakeLock = null;
+        });
+      } catch (err) {}
+    }
+  }
+
+  releaseWakeLock() {
+    if (this.wakeLock) {
+      try {
+        this.wakeLock.release().catch(() => {});
+      } catch (e) {}
+      this.wakeLock = null;
+    }
+  }
+
+  // -------------------------------------------------------------------------
+  // Mobile Compact Audio Player Strip
+  // -------------------------------------------------------------------------
+  toggleMobilePlayer() {
+    const card = document.querySelector('.audio-player-card');
+    if (!card) return;
+    const isCompact = card.classList.toggle('audio-player-compact');
+    localStorage.setItem('stenomaster_mobile_player_compact', isCompact ? 'true' : 'false');
+    const btn = document.getElementById('toggleMobilePlayerBtn');
+    if (btn) {
+      btn.innerHTML = isCompact ? '🔽 विस्तृत' : '🔼 संक्षिप्त';
+    }
+  }
+
+  initMobilePlayerState() {
+    const card = document.querySelector('.audio-player-card');
+    const btn = document.getElementById('toggleMobilePlayerBtn');
+    if (!card) return;
+    const saved = localStorage.getItem('stenomaster_mobile_player_compact');
+    const isMobile = window.innerWidth <= 768;
+    const shouldCompact = saved === 'true' || (saved === null && isMobile);
+    if (shouldCompact) {
+      card.classList.add('audio-player-compact');
+      if (btn) btn.innerHTML = '🔽 विस्तृत';
+    } else {
+      card.classList.remove('audio-player-compact');
+      if (btn) btn.innerHTML = '🔼 संक्षिप्त';
+    }
   }
 
   initExamAntiCheat() {
@@ -549,6 +712,7 @@ class StenoTypingEngine {
     if (warningModal) warningModal.classList.remove('active');
 
     this.exitFullScreen();
+    this.releaseWakeLock();
 
     if (this.currentPassageId) {
       localStorage.removeItem(`stenomaster_draft_${this.currentPassageId}`);
