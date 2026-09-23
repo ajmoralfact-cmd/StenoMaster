@@ -426,10 +426,10 @@ class StenoTypingEngine {
 
     if (this.typingMode === 'krutidev') {
       this.textarea.classList.add('font-krutidev');
-      this.textarea.setAttribute('placeholder', 'कृति देव 010 में डिक्टेशन टाइप करना प्रारंभ करें... (Start typing in Kruti Dev 010)');
+      this.textarea.setAttribute('placeholder', 'कृति देव 010 में डिक्टेशन टाइप करना प्रारंभ करें...');
     } else {
       this.textarea.classList.add('font-mangal');
-      this.textarea.setAttribute('placeholder', 'डिक्टेशन सुनकर यहाँ टाइप करना प्रारंभ करें... (Start typing the dictated passage here)');
+      this.textarea.setAttribute('placeholder', 'डिक्टेशन सुनकर यहाँ टाइप करना प्रारंभ करें...');
     }
   }
 

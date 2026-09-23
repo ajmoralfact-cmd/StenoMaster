@@ -16,7 +16,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Mukta:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/css/style.css?v=11.6">
+  <link rel="stylesheet" href="/css/style.css?v=11.8">
 
   <!-- Font Preloads for Instant Hindi Typography -->
   <link rel="preload" href="/assets/fonts/Mangal.ttf" as="font" type="font/ttf" crossorigin>
@@ -214,51 +214,53 @@
           <!-- Typing Editor Card -->
           <div class="typing-editor-card">
             <div class="editor-toolbar">
-              <!-- Exam Rule Selector -->
-              <div class="exam-rule-group" style="display:flex; align-items:center; gap:8px; background:var(--bg-subtle); padding:4px 10px; border-radius:var(--radius-md); border:1px solid var(--border-subtle);">
-                <label class="mode-label" style="margin:0; font-weight:700; font-size:0.82rem;">🎯 परीक्षा नियम:</label>
-                <div style="display:flex; gap:4px;">
-                  <button type="button" id="examRuleSscBtn" class="btn-sm" onclick="stenoApp.setExamRule('ssc_steno')" style="font-size:0.75rem; padding:4px 10px; font-weight:700; border-radius:6px; background:#0284c7; color:#fff; border:1px solid #0284c7; cursor:pointer;">🎯 SSC Steno (5%/7%)</button>
-                  <button type="button" id="examRuleUpssscBtn" class="btn-sm" onclick="stenoApp.setExamRule('upsssc')" style="font-size:0.75rem; padding:4px 10px; font-weight:700; border-radius:6px; background:transparent; color:var(--text-secondary); border:1px solid var(--border); cursor:pointer;">🏛️ UPSSSC (25 WPM + 5%)</button>
+              <!-- Top Row: Exam Rule + Typing Mode -->
+              <div class="editor-toolbar-row-top">
+                <div class="exam-rule-group" style="display:flex; align-items:center; gap:8px; background:var(--bg-subtle); padding:4px 10px; border-radius:var(--radius-md); border:1px solid var(--border-subtle);">
+                  <label class="mode-label" style="margin:0; font-weight:700; font-size:0.82rem;">🎯 परीक्षा नियम:</label>
+                  <div style="display:flex; gap:4px;">
+                    <button type="button" id="examRuleSscBtn" class="btn-sm" onclick="stenoApp.setExamRule('ssc_steno')" style="font-size:0.75rem; padding:4px 10px; font-weight:700; border-radius:6px; background:#0284c7; color:#fff; border:1px solid #0284c7; cursor:pointer;">🎯 SSC Steno (5%/7%)</button>
+                    <button type="button" id="examRuleUpssscBtn" class="btn-sm" onclick="stenoApp.setExamRule('upsssc')" style="font-size:0.75rem; padding:4px 10px; font-weight:700; border-radius:6px; background:transparent; color:var(--text-secondary); border:1px solid var(--border); cursor:pointer;">🏛️ UPSSSC (25 WPM + 5%)</button>
+                  </div>
+                </div>
+
+                <div class="typing-mode-group">
+                  <label class="mode-label" for="typingModeSelect">Typing Mode:</label>
+                  <select id="typingModeSelect" class="select-typing-mode">
+                    <option value="mangal">Mangal / Unicode Hindi (मंगल/यूनिकोड)</option>
+                    <option value="krutidev">Kruti Dev 010 (कृति देव 010)</option>
+                    <option value="inscript">Inscript Hindi (इन्स्क्रिप्ट)</option>
+                    <option value="remington">Remington-Style Hindi (रेमिंगटन)</option>
+                  </select>
                 </div>
               </div>
 
-              <!-- Typing Mode Selector -->
-              <div class="typing-mode-group">
-                <label class="mode-label" for="typingModeSelect">Typing Mode:</label>
-                <select id="typingModeSelect" class="select-typing-mode">
-                  <option value="mangal">Mangal / Unicode Hindi (मंगल/यूनिकोड)</option>
-                  <option value="krutidev">Kruti Dev 010 (कृति देव 010)</option>
-                  <option value="inscript">Inscript Hindi (इन्स्क्रिप्ट)</option>
-                  <option value="remington">Remington-Style Hindi (रेमिंगटन)</option>
-                </select>
-              </div>
-
-              <!-- Extra Controls -->
-              <div class="editor-controls-row">
-                <div class="font-size-btn-group" title="फ़ॉन्ट आकार">
-                  <button type="button" class="font-size-btn" data-size="sm" onclick="stenoTypingEngine.setFontSize('sm')">A-</button>
-                  <button type="button" class="font-size-btn active" data-size="md" onclick="stenoTypingEngine.setFontSize('md')">18</button>
-                  <button type="button" class="font-size-btn" data-size="lg" onclick="stenoTypingEngine.setFontSize('lg')">22</button>
-                  <button type="button" class="font-size-btn" data-size="xl" onclick="stenoTypingEngine.setFontSize('xl')">A+</button>
+              <!-- Bottom Row: Controls + Live Stats -->
+              <div class="editor-toolbar-row-bottom">
+                <div class="editor-controls-row">
+                  <div class="font-size-btn-group" title="फ़ॉन्ट आकार">
+                    <button type="button" class="font-size-btn" data-size="sm" onclick="stenoTypingEngine.setFontSize('sm')">A-</button>
+                    <button type="button" class="font-size-btn active" data-size="md" onclick="stenoTypingEngine.setFontSize('md')">18</button>
+                    <button type="button" class="font-size-btn" data-size="lg" onclick="stenoTypingEngine.setFontSize('lg')">22</button>
+                    <button type="button" class="font-size-btn" data-size="xl" onclick="stenoTypingEngine.setFontSize('xl')">A+</button>
+                  </div>
+                  <button type="button" id="togglePracticeKeyboardBtn" class="btn-secondary" onclick="stenoApp.togglePracticeKeyboard()" style="padding:5px 10px; font-size:0.78rem; font-weight:700;">⌨️ कीबोर्ड: OFF</button>
+                  <button type="button" id="toggleBackspaceBtn" class="btn-secondary" onclick="stenoTypingEngine.toggleBackspaceLock()" style="padding:5px 10px; font-size:0.78rem;">🔓 Backspace: ON</button>
+                  <button type="button" class="btn-secondary" onclick="stenoApp.openModal('altCodesModal')" style="padding:5px 10px; font-size:0.78rem;">⌨️ Alt Codes</button>
                 </div>
-                <button type="button" id="togglePracticeKeyboardBtn" class="btn-secondary" onclick="stenoApp.togglePracticeKeyboard()" style="padding:5px 10px; font-size:0.78rem; font-weight:700;">⌨️ कीबोर्ड: OFF</button>
-                <button type="button" id="toggleBackspaceBtn" class="btn-secondary" onclick="stenoTypingEngine.toggleBackspaceLock()" style="padding:5px 10px; font-size:0.78rem;">🔓 Backspace: ON</button>
-                <button type="button" class="btn-secondary" onclick="stenoApp.openModal('altCodesModal')" style="padding:5px 10px; font-size:0.78rem;">⌨️ Alt Codes</button>
-              </div>
 
-              <!-- Live Word & Char Counters -->
-              <div class="editor-live-stats">
-                <div class="stat-pill">शब्द (Words): <strong id="liveWordCount">0</strong></div>
-                <div class="stat-pill">वर्ण (Chars): <strong id="liveCharCount">0</strong></div>
-                <div class="stat-pill" style="color:var(--primary);">समय: <strong id="liveTimerText">00:00</strong></div>
+                <div class="editor-live-stats">
+                  <div class="stat-pill">शब्द (Words): <strong id="liveWordCount">0</strong></div>
+                  <div class="stat-pill">वर्ण (Chars): <strong id="liveCharCount">0</strong></div>
+                  <div class="stat-pill" style="color:var(--primary);">समय: <strong id="liveTimerText">00:00</strong></div>
+                </div>
               </div>
             </div>
 
             <!-- Typing Textarea -->
             <textarea id="typingTextarea" class="typing-textarea font-mangal notranslate" translate="no"
                       spellcheck="false" autocomplete="off" autocorrect="off" autocapitalize="off"
-                      placeholder="डिक्टेशन सुनकर यहाँ टाइप करना प्रारंभ करें... (Start typing the dictated passage here)"></textarea>
+                      placeholder="डिक्टेशन सुनकर यहाँ टाइप करना प्रारंभ करें..."></textarea>
 
             <!-- Visual Keyboard Drawer -->
             <div id="practiceKeyboardDrawer" style="display:none; margin:14px 0; background:var(--bg-surface); border:1px solid var(--border-subtle); border-radius:var(--radius-lg); padding:14px; box-shadow:0 4px 14px rgba(0,0,0,0.06);"></div>
@@ -454,9 +456,9 @@
   <script defer src="https://sdk.cashfree.com/js/v3/cashfree.js"></script>
   <script src="/js/audio_player.js?v=8.1"></script>
   <script src="/js/keyboard_map.js?v=8.1"></script>
-  <script src="/js/typing_engine.js?v=8.1"></script>
+  <script src="/js/typing_engine.js?v=8.2"></script>
   <script src="/js/ocr_service.js?v=1.1"></script>
-  <script src="/js/app.js?v=11.3"></script>
+  <script src="/js/app.js?v=11.8"></script>
 
   <!-- Practice Page Bootstrap -->
   <script>
@@ -471,7 +473,10 @@
         }
         var passageId = new URLSearchParams(window.location.search).get('id');
         if (passageId) {
-          window.stenoApp.openPractice(parseInt(passageId, 10));
+          var pIdInt = parseInt(passageId, 10);
+          if (!window.stenoApp.currentPassage || window.stenoApp.currentPassage.id !== pIdInt) {
+            window.stenoApp.openPractice(pIdInt);
+          }
         } else {
           // No id — go home
           window.location.href = '/';

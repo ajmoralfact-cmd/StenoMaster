@@ -314,7 +314,9 @@ class StenoApp {
     }
 
     if (path === 'practice' && params.id) {
-      window.location.href = `/practice?id=${params.id}` + (params.system ? `&system=${params.system}` : '');
+      if (!window.location.pathname.includes('/practice')) {
+        window.location.href = `/practice?id=${params.id}` + (params.system ? `&system=${params.system}` : '');
+      }
       return;
     }
 
@@ -2023,6 +2025,9 @@ class StenoApp {
   }
 
   navigate(viewId, params = {}, updateHash = true, isBack = false) {
+    if (this.activeView === viewId && (viewId === 'practice' || viewId === 'category-detail')) {
+      return;
+    }
     // Role-based access control (RBAC) enforcement
     if (viewId === 'admin') {
       if (!this.user || this.user.role !== 'admin') {
@@ -2980,7 +2985,8 @@ class StenoApp {
     const titleEl = document.getElementById('practicePassageTitle');
     if (titleEl) titleEl.textContent = this.currentPassage.title || 'आलेख अभ्यास';
     const catEl = document.getElementById('practiceCategoryName');
-    if (catEl) catEl.textContent = this.currentPassage.category_name || '';
+    const foundCat = (this.categories || []).find(c => c.id === this.currentPassage.category_id);
+    if (catEl) catEl.textContent = this.currentPassage.category_name || (foundCat && foundCat.name) || '';
     const modeBadgeText = selectedSystem === 'kruti_dev_010' ? 'KRUTI DEV 010' : 'MANGAL / UNICODE';
     const langBadge = document.getElementById('practiceLanguageBadge');
     if (langBadge) langBadge.textContent = `${(this.currentPassage.language || 'hindi').toUpperCase()} (${modeBadgeText})`;
