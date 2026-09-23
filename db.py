@@ -18,11 +18,17 @@ _CATEGORIES_CACHE = {
     "data": None,
     "timestamp": 0
 }
+_CATEGORY_DETAIL_CACHE = {}  # category_id -> {"timestamp": float, "cat_dict": dict, "raw_passages": list, "free_ids": set}
+_CATEGORY_DETAIL_CACHE_TTL = 60  # 60 seconds
+_FREE_PASSAGE_IDS_CACHE = {"data": None, "timestamp": 0}
 
 def invalidate_categories_cache():
-    global _CATEGORIES_CACHE
+    global _CATEGORIES_CACHE, _CATEGORY_DETAIL_CACHE, _FREE_PASSAGE_IDS_CACHE
     _CATEGORIES_CACHE["data"] = None
     _CATEGORIES_CACHE["timestamp"] = 0
+    _CATEGORY_DETAIL_CACHE.clear()
+    _FREE_PASSAGE_IDS_CACHE["data"] = None
+    _FREE_PASSAGE_IDS_CACHE["timestamp"] = 0
 
 DB_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'stenomaster.db')
 
@@ -1579,11 +1585,17 @@ def delete_session(token: str):
 
 def get_free_passage_ids(limit: int = 2) -> List[int]:
     """Returns the IDs of the first 2 published passages that are completely free for everyone."""
+    global _FREE_PASSAGE_IDS_CACHE
+    now = time.time()
+    if _FREE_PASSAGE_IDS_CACHE["data"] is not None and (now - _FREE_PASSAGE_IDS_CACHE["timestamp"]) < 120:
+        return _FREE_PASSAGE_IDS_CACHE["data"]
     conn = get_db()
     c = conn.cursor()
     c.execute("SELECT id FROM passages WHERE status = 'published' ORDER BY id ASC LIMIT ?", (limit,))
     rows = [r["id"] for r in c.fetchall()]
     conn.close()
+    _FREE_PASSAGE_IDS_CACHE["data"] = rows
+    _FREE_PASSAGE_IDS_CACHE["timestamp"] = now
     return rows
 
 
@@ -2742,6 +2754,7 @@ def admin_save_passage(data: Dict[str, Any]) -> int:
             passage_id = c.lastrowid
 
         conn.commit()
+        invalidate_categories_cache()
         return passage_id
     finally:
         conn.close()
@@ -2753,6 +2766,7 @@ def admin_delete_passage(passage_id: int) -> bool:
     c.execute("DELETE FROM passages WHERE id = ?", (passage_id,))
     conn.commit()
     conn.close()
+    invalidate_categories_cache()
     return True
 
 
@@ -4291,10 +4305,20 @@ def admin_reset_user_password(user_id: int, new_password: str) -> Dict[str, Any]
 def is_category_unlocked_for_user(user_id: Optional[int], category_id: int) -> bool:
     if not user_id:
         return False
-    if is_user_premium(user_id):
-        return True
     conn = get_db()
     c = conn.cursor()
+    c.execute("SELECT is_premium, premium_until, role FROM users WHERE id = ?", (user_id,))
+    u_row = c.fetchone()
+    if u_row:
+        u_dict = dict(u_row)
+        if u_dict.get('role') == 'admin':
+            conn.close()
+            return True
+        if u_dict.get('is_premium'):
+            until = u_dict.get('premium_until')
+            if not until or not is_expired_datetime(until):
+                conn.close()
+                return True
     c.execute("""
         SELECT id, expires_at 
         FROM user_unlocked_categories 
@@ -4413,34 +4437,55 @@ def get_categories_with_user_status(user_id: Optional[int] = None) -> List[Dict[
 
 
 def get_passages_by_category(category_id: int, user_id: Optional[int] = None) -> Dict[str, Any]:
-    conn = get_db()
-    c = conn.cursor()
-    c.execute("SELECT * FROM categories WHERE id = ?", (category_id,))
-    cat_row = c.fetchone()
-    if not cat_row:
-        conn.close()
-        return {"category": None, "passages": []}
+    global _CATEGORY_DETAIL_CACHE
+    now = time.time()
+    cached_entry = _CATEGORY_DETAIL_CACHE.get(category_id)
 
-    cat_dict = dict(cat_row)
-    cat_dict['price'] = int(cat_dict.get('price')) if cat_dict.get('price') is not None else 49
+    if cached_entry and (now - cached_entry["timestamp"]) < _CATEGORY_DETAIL_CACHE_TTL:
+        cat_dict = cached_entry["cat_dict"]
+        p_rows = cached_entry["raw_passages"]
+        free_ids = cached_entry["free_ids"]
+    else:
+        conn = get_db()
+        c = conn.cursor()
+        c.execute("SELECT * FROM categories WHERE id = ?", (category_id,))
+        cat_row = c.fetchone()
+        if not cat_row:
+            conn.close()
+            return {"category": None, "passages": []}
+
+        cat_dict = dict(cat_row)
+        cat_dict['price'] = int(cat_dict.get('price')) if cat_dict.get('price') is not None else 49
+
+        c.execute("""
+            SELECT id, title, category_id, language, difficulty, target_wpm, duration_seconds,
+                   typing_system, is_premium, audio_url, created_at,
+                   ROUND(LENGTH(official_text) / 5) as word_count
+            FROM passages
+            WHERE category_id = ? AND status = 'published'
+            ORDER BY id ASC
+        """, (category_id,))
+        p_rows = [dict(r) for r in c.fetchall()]
+
+        # Query free passage ids in same connection
+        c.execute("SELECT id FROM passages WHERE status = 'published' ORDER BY id ASC LIMIT 2")
+        free_ids = set([r[0] if isinstance(r, (list, tuple)) else r["id"] for r in c.fetchall()])
+        conn.close()
+
+        _CATEGORY_DETAIL_CACHE[category_id] = {
+            "timestamp": now,
+            "cat_dict": cat_dict,
+            "raw_passages": p_rows,
+            "free_ids": free_ids
+        }
 
     is_unlocked = False
     if user_id:
         is_unlocked = is_category_unlocked_for_user(user_id, category_id)
-    cat_dict['is_unlocked'] = is_unlocked
 
-    c.execute("""
-        SELECT id, title, category_id, language, difficulty, target_wpm, duration_seconds,
-               typing_system, is_premium, audio_url, created_at,
-               ROUND(LENGTH(official_text) / 5) as word_count
-        FROM passages
-        WHERE category_id = ? AND status = 'published'
-        ORDER BY id ASC
-    """, (category_id,))
-    p_rows = c.fetchall()
-    conn.close()
+    cat_res = dict(cat_dict)
+    cat_res['is_unlocked'] = is_unlocked
 
-    free_ids = get_free_passage_ids(2)
     passages = []
     for r in p_rows:
         pd = dict(r)
@@ -4449,7 +4494,7 @@ def get_passages_by_category(category_id: int, user_id: Optional[int] = None) ->
         passages.append(pd)
 
     return {
-        "category": cat_dict,
+        "category": cat_res,
         "passages": passages
     }
 

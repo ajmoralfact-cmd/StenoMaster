@@ -2247,6 +2247,7 @@ class StenoApp {
     if (this.categories && this.categories.length > 0) {
       this.renderCategoryPills();
       this.renderHorizontalCategories();
+      this.prewarmCategories();
     }
     try {
       const res = await this.apiCall('/api/categories');
@@ -2257,10 +2258,21 @@ class StenoApp {
         } catch (e) {}
         this.renderCategoryPills();
         this.renderHorizontalCategories();
+        this.prewarmCategories();
       }
     } catch (err) {
       console.error('Failed to load categories:', err);
     }
+  }
+
+  prewarmCategories() {
+    if (!this.categories || !this.categories.length) return;
+    if (this._prewarmTimeout) clearTimeout(this._prewarmTimeout);
+    this._prewarmTimeout = setTimeout(() => {
+      this.categories.slice(0, 8).forEach(c => {
+        if (c && c.id) this.prefetchCategoryDetail(c.id);
+      });
+    }, 1000);
   }
 
   filterByExam(examKey, btnEl) {
@@ -4966,7 +4978,36 @@ ${link}`;
 
     if (!this._categoryDetailCache) this._categoryDetailCache = new Map();
     const cIdInt = parseInt(categoryId, 10);
-    const cached = this._categoryDetailCache.get(cIdInt);
+    let cached = this._categoryDetailCache.get(cIdInt);
+
+    // 0ms Instant Header Hydration from categories in memory
+    const catMeta = (this.categories || []).find(c => c.id === cIdInt || String(c.id) === String(categoryId));
+    if (catMeta) {
+      if (nameEl) nameEl.textContent = catMeta.name || 'डिक्टेशन टेस्ट सीरीज';
+      if (iconEl) iconEl.textContent = catMeta.icon_emoji || '📘';
+      if (subEl) subEl.textContent = `कुल ${catMeta.passage_count || 0} डिक्टेशन्स • 80-100 WPM • ऑडियो सहित`;
+    }
+
+    // 0ms Instant Passages Hydration from allPassages in memory
+    if (!cached && catMeta) {
+      const isPremium = Boolean(this.user && (this.user.is_premium || this.user.role === 'admin'));
+      const userUnlocked = (this.user && this.user.unlocked_categories) || [];
+      const isUnlocked = isPremium || userUnlocked.includes(cIdInt) || Boolean(catMeta.is_unlocked);
+
+      const localPassages = (this.allPassages || []).filter(p => Number(p.category_id) === cIdInt || String(p.category_id) === String(categoryId));
+
+      cached = {
+        category: {
+          ...catMeta,
+          is_unlocked: isUnlocked
+        },
+        passages: localPassages.map(p => ({
+          ...p,
+          is_accessible: isUnlocked || Boolean(p.is_free_tier)
+        }))
+      };
+      this._categoryDetailCache.set(cIdInt, cached);
+    }
 
     const applyDetailData = (res) => {
       const cat = res.category || {};
@@ -4996,18 +5037,32 @@ ${link}`;
       this.renderCategoryPassagesList(this.currentCategoryPassages);
     };
 
-    // 0ms Instant Hydration if already prefetched or visited
+    // 0ms Instant Hydration if already prefetched, visited, or reconstructed from memory
     if (cached) {
       applyDetailData(cached);
     } else if (listEl) {
-      listEl.innerHTML = '<div style="text-align:center; padding:30px; color:var(--text-muted);"><div class="spinner-small" style="display:inline-block; margin-right:8px;"></div>डिक्टेशन्स लोड हो रही हैं...</div>';
+      listEl.innerHTML = `
+        <div style="display:flex; flex-direction:column; gap:12px; margin-top:8px;">
+          ${[1, 2, 3, 4].map(() => `
+            <div style="background:var(--bg-card); border:1.5px solid var(--border); border-radius:14px; padding:18px; display:flex; justify-content:space-between; align-items:center; opacity:0.65;">
+              <div style="width:65%;">
+                <div style="height:16px; width:70%; background:var(--bg-subtle); border-radius:6px; margin-bottom:10px;"></div>
+                <div style="height:12px; width:45%; background:var(--bg-subtle); border-radius:4px;"></div>
+              </div>
+              <div style="height:34px; width:110px; background:var(--bg-subtle); border-radius:20px;"></div>
+            </div>
+          `).join('')}
+        </div>
+      `;
     }
 
     try {
       const res = await this.apiCall(`/api/categories/detail?id=${categoryId}`);
       if (res && res.category) {
         this._categoryDetailCache.set(cIdInt, res);
-        applyDetailData(res);
+        if (this.currentCategoryId === categoryId || this.currentCategoryId === cIdInt) {
+          applyDetailData(res);
+        }
       }
     } catch (err) {
       if (!cached && listEl) {

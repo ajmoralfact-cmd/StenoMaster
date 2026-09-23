@@ -290,6 +290,21 @@ class StenoApp {
       return;
     }
 
+    if (path === 'subscription' || path === 'plans') {
+      window.location.href = '/plans' + (queryStr ? `?${queryStr}` : '');
+      return;
+    }
+
+    if (path === 'refer' || path === 'wallet') {
+      window.location.href = '/wallet' + (queryStr ? `?${queryStr}` : '');
+      return;
+    }
+
+    if (path === 'profile' || path === 'settings') {
+      window.location.href = '/profile' + (queryStr ? `?${queryStr}` : '');
+      return;
+    }
+
     if (path === 'category-detail' && params.id) {
       const catId = parseInt(params.id, 10);
       if (this.currentCategoryId !== catId || this.activeView !== 'category-detail') {
@@ -299,10 +314,7 @@ class StenoApp {
     }
 
     if (path === 'practice' && params.id) {
-      const pId = parseInt(params.id, 10);
-      if (!this.currentPassage || this.currentPassage.id !== pId) {
-        this.openPractice(pId, params.system);
-      }
+      window.location.href = `/practice?id=${params.id}` + (params.system ? `&system=${params.system}` : '');
       return;
     }
 
@@ -1479,6 +1491,18 @@ class StenoApp {
     this.user = null;
     localStorage.removeItem('stenomaster_token');
     localStorage.removeItem('stenomaster_user');
+
+    // Admin page: show the in-page admin login modal (do NOT redirect or touch student UI)
+    if (window.location.pathname.includes('admin')) {
+      if (showToast) this.showToast('लॉगआउट सफल। पुनः लॉगिन करें। (Logged out)', 'info');
+      if (typeof window.checkAdminStandaloneAuth === 'function') {
+        window.checkAdminStandaloneAuth(true); // forceShow = true
+      } else {
+        window.location.href = '/admin.html';
+      }
+      return;
+    }
+
     this.updateUserUI();
     this.showAuthGateway('student');
     if (showToast) this.showToast('लॉगआउट सफल। (Logged out successfully)', 'info');
@@ -1671,7 +1695,7 @@ class StenoApp {
           validityPill.className = 'plan-validity-pill is-pro';
           validityPill.innerHTML = '👑 ऑल एक्सेस (Pro Active)';
           validityPill.title = 'प्रो प्लान सक्रिय है';
-          validityPill.onclick = () => stenoApp.navigate('subscription');
+          validityPill.onclick = () => { window.location.href = '/plans'; };
         }
         if (avatarEl) {
           avatarEl.classList.add('pro-rainbow-ring');
@@ -1693,7 +1717,7 @@ class StenoApp {
             validityPill.className = 'plan-validity-pill is-pro';
             validityPill.innerHTML = (daysLeft >= 1000) ? '👑 Pro: Active' : `👑 Pro: ${daysLeft} दिन शेष`;
             validityPill.title = 'प्रो प्लान सक्रिय है';
-            validityPill.onclick = () => stenoApp.navigate('subscription');
+            validityPill.onclick = () => { window.location.href = '/plans'; };
           }
           if (avatarEl) {
             avatarEl.classList.add('pro-rainbow-ring');
@@ -1704,7 +1728,7 @@ class StenoApp {
             validityPill.className = 'plan-validity-pill is-free';
             validityPill.innerHTML = '🔒 2 फ्री कक्षाएं • ₹100 में Pro लें';
             validityPill.title = 'प्रीमियम अनलॉक करने के लिए क्लिक करें';
-            validityPill.onclick = () => stenoApp.navigate('subscription');
+            validityPill.onclick = () => { window.location.href = '/plans'; };
           }
           if (avatarEl) {
             avatarEl.classList.remove('pro-rainbow-ring');
@@ -1788,15 +1812,15 @@ class StenoApp {
         { id: 'home', icon: '🏠', label: 'Dashboard', sub: 'डैशबोर्ड' },
         { id: 'classes', icon: '🎧', label: 'Practice Classes', sub: 'डिक्टेशन क्लास' },
         { id: 'self-practice', icon: '🎙️', label: 'Self Practice', sub: 'कस्टम डिक्टेशन' },
-        { id: 'subscription', icon: '💳', label: 'Subscription', sub: 'सदस्यता एवं प्रो' },
+        { id: 'subscription', icon: '💳', label: 'Subscription', sub: 'सदस्यता एवं प्रो', url: '/plans' },
         { id: 'my-practice', icon: '📜', label: 'Practice History', sub: 'अभ्यास इतिहास' },
         { id: 'progress', icon: '📊', label: 'Progress & Analytics', sub: 'प्रगति चार्ट' },
         { id: 'leaderboard', icon: '🏆', label: 'Leaderboard', sub: 'रैंकिंग बोर्ड' },
         { id: 'bookmarks', icon: '🔖', label: 'Bookmarks', sub: 'सहेजे गए आलेख' },
         { id: 'rules', icon: '📋', label: 'परीक्षा नियम', sub: 'UPSSSC & SSC Rules' },
-        { id: 'profile', icon: '👤', label: 'My Profile', sub: 'मेरी प्रोफ़ाइल' },
-        { id: 'refer', icon: '🎁', label: 'Refer & Earn', sub: 'रेफरल एवं अंक' },
-        { id: 'settings', icon: '⚙️', label: 'Settings', sub: 'प्राथमिकताएं' }
+        { id: 'profile', icon: '👤', label: 'My Profile', sub: 'मेरी प्रोफ़ाइल', url: '/profile' },
+        { id: 'refer', icon: '🎁', label: 'Refer & Dual-Wallet', sub: 'वॉलेट व कमीशन', url: '/wallet' },
+        { id: 'settings', icon: '⚙️', label: 'Settings', sub: 'प्राथमिकताएं', url: '/profile' }
       ];
 
       navContainer.innerHTML = `
@@ -1830,7 +1854,11 @@ class StenoApp {
         el.addEventListener('click', (e) => {
           e.preventDefault();
           this.closeSidebar();
-          this.navigate(item.id);
+          if (item.url) {
+            window.location.href = item.url;
+          } else {
+            this.navigate(item.id);
+          }
         });
       });
 
@@ -2003,6 +2031,20 @@ class StenoApp {
         return;
       }
       window.location.href = '/admin.html';
+      return;
+    }
+
+    // Direct multi-page redirection for dedicated standalone pages
+    if (viewId === 'subscription') {
+      window.location.href = '/plans';
+      return;
+    }
+    if (viewId === 'refer') {
+      window.location.href = '/wallet';
+      return;
+    }
+    if (viewId === 'profile' || viewId === 'settings') {
+      window.location.href = '/profile';
       return;
     }
 
@@ -2205,6 +2247,7 @@ class StenoApp {
     if (this.categories && this.categories.length > 0) {
       this.renderCategoryPills();
       this.renderHorizontalCategories();
+      this.prewarmCategories();
     }
     try {
       const res = await this.apiCall('/api/categories');
@@ -2215,10 +2258,21 @@ class StenoApp {
         } catch (e) {}
         this.renderCategoryPills();
         this.renderHorizontalCategories();
+        this.prewarmCategories();
       }
     } catch (err) {
       console.error('Failed to load categories:', err);
     }
+  }
+
+  prewarmCategories() {
+    if (!this.categories || !this.categories.length) return;
+    if (this._prewarmTimeout) clearTimeout(this._prewarmTimeout);
+    this._prewarmTimeout = setTimeout(() => {
+      this.categories.slice(0, 8).forEach(c => {
+        if (c && c.id) this.prefetchCategoryDetail(c.id);
+      });
+    }, 1000);
   }
 
   filterByExam(examKey, btnEl) {
@@ -2825,6 +2879,12 @@ class StenoApp {
       // Check lock status before entering
       if (passage && passage.is_locked && !hasFullAccess) {
         this.handleLockedPassageClick(pId);
+        return;
+      }
+
+      // Multi-page routing: Launch in dedicated ultra-fast /practice studio
+      if (!customPassage && !window.location.pathname.includes('/practice')) {
+        window.location.href = `/practice?id=${pId}`;
         return;
       }
 
@@ -4918,7 +4978,36 @@ ${link}`;
 
     if (!this._categoryDetailCache) this._categoryDetailCache = new Map();
     const cIdInt = parseInt(categoryId, 10);
-    const cached = this._categoryDetailCache.get(cIdInt);
+    let cached = this._categoryDetailCache.get(cIdInt);
+
+    // 0ms Instant Header Hydration from categories in memory
+    const catMeta = (this.categories || []).find(c => c.id === cIdInt || String(c.id) === String(categoryId));
+    if (catMeta) {
+      if (nameEl) nameEl.textContent = catMeta.name || 'डिक्टेशन टेस्ट सीरीज';
+      if (iconEl) iconEl.textContent = catMeta.icon_emoji || '📘';
+      if (subEl) subEl.textContent = `कुल ${catMeta.passage_count || 0} डिक्टेशन्स • 80-100 WPM • ऑडियो सहित`;
+    }
+
+    // 0ms Instant Passages Hydration from allPassages in memory
+    if (!cached && catMeta) {
+      const isPremium = Boolean(this.user && (this.user.is_premium || this.user.role === 'admin'));
+      const userUnlocked = (this.user && this.user.unlocked_categories) || [];
+      const isUnlocked = isPremium || userUnlocked.includes(cIdInt) || Boolean(catMeta.is_unlocked);
+
+      const localPassages = (this.allPassages || []).filter(p => Number(p.category_id) === cIdInt || String(p.category_id) === String(categoryId));
+
+      cached = {
+        category: {
+          ...catMeta,
+          is_unlocked: isUnlocked
+        },
+        passages: localPassages.map(p => ({
+          ...p,
+          is_accessible: isUnlocked || Boolean(p.is_free_tier)
+        }))
+      };
+      this._categoryDetailCache.set(cIdInt, cached);
+    }
 
     const applyDetailData = (res) => {
       const cat = res.category || {};
@@ -4948,18 +5037,32 @@ ${link}`;
       this.renderCategoryPassagesList(this.currentCategoryPassages);
     };
 
-    // 0ms Instant Hydration if already prefetched or visited
+    // 0ms Instant Hydration if already prefetched, visited, or reconstructed from memory
     if (cached) {
       applyDetailData(cached);
     } else if (listEl) {
-      listEl.innerHTML = '<div style="text-align:center; padding:30px; color:var(--text-muted);"><div class="spinner-small" style="display:inline-block; margin-right:8px;"></div>डिक्टेशन्स लोड हो रही हैं...</div>';
+      listEl.innerHTML = `
+        <div style="display:flex; flex-direction:column; gap:12px; margin-top:8px;">
+          ${[1, 2, 3, 4].map(() => `
+            <div style="background:var(--bg-card); border:1.5px solid var(--border); border-radius:14px; padding:18px; display:flex; justify-content:space-between; align-items:center; opacity:0.65;">
+              <div style="width:65%;">
+                <div style="height:16px; width:70%; background:var(--bg-subtle); border-radius:6px; margin-bottom:10px;"></div>
+                <div style="height:12px; width:45%; background:var(--bg-subtle); border-radius:4px;"></div>
+              </div>
+              <div style="height:34px; width:110px; background:var(--bg-subtle); border-radius:20px;"></div>
+            </div>
+          `).join('')}
+        </div>
+      `;
     }
 
     try {
       const res = await this.apiCall(`/api/categories/detail?id=${categoryId}`);
       if (res && res.category) {
         this._categoryDetailCache.set(cIdInt, res);
-        applyDetailData(res);
+        if (this.currentCategoryId === categoryId || this.currentCategoryId === cIdInt) {
+          applyDetailData(res);
+        }
       }
     } catch (err) {
       if (!cached && listEl) {
@@ -5392,29 +5495,9 @@ ${link}`;
     this.closeCategoryCheckoutModal();
 
     if (isAllInOne) {
-      this.subSelectedTab = 'month';
-      this.navigate('subscription');
-      setTimeout(() => {
-        this.switchSubPlanTab('month');
-        this.selectSubscriptionPlan('1m');
-        document.getElementById('subPlansGrid')?.scrollIntoView({ behavior: 'smooth' });
-      }, 100);
-      this.showToast('👑 ऑल-इन-वन मासिक पास चुना गया है। नीचे 4 प्लान्स में से अपना पसंदीदा प्लान चुनकर भुगतान करें।', 'info');
+      window.location.href = '/plans?plan=1m';
     } else {
-      const totalAmount = selectedCats.reduce((sum, c) => sum + c.price, 0);
-      this.selectedCategoryCheckout = {
-        category_ids: selectedCats.map(c => c.id),
-        category_names: selectedCats.map(c => c.name),
-        categories: selectedCats,
-        totalAmount: totalAmount
-      };
-      this.subSelectedTab = 'category';
-      this.navigate('subscription');
-      setTimeout(() => {
-        this.switchSubPlanTab('category');
-        document.getElementById('subCategoryPlansWrap')?.scrollIntoView({ behavior: 'smooth' });
-      }, 100);
-      this.showToast(`✓ ${selectedCats.length} कैटेगरी चुनी गई (कुल: ₹${totalAmount})। नीचे दिए गए विकल्पों में से भुगतान करें।`, 'success');
+      window.location.href = '/plans';
     }
   }
 
