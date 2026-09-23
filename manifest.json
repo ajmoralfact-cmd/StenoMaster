@@ -1,0 +1,46 @@
+{
+  "name": "StenoMaster — Professional Stenographer Platform",
+  "short_name": "StenoMaster",
+  "description": "भारत का #1 ऑनलाइन स्टेनोग्राफी एवं टाइपिंग प्रैक्टिस प्लेटफॉर्म। SSC Steno, UPSSSC, और Court परीक्षाओं के लिए 80 व 100 WPM ऑडियो डिक्टेशन।",
+  "lang": "hi",
+  "dir": "ltr",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#2563eb",
+  "orientation": "portrait-primary",
+  "categories": ["education", "productivity"],
+  "icons": [
+    {
+      "src": "/assets/icon-192.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/assets/icon-512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/assets/logo.png",
+      "type": "image/png",
+      "sizes": "256x256",
+      "purpose": "any"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "डिक्टेशन प्रैक्टिस (Practice)",
+      "url": "/",
+      "icons": [{ "src": "/assets/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "लीडरबोर्ड (Leaderboard)",
+      "url": "/#/leaderboard",
+      "icons": [{ "src": "/assets/icon-192.png", "sizes": "192x192" }]
+    }
+  ]
+}
