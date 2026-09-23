@@ -3,10 +3,160 @@
  * Master Controller for State, Routing, Views, Authentication, and Interactions
  */
 
+const I18N_DICTIONARY = {
+  hi: {
+    nav_home: 'डैशबोर्ड (Dashboard)',
+    nav_classes: 'अभ्यास कक्षाएं (Classes)',
+    nav_self_practice: 'सेल्फ प्रैक्टिस (Self Practice)',
+    nav_subscription: 'सदस्यता प्लान (Plans)',
+    nav_my_practice: 'अभ्यास इतिहास (History)',
+    nav_progress: 'प्रगति विश्लेषण (Progress)',
+    nav_leaderboard: 'लीडरबोर्ड (Leaderboard)',
+    nav_bookmarks: 'सहेजे गए आलेख (Bookmarks)',
+    nav_profile: 'मेरी प्रोफ़ाइल (My Profile)',
+    nav_refer: 'रेफरल एवं पुरस्कार (Refer & Earn)',
+    nav_notifications: 'सूचनाएं (Notifications)',
+    nav_settings: 'प्राथमिकताएं (Settings)',
+    nav_rules: '📜 परीक्षा नियम',
+    nav_admin: 'एडमिन कंसोल (Admin Console)',
+    nav_logout: 'लॉगआउट (Logout)',
+    nav_back: 'वापस',
+    nav_back_to_dashboard: '← वापस डैशबोर्ड पर जाएं (Back to Dashboard)',
+    nav_back_to_classes: '← वापस कक्षाओं पर जाएं (Back)',
+    header_plan_validity: '2 फ्री कक्षाएं',
+    header_streak: 'Day Streak',
+    header_user_role: 'Student',
+    practice_title: 'स्टेनो टंकण अभ्यास (Typing Test)',
+    practice_instructions: 'ऑडियो ध्यानपूर्वक सुनें और शुद्धता के साथ टाइप करें।',
+    practice_exam_rule_label: '🎯 परीक्षा नियम:',
+    practice_rule_ssc: '🎯 SSC Steno (5%/7%)',
+    practice_rule_upsssc: '🏛️ UPSSSC (25 WPM + 5%)',
+    practice_typing_mode_label: 'Typing Mode:',
+    practice_speed_label: 'डिक्टेशन गति (Speed):',
+    practice_font_size_title: 'फ़ॉन्ट आकार',
+    practice_steno_notes: '📝 स्टेनो आउटलाइन देखें',
+    practice_exam_mode_off: '🔒 परीक्षा मोड: OFF',
+    practice_exam_mode_on: '🔒 परीक्षा मोड: ON',
+    practice_fullscreen: '📺 फुल-स्क्रीन',
+    practice_fullscreen_exit: '✕ सामान्य स्क्रीन',
+    practice_keyboard_off: '⌨️ कीबोर्ड: OFF',
+    practice_keyboard_on: '⌨️ कीबोर्ड: ON',
+    practice_backspace_on: '🔓 Backspace: ON',
+    practice_backspace_off: '🔒 Backspace: OFF',
+    practice_alt_codes: '⌨️ Alt Codes',
+    practice_otg_off: '⌨️ OTG: OFF',
+    practice_otg_on: '⌨️ OTG: ON',
+    practice_compact_player: '🔼 संक्षिप्त',
+    practice_expand_player: '🔽 विस्तृत',
+    practice_words: 'शब्द (Words):',
+    practice_chars: 'वर्ण (Chars):',
+    practice_time: 'समय:',
+    practice_draft_saved: 'सहेजा गया',
+    practice_clear: '🗑️ साफ़ करें',
+    practice_submit: '🚀 सबमिट करें (Submit)',
+    filter_all: 'सभी (All)',
+    filter_easy: 'सरल (Easy)',
+    filter_medium: 'मध्यम (Medium)',
+    filter_hard: 'कठिन (Hard)',
+    search_placeholder: 'आलेख या शीर्षक खोजें...',
+    btn_start_practice: 'अभ्यास शुरू करें (Start)',
+    btn_unlock_pro: '🔒 प्रो पास अनलॉक करें',
+    label_interface_lang: '🌐 वेबसाइट इंटरफेस भाषा (Interface Language):',
+    opt_lang_hi: 'हिंदी + English (डिफ़ॉल्ट / Default)',
+    opt_lang_en: 'English (Pure English Interface)',
+    help_interface_lang: '💡 डिक्टेशन और टाइपिंग पैसेज हमेशा मूल भाषा (हिंदी) में ही रहेंगे। केवल वेबसाइट के मेन्यू व बटन्स बदलेंगे।',
+    toast_lang_changed: '🌐 वेबसाइट भाषा हिंदी + English में सेट की गई',
+    header_back: 'वापस',
+    header_logout: 'लॉगआउट',
+    profile_box2_title: 'परीक्षा लक्ष्य व टंकण वरीयताएँ',
+    profile_box2_sub: 'अपनी तैयारी अनुसार लक्ष्य परीक्षा, भाषा, फॉन्ट व गति चुनें',
+    btn_save_profile: 'प्रोफ़ाइल विवरण सहेजें (Save Changes)',
+    practice_back: '← वापस जाएं (Back)',
+    practice_wpm_label: 'डिक्टेशन गति (Speed):',
+    dash_welcome_sub: 'आपकी दैनिक स्टेनो अभ्यास प्रगति, गति एवं सटीकता का संपूर्ण विवरण',
+    classes_title: 'सभी अभ्यास डिक्टेशन (All Dictation Classes)',
+    classes_subtitle: 'अपनी पसंद की भाषा, कठिनाई और श्रेणी के अनुसार अभ्यास चुनें।'
+  },
+  en: {
+    nav_home: 'Dashboard',
+    nav_classes: 'Practice Classes',
+    nav_self_practice: 'Self Practice',
+    nav_subscription: 'Subscription Plans',
+    nav_my_practice: 'Practice History',
+    nav_progress: 'Progress Analytics',
+    nav_leaderboard: 'Leaderboard',
+    nav_bookmarks: 'Saved Bookmarks',
+    nav_profile: 'My Profile',
+    nav_refer: 'Refer & Earn',
+    nav_notifications: 'Notifications',
+    nav_settings: 'Preferences & Settings',
+    nav_rules: '📜 Exam Rules',
+    nav_admin: 'Admin Console',
+    nav_logout: 'Logout',
+    nav_back: 'Back',
+    nav_back_to_dashboard: '← Back to Dashboard',
+    nav_back_to_classes: '← Back to Classes',
+    header_plan_validity: '2 Free Classes',
+    header_streak: 'Day Streak',
+    header_user_role: 'Student',
+    practice_title: 'Steno Typing Practice Test',
+    practice_instructions: 'Listen carefully to the audio and transcribe with maximum accuracy.',
+    practice_exam_rule_label: '🎯 Exam Rule:',
+    practice_rule_ssc: '🎯 SSC Steno (5%/7%)',
+    practice_rule_upsssc: '🏛️ UPSSSC (25 WPM + 5%)',
+    practice_typing_mode_label: 'Typing Mode:',
+    practice_speed_label: 'Dictation Speed:',
+    practice_font_size_title: 'Font Size',
+    practice_steno_notes: '📝 View Steno Outline',
+    practice_exam_mode_off: '🔒 Exam Mode: OFF',
+    practice_exam_mode_on: '🔒 Exam Mode: ON',
+    practice_fullscreen: '📺 Full Screen',
+    practice_fullscreen_exit: '✕ Normal Screen',
+    practice_keyboard_off: '⌨️ Keyboard: OFF',
+    practice_keyboard_on: '⌨️ Keyboard: ON',
+    practice_backspace_on: '🔓 Backspace: ON',
+    practice_backspace_off: '🔒 Backspace: OFF',
+    practice_alt_codes: '⌨️ Alt Codes',
+    practice_otg_off: '⌨️ OTG: OFF',
+    practice_otg_on: '⌨️ OTG: ON',
+    practice_compact_player: '🔼 Compact',
+    practice_expand_player: '🔽 Expand',
+    practice_words: 'Words:',
+    practice_chars: 'Chars:',
+    practice_time: 'Time:',
+    practice_draft_saved: 'Draft Saved',
+    practice_clear: '🗑️ Clear',
+    practice_submit: '🚀 Submit Test',
+    filter_all: 'All',
+    filter_easy: 'Easy',
+    filter_medium: 'Medium',
+    filter_hard: 'Hard',
+    search_placeholder: 'Search dictation or passage title...',
+    btn_start_practice: 'Start Practice',
+    btn_unlock_pro: '🔒 Unlock Pro Pass',
+    label_interface_lang: '🌐 Website Interface Language:',
+    opt_lang_hi: 'Hindi + English (Default)',
+    opt_lang_en: 'English (Pure English Interface)',
+    help_interface_lang: '💡 Dictation passages, audio, and Hindi typing will always stay in original Hindi. Only UI menus and buttons are translated.',
+    toast_lang_changed: '🌐 Interface language set to English',
+    header_back: 'Back',
+    header_logout: 'Logout',
+    profile_box2_title: 'Exam Target & Typing Preferences',
+    profile_box2_sub: 'Select your target exam, language, font and target speed',
+    btn_save_profile: 'Save Profile Changes',
+    practice_back: '← Go Back',
+    practice_wpm_label: 'Dictation Speed:',
+    dash_welcome_sub: 'Complete overview of your daily steno practice, speed, and accuracy',
+    classes_title: 'All Dictation Classes',
+    classes_subtitle: 'Choose your practice according to language, difficulty and category.'
+  }
+};
+
 class StenoApp {
   constructor() {
     this.apiBase = '';
     this.token = localStorage.getItem('stenomaster_token') || null;
+    this.currentLang = localStorage.getItem('stenomaster_app_lang') || 'hi';
     this.user = null;
     this.activeView = 'home';
     this.currentPassage = null;
@@ -327,6 +477,7 @@ class StenoApp {
 
   async init() {
     this.initTheme();
+    this.initLanguage();
     this.initPWA();
     this.initNavigation();
     this.initSessionHeartbeat();
@@ -344,10 +495,14 @@ class StenoApp {
       }
     } catch(e) {}
 
-    // Cross-tab real-time sync when Admin edits or deletes passages
+    // Cross-tab real-time sync when Admin edits or deletes passages or changes language
     window.addEventListener('storage', (e) => {
       if (e.key === 'stenomaster_passages_version' || e.key === 'stenomaster_cached_passages') {
         this.loadPassages(true);
+      }
+      if (e.key === 'stenomaster_app_lang') {
+        this.currentLang = e.newValue || 'hi';
+        this.applyLanguage(this.currentLang, false);
       }
     });
 
@@ -424,6 +579,87 @@ class StenoApp {
   toggleTheme() {
     const current = document.documentElement.getAttribute('data-theme') || 'light';
     this.setTheme(current === 'dark' ? 'light' : 'dark');
+  }
+
+  // -------------------------------------------------------------------------
+  // Internationalization (Hindi + English bilingual default vs Pure English UI)
+  // Dictations, passages, audio and Hindi typing mechanics remain 100% untouched
+  // -------------------------------------------------------------------------
+  initLanguage() {
+    this.currentLang = localStorage.getItem('stenomaster_app_lang') || 'hi';
+    this.applyLanguage(this.currentLang, false);
+  }
+
+  t(key) {
+    const dict = (typeof I18N_DICTIONARY !== 'undefined' && I18N_DICTIONARY[this.currentLang]) ? I18N_DICTIONARY[this.currentLang] : (typeof I18N_DICTIONARY !== 'undefined' ? I18N_DICTIONARY.hi : {});
+    return (dict && dict[key] !== undefined) ? dict[key] : key;
+  }
+
+  setAppLanguage(lang, showToast = true) {
+    this.currentLang = (lang === 'en') ? 'en' : 'hi';
+    localStorage.setItem('stenomaster_app_lang', this.currentLang);
+    this.applyLanguage(this.currentLang, showToast);
+  }
+
+  toggleAppLanguage() {
+    this.setAppLanguage(this.currentLang === 'en' ? 'hi' : 'en', true);
+  }
+
+  applyLanguage(lang, showToast = false) {
+    const isEn = lang === 'en';
+    document.documentElement.setAttribute('data-app-lang', lang);
+
+    // Update all language toggle buttons (header/nav/etc)
+    document.querySelectorAll('.lang-toggle-btn').forEach(btn => {
+      btn.textContent = isEn ? '🌐 हिंदी' : '🌐 EN';
+      btn.title = isEn ? 'Switch to Hindi + English UI' : 'Switch to Pure English UI';
+      btn.setAttribute('aria-label', btn.title);
+    });
+
+    // Update settings dropdown if present on current page
+    const select = document.getElementById('profileInterfaceLangSelect');
+    if (select && select.value !== lang) {
+      select.value = lang;
+    }
+
+    // Apply dictionary to elements with data-i18n attributes
+    const dict = (typeof I18N_DICTIONARY !== 'undefined' && I18N_DICTIONARY[lang]) ? I18N_DICTIONARY[lang] : (typeof I18N_DICTIONARY !== 'undefined' ? I18N_DICTIONARY.hi : {});
+    if (dict) {
+      document.querySelectorAll('[data-i18n]').forEach(el => {
+        const k = el.getAttribute('data-i18n');
+        if (dict[k] !== undefined) {
+          el.innerHTML = dict[k];
+        }
+      });
+      document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+        const k = el.getAttribute('data-i18n-placeholder');
+        if (dict[k] !== undefined) {
+          el.setAttribute('placeholder', dict[k]);
+        }
+      });
+      document.querySelectorAll('[data-i18n-title]').forEach(el => {
+        const k = el.getAttribute('data-i18n-title');
+        if (dict[k] !== undefined) {
+          el.setAttribute('title', dict[k]);
+        }
+      });
+    }
+
+    // Re-render sidebar nav if container exists
+    if (document.getElementById('sidebarNavItems')) {
+      this.renderSidebarNav();
+    }
+
+    // Update typing engine UI buttons if available (without touching typing passage or input)
+    if (window.stenoTypingEngine) {
+      if (typeof stenoTypingEngine.updateExamModeUI === 'function') stenoTypingEngine.updateExamModeUI();
+      if (typeof stenoTypingEngine.updateFullscreenUI === 'function') stenoTypingEngine.updateFullscreenUI();
+      if (typeof stenoTypingEngine.applyOtgMode === 'function') stenoTypingEngine.applyOtgMode();
+    }
+
+    if (showToast) {
+      this.showToast(isEn ? '🌐 Interface language set to English' : '🌐 भाषा हिंदी + English (Default) में सेट की गई', 'info');
+    }
   }
 
   initPWA() {
@@ -1810,33 +2046,47 @@ class StenoApp {
       // Disabled: Admin portal items strictly excluded from student app
     } else {
       // Student Sidebar Items (Strictly NO admin items in DOM)
-      const studentItems = [
-        { id: 'home', icon: '🏠', label: 'Dashboard', sub: 'डैशबोर्ड' },
-        { id: 'classes', icon: '🎧', label: 'Practice Classes', sub: 'डिक्टेशन क्लास' },
-        { id: 'self-practice', icon: '🎙️', label: 'Self Practice', sub: 'कस्टम डिक्टेशन' },
-        { id: 'subscription', icon: '💳', label: 'Subscription', sub: 'सदस्यता एवं प्रो', url: '/plans' },
-        { id: 'my-practice', icon: '📜', label: 'Practice History', sub: 'अभ्यास इतिहास' },
-        { id: 'progress', icon: '📊', label: 'Progress & Analytics', sub: 'प्रगति चार्ट' },
-        { id: 'leaderboard', icon: '🏆', label: 'Leaderboard', sub: 'रैंकिंग बोर्ड' },
-        { id: 'bookmarks', icon: '🔖', label: 'Bookmarks', sub: 'सहेजे गए आलेख' },
-        { id: 'rules', icon: '📋', label: 'परीक्षा नियम', sub: 'UPSSSC & SSC Rules' },
-        { id: 'profile', icon: '👤', label: 'My Profile', sub: 'मेरी प्रोफ़ाइल', url: '/profile' },
-        { id: 'refer', icon: '🎁', label: 'Refer & Dual-Wallet', sub: 'वॉलेट व कमीशन', url: '/wallet' },
-        { id: 'settings', icon: '⚙️', label: 'Settings', sub: 'प्राथमिकताएं', url: '/profile' }
+      const isEn = this.currentLang === 'en';
+      const studentItems = isEn ? [
+        { id: 'home', icon: '🏠', label: 'Dashboard', sub: 'Home & Analytics' },
+        { id: 'classes', icon: '🎧', label: 'Practice Classes', sub: 'Dictation Sessions' },
+        { id: 'self-practice', icon: '🎙️', label: 'Self Practice', sub: 'Custom Dictation' },
+        { id: 'subscription', icon: '💳', label: 'Subscription & Pro', sub: 'Unlock All Passages', url: '/plans' },
+        { id: 'my-practice', icon: '📜', label: 'Practice History', sub: 'Attempt Records' },
+        { id: 'progress', icon: '📊', label: 'Progress & Analytics', sub: 'Speed & Accuracy' },
+        { id: 'leaderboard', icon: '🏆', label: 'Leaderboard', sub: 'Student Rankings' },
+        { id: 'bookmarks', icon: '🔖', label: 'Bookmarks', sub: 'Saved Passages' },
+        { id: 'rules', icon: '📋', label: 'Exam Rules', sub: 'UPSSSC & SSC Rules' },
+        { id: 'profile', icon: '👤', label: 'My Profile', sub: 'Account Settings', url: '/profile' },
+        { id: 'refer', icon: '🎁', label: 'Refer & Dual-Wallet', sub: 'Earnings & Credits', url: '/wallet' },
+        { id: 'settings', icon: '⚙️', label: 'Settings', sub: 'Preferences', url: '/profile' }
+      ] : [
+        { id: 'home', icon: '🏠', label: 'डैशबोर्ड (Dashboard)', sub: 'होम एवं आंकड़े' },
+        { id: 'classes', icon: '🎧', label: 'अभ्यास कक्षाएं (Classes)', sub: 'दैनिक डिक्टेशन' },
+        { id: 'self-practice', icon: '🎙️', label: 'सेल्फ प्रैक्टिस (Self)', sub: 'कस्टम डिक्टेशन' },
+        { id: 'subscription', icon: '💳', label: 'सब्सक्रिप्शन (Subscription)', sub: 'सदस्यता एवं प्रो', url: '/plans' },
+        { id: 'my-practice', icon: '📜', label: 'अभ्यास इतिहास (History)', sub: 'पिछले टेस्ट परिणाम' },
+        { id: 'progress', icon: '📊', label: 'प्रगति विश्लेषण (Progress)', sub: 'गति व शुद्धता ग्राफ' },
+        { id: 'leaderboard', icon: '🏆', label: 'लीडरबोर्ड (Leaderboard)', sub: 'रैंकिंग बोर्ड' },
+        { id: 'bookmarks', icon: '🔖', label: 'सहेजे गए आलेख (Bookmarks)', sub: 'सहेजे गए आलेख' },
+        { id: 'rules', icon: '📋', label: 'परीक्षा नियम (Exam Rules)', sub: 'UPSSSC & SSC Rules' },
+        { id: 'profile', icon: '👤', label: 'मेरी प्रोफ़ाइल (Profile)', sub: 'खाता सेटिंग्स', url: '/profile' },
+        { id: 'refer', icon: '🎁', label: 'वॉलेट व रेफरल (Wallet)', sub: 'कमीशन व वॉलेट', url: '/wallet' },
+        { id: 'settings', icon: '⚙️', label: 'प्राथमिकताएं (Settings)', sub: 'टंकण वरीयताएँ', url: '/profile' }
       ];
 
       navContainer.innerHTML = `
         ${isAdmin ? `
-          <a href="/admin.html" class="nav-item" data-sidebar-item="admin-console-link" style="background:rgba(239,68,68,0.08); border:1px solid rgba(239,68,68,0.25); border-radius:10px; margin-top:8px; color:#ef4444;" title="एडमिन कंसोल">
+          <a href="/admin.html" class="nav-item" data-sidebar-item="admin-console-link" style="background:rgba(239,68,68,0.08); border:1px solid rgba(239,68,68,0.25); border-radius:10px; margin-top:8px; color:#ef4444;" title="${isEn ? 'Admin Console' : 'एडमिन कंसोल'}">
             <span class="nav-item-icon">🛡️</span>
             <div style="flex:1; min-width:0;">
               <div style="font-weight:700; font-size:0.86rem; color:#ef4444;">Admin Console</div>
-              <div style="font-size:0.7rem; color:var(--text-muted);">प्रशासनिक पोर्टल खोलें ➔</div>
+              <div style="font-size:0.7rem; color:var(--text-muted);">${isEn ? 'Open Admin Console ➔' : 'प्रशासनिक पोर्टल खोलें ➔'}</div>
             </div>
           </a>
         ` : ''}
         <div class="sidebar-role-badge student-badge">
-          <span>👨‍🎓</span> <span>STUDENT PORTAL</span>
+          <span>👨‍🎓</span> <span>${isEn ? 'STUDENT PORTAL' : 'विद्यार्थी पोर्टल (STUDENT)'}</span>
         </div>
         ${studentItems.map(item => `
           <a href="javascript:void(0)" class="nav-item ${currentView === item.id ? 'active' : ''}" data-sidebar-item="${item.id}" title="${item.label}">
@@ -1877,7 +2127,7 @@ class StenoApp {
           </div>
           <button class="nav-item" style="width:100%; margin-top:6px; color:var(--accent-red); justify-content:center; gap:8px;" onclick="stenoApp.closeSidebar(); stenoApp.logout();">
             <span class="nav-item-icon">🚪</span>
-            <span>लॉगआउट (Logout)</span>
+            <span>${isEn ? 'Logout' : 'लॉगआउट (Logout)'}</span>
           </button>
         `;
       }
@@ -3553,12 +3803,14 @@ class StenoApp {
     const modeSelect = document.getElementById('profileTypingModeSelect');
     const wpmInput = document.getElementById('profileTargetWpmInput');
     const lbVis = document.getElementById('profileLeaderboardVisibility');
+    const interfaceLangSelect = document.getElementById('profileInterfaceLangSelect');
 
     if (examSelect) examSelect.value = this.user.target_exam || 'SSC Stenographer';
     if (langSelect) langSelect.value = this.user.preferred_language || 'hindi';
     if (modeSelect) modeSelect.value = this.user.preferred_typing_mode || 'mangal';
     if (wpmInput) wpmInput.value = this.user.target_wpm || 80;
     if (lbVis) lbVis.checked = !!this.user.show_on_leaderboard;
+    if (interfaceLangSelect) interfaceLangSelect.value = this.currentLang || 'hi';
 
     // 5. Clear Password Inputs
     const currPassInput = document.getElementById('profileCurrentPasswordInput');
@@ -3660,6 +3912,11 @@ class StenoApp {
       target_wpm: parseInt(document.getElementById('profileTargetWpmInput')?.value) || 80,
       show_on_leaderboard: !!document.getElementById('profileLeaderboardVisibility')?.checked
     };
+
+    const interfaceLang = document.getElementById('profileInterfaceLangSelect')?.value;
+    if (interfaceLang && interfaceLang !== this.currentLang) {
+      this.setAppLanguage(interfaceLang, false);
+    }
 
     try {
       const res = await this.apiCall('/api/profile/update', 'POST', payload);

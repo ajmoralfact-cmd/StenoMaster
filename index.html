@@ -560,6 +560,11 @@
             <span>📲</span> <span class="hide-mobile">ऐप इंस्टॉल करें</span>
           </button>
 
+          <!-- Language Quick Toggle -->
+          <button class="lang-toggle-btn" id="langToggleBtn" onclick="stenoApp.toggleAppLanguage()" title="भाषा बदलें / Change Language" aria-label="Change Language">
+            🌐 EN
+          </button>
+
           <!-- Theme Toggle -->
           <button class="theme-toggle-btn" id="themeToggleBtn" onclick="stenoApp.toggleTheme()" title="थीम बदलें (Light/Dark)">
             🌙
@@ -584,7 +589,7 @@
 
           <!-- Logout Button -->
           <button class="btn-secondary header-logout-btn" onclick="stenoApp.logout()" title="लॉगआउट करें">
-            <span>🚪</span> <span class="hide-mobile">लॉगआउट</span>
+            <span>🚪</span> <span class="hide-mobile" data-i18n="header_logout">लॉगआउट</span>
           </button>
         </div>
       </header>
@@ -596,8 +601,8 @@
         <!-- Dashboard Section Title & Real-Time Sync Bar -->
         <div class="section-header" style="margin-bottom: 20px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
           <div>
-            <h2 class="section-title">डैशबोर्ड (Dashboard)</h2>
-            <p class="section-subtitle">आपकी दैनिक स्टेनो अभ्यास प्रगति, गति एवं सटीकता का संपूर्ण विवरण</p>
+            <h2 class="section-title" data-i18n="nav_dashboard">डैशबोर्ड (Dashboard)</h2>
+            <p class="section-subtitle" data-i18n="dash_welcome_sub">आपकी दैनिक स्टेनो अभ्यास प्रगति, गति एवं सटीकता का संपूर्ण विवरण</p>
           </div>
           <div style="display:inline-flex; align-items:center; gap:8px;">
             <span class="live-pulse-badge" id="liveSyncStatus"><span class="pulse-dot"></span> लाइव सिंक सक्रिय</span>
@@ -1013,13 +1018,13 @@
       <main class="page-view" id="view-classes">
         <div class="view-top-back-wrap" style="margin-bottom:14px;">
           <button type="button" class="view-back-strip-btn" onclick="stenoApp.goBack()" title="वापस जाएं">
-            <span class="back-icon">←</span> <span>मुख्य पृष्ठ (Home)</span>
+            <span class="back-icon">←</span> <span data-i18n="nav_back_to_dashboard">मुख्य पृष्ठ (Home)</span>
           </button>
         </div>
         <div class="section-header">
           <div>
-            <h2 class="section-title">सभी अभ्यास डिक्टेशन (All Dictation Classes)</h2>
-            <p class="section-subtitle">अपनी पसंद की भाषा, कठिनाई और श्रेणी के अनुसार अभ्यास चुनें।</p>
+            <h2 class="section-title" data-i18n="classes_title">सभी अभ्यास डिक्टेशन (All Dictation Classes)</h2>
+            <p class="section-subtitle" data-i18n="classes_subtitle">अपनी पसंद की भाषा, कठिनाई और श्रेणी के अनुसार अभ्यास चुनें।</p>
           </div>
         </div>
 
@@ -2813,9 +2818,9 @@
   <!-- Core Lightweight Scripts (charts.js & comparison_view.js?v=9.7 are lazy-loaded on demand for 50% faster startup) -->
   <script src="/js/audio_player.js?v=8.1"></script>
   <script src="/js/keyboard_map.js?v=8.1"></script>
-  <script src="/js/typing_engine.js?v=8.3"></script>
+  <script src="/js/typing_engine.js?v=12.0"></script>
   <script src="/js/ocr_service.js?v=1.1"></script>
-  <script src="/js/app.js?v=11.9"></script>
+  <script src="/js/app.js?v=12.0"></script>
   <!-- Strict Exam Hall Anti-Cheat Warning Modal -->
   <div class="modal-overlay" id="examHallWarningModal" style="z-index:99999;">
     <div class="modal-card" style="max-width: 480px; text-align:center; border:2px solid #ef4444; box-shadow:0 10px 40px rgba(239,68,68,0.3);">

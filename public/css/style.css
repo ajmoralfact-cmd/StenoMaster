@@ -562,6 +562,40 @@ body {
   color: var(--text-main);
 }
 
+.lang-toggle-btn {
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-main);
+  height: 38px;
+  padding: 0 11px;
+  border-radius: var(--radius-full);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  font-size: 0.76rem;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  user-select: none;
+  transition: all var(--transition-fast);
+}
+
+.lang-toggle-btn:hover {
+  background-color: var(--border-subtle);
+  border-color: var(--primary);
+  color: var(--primary);
+  transform: translateY(-1px);
+}
+
+@media (max-width: 640px) {
+  .lang-toggle-btn {
+    height: 32px;
+    padding: 0 8px;
+    font-size: 0.72rem;
+  }
+}
+
 .notif-badge-dot {
   position: absolute;
   top: 7px;

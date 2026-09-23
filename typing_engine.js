@@ -326,18 +326,19 @@ class StenoTypingEngine {
   updateExamModeUI() {
     const btn = document.getElementById('toggleExamModeBtn');
     if (btn) {
+      const isEn = (window.stenoApp && window.stenoApp.currentLang === 'en') || localStorage.getItem('stenomaster_app_lang') === 'en';
       if (this.examModeEnabled) {
-        btn.innerHTML = '🔒 परीक्षा मोड: ON';
+        btn.innerHTML = isEn ? '🔒 Exam Mode: ON' : '🔒 परीक्षा मोड: ON';
         btn.style.background = '#dc2626';
         btn.style.color = '#ffffff';
         btn.style.borderColor = '#b91c1c';
-        btn.title = 'सख्त परीक्षा मोड सक्रिय है (फुल-स्क्रीन, टैब सुरक्षा व 1-मिनट बीप)';
+        btn.title = isEn ? 'Strict exam mode is active (fullscreen, anti-cheat & 1-minute beep)' : 'सख्त परीक्षा मोड सक्रिय है (फुल-स्क्रीन, टैब सुरक्षा व 1-मिनट बीप)';
       } else {
-        btn.innerHTML = '🔓 परीक्षा मोड: OFF';
+        btn.innerHTML = isEn ? '🔓 Exam Mode: OFF' : '🔓 परीक्षा मोड: OFF';
         btn.style.background = '#fef2f2';
         btn.style.color = '#b91c1c';
         btn.style.borderColor = '#fecaca';
-        btn.title = 'सख्त परीक्षा हॉल मोड ऑन/ऑफ करें (फुल-स्क्रीन, एंटी-चीट व बीप)';
+        btn.title = isEn ? 'Toggle strict exam hall mode (fullscreen, anti-cheat & beep)' : 'सख्त परीक्षा हॉल मोड ऑन/ऑफ करें (फुल-स्क्रीन, एंटी-चीट व बीप)';
       }
     }
   }
@@ -382,7 +383,8 @@ class StenoTypingEngine {
     const btn = document.getElementById('practiceFullscreenBtn');
     if (!btn) return;
     const isFull = Boolean(document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement);
-    btn.innerHTML = isFull ? '✕ सामान्य स्क्रीन' : '📺 फुल-स्क्रीन';
+    const isEn = (window.stenoApp && window.stenoApp.currentLang === 'en') || localStorage.getItem('stenomaster_app_lang') === 'en';
+    btn.innerHTML = isFull ? (isEn ? '✕ Normal Screen' : '✕ सामान्य स्क्रीन') : (isEn ? '📺 Full Screen' : '📺 फुल-स्क्रीन');
     btn.classList.toggle('active', isFull);
     if (isFull) {
       btn.style.background = '#0284c7';
@@ -407,13 +409,14 @@ class StenoTypingEngine {
     this.otgMode = !this.otgMode;
     localStorage.setItem('stenomaster_otg_mode', this.otgMode ? 'true' : 'false');
     this.applyOtgMode();
+    const isEn = (window.stenoApp && window.stenoApp.currentLang === 'en') || localStorage.getItem('stenomaster_app_lang') === 'en';
     if (this.otgMode) {
       if (window.stenoApp && typeof window.stenoApp.showToast === 'function') {
-        window.stenoApp.showToast('⌨️ OTG कीबोर्ड मोड ON: ऑन-स्क्रीन कीबोर्ड छुपा दिया गया है। अपने फिजिकल कीबोर्ड से टाइप करें!', 'success');
+        window.stenoApp.showToast(isEn ? '⌨️ OTG Keyboard Mode ON: On-screen keyboard hidden. Type with your physical keyboard!' : '⌨️ OTG कीबोर्ड मोड ON: ऑन-स्क्रीन कीबोर्ड छुपा दिया गया है। अपने फिजिकल कीबोर्ड से टाइप करें!', 'success');
       }
     } else {
       if (window.stenoApp && typeof window.stenoApp.showToast === 'function') {
-        window.stenoApp.showToast('📱 ऑन-स्क्रीन टच कीबोर्ड सक्रिय है।', 'info');
+        window.stenoApp.showToast(isEn ? '📱 On-screen touch keyboard is active.' : '📱 ऑन-स्क्रीन टच कीबोर्ड सक्रिय है।', 'info');
       }
     }
   }
@@ -431,20 +434,21 @@ class StenoTypingEngine {
     }
 
     if (btn) {
+      const isEn = (window.stenoApp && window.stenoApp.currentLang === 'en') || localStorage.getItem('stenomaster_app_lang') === 'en';
       if (this.otgMode) {
         btn.classList.add('active');
         btn.innerHTML = '⌨️ OTG: ON';
         btn.style.background = '#10b981';
         btn.style.color = '#ffffff';
         btn.style.borderColor = '#059669';
-        btn.title = 'OTG फिजिकल कीबोर्ड मोड चालू है (सॉफ्ट कीबोर्ड छिपा है)';
+        btn.title = isEn ? 'OTG physical keyboard mode active (soft keyboard hidden)' : 'OTG फिजिकल कीबोर्ड मोड चालू है (सॉफ्ट कीबोर्ड छिपा है)';
       } else {
         btn.classList.remove('active');
         btn.innerHTML = '⌨️ OTG: OFF';
         btn.style.background = '';
         btn.style.color = '';
         btn.style.borderColor = '';
-        btn.title = 'OTG फिजिकल कीबोर्ड मोड चालू करने के लिए क्लिक करें';
+        btn.title = isEn ? 'Click to enable OTG physical keyboard mode' : 'OTG फिजिकल कीबोर्ड मोड चालू करने के लिए क्लिक करें';
       }
     }
 

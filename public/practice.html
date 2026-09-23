@@ -88,7 +88,7 @@
         <div class="header-left">
           <button class="header-back-btn" id="headerBackBtn" onclick="window.history.length > 1 ? window.history.back() : window.location.href = '/'" style="display:inline-flex;" title="वापस जाएं (Go Back)" aria-label="Go Back">
             <span class="back-arrow">←</span>
-            <span class="back-text">वापस</span>
+            <span class="back-text" data-i18n="header_back">वापस</span>
           </button>
           <button class="three-dot-btn" id="navToggleBtn" onclick="stenoApp.toggleSidebar()" aria-label="Open navigation menu" aria-expanded="false">
             <span class="three-dots-icon">⋮</span>
@@ -108,6 +108,7 @@
             <span>🔥</span>
             <span id="userStreakCount">0 Day Streak</span>
           </div>
+          <button class="lang-toggle-btn" id="langToggleBtn" onclick="stenoApp.toggleAppLanguage()" title="भाषा बदलें / Change Language" aria-label="Change Language">🌐 EN</button>
           <button class="theme-toggle-btn" id="themeToggleBtn" onclick="stenoApp.toggleTheme()" title="थीम बदलें (Light/Dark)">🌙</button>
           <button class="user-profile-btn" onclick="window.location.href='/profile'" title="मेरी प्रोफ़ाइल">
             <div class="user-avatar" id="headerUserAvatar">S</div>
@@ -117,7 +118,7 @@
             </div>
           </button>
           <button class="btn-secondary header-logout-btn" onclick="stenoApp.logout()" title="लॉगआउट करें">
-            <span>🚪</span> <span class="hide-mobile">लॉगआउट</span>
+            <span>🚪</span> <span class="hide-mobile" data-i18n="header_logout">लॉगआउट</span>
           </button>
         </div>
       </header>
@@ -128,7 +129,7 @@
       <main class="page-view active" id="view-practice">
         <div class="practice-container">
           <div class="practice-header-bar">
-            <button class="back-btn" onclick="window.history.length > 1 ? window.history.back() : window.location.href = '/'">
+            <button class="back-btn" onclick="window.history.length > 1 ? window.history.back() : window.location.href = '/'" data-i18n="practice_back">
               ← वापस कक्षाओं पर जाएं (Back)
             </button>
             <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
@@ -169,7 +170,7 @@
               <div class="wpm-speeder-top">
                 <div class="wpm-title-group">
                   <span class="wpm-speed-icon">⚡</span>
-                  <span class="wpm-label">डिक्टेशन गति (Speed):</span>
+                  <span class="wpm-label" data-i18n="practice_speed_label">डिक्टेशन गति (Speed):</span>
                   <strong id="wpmSpeederValue" class="wpm-val-badge">80 WPM</strong>
                   <span id="wpmMultiplierBadge" class="wpm-mult-badge">(1.00x • मूल 80 WPM)</span>
                 </div>
@@ -259,9 +260,9 @@
                 </div>
 
                 <div class="editor-live-stats">
-                  <div class="stat-pill">शब्द (Words): <strong id="liveWordCount">0</strong></div>
-                  <div class="stat-pill">वर्ण (Chars): <strong id="liveCharCount">0</strong></div>
-                  <div class="stat-pill" style="color:var(--primary);">समय: <strong id="liveTimerText">00:00</strong></div>
+                  <div class="stat-pill"><span data-i18n="practice_words">शब्द (Words):</span> <strong id="liveWordCount">0</strong></div>
+                  <div class="stat-pill"><span data-i18n="practice_chars">वर्ण (Chars):</span> <strong id="liveCharCount">0</strong></div>
+                  <div class="stat-pill" style="color:var(--primary);"><span data-i18n="practice_time">समय:</span> <strong id="liveTimerText">00:00</strong></div>
                 </div>
               </div>
             </div>
@@ -277,8 +278,8 @@
             <div class="editor-footer-actions">
               <div class="draft-indicator" id="draftStatusText">सहेजा गया</div>
               <div style="display:flex; gap:12px;">
-                <button class="btn-secondary" onclick="if(confirm('क्या आप टेक्स्ट खाली करना चाहते हैं?')) stenoTypingEngine.clearDraft();">🗑️ साफ़ करें</button>
-                <button class="btn-primary" id="submitPracticeBtn" onclick="stenoApp.submitPractice()" style="padding:10px 28px; font-size:1rem;">🚀 सबमिट करें (Submit)</button>
+                <button class="btn-secondary" onclick="if(confirm('क्या आप टेक्स्ट खाली करना चाहते हैं?')) stenoTypingEngine.clearDraft();" data-i18n="practice_clear">🗑️ साफ़ करें</button>
+                <button class="btn-primary" id="submitPracticeBtn" onclick="stenoApp.submitPractice()" style="padding:10px 28px; font-size:1rem;" data-i18n="practice_submit">🚀 सबमिट करें (Submit)</button>
               </div>
             </div>
           </div>
@@ -291,7 +292,7 @@
       <main class="page-view" id="view-result">
         <div class="view-top-back-wrap" style="margin-bottom:14px;">
           <button type="button" class="view-back-strip-btn" onclick="stenoApp.goBack()" title="वापस जाएं">
-            <span class="back-icon">←</span> <span>वापस जाएं (Back)</span>
+            <span class="back-icon">←</span> <span data-i18n="practice_back">वापस जाएं (Back)</span>
           </button>
         </div>
         <div class="practice-container" id="resultReportContainer">
@@ -465,9 +466,9 @@
   <script defer src="https://sdk.cashfree.com/js/v3/cashfree.js"></script>
   <script src="/js/audio_player.js?v=8.1"></script>
   <script src="/js/keyboard_map.js?v=8.1"></script>
-  <script src="/js/typing_engine.js?v=8.3"></script>
+  <script src="/js/typing_engine.js?v=12.0"></script>
   <script src="/js/ocr_service.js?v=1.1"></script>
-  <script src="/js/app.js?v=11.9"></script>
+  <script src="/js/app.js?v=12.0"></script>
 
   <!-- Practice Page Bootstrap -->
   <script>

@@ -85,7 +85,7 @@
         <div class="header-left">
           <button class="header-back-btn" id="headerBackBtn" onclick="window.history.length > 1 ? window.history.back() : window.location.href = '/'" style="display:inline-flex;" title="वापस जाएं (Go Back)" aria-label="Go Back">
             <span class="back-arrow">←</span>
-            <span class="back-text">वापस</span>
+            <span class="back-text" data-i18n="header_back">वापस</span>
           </button>
           <button class="three-dot-btn" id="navToggleBtn" onclick="stenoApp.toggleSidebar()" aria-label="Open navigation menu" aria-expanded="false">
             <span class="three-dots-icon">⋮</span>
@@ -105,6 +105,7 @@
             <span>🔥</span>
             <span id="userStreakCount">0 Day Streak</span>
           </div>
+          <button class="lang-toggle-btn" id="langToggleBtn" onclick="stenoApp.toggleAppLanguage()" title="भाषा बदलें / Change Language" aria-label="Change Language">🌐 EN</button>
           <button class="theme-toggle-btn" id="themeToggleBtn" onclick="stenoApp.toggleTheme()" title="थीम बदलें (Light/Dark)">🌙</button>
           <button class="user-profile-btn" id="headerUserBtn" onclick="window.location.href='/profile'" title="मेरी प्रोफ़ाइल">
             <div class="user-avatar" id="headerUserAvatar">S</div>
@@ -114,7 +115,7 @@
             </div>
           </button>
           <button class="btn-secondary header-logout-btn" id="headerLogoutBtn" onclick="stenoApp.logout()" title="लॉगआउट करें">
-            <span>🚪</span> <span class="hide-mobile">लॉगआउट</span>
+            <span>🚪</span> <span class="hide-mobile" data-i18n="header_logout">लॉगआउट</span>
           </button>
         </div>
       </header>
@@ -273,8 +274,8 @@
                     <div class="profile-box-header">
                       <div class="profile-box-icon-wrap icon-purple">🎯</div>
                       <div>
-                        <h3 class="profile-box-title">परीक्षा लक्ष्य व टंकण वरीयताएँ</h3>
-                        <p class="profile-box-subtitle">अपनी तैयारी अनुसार लक्ष्य परीक्षा, भाषा, फॉन्ट व गति चुनें</p>
+                        <h3 class="profile-box-title" data-i18n="profile_box2_title">परीक्षा लक्ष्य व टंकण वरीयताएँ</h3>
+                        <p class="profile-box-subtitle" data-i18n="profile_box2_sub">अपनी तैयारी अनुसार लक्ष्य परीक्षा, भाषा, फॉन्ट व गति चुनें</p>
                       </div>
                     </div>
 
@@ -323,6 +324,19 @@
                         </select>
                       </div>
 
+                      <div class="form-group" style="margin:0;">
+                        <label class="form-label" style="font-size:0.82rem; font-weight:700;" data-i18n="label_interface_lang">
+                          🌐 वेबसाइट इंटरफ़ेस भाषा (Website Interface Language):
+                        </label>
+                        <select id="profileInterfaceLangSelect" class="form-select" onchange="stenoApp.setAppLanguage(this.value)">
+                          <option value="hi" data-i18n="opt_lang_hi">हिंदी + English (Default / डिफ़ॉल्ट)</option>
+                          <option value="en" data-i18n="opt_lang_en">English (Pure English Interface)</option>
+                        </select>
+                        <small style="color:var(--text-muted); font-size:0.75rem; display:block; margin-top:4px;" data-i18n="help_interface_lang">
+                          💡 डिक्टेशन पैसेज, ऑडियो व हिंदी टाइपिंग हमेशा मूल हिंदी में ही रहेंगे। केवल वेबसाइट के मेनू व बटन बदलेंगे।
+                        </small>
+                      </div>
+
                       <div class="form-group" style="display:flex; align-items:center; gap:8px; margin:4px 0 0 0; background:rgba(99,102,241,0.06); padding:10px 14px; border-radius:12px; border:1px solid rgba(99,102,241,0.18);">
                         <input type="checkbox" id="profileLeaderboardVisibility" style="width:18px; height:18px; cursor:pointer;">
                         <label for="profileLeaderboardVisibility" style="font-size:0.82rem; font-weight:600; cursor:pointer; margin:0;">
@@ -334,7 +348,7 @@
 
                   <div class="profile-box-footer" style="margin-top:16px;">
                     <button type="submit" class="btn-box-action btn-purple" id="btnSaveProfile">
-                      <span>💾</span> <span>प्रोफ़ाइल विवरण सहेजें (Save Changes)</span>
+                      <span>💾</span> <span data-i18n="btn_save_profile">प्रोफ़ाइल विवरण सहेजें (Save Changes)</span>
                     </button>
                   </div>
                 </div>
@@ -456,9 +470,9 @@
   <!-- Core Lightweight Scripts -->
   <script src="/js/audio_player.js?v=8.1"></script>
   <script src="/js/keyboard_map.js?v=8.1"></script>
-  <script src="/js/typing_engine.js?v=8.1"></script>
+  <script src="/js/typing_engine.js?v=12.0"></script>
   <script src="/js/ocr_service.js?v=1.1"></script>
-  <script src="/js/app.js?v=11.3"></script>
+  <script src="/js/app.js?v=12.0"></script>
 
   <!-- Profile Page Bootstrap Script -->
   <script>
