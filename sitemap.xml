@@ -1,0 +1,16 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:xhtml="http://www.w3.org/1999/xhtml"
+        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
+  <url>
+    <loc>https://steno-master-9ngn.vercel.app/</loc>
+    <lastmod>2026-09-22</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+    <image:image>
+      <image:loc>https://steno-master-9ngn.vercel.app/assets/og-banner.png</image:loc>
+      <image:title>StenoMaster — Professional Stenographer Practice &amp; Typing Platform</image:title>
+      <image:caption>Listen. Type. Improve. Master Hindi and English Shorthand with 80 and 100 WPM Audio Dictations.</image:caption>
+    </image:image>
+  </url>
+</urlset>
