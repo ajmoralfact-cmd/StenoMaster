@@ -6223,6 +6223,8 @@ ${link}`;
         this.showToast('भुगतान आरंभ विफल: ' + (err.message || ''), 'error');
       }
     }
+  }
+
   toggleOtgMode() {
     if (window.stenoTypingEngine) {
       window.stenoTypingEngine.toggleOtgMode();
