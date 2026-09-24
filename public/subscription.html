@@ -24,7 +24,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Mukta:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/css/style.css?v=11.6">
+  <link rel="stylesheet" href="/css/style.css?v=12.0">
 
   <!-- Font Preloads for Instant Hindi Typography -->
   <link rel="preload" href="/assets/fonts/Mangal.ttf" as="font" type="font/ttf" crossorigin>
@@ -554,8 +554,8 @@
   </div>
 
   <!-- Modal: Multi-Category Custom Checkout / Buy Categories -->
-  <div id="categoryCheckoutModal" class="modal-overlay" style="display:none; position:fixed; inset:0; background:rgba(15,23,42,0.78); backdrop-filter:blur(6px); z-index:99999; justify-content:center; align-items:center; padding:16px;">
-    <div style="background:var(--bg-card, #ffffff); width:100%; max-width:540px; border-radius:20px; box-shadow:0 25px 50px -12px rgba(0,0,0,0.4); overflow:hidden; border:1px solid var(--border, #e2e8f0); animation:scaleUp 0.2s cubic-bezier(0.16, 1, 0.3, 1); max-height:90vh; display:flex; flex-direction:column;">
+  <div id="categoryCheckoutModal" class="modal-overlay" onclick="if(event.target===this) stenoApp.closeCategoryCheckoutModal()" style="display:none; position:fixed; inset:0; background:rgba(15,23,42,0.78); backdrop-filter:blur(6px); z-index:999999; justify-content:center; align-items:center; padding:16px; pointer-events:auto;">
+    <div class="modal-card" style="background:var(--bg-card, #ffffff); width:100%; max-width:540px; border-radius:20px; box-shadow:0 25px 50px -12px rgba(0,0,0,0.4); overflow:hidden; border:1px solid var(--border, #e2e8f0); animation:scaleUp 0.2s cubic-bezier(0.16, 1, 0.3, 1); max-height:90vh; display:flex; flex-direction:column; pointer-events:auto; padding:0 !important;">
       <div style="background:linear-gradient(135deg, #1e293b, #0f172a); color:#fff; padding:18px 22px; display:flex; align-items:center; justify-content:space-between; border-bottom:2px solid #2563eb;">
         <div style="display:flex; align-items:center; gap:10px;">
           <span style="font-size:1.6rem;">🛒</span>

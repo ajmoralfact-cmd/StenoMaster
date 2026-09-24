@@ -1502,7 +1502,9 @@ class StenoApp {
     }
 
     if (modal) {
+      modal.classList.add('active');
       modal.style.display = 'flex';
+      document.body.style.overflow = 'hidden';
       setTimeout(() => {
         if (idInput) idInput.focus();
       }, 50);
@@ -1511,7 +1513,11 @@ class StenoApp {
 
   closeForgotPassword() {
     const modal = document.getElementById('forgotPasswordModal');
-    if (modal) modal.style.display = 'none';
+    if (modal) {
+      modal.classList.remove('active');
+      modal.style.display = 'none';
+      document.body.style.overflow = '';
+    }
   }
 
   backToForgotStep1() {
@@ -5704,13 +5710,19 @@ ${link}`;
       `;
     }).join('');
 
+    modal.classList.add('active');
     modal.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
     this.updateCheckoutTotal();
   }
 
   closeCategoryCheckoutModal() {
     const modal = document.getElementById('categoryCheckoutModal');
-    if (modal) modal.style.display = 'none';
+    if (modal) {
+      modal.classList.remove('active');
+      modal.style.display = 'none';
+      document.body.style.overflow = '';
+    }
   }
 
   selectAllCategories() {
@@ -5869,7 +5881,9 @@ ${link}`;
     if (chipFont) chipFont.textContent = `🔤 ${fontMode === 'kruti_dev_010' ? 'कृति देव' : 'मंगल'}`;
 
     if (modal) {
+      modal.classList.add('active');
       modal.style.display = 'flex';
+      document.body.style.overflow = 'hidden';
       setTimeout(() => {
         if (input) {
           input.focus();
@@ -5881,7 +5895,11 @@ ${link}`;
 
   closeSaveCustomClassModal() {
     const modal = document.getElementById('saveCustomClassModal');
-    if (modal) modal.style.display = 'none';
+    if (modal) {
+      modal.classList.remove('active');
+      modal.style.display = 'none';
+      document.body.style.overflow = '';
+    }
   }
 
   async confirmSaveCustomClass() {

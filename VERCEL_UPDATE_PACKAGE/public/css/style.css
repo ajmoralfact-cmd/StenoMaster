@@ -2076,14 +2076,22 @@ body {
   -webkit-backdrop-filter: blur(6px) !important;
   z-index: 999999 !important;
   display: none;
-  pointer-events: none !important;
+  pointer-events: auto !important;
   align-items: center !important;
   justify-content: center !important;
   padding: 16px !important;
 }
 
-.modal-overlay.active {
+.modal-overlay.active,
+.modal-overlay[style*="display: flex"],
+.modal-overlay[style*="display:flex"],
+.modal-overlay[style*="display: block"],
+.modal-overlay[style*="display:block"] {
   display: flex !important;
+  pointer-events: auto !important;
+}
+
+.modal-overlay > * {
   pointer-events: auto !important;
 }
 
