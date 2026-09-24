@@ -687,6 +687,35 @@ class StenoApp {
     }
 
     if ('serviceWorker' in navigator) {
+      const CURRENT_SW_VERSION = 'v12.2';
+
+      // Step 1: Unregister ALL stale/old service workers first
+      navigator.serviceWorker.getRegistrations().then((registrations) => {
+        const staleUnregistrations = registrations.filter((reg) => {
+          const swUrl = reg.active?.scriptURL || reg.installing?.scriptURL || reg.waiting?.scriptURL || '';
+          // Keep only registrations pointing to our current version
+          return !swUrl.includes(CURRENT_SW_VERSION);
+        });
+        if (staleUnregistrations.length > 0) {
+          console.log(`[SW] Unregistering ${staleUnregistrations.length} stale service worker(s)...`);
+          Promise.all(staleUnregistrations.map((reg) => reg.unregister()))
+            .then(() => {
+              // Clear ALL stale caches
+              if ('caches' in window) {
+                caches.keys().then((keys) => {
+                  keys.forEach((key) => {
+                    if (!key.includes('v12.2')) {
+                      caches.delete(key);
+                      console.log('[SW] Cleared stale cache:', key);
+                    }
+                  });
+                });
+              }
+            });
+        }
+      }).catch(() => {});
+
+      // Step 2: Register the current SW
       navigator.serviceWorker.register('/service-worker.js?v=12.2')
         .then((reg) => {
           reg.update().catch(() => {});
