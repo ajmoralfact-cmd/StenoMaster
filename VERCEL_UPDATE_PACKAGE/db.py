@@ -1421,14 +1421,25 @@ def create_session(user_id: int, ip_address: Optional[str] = None, user_agent: O
 
     # Single-Device Concurrent Login Prevention:
     # Invalidate any previously active sessions for this user with details of the new login
-    c.execute("""
-        UPDATE sessions
-        SET is_active = 0,
-            invalidated_reason = 'concurrent_login',
-            superseded_by_ip = ?,
-            superseded_at = ?
-        WHERE user_id = ? AND is_active = 1
-    """, (ip_clean, now_iso, user_id))
+    # (Admins and demo student account are exempt to prevent testing locks and multi-tab admin drops)
+    c.execute("SELECT role, email FROM users WHERE id = ?", (user_id,))
+    u_row = c.fetchone()
+    is_exempt = False
+    if u_row:
+        u_role = u_row['role'] if isinstance(u_row, dict) else u_row[0]
+        u_email = (u_row['email'] if isinstance(u_row, dict) else u_row[1]) or ''
+        if u_role == 'admin' or u_email.lower() == 'student@stenomaster.com':
+            is_exempt = True
+
+    if not is_exempt:
+        c.execute("""
+            UPDATE sessions
+            SET is_active = 0,
+                invalidated_reason = 'concurrent_login',
+                superseded_by_ip = ?,
+                superseded_at = ?
+            WHERE user_id = ? AND is_active = 1
+        """, (ip_clean, now_iso, user_id))
 
     # Insert new active session
     c.execute("""

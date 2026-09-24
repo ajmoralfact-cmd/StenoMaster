@@ -687,7 +687,7 @@ class StenoApp {
     }
 
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/service-worker.js?v=9.0')
+      navigator.serviceWorker.register('/service-worker.js?v=12.2')
         .then((reg) => {
           reg.update().catch(() => {});
           reg.addEventListener('updatefound', () => {
@@ -1234,7 +1234,7 @@ class StenoApp {
     const password = passInput.value;
 
     if (!email || !password) {
-      if (errBox) { errBox.style.display = 'flex'; errBox.textContent = 'Password is required.'; }
+      if (errBox) { errBox.style.display = 'flex'; errBox.textContent = 'कृपया आईडी/ईमेल और पासवर्ड दोनों दर्ज करें। (ID and password required)'; }
       return;
     }
 
@@ -1267,8 +1267,13 @@ class StenoApp {
 
       this.hideAuthGateway();
       this.updateUserUI();
-      await this.loadCategories();
-      await this.loadPassages();
+
+      // Hydrate categories and passages in background without blocking successful login
+      try {
+        await Promise.all([this.loadCategories(), this.loadPassages()]);
+      } catch (hydrateErr) {
+        console.warn('Background data hydration warning:', hydrateErr);
+      }
 
       this.showToast(`स्वागतम्, ${this.user.display_name || this.user.username}! 👋`, 'success');
 
@@ -1287,7 +1292,7 @@ class StenoApp {
       }
       this.restoreRouteOnLoad(targetRoute);
     } catch (err) {
-      const msg = err.status === 401 ? 'Invalid username or password.' : (err.message || 'Login failed.');
+      const msg = err.status === 401 ? 'गलत ईमेल/यूज़रनेम अथवा पासवर्ड। (Invalid username or password)' : (err.message || 'लॉगिन विफल रहा। कृपया पुनः प्रयास करें।');
       if (errBox) {
         errBox.style.display = 'flex';
         errBox.textContent = msg;
@@ -1320,13 +1325,16 @@ class StenoApp {
       this.closeModal('loginModal');
       this.hideAuthGateway();
       this.updateUserUI();
-      await this.loadCategories();
-      await this.loadPassages();
+      try {
+        await Promise.all([this.loadCategories(), this.loadPassages()]);
+      } catch (hydrateErr) {
+        console.warn('Background data hydration warning:', hydrateErr);
+      }
       this.showToast(`स्वागतम्, ${this.user.display_name || this.user.username}! 👋`, 'success');
       // Stay in Student Portal on successful student login
       this.navigate('home');
     } catch (err) {
-      const msg = err.status === 401 ? 'गलत ईमेल/यूज़रनेम अथवा पासवर्ड।' : (err.message || 'लॉगिन विफल रहा।');
+      const msg = err.status === 401 ? 'गलत ईमेल/यूज़रनेम अथवा पासवर्ड। (Invalid credentials)' : (err.message || 'लॉगिन विफल रहा।');
       this.showToast(msg, 'error');
     }
   }
@@ -1343,7 +1351,7 @@ class StenoApp {
     const password = passInput.value;
 
     if (!email || !password) {
-      if (errBox) { errBox.style.display = 'flex'; errBox.textContent = 'Password is required.'; }
+      if (errBox) { errBox.style.display = 'flex'; errBox.textContent = 'कृपया एडमिन ईमेल और पासवर्ड दोनों दर्ज करें। (Admin credentials required)'; }
       return;
     }
 
@@ -1359,7 +1367,7 @@ class StenoApp {
       // Strict Server-Side Role Enforcement
       if (!res.user || res.user.role !== 'admin') {
         // Reject student attempting to use admin portal
-        throw new Error('This account does not have administrator access.');
+        throw new Error('इस खाते को एडमिन एक्सेस की अनुमति नहीं है। (Admin access denied)');
       }
 
       this.token = res.token;
@@ -1389,7 +1397,7 @@ class StenoApp {
       window.location.href = '/admin.html';
       return;
     } catch (err) {
-      const msg = err.status === 401 ? 'Invalid username or password.' : (err.message || 'Admin authentication failed.');
+      const msg = err.status === 401 ? 'गलत एडमिन ईमेल अथवा पासवर्ड। (Invalid admin credentials)' : (err.message || 'एडमिन प्रमाणीकरण विफल रहा। (Admin authentication failed)');
       if (errBox) {
         errBox.style.display = 'flex';
         errBox.textContent = msg;
