@@ -1602,6 +1602,19 @@ def verify_session(token: str) -> Optional[Dict[str, Any]]:
         res['subscription_days_left'] = 0
         res['is_premium'] = False
 
+    # Fetch unlocked category IDs for user
+    try:
+        c.execute("SELECT category_id, expires_at FROM user_unlocked_categories WHERE user_id = ?", (res['user_id'],))
+        unlocked_cids = []
+        for ur in c.fetchall():
+            ur_dict = dict(ur)
+            exp = ur_dict.get('expires_at')
+            if not exp or not is_expired_datetime(exp):
+                unlocked_cids.append(int(ur_dict['category_id']))
+        res['unlocked_category_ids'] = unlocked_cids
+    except Exception as e:
+        res['unlocked_category_ids'] = []
+
     conn.close()
     return res
 
@@ -1685,13 +1698,11 @@ def is_passage_accessible(user_id: Optional[int], passage_id: int) -> bool:
     try:
         conn = get_db()
         c = conn.cursor()
-        c.execute("SELECT category_id, is_premium FROM passages WHERE id = ?", (passage_id,))
+        c.execute("SELECT category_id FROM passages WHERE id = ?", (passage_id,))
         p_row = c.fetchone()
         conn.close()
         if p_row:
             p_dict = dict(p_row)
-            if not p_dict.get('is_premium', 0):
-                return True
             cat_id = p_dict.get('category_id')
             if cat_id and is_category_unlocked_for_user(user_id, cat_id):
                 return True
@@ -1864,8 +1875,9 @@ def get_passages(
     c.execute("SELECT id FROM passages WHERE status = 'published' ORDER BY id ASC LIMIT 2")
     free_ids = {r["id"] for r in c.fetchall()}
 
-    # Check pro status using current cursor
+    # Check pro status and category unlocks using current cursor
     user_has_pro = False
+    unlocked_category_ids = set()
     if user_id:
         c.execute("SELECT role, subscription_status, subscription_end, is_free_access FROM users WHERE id = ?", (user_id,))
         u_row = c.fetchone()
@@ -1875,6 +1887,13 @@ def get_passages(
             elif u_row["subscription_status"] == "active":
                 if not u_row["subscription_end"] or not is_expired_datetime(u_row["subscription_end"]):
                     user_has_pro = True
+        if not user_has_pro:
+            c.execute("SELECT category_id, expires_at FROM user_unlocked_categories WHERE user_id = ?", (user_id,))
+            for ur in c.fetchall():
+                ur_dict = dict(ur)
+                exp = ur_dict.get('expires_at')
+                if not exp or not is_expired_datetime(exp):
+                    unlocked_category_ids.add(int(ur_dict['category_id']))
 
     conn.close()
 
@@ -1885,6 +1904,11 @@ def get_passages(
         dur_sec = item.get('duration_seconds') or 300
         off_text = item.get('official_text') or ''
         word_count = len(off_text.split()) if off_text.strip() else max(1, int(round(target_wpm * dur_sec / 60)))
+
+        cat_id = item.get('category_id')
+        is_cat_unlocked = user_has_pro or (cat_id in unlocked_category_ids)
+        is_free_tier = (item['id'] in free_ids) or is_cat_unlocked
+        is_locked = False if is_cat_unlocked else (item['id'] not in free_ids)
 
         if summary:
             clean_item = {
@@ -1902,8 +1926,8 @@ def get_passages(
                 'tags': item.get('tags') or '',
                 'is_premium': bool(item.get('is_premium')),
                 'typing_system': item.get('typing_system') or 'dual',
-                'is_free_tier': item['id'] in free_ids,
-                'is_locked': False if user_has_pro else (item['id'] not in free_ids),
+                'is_free_tier': is_free_tier,
+                'is_locked': is_locked,
                 'is_bookmarked': bool(item.get('is_bookmarked')),
                 'best_wpm': item.get('best_wpm'),
                 'best_accuracy': item.get('best_accuracy')
@@ -1914,8 +1938,8 @@ def get_passages(
             item['word_count'] = word_count
             item['official_mangal_text'] = item.get('official_text')
             item['official_kruti_dev_text'] = item.get('official_text_krutidev')
-            item['is_free_tier'] = item['id'] in free_ids
-            item['is_locked'] = False if user_has_pro else (item['id'] not in free_ids)
+            item['is_free_tier'] = is_free_tier
+            item['is_locked'] = is_locked
             result.append(item)
     return result
 
@@ -1970,8 +1994,10 @@ def get_passage_detail(passage_id: int, user_id: Optional[int] = None, include_o
         res_dict['official_kruti_dev_text'] = res_dict.get('official_text_krutidev')
         free_ids = set(get_free_passage_ids(2))
         user_has_pro = is_user_premium(user_id) if user_id else False
-        res_dict['is_free_tier'] = res_dict['id'] in free_ids
-        res_dict['is_locked'] = False if user_has_pro else (res_dict['id'] not in free_ids)
+        p_cat_id = res_dict.get('category_id')
+        is_cat_unlocked = user_has_pro or (p_cat_id and is_category_unlocked_for_user(user_id, p_cat_id))
+        res_dict['is_free_tier'] = (res_dict['id'] in free_ids) or is_cat_unlocked
+        res_dict['is_locked'] = False if is_cat_unlocked else (res_dict['id'] not in free_ids)
         conn.close()
         return res_dict
 
@@ -2958,10 +2984,37 @@ def get_admin_users() -> List[Dict[str, Any]]:
         ORDER BY u.id ASC
     """)
     rows = [dict(r) for r in c.fetchall()]
+
+    # Fetch active unlocked categories for all subscribers
+    unlocked_map = {}
+    try:
+        c.execute("""
+            SELECT uuc.user_id, uuc.category_id, uuc.expires_at, c.name as category_name
+            FROM user_unlocked_categories uuc
+            JOIN categories c ON uuc.category_id = c.id
+        """)
+        for ur in c.fetchall():
+            ur_dict = dict(ur)
+            exp = ur_dict.get('expires_at')
+            if not exp or not is_expired_datetime(exp):
+                uid = ur_dict['user_id']
+                if uid not in unlocked_map:
+                    unlocked_map[uid] = []
+                unlocked_map[uid].append({
+                    'category_id': ur_dict['category_id'],
+                    'category_name': ur_dict['category_name']
+                })
+    except Exception as e:
+        print(f"get_admin_users category fetch error: {e}")
+
     conn.close()
 
     now_dt = datetime.now()
     for r in rows:
+        uid = r['id']
+        u_cats = unlocked_map.get(uid, [])
+        r['unlocked_category_ids'] = [x['category_id'] for x in u_cats]
+        r['unlocked_categories'] = u_cats
         r["is_free_access"] = bool(r.get("is_free_access", 0))
         if r["role"] == "admin":
             r["effective_status"] = "admin"
@@ -3373,9 +3426,13 @@ def is_user_premium(user_id: int) -> bool:
     if not user:
         conn.close()
         return False
-    if user["role"] == "admin":
+    if user["role"] == "admin" or bool(user.get("is_free_access")):
         conn.close()
         return True
+
+    if user.get("subscription_status") != "active":
+        conn.close()
+        return False
 
     end_val = user.get("subscription_end")
     if end_val:
@@ -3388,9 +3445,8 @@ def is_user_premium(user_id: int) -> bool:
             conn.close()
             return True
 
-    if user.get("subscription_status") == "active":
-        conn.close()
-        return True
+    conn.close()
+    return True
 
     conn.close()
     return False
@@ -4374,16 +4430,16 @@ def is_category_unlocked_for_user(user_id: Optional[int], category_id: int) -> b
         return False
     conn = get_db()
     c = conn.cursor()
-    c.execute("SELECT is_premium, premium_until, role FROM users WHERE id = ?", (user_id,))
+    c.execute("SELECT role, is_free_access, subscription_status, subscription_end FROM users WHERE id = ?", (user_id,))
     u_row = c.fetchone()
     if u_row:
         u_dict = dict(u_row)
-        if u_dict.get('role') == 'admin':
+        if u_dict.get('role') == 'admin' or bool(u_dict.get('is_free_access')):
             conn.close()
             return True
-        if u_dict.get('is_premium'):
-            until = u_dict.get('premium_until')
-            if not until or not is_expired_datetime(until):
+        if u_dict.get('subscription_status') == 'active':
+            sub_end = u_dict.get('subscription_end')
+            if not sub_end or not is_expired_datetime(sub_end):
                 conn.close()
                 return True
     c.execute("""
@@ -4399,6 +4455,91 @@ def is_category_unlocked_for_user(user_id: Optional[int], category_id: int) -> b
     if exp and is_expired_datetime(exp):
         return False
     return True
+
+
+def admin_grant_category_access(
+    user_id: int,
+    category_ids: List[int],
+    days: int = 30,
+    admin_id: int = 1,
+    notes: str = ""
+) -> Dict[str, Any]:
+    """
+    Admin grants or syncs free access for selected categories for a student.
+    Sets records in user_unlocked_categories, notifies the student, and invalidates category cache.
+    """
+    invalidate_categories_cache()
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("SELECT id, username, email FROM users WHERE id = ?", (user_id,))
+    user = c.fetchone()
+    if not user:
+        conn.close()
+        return {"success": False, "error": "छात्र नहीं मिला (User not found)"}
+
+    now_dt = datetime.now()
+    now_iso = now_dt.isoformat()
+
+    if days >= 9999:
+        expires_iso = None
+        duration_label = "लाइफटाइम (Lifetime)"
+    else:
+        expires_dt = now_dt + timedelta(days=days)
+        expires_iso = expires_dt.isoformat()
+        duration_label = f"{days} दिन"
+
+    # Category names lookup
+    c.execute("SELECT id, name FROM categories")
+    cat_rows = c.fetchall()
+    cat_map = {r['id']: r['name'] for r in cat_rows}
+
+    # Delete existing unlocked categories for this user that are not in the new category_ids list
+    clean_cat_ids = [int(cid) for cid in category_ids if cid]
+    if clean_cat_ids:
+        placeholders = ','.join(['?'] * len(clean_cat_ids))
+        c.execute(f"DELETE FROM user_unlocked_categories WHERE user_id = ? AND category_id NOT IN ({placeholders})", [user_id] + clean_cat_ids)
+    else:
+        c.execute("DELETE FROM user_unlocked_categories WHERE user_id = ?", (user_id,))
+
+    granted_names = []
+    for cat_id in clean_cat_ids:
+        try:
+            c.execute("""
+                INSERT INTO user_unlocked_categories (user_id, category_id, order_id, expires_at, created_at)
+                VALUES (?, ?, ?, ?, ?)
+                ON CONFLICT (user_id, category_id) DO UPDATE SET 
+                    order_id = excluded.order_id,
+                    expires_at = excluded.expires_at
+            """, (user_id, cat_id, f"ADMIN_GRANT_{admin_id}", expires_iso, now_iso))
+            if cat_id in cat_map:
+                granted_names.append(cat_map[cat_id])
+        except Exception as e:
+            print(f"Error unlocking category {cat_id} for user {user_id}: {e}")
+
+    cat_list_str = ", ".join(granted_names) if granted_names else "कोई नहीं"
+
+    if clean_cat_ids:
+        # Add notification for student
+        c.execute("""
+            INSERT INTO notifications (user_id, title, message, type, created_at)
+            VALUES (?, '🎯 विशेष कैटेगरीज निःशुल्क सक्रिय!', ?, 'success', ?)
+        """, (
+            user_id,
+            f"आपको {len(granted_names)} कैटेगरीज ({cat_list_str}) की निःशुल्क एक्सेस प्रदान की गई है ({duration_label})।",
+            now_iso
+        ))
+
+    conn.commit()
+    conn.close()
+
+    return {
+        "success": True,
+        "user_id": user_id,
+        "granted_categories": granted_names,
+        "category_ids": clean_cat_ids,
+        "duration": duration_label,
+        "message": f"छात्र #{user_id} को {len(granted_names)} कैटेगरीज ({cat_list_str}) की फ्री एक्सेस सफलता से प्रदान की गई ({duration_label})!"
+    }
 
 
 def get_user_unlocked_category_ids(user_id: Optional[int]) -> List[int]:

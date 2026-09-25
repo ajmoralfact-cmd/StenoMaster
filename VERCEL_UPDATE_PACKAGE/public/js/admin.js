@@ -1514,6 +1514,7 @@ class StenoAdmin {
       const isFreeAccess = !!u.is_free_access;
       const isPro = u.effective_status === 'active' || isFreeAccess;
       const isExpired = u.effective_status === 'expired';
+      const hasCatAccess = !isPro && Array.isArray(u.unlocked_categories) && u.unlocked_categories.length > 0;
 
       let statusBadge = `<span class="sub-status-badge free">🆓 Free Tier</span>`;
       let daysBadge = `<span style="color:var(--text-muted);">—</span>`;
@@ -1525,6 +1526,10 @@ class StenoAdmin {
       } else if (isPro) {
         statusBadge = `<span class="sub-status-badge active-pro">👑 Active Pro</span>`;
         daysBadge = `<span style="font-weight:700; color:#d97706;">${days >= 9999 ? 'असीमित' : (days > 0 ? `${days} दिन शेष` : 'समाप्त')}</span>`;
+      } else if (hasCatAccess) {
+        const catNames = u.unlocked_categories.map(c => c.category_name).join(', ');
+        statusBadge = `<span class="sub-status-badge active-pro" style="background:#e0e7ff; color:#3730a3; border-color:#c7d2fe;" title="${this.escapeHtml(catNames)}">🎯 ${u.unlocked_categories.length} कैटेगरीज फ्री</span>`;
+        daysBadge = `<span style="font-weight:700; color:#3730a3;" title="${this.escapeHtml(catNames)}">सक्रिय</span>`;
       } else if (isExpired) {
         statusBadge = `<span class="sub-status-badge expired">⏳ Expired</span>`;
         daysBadge = `<span style="color:#dc2626; font-size:0.8rem; font-weight:600;">समाप्त</span>`;
@@ -1551,7 +1556,11 @@ class StenoAdmin {
         }
       }
 
-      const planName = u.subscription_plan || (isFreeAccess ? 'StenoMaster Pro (30 दिन फ्री)' : (isPro ? 'StenoMaster Pro' : 'Free Tier'));
+      let planName = u.subscription_plan || (isFreeAccess ? 'StenoMaster Pro (30 दिन फ्री)' : (isPro ? 'StenoMaster Pro' : 'Free Tier'));
+      if (hasCatAccess) {
+        const catNames = u.unlocked_categories.map(c => c.category_name).join(', ');
+        planName = `🎯 ${u.unlocked_categories.length} कैटेगरीज (${catNames})`;
+      }
 
       return `
         <tr>
@@ -1622,19 +1631,44 @@ class StenoAdmin {
     const daysSelect = document.getElementById('grantProDaysSelect');
     const customDaysGroup = document.getElementById('grantProCustomDaysGroup');
     const planInput = document.getElementById('grantProPlanNameInput');
+    const radioAll = document.querySelector('input[name="grantAccessScope"][value="all"]');
+    const radioCat = document.querySelector('input[name="grantAccessScope"][value="categories"]');
+    const searchInput = document.getElementById('grantCategorySearchInput');
 
     if (idInput) idInput.value = userId;
-    if (daysSelect) daysSelect.value = '30';
+    if (daysSelect) daysSelect.value = '9999';
     if (customDaysGroup) customDaysGroup.style.display = 'none';
     if (planInput) planInput.value = 'StenoMaster Pro';
+    if (searchInput) searchInput.value = '';
+
+    const user = (this.subscribersList || []).find(x => x.id === userId);
+    const unlockedCatIds = (user && Array.isArray(user.unlocked_category_ids)) ? user.unlocked_category_ids.map(Number) : [];
+
+    // Pre-populate category checklist with student's current unlocked categories
+    this.populateGrantCategories(unlockedCatIds);
+
+    // If user has unlocked categories and not full pro, default to categories scope
+    if (unlockedCatIds.length > 0 && currentStatus !== 'active' && !user?.is_free_access) {
+      if (radioCat) radioCat.checked = true;
+      this.onGrantScopeChange('categories');
+    } else {
+      if (radioAll) radioAll.checked = true;
+      this.onGrantScopeChange('all');
+    }
 
     if (infoBox) {
-      const statusText = currentStatus === 'active' ? `<span style="color:#d97706; font-weight:700;">👑 Pro सक्रिय (${daysLeft} दिन शेष)</span>` : `<span style="color:var(--text-muted);">निःशुल्क टियर (Free Tier)</span>`;
+      let statusText = `<span style="color:var(--text-muted);">निःशुल्क टियर (Free Tier)</span>`;
+      if (currentStatus === 'active' || user?.is_free_access) {
+        statusText = `<span style="color:#d97706; font-weight:700;">👑 Pro सक्रिय (${daysLeft >= 9999 ? 'असीमित' : `${daysLeft} दिन शेष`})</span>`;
+      } else if (unlockedCatIds.length > 0) {
+        statusText = `<span style="color:#2563eb; font-weight:700;">🎯 ${unlockedCatIds.length} कैटेगरीज अनलॉक्ड</span>`;
+      }
+
       infoBox.innerHTML = `
         <div><strong>छात्र:</strong> ${this.escapeHtml(userName)} (${this.escapeHtml(studentCode)})</div>
         <div style="margin-top:2px;"><strong>वर्तमान स्थिति:</strong> ${statusText}</div>
         <div style="font-size:0.78rem; color:var(--text-muted); margin-top:4px;">
-          💡 <em>नोट: यदि छात्र के पास पहले से सक्रिय दिन शेष हैं, तो नए दिन वर्तमान समाप्ति तिथि के आगे स्वतः जुड़ जाएंगे।</em>
+          💡 <em>विशिष्ट कैटेगरीज चुनने पर छात्र को केवल चुनी गई कैटेगरीज की डिक्टेशन्स फ्री में खुलेंगी।</em>
         </div>
       `;
     }
@@ -1647,6 +1681,129 @@ class StenoAdmin {
     if (group) group.style.display = val === 'custom' ? 'block' : 'none';
   }
 
+  onGrantScopeChange(val) {
+    const catGroup = document.getElementById('grantCategorySelectionGroup');
+    const planGroup = document.getElementById('grantProPlanNameGroup');
+    const cardAll = document.getElementById('grantScopeAllCard');
+    const cardCat = document.getElementById('grantScopeCatCard');
+
+    if (val === 'categories') {
+      if (catGroup) catGroup.style.display = 'block';
+      if (planGroup) planGroup.style.display = 'none';
+      if (cardCat) {
+        cardCat.style.borderColor = '#059669';
+        cardCat.style.background = 'rgba(16,185,129,0.06)';
+      }
+      if (cardAll) {
+        cardAll.style.borderColor = 'var(--border)';
+        cardAll.style.background = 'var(--bg-surface)';
+      }
+    } else {
+      if (catGroup) catGroup.style.display = 'none';
+      if (planGroup) planGroup.style.display = 'block';
+      if (cardAll) {
+        cardAll.style.borderColor = '#059669';
+        cardAll.style.background = 'rgba(16,185,129,0.06)';
+      }
+      if (cardCat) {
+        cardCat.style.borderColor = 'var(--border)';
+        cardCat.style.background = 'var(--bg-surface)';
+      }
+    }
+  }
+
+  async populateGrantCategories(selectedIds = []) {
+    const listEl = document.getElementById('grantCategoryChecklist');
+    if (!listEl) return;
+
+    let cats = this._allCategoriesCache || [];
+    if (!cats.length) {
+      try {
+        const res = await stenoApp.apiCall('/api/categories');
+        cats = res.categories || [];
+        this._allCategoriesCache = cats;
+      } catch (e) {
+        cats = [];
+      }
+    }
+
+    if (!cats.length) {
+      listEl.innerHTML = '<div style="padding:10px; color:var(--text-muted); font-size:0.8rem;">कोई कैटेगरी लोड नहीं हो सकी।</div>';
+      return;
+    }
+
+    const selSet = new Set((selectedIds || []).map(Number));
+
+    listEl.innerHTML = cats.map(c => {
+      const isChecked = selSet.has(Number(c.id));
+      const icon = this.getCategoryIconDisplay(c.icon, c.slug, c.name);
+      return `
+        <label class="grant-cat-item" data-cat-name="${this.escapeHtml((c.name || '').toLowerCase())}" style="display:flex; align-items:center; justify-content:space-between; padding:6px 10px; border-radius:6px; cursor:pointer; margin-bottom:4px; background:${isChecked ? 'rgba(16,185,129,0.08)' : 'var(--bg-subtle)'}; border:1px solid ${isChecked ? '#10b981' : 'transparent'};">
+          <div style="display:flex; align-items:center; gap:8px;">
+            <input type="checkbox" class="grant-cat-checkbox" value="${c.id}" ${isChecked ? 'checked' : ''} onchange="stenoAdmin.onGrantCatCheckboxChange(this)" style="width:16px; height:16px; cursor:pointer; accent-color:#059669;">
+            <span style="font-size:1.1rem;">${icon}</span>
+            <span style="font-size:0.84rem; font-weight:600; color:var(--text-main);">${this.escapeHtml(c.name)}</span>
+          </div>
+          <div style="display:flex; gap:6px; align-items:center;">
+            <span class="badge" style="background:var(--bg-body); font-size:0.72rem; color:var(--text-secondary);">${c.passage_count || 0} क्लासेस</span>
+          </div>
+        </label>
+      `;
+    }).join('');
+
+    this.updateGrantSelectedCount();
+  }
+
+  onGrantCatCheckboxChange(inputEl) {
+    const parent = inputEl.closest('.grant-cat-item');
+    if (parent) {
+      if (inputEl.checked) {
+        parent.style.background = 'rgba(16,185,129,0.08)';
+        parent.style.borderColor = '#10b981';
+      } else {
+        parent.style.background = 'var(--bg-subtle)';
+        parent.style.borderColor = 'transparent';
+      }
+    }
+    this.updateGrantSelectedCount();
+  }
+
+  updateGrantSelectedCount() {
+    const badge = document.getElementById('grantSelectedCountBadge');
+    const checked = document.querySelectorAll('#grantCategoryChecklist input[type="checkbox"]:checked');
+    if (badge) {
+      badge.textContent = `${checked.length} चुनी गईं`;
+      badge.style.background = checked.length > 0 ? '#10b981' : '#64748b';
+    }
+  }
+
+  selectAllGrantCategories(selectAll = true) {
+    const boxes = document.querySelectorAll('#grantCategoryChecklist input[type="checkbox"]');
+    boxes.forEach(cb => {
+      const parent = cb.closest('.grant-cat-item');
+      if (!parent || parent.style.display !== 'none') {
+        cb.checked = selectAll;
+        if (selectAll) {
+          parent.style.background = 'rgba(16,185,129,0.08)';
+          parent.style.borderColor = '#10b981';
+        } else {
+          parent.style.background = 'var(--bg-subtle)';
+          parent.style.borderColor = 'transparent';
+        }
+      }
+    });
+    this.updateGrantSelectedCount();
+  }
+
+  filterGrantCategories(query = '') {
+    const q = (query || '').toLowerCase().trim();
+    const items = document.querySelectorAll('#grantCategoryChecklist .grant-cat-item');
+    items.forEach(el => {
+      const name = el.getAttribute('data-cat-name') || '';
+      el.style.display = !q || name.includes(q) ? 'flex' : 'none';
+    });
+  }
+
   async submitGrantPro(e) {
     e.preventDefault();
     const userId = document.getElementById('grantProUserId')?.value;
@@ -1654,6 +1811,7 @@ class StenoAdmin {
     const customInput = document.getElementById('grantProCustomDaysInput')?.value;
     const planName = document.getElementById('grantProPlanNameInput')?.value.trim() || 'StenoMaster Pro';
     const notes = document.getElementById('grantProNotesInput')?.value.trim();
+    const scope = document.querySelector('input[name="grantAccessScope"]:checked')?.value || 'all';
 
     let days = parseInt(daysSelect);
     if (daysSelect === 'custom') {
@@ -1664,19 +1822,33 @@ class StenoAdmin {
       }
     }
 
+    let payload = {
+      user_id: parseInt(userId),
+      access_scope: scope,
+      days: days,
+      notes: notes
+    };
+
+    if (scope === 'categories') {
+      const checkedBoxes = Array.from(document.querySelectorAll('#grantCategoryChecklist input[type="checkbox"]:checked'));
+      const categoryIds = checkedBoxes.map(cb => parseInt(cb.value)).filter(Boolean);
+      if (categoryIds.length === 0) {
+        stenoApp.showToast('कृपया कम से कम एक कैटेगरी चुनें, या संपूर्ण प्रो का चयन करें', 'warning');
+        return;
+      }
+      payload.category_ids = categoryIds;
+    } else {
+      payload.plan_name = planName;
+    }
+
     try {
-      const res = await stenoApp.apiCall('/api/admin/users/grant-subscription', 'POST', {
-        user_id: parseInt(userId),
-        plan_name: planName,
-        days: days,
-        notes: notes
-      });
+      const res = await stenoApp.apiCall('/api/admin/users/grant-subscription', 'POST', payload);
       stenoApp.closeModal('adminGrantProModal');
-      stenoApp.showToast(res.message || 'प्रो सदस्यता सफलतापूर्वक प्रदान की गई! 🎉', 'success');
+      stenoApp.showToast(res.message || 'एक्सेस सफलतापूर्वक प्रदान की गई! 🎉', 'success');
       await this.loadSubscribers(this.currentSubFilter);
       await this.loadUsers();
     } catch (err) {
-      stenoApp.showToast('प्रो सक्रियण विफल: ' + err.message, 'error');
+      stenoApp.showToast('एक्सेस सक्रियण विफल: ' + err.message, 'error');
     }
   }
 

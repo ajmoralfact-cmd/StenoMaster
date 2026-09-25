@@ -1671,33 +1671,81 @@
 
 
   <div class="modal-overlay" id="adminGrantProModal" onclick="if(event.target===this) stenoApp.closeModal('adminGrantProModal')">
-    <div class="modal-card" style="max-width: 520px;">
+    <div class="modal-card" style="max-width: 560px; max-height: 90vh; display: flex; flex-direction: column;">
       <button class="modal-close-btn" onclick="stenoApp.closeModal('adminGrantProModal')">✕</button>
       <div style="display:flex; align-items:center; gap:10px; margin-bottom:6px;">
         <span style="font-size:1.8rem;">👑</span>
         <div>
-          <h3 class="modal-title" style="margin:0;">प्रो सदस्यता प्रदान / विस्तारित करें</h3>
-          <p class="modal-subtitle" style="margin:0;">Grant or Extend Student's Pro Subscription</p>
+          <h3 class="modal-title" style="margin:0;">प्रो / कैटेगरी एक्सेस प्रदान करें</h3>
+          <p class="modal-subtitle" style="margin:0;">Grant Full Pro or Specific Categories Free</p>
         </div>
       </div>
 
       <!-- Student Target Summary Card -->
-      <div id="grantProStudentInfo" style="background:var(--bg-subtle); border:1px solid var(--border-subtle); border-radius:10px; padding:12px 14px; margin:14px 0; font-size:0.86rem; line-height:1.5;">
+      <div id="grantProStudentInfo" style="background:var(--bg-subtle); border:1px solid var(--border-subtle); border-radius:10px; padding:12px 14px; margin:10px 0; font-size:0.86rem; line-height:1.5;">
         <!-- Populated via stenoAdmin.openGrantProModal() -->
       </div>
 
-      <form onsubmit="stenoAdmin.submitGrantPro(event)">
+      <form onsubmit="stenoAdmin.submitGrantPro(event)" style="overflow-y:auto; padding-right:4px;">
         <input type="hidden" id="grantProUserId">
 
+        <!-- Access Scope Selector: Full Pro vs Specific Categories -->
+        <div class="form-group" style="margin-bottom:14px;">
+          <label class="form-label" style="font-weight:700; margin-bottom:8px; display:block;">एक्सेस का प्रकार चुनें (Access Scope):</label>
+          <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+            <label style="display:flex; align-items:flex-start; gap:8px; padding:10px 12px; border:1.5px solid var(--border); border-radius:10px; cursor:pointer; background:var(--bg-surface); transition:all 0.2s;" id="grantScopeAllCard">
+              <input type="radio" name="grantAccessScope" value="all" checked onchange="stenoAdmin.onGrantScopeChange(this.value)" style="margin-top:3px; accent-color:#059669;">
+              <div>
+                <div style="font-weight:700; font-size:0.86rem; color:var(--text-main);">👑 संपूर्ण प्रो (All Content)</div>
+                <div style="font-size:0.75rem; color:var(--text-muted); margin-top:2px;">सभी 100+ डिक्टेशन्स व सभी कैटेगरीज अनलॉक</div>
+              </div>
+            </label>
+            <label style="display:flex; align-items:flex-start; gap:8px; padding:10px 12px; border:1.5px solid var(--border); border-radius:10px; cursor:pointer; background:var(--bg-surface); transition:all 0.2s;" id="grantScopeCatCard">
+              <input type="radio" name="grantAccessScope" value="categories" onchange="stenoAdmin.onGrantScopeChange(this.value)" style="margin-top:3px; accent-color:#059669;">
+              <div>
+                <div style="font-weight:700; font-size:0.86rem; color:var(--text-main);">🎯 विशिष्ट कैटेगरीज (Categories)</div>
+                <div style="font-size:0.75rem; color:var(--text-muted); margin-top:2px;">केवल चुनी गई कैटेगरीज ही फ्री में खुलेंगी</div>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <!-- Category Dropdown / Multi-Select Checklist (shown when scope == 'categories') -->
+        <div id="grantCategorySelectionGroup" style="display:none; margin-bottom:14px; background:var(--bg-subtle); border:1.5px solid var(--border); border-radius:10px; padding:12px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+            <label class="form-label" style="font-weight:700; margin:0; font-size:0.86rem;">
+              📁 फ्री कैटेगरीज चुनें: <span id="grantSelectedCountBadge" class="badge" style="background:#10b981; color:#fff; font-size:0.75rem; font-weight:700; margin-left:6px;">0 चुनी गईं</span>
+            </label>
+            <div style="display:flex; gap:6px;">
+              <button type="button" class="btn-secondary" style="padding:2px 8px; font-size:0.75rem;" onclick="stenoAdmin.selectAllGrantCategories(true)">☑️ सब चुनें</button>
+              <button type="button" class="btn-secondary" style="padding:2px 8px; font-size:0.75rem;" onclick="stenoAdmin.selectAllGrantCategories(false)">◻️ हटाएं</button>
+            </div>
+          </div>
+
+          <!-- Category search filter -->
+          <div style="margin-bottom:8px;">
+            <input type="text" id="grantCategorySearchInput" class="form-input" placeholder="🔍 कैटेगरी खोजें (उदा. रामधारी, SSC)..." oninput="stenoAdmin.filterGrantCategories(this.value)" style="padding:6px 10px; font-size:0.82rem; background:#fff;">
+          </div>
+
+          <!-- Scrollable category checklist -->
+          <div id="grantCategoryChecklist" style="max-height:180px; overflow-y:auto; border:1px solid var(--border-subtle); border-radius:8px; background:#fff; padding:6px;">
+            <!-- Populated via stenoAdmin.populateGrantCategories() -->
+          </div>
+          <div style="font-size:0.75rem; color:var(--text-muted); margin-top:6px;">
+            💡 <em>जिन कैटेगरीज पर टिक होगा, वे सभी छात्र के खाते में तुरंत बिना किसी लॉक के खुल जाएंगी।</em>
+          </div>
+        </div>
+
+        <!-- Duration Select -->
         <div class="form-group" style="margin-bottom:12px;">
           <label class="form-label" style="font-weight:700;">वैधता अवधि चुनें (Duration to Add):</label>
           <select id="grantProDaysSelect" class="form-select" onchange="stenoAdmin.onGrantDaysChange(this.value)" style="font-size:0.9rem; font-weight:600;">
-            <option value="30">+30 दिन (1 माह • ₹100 Plan)</option>
-            <option value="90">+90 दिन (3 माह • ₹250 Popular)</option>
-            <option value="180">+180 दिन (6 माह • ₹450 Super Saver)</option>
-            <option value="365">+365 दिन (1 वर्ष • ₹800 Best Value)</option>
+            <option value="30">+30 दिन (1 माह)</option>
+            <option value="90">+90 दिन (3 माह)</option>
+            <option value="180">+180 दिन (6 माह)</option>
+            <option value="365">+365 दिन (1 वर्ष)</option>
             <option value="custom">✏️ कस्टम दिन (Custom Number of Days)...</option>
-            <option value="9999">🌟 असीमित / लाइफटाइम (Lifetime Pro)</option>
+            <option value="9999" selected>🌟 असीमित / लाइफटाइम (Lifetime Free)</option>
           </select>
         </div>
 
@@ -1706,7 +1754,7 @@
           <input type="number" id="grantProCustomDaysInput" class="form-input" min="1" max="3650" placeholder="e.g. 45 or 60">
         </div>
 
-        <div class="form-group" style="margin-bottom:12px;">
+        <div class="form-group" id="grantProPlanNameGroup" style="margin-bottom:12px;">
           <label class="form-label" style="font-size:0.82rem;">प्लान का शीर्षक (Plan Name):</label>
           <input type="text" id="grantProPlanNameInput" class="form-input" value="StenoMaster Pro (Admin Grant)" style="font-size:0.86rem;">
         </div>
@@ -1716,10 +1764,10 @@
           <input type="text" id="grantProNotesInput" class="form-input" placeholder="जैसे: विशेष छात्र ऑफर, ऑफलाइन नकद भुगतान, आदि" style="font-size:0.86rem;">
         </div>
 
-        <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:16px;">
+        <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:16px; position:sticky; bottom:0; background:var(--bg-surface); padding-top:10px; border-top:1px solid var(--border-subtle);">
           <button type="button" class="btn-secondary" onclick="stenoApp.closeModal('adminGrantProModal')">रद्द करें</button>
-          <button type="submit" class="btn-primary" style="background:linear-gradient(135deg, #10b981, #059669); border-color:#059669; font-weight:700;">
-            👑 प्रो सक्रिय करें (Activate Pro)
+          <button type="submit" class="btn-primary" style="background:linear-gradient(135deg, #10b981, #059669); border-color:#059669; font-weight:700; font-size:0.9rem; padding:8px 16px;">
+            ✓ OK Changes (प्रो सक्रिय करें)
           </button>
         </div>
       </form>
@@ -1965,7 +2013,7 @@
   <script src="/js/charts.js?v=8.1"></script>
   <script src="/js/comparison_view.js?v=8.1"></script>
   <script src="/js/ocr_service.js?v=1.1"></script>
-  <script src="/js/admin.js?v=11.7"></script>
+  <script src="/js/admin.js?v=12.1"></script>
 
   <!-- Standalone In-Page Admin Login Modal (Never redirects away) -->
   <div id="adminStandaloneAuthModal" class="modal-overlay" style="display:none; pointer-events:none; z-index:999999; background:rgba(15, 23, 42, 0.85); backdrop-filter:blur(8px);">

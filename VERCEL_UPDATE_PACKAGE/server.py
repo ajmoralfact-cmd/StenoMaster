@@ -361,8 +361,9 @@ class StenoMasterHandler(http.server.SimpleHTTPRequestHandler):
                 include_official_text=False,  # Security: never expose to student
                 summary=True  # Ultra-lightweight summary payload (10x faster homepage)
             )
-            # Vercel Edge CDN Caching: 60s shared cache, 300s background stale-while-revalidate
-            self._send_json(200, {"passages": passages}, cache_control='public, s-maxage=60, stale-while-revalidate=300')
+            # Vercel Edge CDN Caching: private for logged-in users, public for guests
+            cache_ctrl = 'private, no-cache, no-store' if user_id else 'public, s-maxage=60, stale-while-revalidate=300'
+            self._send_json(200, {"passages": passages}, cache_control=cache_ctrl)
             return
 
         if path.startswith('/api/passages/'):
@@ -1731,17 +1732,22 @@ class StenoMasterHandler(http.server.SimpleHTTPRequestHandler):
                 self._send_json(200, res)
                 return
 
-            # Admin Manual Subscriber Management: Grant / Extend Pro
+            # Admin Manual Subscriber Management: Grant / Extend Pro or Grant Specific Categories
             if path == '/api/admin/users/grant-subscription':
                 data = self._read_json_body()
                 target_user_id = data.get('user_id')
+                access_scope = data.get('access_scope', 'all')
+                category_ids = data.get('category_ids', [])
                 plan_name = data.get('plan_name', 'StenoMaster Pro')
                 days = int(data.get('days', 30))
                 notes = data.get('notes', '')
                 if not target_user_id:
                     self._send_json(400, {"error": "user_id आवश्यक है"})
                     return
-                res = db.admin_grant_subscription(int(target_user_id), plan_name, days, user['user_id'], notes)
+                if access_scope == 'categories':
+                    res = db.admin_grant_category_access(int(target_user_id), category_ids, days, user['user_id'], notes)
+                else:
+                    res = db.admin_grant_subscription(int(target_user_id), plan_name, days, user['user_id'], notes)
                 self._send_json(200 if res.get('success') else 400, res)
                 return
 

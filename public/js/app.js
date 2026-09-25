@@ -3058,7 +3058,8 @@ class StenoApp {
     const durStr = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
     const wordCount = p.word_count || Math.max(1, Math.round((p.target_wpm || 80) * (p.duration_seconds || 180) / 60));
     const progressPercent = p.best_wpm ? Math.min(100, Math.round((p.best_wpm / p.target_wpm) * 100)) : 0;
-    const hasFullAccess = !!(this.user && (this.user.role === 'admin' || this.user.subscription_status === 'active' || this.user.is_free_access));
+    const isCategoryUnlocked = Boolean(this.user && Array.isArray(this.user.unlocked_category_ids) && this.user.unlocked_category_ids.map(Number).includes(Number(p.category_id)));
+    const hasFullAccess = !!(this.user && (this.user.role === 'admin' || this.user.subscription_status === 'active' || this.user.is_free_access || isCategoryUnlocked));
     const isLocked = !hasFullAccess && !!p.is_locked;
     const isFree = !!p.is_free_tier || hasFullAccess;
 
@@ -3075,7 +3076,7 @@ class StenoApp {
               ${(p.target_wpm && p.target_wpm >= 120) ? '<span class="badge" style="background:#fce7f3; color:#9d174d; font-weight:700;">⚡ रिपोर्टर (140-160 WPM)</span>' : ''}
               <span class="badge" style="background:var(--bg-subtle); color:var(--text-secondary)">⏱ ${durStr}</span>
               <span class="badge" style="background:var(--bg-subtle); color:var(--text-secondary)" title="शब्द संख्या">📝 ${wordCount} शब्द</span>
-              ${isFree ? '<span class="badge badge-free-tier">🎁 फ्री क्लास (Free)</span>' : ''}
+              ${isFree ? `<span class="badge badge-free-tier">${isCategoryUnlocked ? '🎯 अनलॉक्ड (Free)' : '🎁 फ्री क्लास (Free)'}</span>` : ''}
               ${isLocked ? '<span class="badge badge-locked-tier">🔒 Pro Locked (₹100/माह)</span>' : ''}
               ${!isLocked && !isFree && p.is_premium ? '<span class="badge" style="background:#fef3c7; color:#b45309; font-weight:700; border:1px solid #fde68a;">👑 PRO</span>' : ''}
             </div>
@@ -3133,6 +3134,11 @@ class StenoApp {
   handleLockedPassageClick(passageId) {
     if (!this.user) {
       this.showAuthGateway('student', 'प्रीमियम डिक्टेशन अनलॉक करने के लिए कृपया पहले लॉगिन करें।');
+      return;
+    }
+    const p = (this.allPassages || []).find(x => Number(x.id) === Number(passageId));
+    if (p && Array.isArray(this.user.unlocked_category_ids) && this.user.unlocked_category_ids.map(Number).includes(Number(p.category_id))) {
+      this.openPractice(passageId);
       return;
     }
     this.openModal('lockedClassProModal');
@@ -3194,7 +3200,8 @@ class StenoApp {
         passage = { ...inMem };
       }
 
-      const hasFullAccess = !!(this.user && (this.user.role === 'admin' || this.user.subscription_status === 'active' || this.user.is_free_access));
+      const isCatUnlocked = Boolean(this.user && Array.isArray(this.user.unlocked_category_ids) && passage && this.user.unlocked_category_ids.map(Number).includes(Number(passage.category_id)));
+      const hasFullAccess = !!(this.user && (this.user.role === 'admin' || this.user.subscription_status === 'active' || this.user.is_free_access || isCatUnlocked));
 
       // Check lock status before entering
       if (passage && passage.is_locked && !hasFullAccess) {
@@ -3253,7 +3260,9 @@ class StenoApp {
         await this.loadPassages(true);
         return;
       }
-      if (passage.is_locked && !hasFullAccess) {
+      const isCatUnlockedFallback = Boolean(this.user && Array.isArray(this.user.unlocked_category_ids) && passage && this.user.unlocked_category_ids.map(Number).includes(Number(passage.category_id)));
+      const hasFullAccessFallback = !!(this.user && (this.user.role === 'admin' || this.user.subscription_status === 'active' || this.user.is_free_access || isCatUnlockedFallback));
+      if (passage.is_locked && !hasFullAccessFallback) {
         this.handleLockedPassageClick(pId);
         return;
       }
