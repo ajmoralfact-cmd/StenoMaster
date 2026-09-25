@@ -340,6 +340,9 @@ class StenoApp {
   // Deep URL Hash Routing & Refresh Route Preservation
   // -------------------------------------------------------------------------
   restoreRouteOnLoad(customRoute = null) {
+    if (window.location.pathname.startsWith('/practice') || window.location.pathname.endsWith('practice.html')) {
+      return;
+    }
     let route = customRoute;
     if (!route) {
       route = window.location.hash ? window.location.hash.replace(/^#\/?/, '') : '';
@@ -418,6 +421,9 @@ class StenoApp {
   }
 
   handleHashChange() {
+    if (window.location.pathname.startsWith('/practice') || window.location.pathname.endsWith('practice.html')) {
+      return;
+    }
     if (!this.user || !this.token) return;
     const rawHash = window.location.hash ? window.location.hash.replace(/^#\/?/, '') : '';
     if (!rawHash) return;
