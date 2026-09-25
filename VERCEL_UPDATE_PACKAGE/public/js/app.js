@@ -196,20 +196,15 @@ class StenoApp {
     try {
       const cachedCats = localStorage.getItem('stenomaster_cached_categories');
       if (cachedCats) {
-        this.categories = JSON.parse(cachedCats);
+        const parsed = JSON.parse(cachedCats);
+        this.categories = (parsed || []).filter(c => c.id === 126 || c.id === 128);
       }
     } catch(e) {}
     if (!this.categories || this.categories.length === 0) {
-      // 0ms instant fallback seed so user sees categories immediately without waiting
+      // 0ms instant fallback seed: only the 2 active user categories
       this.categories = [
-        { id: 126, slug: 'ramdhari-gupta-khand-1', name: 'रामधारी गुप्ता (खंड 1)', passage_count: 1, free_count: 1, price: 49, icon_emoji: '📘' },
-        { id: 127, slug: 'ramdhari-gupta-khand-2', name: 'रामधारी गुप्ता (खंड 2)', passage_count: 1, free_count: 1, price: 49, icon_emoji: '📙' },
-        { id: 125, slug: 'audit-cat-1788546457', name: 'संसदीय एवं विधिक डिक्टेशन', passage_count: 3, free_count: 1, price: 49, icon_emoji: '🏛️' },
-        { id: 8, slug: 'editorial-passages', name: 'समाचार सम्पादकीय', passage_count: 1, free_count: 1, price: 49, icon_emoji: '📰' },
-        { id: 10, slug: 'upsssc-steno', name: 'UPSSSC Steno', passage_count: 2, free_count: 1, price: 49, icon_emoji: '🏛️' },
-        { id: 11, slug: 'court-steno', name: 'High Court Steno', passage_count: 1, free_count: 1, price: 49, icon_emoji: '⚖️' },
-        { id: 9, slug: 'ssc-steno', name: 'SSC Stenographer', passage_count: 1, free_count: 1, price: 49, icon_emoji: '🎯' },
-        { id: 1, slug: 'ramdhari-singh-dinkar', name: 'रामधारी सिंह दिनकर', passage_count: 1, free_count: 1, price: 49, icon_emoji: '🪶' }
+        { id: 126, slug: 'ramdhari-gupta-khand-1', name: 'रामधारी गुप्ता (खंड 1)', passage_count: 100, free_count: 5, price: 49, icon_emoji: '📘' },
+        { id: 128, slug: 'cat-1789642826908', name: 'Harsh', passage_count: 4, free_count: 4, price: 0, icon_emoji: '⚡' }
       ];
     }
     this._categoryDetailCache = new Map();

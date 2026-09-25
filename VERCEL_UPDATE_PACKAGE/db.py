@@ -920,31 +920,8 @@ def seed_initial_data():
         code = f"STM-{yr}-{row['id']:06d}"
         c.execute("UPDATE users SET student_code = ? WHERE id = ?", (code, row['id']))
 
-    # 4. Seed Default Categories (only if categories table is empty)
-    c.execute("SELECT COUNT(*) as cnt FROM categories")
-    if c.fetchone()['cnt'] > 0:
-        conn.commit()
-    else:
-        categories_data = [
-            ("दैनिक समाचार संपादकीय", "daily-editorial", "प्रतिष्ठित समाचार पत्रों (दैनिक जागरण, जनसत्ता) के समसामयिक संपादकीय", "hindi", "newspaper", 1),
-            ("विधिक शब्दावली (कोर्ट डिक्टेशन)", "court-legal", "अदालती आदेश, निर्णय, वाद-पत्र और कानूनी मामलों की विशिष्ट शब्दावली", "hindi", "scale", 2),
-            ("प्रशासनिक एवं सरकारी पत्राचार", "governance-admin", "संसदीय कार्यवाही, प्रशासनिक परिपत्र, सरकारी योजनाएं और नीतिगत आलेख", "hindi", "landmark", 3),
-            ("साहित्यिक एवं दार्शनिक गद्यांश", "literature-classic", "प्रेमचंद, दिनकर, महादेवी वर्मा आदि कालजयी रचनाकारों के गद्य", "hindi", "book-open", 4),
-            ("प्रतियोगी परीक्षा स्पेशल", "exam-special", "SSC Stenographer Grade C & D, UPSSSC, रेलवे आदि के पिछले वर्षों के पेपर्स", "hindi", "trophy", 5),
-            ("General English", "general-english", "Standard contemporary and formal English prose for all examinations", "english", "book", 6),
-            ("Legal English", "legal-english", "Court judgments, legal proceedings, and statutory legal dictation", "english", "file-text", 7),
-            ("Parliamentary Debates", "parliament-english", "Official parliamentary proceeding transcripts and policy speeches", "english", "flag", 8),
-            ("SSC Stenographer", "ssc-steno", "कर्मचारी चयन आयोग ग्रेड 'सी' और 'डी' मॉडल टेस्ट", "both", "award", 9),
-            ("UPSSSC Steno", "upsssc-steno", "उत्तर प्रदेश अधीनस्थ सेवा चयन आयोग आशुलिपिक परीक्षा", "hindi", "briefcase", 10),
-            ("High Court Steno", "court-steno", "उच्च न्यायालय एवं जिला न्यायालय आशुलिपिक विधिक डिक्टेशन", "both", "scale", 11),
-        ]
-        for name, slug, desc, lang, icon, order in categories_data:
-            c.execute("""
-                INSERT INTO categories (name, slug, description, language, icon, sort_order)
-                VALUES (?, ?, ?, ?, ?, ?)
-                ON CONFLICT (slug) DO NOTHING
-            """, (name, slug, desc, lang, icon, order))
-        conn.commit()
+    # 4. Categories table preserved as-is
+    conn.commit()
 
     # Seed initial payment QR placeholder file if missing
     qr_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'public', 'assets')
@@ -999,19 +976,10 @@ def seed_initial_data():
             VALUES (?, 'स्वागतम् StenoMaster पर!', 'आपकी पहली स्टेनोग्राफर डिक्टेशन तैयार है। दैनिक लक्ष्य पूरा करें और अपनी गति सुधारें।', 'info', ?)
         """, (student_id, now_iso))
 
-    # 4. Categories
+    # 4. Categories (Only user categories)
     categories_data = [
-        ("रामधारी सिंह दिनकर", "ramdhari-singh-dinkar", "दिनकर जी की प्रसिद्ध रचनाएं एवं ओजस्वी काव्य गद्य", "hindi", "feather", 1),
-        ("महात्मा गांधी", "mahatma-gandhi", "गांधी जी के विचार, आत्मकथा एवं स्वतंत्रता आंदोलन", "hindi", "user-check", 2),
-        ("भारतीय संविधान", "indian-constitution", "संविधान की प्रस्तावना, मूल अधिकार एवं राजव्यवस्था", "both", "book-open", 3),
-        ("भारत का इतिहास", "indian-history", "प्राचीन, मध्यकालीन और आधुनिक भारत का गौरवशाली इतिहास", "both", "landmark", 4),
-        ("विज्ञान एवं प्रौद्योगिकी", "science-technology", "डिजिटल क्रांति, अंतरिक्ष अनुसंधान और विज्ञान आधारित डिक्टेशन", "both", "cpu", 5),
-        ("सामान्य ज्ञान", "general-knowledge", "समसामयिक, भूगोल एवं भारतीय अर्थव्यवस्था", "both", "globe", 6),
-        ("करंट अफेयर्स", "current-affairs", "राष्ट्रीय एवं अंतर्राष्ट्रीय महत्वपूर्ण घटनाक्रम", "both", "trending-up", 7),
-        ("समाचार सम्पादकीय", "editorial-passages", "प्रमुख राष्ट्रीय समाचार पत्रों के संपादकीय आलेख", "both", "newspaper", 8),
-        ("SSC Stenographer", "ssc-steno", "कर्मचारी चयन आयोग ग्रेड 'सी' और 'डी' मॉडल टेस्ट", "both", "award", 9),
-        ("UPSSSC Steno", "upsssc-steno", "उत्तर प्रदेश अधीनस्थ सेवा चयन आयोग आशुलिपिक परीक्षा", "hindi", "briefcase", 10),
-        ("High Court Steno", "court-steno", "उच्च न्यायालय एवं जिला न्यायालय आशुलिपिक विधिक डिक्टेशन", "both", "scale", 11),
+        ("Harsh", "cat-1789642826908", "विशेष डिक्टेशन अभ्यास", "both", "feather", 1),
+        ("रामधारी गुप्ता (खंड 1)", "ramdhari-gupta-khand-1", "आशुलिपिक मानक गति अभ्यास — खंड 1 (80-100 WPM)", "hindi", "book-open", 2),
     ]
 
     for name, slug, desc, lang, icon, order in categories_data:
@@ -4615,15 +4583,12 @@ def get_categories_with_user_status(user_id: Optional[int] = None) -> List[Dict[
 
         icon_map = {
             'ramdhari-gupta-khand-1': '📘',
+            'cat-1789642826908': '⚡',
             'ramdhari-gupta-khand-2': '📙',
             'editorial-passages': '📰',
             'ssc-steno': '🎯',
             'upsssc-steno': '🏛️',
             'court-steno': '⚖️',
-            'ramdhari-singh-dinkar': '🪶',
-            'indian-constitution': '📜',
-            'science-technology': '🔬',
-            'general-knowledge': '🌍'
         }
 
         base_cats = []
