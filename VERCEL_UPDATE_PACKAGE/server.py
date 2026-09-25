@@ -318,14 +318,18 @@ class StenoMasterHandler(http.server.SimpleHTTPRequestHandler):
                 user_dict['subscription_end'] = sub_info.get('end_date')
                 user_dict['subscription_days_left'] = sub_info.get('days_left', 0)
                 user_dict['is_premium'] = sub_info.get('is_premium', False)
-                self._send_json(200, {"user": user_dict, "subscription": sub_info})
+                user_dict['is_free_access'] = sub_info.get('is_free_access', False)
+                user_dict['unlocked_category_ids'] = user.get('unlocked_category_ids', [])
+                sub_info['unlocked_category_ids'] = user_dict['unlocked_category_ids']
+                sub_info['is_free_access'] = user_dict['is_free_access']
+                self._send_json(200, {"user": user_dict, "subscription": sub_info}, cache_control='private, no-cache, no-store, must-revalidate')
             return
 
         if path == '/api/categories':
             user = self._get_auth_user()
             user_id = user['user_id'] if user else None
             cats = db.get_categories_with_user_status(user_id)
-            cache_ctrl = 'private, max-age=15, stale-while-revalidate=60' if user_id else 'public, s-maxage=60, stale-while-revalidate=300'
+            cache_ctrl = 'private, no-cache, no-store, must-revalidate' if user_id else 'public, max-age=10, stale-while-revalidate=30'
             self._send_json(200, {"categories": cats}, cache_control=cache_ctrl)
             return
 
@@ -337,7 +341,7 @@ class StenoMasterHandler(http.server.SimpleHTTPRequestHandler):
                 self._send_json(400, {"error": "Category ID is required"})
                 return
             data = db.get_passages_by_category(int(cat_id), user_id)
-            cache_ctrl = 'private, max-age=15, stale-while-revalidate=60' if user_id else 'public, s-maxage=60, stale-while-revalidate=300'
+            cache_ctrl = 'private, no-cache, no-store, must-revalidate' if user_id else 'public, max-age=10, stale-while-revalidate=30'
             self._send_json(200, data, cache_control=cache_ctrl)
             return
 

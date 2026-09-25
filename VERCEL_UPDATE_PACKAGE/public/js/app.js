@@ -501,10 +501,12 @@ class StenoApp {
       }
     } catch(e) {}
 
-    // Cross-tab real-time sync when Admin edits or deletes passages or changes language
+    // Cross-tab real-time sync when Admin grants access, edits passages, or changes language
     window.addEventListener('storage', (e) => {
-      if (e.key === 'stenomaster_passages_version' || e.key === 'stenomaster_cached_passages') {
-        this.loadPassages(true);
+      if (e.key === 'stenomaster_passages_version' || e.key === 'stenomaster_cached_passages' || e.key === 'stenomaster_user_access_updated') {
+        this.fetchCurrentUser().catch(() => {});
+        this.loadCategories().catch(() => {});
+        this.loadPassages(true).catch(() => {});
       }
       if (e.key === 'stenomaster_app_lang') {
         this.currentLang = e.newValue || 'hi';
@@ -785,11 +787,18 @@ class StenoApp {
     if (this.token) {
       headers['Authorization'] = `Bearer ${this.token}`;
     }
+    if (method === 'GET') {
+      headers['Cache-Control'] = 'no-cache, no-store, must-revalidate';
+      headers['Pragma'] = 'no-cache';
+    }
 
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), timeoutMs);
 
     const opts = { method, headers, signal: controller.signal };
+    if (method === 'GET') {
+      opts.cache = 'no-cache';
+    }
     if (body) {
       opts.body = JSON.stringify(body);
     }
@@ -1756,6 +1765,15 @@ class StenoApp {
       this.user = res.user;
       localStorage.setItem('stenomaster_user', JSON.stringify(this.user));
       this.updateUserUI();
+      // Instantly propagate updated permissions across category and passage cards (0ms sync on refresh)
+      this.renderHorizontalCategories();
+      this.renderCategoryPills();
+      if (this.allPassages && this.allPassages.length > 0) {
+        this.applyPassageFilters();
+      }
+      if (this.activeView === 'category-detail' && this.currentCategoryId) {
+        this.openCategoryDetail(this.currentCategoryId);
+      }
     } catch (err) {
       if (err.status === 401) {
         console.warn('Session expired (401), logging out');
@@ -2018,15 +2036,31 @@ class StenoApp {
           areaBadge.innerHTML = '👨‍🎓 Student Area';
         }
 
-        const isPro = Boolean(this.user.is_premium || this.user.subscription_status === 'active');
+        const isFreeAccess = Boolean(this.user.is_free_access);
+        const isPro = Boolean(this.user.is_premium || this.user.subscription_status === 'active' || isFreeAccess);
         const daysLeft = this.user.subscription_days_left !== undefined ? this.user.subscription_days_left : 0;
-        if (isPro && daysLeft > 0) {
+        const unlockedCats = Array.isArray(this.user.unlocked_category_ids) ? this.user.unlocked_category_ids : [];
+
+        if (isPro && (daysLeft > 0 || isFreeAccess)) {
           if (validityPill) {
             validityPill.style.display = 'inline-flex';
             validityPill.className = 'plan-validity-pill is-pro';
-            validityPill.innerHTML = (daysLeft >= 1000) ? '👑 Pro: Active' : `👑 Pro: ${daysLeft} दिन शेष`;
+            validityPill.style.background = isFreeAccess ? 'linear-gradient(135deg, #059669, #10b981)' : '';
+            validityPill.innerHTML = isFreeAccess ? '🎁 30D फ्री प्रो (Active)' : ((daysLeft >= 1000) ? '👑 Pro: Active' : `👑 Pro: ${daysLeft} दिन शेष`);
             validityPill.title = 'प्रो प्लान सक्रिय है';
             validityPill.onclick = () => { window.location.href = '/plans'; };
+          }
+          if (avatarEl) {
+            avatarEl.classList.add('pro-rainbow-ring');
+          }
+        } else if (unlockedCats.length > 0) {
+          if (validityPill) {
+            validityPill.style.display = 'inline-flex';
+            validityPill.className = 'plan-validity-pill is-pro';
+            validityPill.style.background = 'linear-gradient(135deg, #4f46e5, #4338ca)';
+            validityPill.innerHTML = `🎯 ${unlockedCats.length} कैटेगरीज अनलॉक्ड (Free)`;
+            validityPill.title = 'विशिष्ट कैटेगरीज निःशुल्क सक्रिय हैं';
+            validityPill.onclick = () => { this.navigate('classes'); };
           }
           if (avatarEl) {
             avatarEl.classList.add('pro-rainbow-ring');
@@ -2035,6 +2069,7 @@ class StenoApp {
           if (validityPill) {
             validityPill.style.display = 'inline-flex';
             validityPill.className = 'plan-validity-pill is-free';
+            validityPill.style.background = '';
             validityPill.innerHTML = '🔒 2 फ्री कक्षाएं • ₹100 में Pro लें';
             validityPill.title = 'प्रीमियम अनलॉक करने के लिए क्लिक करें';
             validityPill.onclick = () => { window.location.href = '/plans'; };
@@ -5336,7 +5371,10 @@ ${link}`;
       });
 
       const html = displayCats.map(cat => {
-        const isUnlocked = Boolean(cat.is_unlocked || cat.price === 0);
+        const userUnlockedIds = (this.user && (this.user.unlocked_category_ids || this.user.unlocked_categories)) || [];
+        const hasFullAccess = Boolean(this.user && (this.user.role === 'admin' || this.user.subscription_status === 'active' || this.user.is_free_access));
+        const isCatDirectlyUnlocked = Array.isArray(userUnlockedIds) && userUnlockedIds.map(Number).includes(Number(cat.id));
+        const isUnlocked = Boolean(hasFullAccess || isCatDirectlyUnlocked || cat.is_unlocked || cat.price === 0);
         const price = (cat.price !== undefined && cat.price !== null) ? cat.price : 49;
         const iconDisplay = this.getCategoryIconDisplay(cat.icon, cat.slug, cat.name);
         const passageCount = parseInt(cat.passage_count || 0, 10);
@@ -5442,9 +5480,10 @@ ${link}`;
 
     // 0ms Instant Passages Hydration from allPassages in memory
     if (!cached && catMeta) {
-      const isPremium = Boolean(this.user && (this.user.is_premium || this.user.role === 'admin'));
-      const userUnlocked = (this.user && this.user.unlocked_categories) || [];
-      const isUnlocked = isPremium || userUnlocked.includes(cIdInt) || Boolean(catMeta.is_unlocked);
+      const userUnlocked = (this.user && (this.user.unlocked_category_ids || this.user.unlocked_categories)) || [];
+      const hasFullAccess = Boolean(this.user && (this.user.role === 'admin' || this.user.subscription_status === 'active' || this.user.is_free_access));
+      const isCatDirect = Array.isArray(userUnlocked) && userUnlocked.map(Number).includes(cIdInt);
+      const isUnlocked = Boolean(hasFullAccess || isCatDirect || catMeta.is_unlocked || catMeta.price === 0);
 
       const localPassages = (this.allPassages || []).filter(p => Number(p.category_id) === cIdInt || String(p.category_id) === String(categoryId));
 
@@ -5463,6 +5502,12 @@ ${link}`;
 
     const applyDetailData = (res) => {
       const cat = res.category || {};
+      const userUnlocked = (this.user && (this.user.unlocked_category_ids || this.user.unlocked_categories)) || [];
+      const hasFullAccess = Boolean(this.user && (this.user.role === 'admin' || this.user.subscription_status === 'active' || this.user.is_free_access));
+      const isCatDirect = Array.isArray(userUnlocked) && userUnlocked.map(Number).includes(cIdInt);
+      const isUnlocked = Boolean(hasFullAccess || isCatDirect || cat.is_unlocked || cat.price === 0);
+
+      cat.is_unlocked = isUnlocked;
       this.currentCategoryData = cat;
       this.currentCategoryPassages = res.passages || [];
 
@@ -5470,7 +5515,6 @@ ${link}`;
       if (iconEl) iconEl.textContent = cat.icon_emoji || '📘';
       if (subEl) subEl.textContent = `कुल ${this.currentCategoryPassages.length} डिक्टेशन्स • 80-100 WPM • ऑडियो सहित`;
 
-      const isUnlocked = Boolean(cat.is_unlocked);
       if (badgeEl) {
         badgeEl.innerHTML = isUnlocked
           ? '<span class="badge badge-success" style="font-size:0.78rem; padding:5px 12px; font-weight:800;">🟢 पूर्ण अनलॉक्ड</span>'
@@ -5578,7 +5622,10 @@ ${link}`;
 
     const catPrice = (this.currentCategoryData && this.currentCategoryData.price) || 49;
     container.innerHTML = passages.map(p => {
-      const isAcc = Boolean(p.is_free_tier || (this.currentCategoryData && this.currentCategoryData.is_unlocked));
+      const userUnlockedIds = (this.user && (this.user.unlocked_category_ids || this.user.unlocked_categories)) || [];
+      const hasFullAccess = Boolean(this.user && (this.user.role === 'admin' || this.user.subscription_status === 'active' || this.user.is_free_access));
+      const isCatUnlocked = hasFullAccess || userUnlockedIds.map(Number).includes(Number(p.category_id || this.currentCategoryId)) || (this.currentCategoryData && this.currentCategoryData.is_unlocked);
+      const isAcc = Boolean(p.is_free_tier || isCatUnlocked);
       const durationMins = p.duration_seconds ? Math.round(p.duration_seconds / 60) : 10;
 
       return `

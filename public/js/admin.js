@@ -1611,6 +1611,10 @@ class StenoAdmin {
         is_free_access: isChecked
       });
       if (res.success) {
+        try {
+          localStorage.setItem('stenomaster_user_access_updated', Date.now().toString());
+          localStorage.setItem('stenomaster_passages_version', Date.now().toString());
+        } catch (e) {}
         stenoApp.showToast(isChecked 
           ? `🎉 ${userName} को 30 दिन का प्रो प्लान फ्री दिया गया!` 
           : `ℹ️ ${userName} की फ्री प्रो एक्सेस हटा दी गई।`, 'success');
@@ -1843,6 +1847,10 @@ class StenoAdmin {
 
     try {
       const res = await stenoApp.apiCall('/api/admin/users/grant-subscription', 'POST', payload);
+      try {
+        localStorage.setItem('stenomaster_user_access_updated', Date.now().toString());
+        localStorage.setItem('stenomaster_passages_version', Date.now().toString());
+      } catch (e) {}
       stenoApp.closeModal('adminGrantProModal');
       stenoApp.showToast(res.message || 'एक्सेस सफलतापूर्वक प्रदान की गई! 🎉', 'success');
       await this.loadSubscribers(this.currentSubFilter);
@@ -1861,6 +1869,10 @@ class StenoAdmin {
         user_id: parseInt(userId),
         reason: reason
       });
+      try {
+        localStorage.setItem('stenomaster_user_access_updated', Date.now().toString());
+        localStorage.setItem('stenomaster_passages_version', Date.now().toString());
+      } catch (e) {}
       stenoApp.showToast(res.message || 'सदस्यता रद्द की गई।', 'info');
       await this.loadSubscribers(this.currentSubFilter);
       await this.loadUsers();

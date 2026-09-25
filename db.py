@@ -3054,6 +3054,7 @@ def admin_toggle_free_access(user_id: int, is_free: bool, admin_id: int = 1) -> 
       - subscription_plan set to 'All Exercises Free (लाइफटाइम)'
       - all 24+ exercises immediately unlocked for this student
     """
+    invalidate_categories_cache()
     conn = get_db()
     c = conn.cursor()
     c.execute("SELECT id, username, email FROM users WHERE id = ?", (user_id,))
@@ -3265,6 +3266,7 @@ def admin_grant_subscription(
     Grants or extends Pro subscription for a user by `days` (or sets lifetime if days >= 9999).
     If user already has active future subscription, extends from current end date.
     """
+    invalidate_categories_cache()
     conn = get_db()
     c = conn.cursor()
     c.execute("SELECT id, username, email, subscription_status, subscription_end FROM users WHERE id = ?", (user_id,))
@@ -4635,11 +4637,30 @@ def get_categories_with_user_status(user_id: Optional[int] = None) -> List[Dict[
         _CATEGORIES_CACHE["data"] = base_cats
         _CATEGORIES_CACHE["timestamp"] = now_ts
 
+    has_full_access = False
+    if user_id:
+        try:
+            conn = get_db()
+            c = conn.cursor()
+            c.execute("SELECT role, is_free_access, subscription_status, subscription_end FROM users WHERE id = ?", (user_id,))
+            u_row = c.fetchone()
+            conn.close()
+            if u_row:
+                u_dict = dict(u_row)
+                if u_dict.get('role') == 'admin' or bool(u_dict.get('is_free_access')):
+                    has_full_access = True
+                elif u_dict.get('subscription_status') == 'active':
+                    sub_end = u_dict.get('subscription_end')
+                    if not sub_end or not is_expired_datetime(sub_end):
+                        has_full_access = True
+        except Exception:
+            pass
+
     unlocked_ids = set(get_user_unlocked_category_ids(user_id)) if user_id else set()
     result = []
     for cat in base_cats:
         c_copy = dict(cat)
-        c_copy['is_unlocked'] = bool(c_copy['id'] in unlocked_ids or c_copy.get('price') == 0)
+        c_copy['is_unlocked'] = bool(has_full_access or c_copy['id'] in unlocked_ids or c_copy.get('price') == 0)
         result.append(c_copy)
     return result
 
