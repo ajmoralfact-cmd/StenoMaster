@@ -2278,6 +2278,20 @@ class StenoApp {
     const stickyBar = document.getElementById('catDetailStickyBar');
     if (stickyBar) stickyBar.style.display = 'none';
 
+    // Standalone /practice page handling
+    if (window.location.pathname.startsWith('/practice') || window.location.pathname.endsWith('practice.html')) {
+      if (this.activeView === 'result') {
+        window.location.href = '/';
+        return;
+      }
+      if (window.history.length > 1) {
+        window.history.back();
+      } else {
+        window.location.href = '/';
+      }
+      return;
+    }
+
     // 2. Context-aware back from Practice or Result report
     if (this.activeView === 'practice' || this.activeView === 'result') {
       if (this.practiceOrigin && this.practiceOrigin.view) {
@@ -2489,12 +2503,16 @@ class StenoApp {
     // Hide all views, display targeted view
     document.querySelectorAll('.page-view').forEach(view => {
       view.classList.remove('active');
+      if (view.id !== `view-${viewId}`) {
+        view.style.display = 'none';
+      }
     });
 
     const targetEl = document.getElementById(`view-${viewId}`);
     if (targetEl) {
       targetEl.classList.add('active');
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      targetEl.style.display = 'block';
+      window.scrollTo({ top: 0, behavior: 'instant' });
     }
 
     // Load view specific data
@@ -2536,8 +2554,10 @@ class StenoApp {
       case 'result': {
         const reportContainer = document.getElementById('resultReportContainer');
         if (!reportContainer || !reportContainer.firstElementChild) {
-          this.navigate('home', {}, true);
-          return;
+          if (!window.location.pathname.includes('/practice') && !window.location.pathname.endsWith('practice.html')) {
+            this.navigate('home', {}, true);
+            return;
+          }
         }
         break;
       }
@@ -3382,11 +3402,12 @@ class StenoApp {
   // Dynamic Script Loader (Lazy Loads charts & comparison view on-demand)
   // -------------------------------------------------------------------------
   async loadScript(src) {
-    if (document.querySelector(`script[src*="${src}"]`)) return true;
+    const existing = document.querySelector(`script[src="${src}"], script[src^="${src.split('?')[0]}"]`);
+    if (existing) return true;
     return new Promise((resolve, reject) => {
       const script = document.createElement('script');
       script.src = src;
-      script.async = true;
+      script.async = false;
       script.onload = () => resolve(true);
       script.onerror = (err) => reject(err);
       document.body.appendChild(script);
@@ -3396,9 +3417,14 @@ class StenoApp {
   async ensureComparisonView() {
     if (window.stenoComparisonView) return window.stenoComparisonView;
     try {
-      await this.loadScript('/js/comparison_view.js?v=7.4');
+      await this.loadScript('/js/comparison_view.js?v=12.5');
     } catch (e) {
       console.warn('Failed to dynamic load comparison_view.js:', e);
+    }
+    let attempts = 0;
+    while (!window.stenoComparisonView && attempts < 20) {
+      await new Promise(r => setTimeout(r, 100));
+      attempts++;
     }
     return window.stenoComparisonView;
   }
@@ -3406,9 +3432,14 @@ class StenoApp {
   async ensureCharts() {
     if (window.stenoCharts) return window.stenoCharts;
     try {
-      await this.loadScript('/js/charts.js?v=7.4');
+      await this.loadScript('/js/charts.js?v=12.5');
     } catch (e) {
       console.warn('Failed to dynamic load charts.js:', e);
+    }
+    let attempts = 0;
+    while (!window.stenoCharts && attempts < 20) {
+      await new Promise(r => setTimeout(r, 100));
+      attempts++;
     }
     return window.stenoCharts;
   }
@@ -3424,6 +3455,45 @@ class StenoApp {
       type,
       this.currentPassage.title || 'स्टेनो आउटलाइन व नोट्स'
     );
+  }
+
+  renderFallbackResult(report, container) {
+    if (!report || !container) return;
+    const m = report.metrics || {};
+    const ec = report.error_counts || {};
+    container.innerHTML = `
+      <div style="background:var(--bg-card, #fff); border:1.5px solid var(--border, #e2e8f0); border-radius:16px; padding:24px; box-shadow:0 4px 20px rgba(0,0,0,0.05); margin:20px auto; max-width:800px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border, #e2e8f0); padding-bottom:16px; margin-bottom:20px; flex-wrap:wrap; gap:12px;">
+          <div>
+            <h2 style="margin:0; font-size:1.4rem; color:var(--text-main, #0f172a);">🎉 अभ्यास मूल्यांकन पूर्ण (Evaluation Completed)</h2>
+            <p style="margin:4px 0 0 0; color:var(--text-muted, #64748b); font-size:0.88rem;">${this.escapeHtml(report.passage_title || 'Stenographer Dictation')}</p>
+          </div>
+          <button class="btn-primary" onclick="stenoApp.retryPractice()" style="padding:8px 18px; font-size:0.9rem; font-weight:700; border-radius:10px;">🔄 पुनः अभ्यास</button>
+        </div>
+        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(140px, 1fr)); gap:12px; margin-bottom:24px;">
+          <div style="background:rgba(2,132,199,0.08); border:1.5px solid #0284c7; border-radius:12px; padding:14px; text-align:center;">
+            <div style="font-size:0.78rem; font-weight:700; color:#0284c7;">Net Speed (नेट गति)</div>
+            <div style="font-size:1.8rem; font-weight:900; color:#0284c7;">${m.net_wpm || 0} <span style="font-size:0.85rem;">WPM</span></div>
+          </div>
+          <div style="background:var(--bg-subtle, #f8fafc); border:1px solid var(--border, #e2e8f0); border-radius:12px; padding:14px; text-align:center;">
+            <div style="font-size:0.78rem; font-weight:700; color:var(--text-muted, #64748b);">Gross Speed (सकल गति)</div>
+            <div style="font-size:1.8rem; font-weight:900; color:var(--text-main, #0f172a);">${m.gross_wpm || 0} <span style="font-size:0.85rem;">WPM</span></div>
+          </div>
+          <div style="background:rgba(16,185,129,0.08); border:1.5px solid #10b981; border-radius:12px; padding:14px; text-align:center;">
+            <div style="font-size:0.78rem; font-weight:700; color:#10b981;">Accuracy (सटीकता)</div>
+            <div style="font-size:1.8rem; font-weight:900; color:#10b981;">${m.accuracy || 0}%</div>
+          </div>
+          <div style="background:rgba(239,68,68,0.08); border:1.5px solid #ef4444; border-radius:12px; padding:14px; text-align:center;">
+            <div style="font-size:0.78rem; font-weight:700; color:#ef4444;">Total Errors (कुल त्रुटियां)</div>
+            <div style="font-size:1.8rem; font-weight:900; color:#ef4444;">${ec.total || 0}</div>
+          </div>
+        </div>
+        <div style="display:flex; justify-content:center; gap:12px; margin-top:20px; flex-wrap:wrap;">
+          <button class="btn-secondary" onclick="window.location.href='/'" style="padding:10px 20px; font-weight:700; border-radius:10px;">🏠 होम पर जाएं</button>
+          <button class="btn-primary" onclick="stenoApp.retryPractice()" style="padding:10px 24px; font-weight:700; border-radius:10px;">🔄 पुनः अभ्यास करें</button>
+        </div>
+      </div>
+    `;
   }
 
   async submitPractice(autoSubmit = false) {
@@ -3479,17 +3549,36 @@ class StenoApp {
         console.warn('Post-submit live summary error:', e);
       }
 
-      // Render Result Report Card (Lazy-load comparison_view.js)
+      // Render Result Report Card (Ensure comparison_view is loaded)
       await this.ensureComparisonView();
       const reportContainer = document.getElementById('resultReportContainer');
+      let rendered = false;
       if (window.stenoComparisonView && reportContainer) {
         try {
           stenoComparisonView.renderResult(evalReport, reportContainer);
+          rendered = true;
         } catch (renderErr) {
           console.error('Error in renderResult:', renderErr);
         }
       }
+      if (!rendered && reportContainer) {
+        this.renderFallbackResult(evalReport, reportContainer);
+      }
+
+      // Explicitly switch view to result and ensure view-practice is hidden
+      const practiceEl = document.getElementById('view-practice');
+      if (practiceEl) {
+        practiceEl.classList.remove('active');
+        practiceEl.style.setProperty('display', 'none', 'important');
+      }
+      const resultEl = document.getElementById('view-result');
+      if (resultEl) {
+        resultEl.classList.add('active');
+        resultEl.style.setProperty('display', 'block', 'important');
+      }
+
       this.navigate('result');
+      window.scrollTo({ top: 0, behavior: 'instant' });
       if (!this.user) {
         this.showToast('स्कोर सुरक्षित रखने व इतिहास देखने हेतु लॉगिन करें।', 'info');
       }
@@ -3572,10 +3661,30 @@ class StenoApp {
         report.language = res.attempt.language;
         await this.ensureComparisonView();
         const reportContainer = document.getElementById('resultReportContainer');
+        let rendered = false;
         if (window.stenoComparisonView && reportContainer) {
-          stenoComparisonView.renderResult(report, reportContainer);
+          try {
+            stenoComparisonView.renderResult(report, reportContainer);
+            rendered = true;
+          } catch (renderErr) {
+            console.error('Error rendering saved report:', renderErr);
+          }
+        }
+        if (!rendered && reportContainer) {
+          this.renderFallbackResult(report, reportContainer);
+        }
+        const practiceEl = document.getElementById('view-practice');
+        if (practiceEl) {
+          practiceEl.classList.remove('active');
+          practiceEl.style.setProperty('display', 'none', 'important');
+        }
+        const resultEl = document.getElementById('view-result');
+        if (resultEl) {
+          resultEl.classList.add('active');
+          resultEl.style.setProperty('display', 'block', 'important');
         }
         this.navigate('result');
+        window.scrollTo({ top: 0, behavior: 'instant' });
       }
     } catch (err) {
       this.showToast('रिपोर्ट लोड करने में विफलता', 'error');

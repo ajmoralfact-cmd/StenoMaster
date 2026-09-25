@@ -43,10 +43,11 @@
 
   <!-- Prevent view flash: Keep practice view active until app re-navigates -->
   <style>
-    /* On practice page, always keep #view-practice visible by default.
-       The page-view.active class is toggled by app.js navigate() — our bootstrap
-       will call openPractice() which re-activates it after app initializes. */
-    #view-practice { display: block !important; opacity: 1; }
+    /* On practice page, handle view visibility cleanly without blocking result report */
+    #view-practice.active { display: block !important; opacity: 1; }
+    #view-practice:not(.active) { display: none !important; }
+    #view-result.active { display: block !important; opacity: 1; }
+    #view-result:not(.active) { display: none !important; }
     /* Hide auth gateway elements that don't exist on this page */
     #authGatewayView { display: none !important; }
   </style>
@@ -464,11 +465,13 @@
 
   <!-- Scripts (same as index.html) -->
   <script defer src="https://sdk.cashfree.com/js/v3/cashfree.js"></script>
+  <script src="/js/charts.js?v=12.5"></script>
+  <script src="/js/comparison_view.js?v=12.5"></script>
   <script src="/js/audio_player.js?v=8.1"></script>
   <script src="/js/keyboard_map.js?v=8.1"></script>
   <script src="/js/typing_engine.js?v=12.0"></script>
   <script src="/js/ocr_service.js?v=1.1"></script>
-  <script src="/js/app.js?v=12.4"></script>
+  <script src="/js/app.js?v=12.5"></script>
 
   <!-- Practice Page Bootstrap -->
   <script>
