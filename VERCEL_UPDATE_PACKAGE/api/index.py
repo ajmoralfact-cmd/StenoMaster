@@ -15,10 +15,9 @@ if parent_dir not in sys.path:
 from server import StenoMasterHandler, STATIC_DIR
 import db
 
-try:
-    db.init_db()
-except Exception as e:
-    print(f"Warning: db.init_db() on serverless startup: {e}")
+# Schema is verified and already deployed on Supabase.
+# Avoid blocking 6+ second DDL executions on every serverless lambda cold start.
+db._db_initialized = True
 
 
 

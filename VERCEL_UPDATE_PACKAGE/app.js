@@ -665,15 +665,11 @@ class StenoApp {
   initPWA() {
     this.deferredPwaPrompt = null;
 
-    // 1. Purge legacy demo credentials from previous tests
+    // 1. Purge legacy demo credentials from previous tests if corrupted
     try {
       const stuRaw = localStorage.getItem('stenomaster_saved_student_creds');
       if (stuRaw && (stuRaw.includes('student@stenomaster.com') || stuRaw.includes('student123'))) {
         localStorage.removeItem('stenomaster_saved_student_creds');
-      }
-      const adminRaw = localStorage.getItem('stenomaster_saved_admin_creds');
-      if (adminRaw && (adminRaw.includes('admin@stenomaster.com') || adminRaw.includes('admin123'))) {
-        localStorage.removeItem('stenomaster_saved_admin_creds');
       }
     } catch (e) {}
 
@@ -1271,10 +1267,23 @@ class StenoApp {
     if (submitBtn) { submitBtn.disabled = true; submitBtn.innerHTML = '<span>लॉगिन हो रहा है...</span>'; }
 
     try {
-      const res = await this.apiCall('/api/auth/login', 'POST', {
-        email_or_username: email,
-        password: password
-      });
+      let res;
+      try {
+        res = await this.apiCall('/api/auth/login', 'POST', {
+          email_or_username: email,
+          password: password
+        }, 15000);
+      } catch (firstErr) {
+        if (firstErr.status === 408 || firstErr.name === 'AbortError' || (firstErr.message && firstErr.message.includes('Timeout'))) {
+          if (submitBtn) submitBtn.innerHTML = '<span>सर्वर सक्रिय हो रहा है, पुनः प्रयास जारी है...</span>';
+          res = await this.apiCall('/api/auth/login', 'POST', {
+            email_or_username: email,
+            password: password
+          }, 18000);
+        } else {
+          throw firstErr;
+        }
+      }
 
       this.token = res.token;
       this.user = res.user;
@@ -1388,10 +1397,23 @@ class StenoApp {
     if (submitBtn) { submitBtn.disabled = true; submitBtn.innerHTML = '<span>प्रमाणन जांच जारी है...</span>'; }
 
     try {
-      const res = await this.apiCall('/api/auth/login', 'POST', {
-        email_or_username: email,
-        password: password
-      });
+      let res;
+      try {
+        res = await this.apiCall('/api/auth/login', 'POST', {
+          email_or_username: email,
+          password: password
+        }, 15000);
+      } catch (firstErr) {
+        if (firstErr.status === 408 || firstErr.name === 'AbortError' || (firstErr.message && firstErr.message.includes('Timeout'))) {
+          if (submitBtn) submitBtn.innerHTML = '<span>सर्वर सक्रिय हो रहा है, पुनः प्रयास जारी है...</span>';
+          res = await this.apiCall('/api/auth/login', 'POST', {
+            email_or_username: email,
+            password: password
+          }, 18000);
+        } else {
+          throw firstErr;
+        }
+      }
 
       // Strict Server-Side Role Enforcement
       if (!res.user || res.user.role !== 'admin') {

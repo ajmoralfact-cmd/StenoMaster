@@ -798,33 +798,50 @@ class StenoMasterHandler(http.server.SimpleHTTPRequestHandler):
             return
 
         if path == '/api/auth/login':
-            data = self._read_json_body()
-            email_or_user = (data.get('email_or_username') or data.get('email') or data.get('username') or '').strip()
-            password = data.get('password', '').strip()
+            try:
+                data = self._read_json_body()
+                email_or_user = (data.get('email_or_username') or data.get('email') or data.get('username') or '').strip()
+                password = data.get('password', '').strip()
 
-            user_row = db.authenticate_user(email_or_user, password)
-            if not user_row:
-                self._send_json(401, {"error": "गलत ईमेल/यूज़रनेम अथवा पासवर्ड (Invalid credentials)"})
+                user_row = None
+                for attempt in range(2):
+                    try:
+                        user_row = db.authenticate_user(email_or_user, password)
+                        break
+                    except Exception as db_err:
+                        print(f"Auth DB attempt {attempt+1} warning: {db_err}")
+                        if attempt == 0:
+                            import time
+                            time.sleep(0.3)
+                        else:
+                            raise db_err
+
+                if not user_row:
+                    self._send_json(401, {"error": "गलत ईमेल/यूज़रनेम अथवा पासवर्ड (Invalid credentials)"})
+                    return
+
+                client_ip = self._get_client_ip()
+                user_agent = self.headers.get('User-Agent', '')
+                device_name = self._parse_device_name(user_agent)
+
+                token = db.create_session(
+                    user_row['id'],
+                    ip_address=client_ip,
+                    user_agent=user_agent,
+                    device_name=device_name
+                )
+                user_obj = db.verify_session(token)
+                self._send_json(200, {
+                    "token": token,
+                    "user": user_obj,
+                    "login_ip": client_ip,
+                    "login_device": device_name
+                })
                 return
-
-            client_ip = self._get_client_ip()
-            user_agent = self.headers.get('User-Agent', '')
-            device_name = self._parse_device_name(user_agent)
-
-            token = db.create_session(
-                user_row['id'],
-                ip_address=client_ip,
-                user_agent=user_agent,
-                device_name=device_name
-            )
-            user_obj = db.verify_session(token)
-            self._send_json(200, {
-                "token": token,
-                "user": user_obj,
-                "login_ip": client_ip,
-                "login_device": device_name
-            })
-            return
+            except Exception as e:
+                print(f"Login endpoint error: {e}")
+                self._send_json(500, {"error": f"प्रमाणीकरण सर्वर में त्रुटि: {str(e)}"})
+                return
 
         if path == '/api/auth/logout':
             token = self.headers.get('Authorization', '').replace('Bearer ', '').strip()
