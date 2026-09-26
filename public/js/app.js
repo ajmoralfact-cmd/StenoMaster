@@ -670,6 +670,10 @@ class StenoApp {
           ? `Total ${this.currentCategoryPassages.length} Dictations • 80-100 WPM • With Audio`
           : `कुल ${this.currentCategoryPassages.length} डिक्टेशन्स • 80-100 WPM • ऑडियो सहित`;
       }
+      const fAll = document.getElementById('catFilterAll');
+      if (fAll) fAll.textContent = isEn ? 'All Classes' : 'सभी कक्षाएं (All)';
+      const fFree = document.getElementById('catFilterFree');
+      if (fFree) fFree.textContent = isEn ? '🎁 Free Demo' : '🎁 फ्री डेमो (Free Demo)';
     }
     if (this.activeView === 'categories' && this.categories && this.categories.length) {
       this.renderCategories();
