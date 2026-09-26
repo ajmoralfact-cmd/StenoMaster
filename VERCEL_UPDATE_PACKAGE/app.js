@@ -5531,18 +5531,19 @@ ${link}`;
       const isUnlocked = Boolean(hasFullAccess || isCatDirect || catMeta.is_unlocked || catMeta.price === 0);
 
       const localPassages = (this.allPassages || []).filter(p => Number(p.category_id) === cIdInt || String(p.category_id) === String(categoryId));
-
-      cached = {
-        category: {
-          ...catMeta,
-          is_unlocked: isUnlocked
-        },
-        passages: localPassages.map(p => ({
-          ...p,
-          is_accessible: isUnlocked || Boolean(p.is_free_tier)
-        }))
-      };
-      this._categoryDetailCache.set(cIdInt, cached);
+      if (localPassages.length > 0) {
+        cached = {
+          category: {
+            ...catMeta,
+            is_unlocked: isUnlocked
+          },
+          passages: localPassages.map(p => ({
+            ...p,
+            is_accessible: isUnlocked || Boolean(p.is_free_tier)
+          }))
+        };
+        this._categoryDetailCache.set(cIdInt, cached);
+      }
     }
 
     const applyDetailData = (res) => {
