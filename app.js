@@ -75,7 +75,11 @@ const I18N_DICTIONARY = {
     practice_wpm_label: 'डिक्टेशन गति (Speed):',
     dash_welcome_sub: 'आपकी दैनिक स्टेनो अभ्यास प्रगति, गति एवं सटीकता का संपूर्ण विवरण',
     classes_title: 'सभी अभ्यास डिक्टेशन (All Dictation Classes)',
-    classes_subtitle: 'अपनी पसंद की भाषा, कठिनाई और श्रेणी के अनुसार अभ्यास चुनें।'
+    classes_subtitle: 'अपनी पसंद की भाषा, कठिनाई और श्रेणी के अनुसार अभ्यास चुनें।',
+    cat_filter_all: 'सभी कक्षाएं (All)',
+    cat_filter_free: '🎁 फ्री डेमो (Free Demo)',
+    cat_sticky_sub: 'इस पूरी कैटेगरी की सभी कक्षाएं अनलॉक करें:',
+    btn_enroll_cat: '⚡ Enroll Now (अभी अनलॉक करें) →'
   },
   en: {
     nav_home: 'Dashboard',
@@ -148,7 +152,11 @@ const I18N_DICTIONARY = {
     practice_wpm_label: 'Dictation Speed:',
     dash_welcome_sub: 'Complete overview of your daily steno practice, speed, and accuracy',
     classes_title: 'All Dictation Classes',
-    classes_subtitle: 'Choose your practice according to language, difficulty and category.'
+    classes_subtitle: 'Choose your practice according to language, difficulty and category.',
+    cat_filter_all: 'All Classes',
+    cat_filter_free: '🎁 Free Demo',
+    cat_sticky_sub: 'Unlock all classes in this series:',
+    btn_enroll_cat: '⚡ Enroll Now →'
   }
 };
 
@@ -653,6 +661,20 @@ class StenoApp {
       this.renderSidebarNav();
     }
 
+    // Instantly update active category or class views if open
+    if (this.activeView === 'category-detail' && this.currentCategoryPassages && this.currentCategoryPassages.length) {
+      this.renderCategoryPassagesList(this.currentCategoryPassages);
+      const subEl = document.getElementById('catDetailSub');
+      if (subEl) {
+        subEl.textContent = isEn 
+          ? `Total ${this.currentCategoryPassages.length} Dictations • 80-100 WPM • With Audio`
+          : `कुल ${this.currentCategoryPassages.length} डिक्टेशन्स • 80-100 WPM • ऑडियो सहित`;
+      }
+    }
+    if (this.activeView === 'categories' && this.categories && this.categories.length) {
+      this.renderCategories();
+    }
+
     // Update typing engine UI buttons if available (without touching typing passage or input)
     if (window.stenoTypingEngine) {
       if (typeof stenoTypingEngine.updateExamModeUI === 'function') stenoTypingEngine.updateExamModeUI();
@@ -667,6 +689,11 @@ class StenoApp {
 
   initPWA() {
     this.deferredPwaPrompt = null;
+
+    // Purge fake or stale test results from browser localStorage
+    try {
+      localStorage.removeItem('stenomaster_recent_results');
+    } catch (e) {}
 
     // 1. Purge legacy demo credentials from previous tests if corrupted
     try {
@@ -3141,8 +3168,8 @@ class StenoApp {
             </button>
           </div>
 
-          <h4 class="class-title hindi-text" style="margin-top:10px;">${this.escapeHtml(p.title)}</h4>
-          <div class="class-category" style="font-size:0.82rem; color:var(--text-muted); margin-bottom:12px;">📂 ${this.escapeHtml(p.category_name || '')}</div>
+          <h4 class="class-title hindi-text notranslate" translate="no" lang="hi" style="margin-top:10px;">${this.escapeHtml(p.title)}</h4>
+          <div class="class-category notranslate" translate="no" lang="hi" style="font-size:0.82rem; color:var(--text-muted); margin-bottom:12px;">📂 ${this.escapeHtml(p.category_name || '')}</div>
 
           <div class="class-stats-row">
             <div class="class-stat-item">
@@ -3363,10 +3390,20 @@ class StenoApp {
 
     // Populate Practice Header Info safely
     const titleEl = document.getElementById('practicePassageTitle');
-    if (titleEl) titleEl.textContent = this.currentPassage.title || 'आलेख अभ्यास';
+    if (titleEl) {
+      titleEl.textContent = this.currentPassage.title || 'आलेख अभ्यास';
+      titleEl.classList.add('notranslate');
+      titleEl.setAttribute('translate', 'no');
+      titleEl.setAttribute('lang', 'hi');
+    }
     const catEl = document.getElementById('practiceCategoryName');
     const foundCat = (this.categories || []).find(c => c.id === this.currentPassage.category_id);
-    if (catEl) catEl.textContent = this.currentPassage.category_name || (foundCat && foundCat.name) || '';
+    if (catEl) {
+      catEl.textContent = this.currentPassage.category_name || (foundCat && foundCat.name) || '';
+      catEl.classList.add('notranslate');
+      catEl.setAttribute('translate', 'no');
+      catEl.setAttribute('lang', 'hi');
+    }
     const modeBadgeText = selectedSystem === 'kruti_dev_010' ? 'KRUTI DEV 010' : 'MANGAL / UNICODE';
     const langBadge = document.getElementById('practiceLanguageBadge');
     if (langBadge) langBadge.textContent = `${(this.currentPassage.language || 'hindi').toUpperCase()} (${modeBadgeText})`;
@@ -3546,7 +3583,13 @@ class StenoApp {
     if (!passageId) return null;
     try {
       const stored = JSON.parse(localStorage.getItem('stenomaster_recent_results') || '{}');
-      return stored[Number(passageId)] || null;
+      const res = stored[Number(passageId)];
+      if (!res || res.net_wpm === undefined) return null;
+      // Strictly ignore empty or dummy/fake test attempts
+      if (!res.total_words || res.total_words <= 0 || (res.time_taken_seconds && res.time_taken_seconds < 5)) {
+        return null;
+      }
+      return res;
     } catch (e) {
       return null;
     }
@@ -3622,6 +3665,7 @@ class StenoApp {
             net_wpm: Math.round(Number(m.net_wpm || 0) * 10) / 10,
             accuracy: Math.round(Number(m.accuracy || 0) * 10) / 10,
             total_errors: Number(m.total_errors || 0),
+            total_words: Number(m.total_words || 0),
             time_taken_seconds: Number(m.time_taken_seconds || timeTaken || 0),
             is_passed: isPassed,
             created_at: new Date().toISOString()
@@ -5415,6 +5459,7 @@ ${link}`;
         return true;
       });
 
+      const isEn = this.currentLang === 'en';
       const html = displayCats.map(cat => {
         const userUnlockedIds = (this.user && (this.user.unlocked_category_ids || this.user.unlocked_categories)) || [];
         const hasFullAccess = Boolean(this.user && (this.user.role === 'admin' || this.user.subscription_status === 'active' || this.user.is_free_access));
@@ -5438,16 +5483,16 @@ ${link}`;
               </div>
               <div>
                 <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:4px;">
-                  <h4 style="margin:0; font-size:1.18rem; font-weight:800; color:var(--text-main); line-height:1.35;">${this.escapeHtml(cat.name)}</h4>
+                  <h4 class="notranslate" translate="no" lang="hi" style="margin:0; font-size:1.18rem; font-weight:800; color:var(--text-main); line-height:1.35;">${this.escapeHtml(cat.name)}</h4>
                   ${isUnlocked 
-                    ? '<span class="badge" style="background:#10b981; color:#fff; font-size:0.75rem; font-weight:800; padding:4px 10px; border-radius:6px;">✓ अनलॉक्ड</span>' 
-                    : `<span class="badge badge-paid" onclick="event.stopPropagation(); stenoApp.openMultiCategoryCheckout(${cat.id})" style="background:linear-gradient(135deg, #f59e0b, #d97706); color:#fff; font-weight:800; font-size:0.78rem; padding:4px 11px; border-radius:8px; box-shadow:0 2px 8px rgba(245,158,11,0.3); cursor:pointer; display:inline-flex; align-items:center; gap:5px;" title="क्लिक करके ₹${price} में खरीदें">🔒 पेड श्रेणी • ₹${price} <span style="font-size:0.72rem; text-decoration:underline; opacity:0.95;">(अनलॉक ➔)</span></span>`
+                    ? `<span class="badge" style="background:#10b981; color:#fff; font-size:0.75rem; font-weight:800; padding:4px 10px; border-radius:6px;">✓ ${isEn ? 'UNLOCKED' : 'अनलॉक्ड'}</span>` 
+                    : `<span class="badge badge-paid" onclick="event.stopPropagation(); stenoApp.openMultiCategoryCheckout(${cat.id})" style="background:linear-gradient(135deg, #f59e0b, #d97706); color:#fff; font-weight:800; font-size:0.78rem; padding:4px 11px; border-radius:8px; box-shadow:0 2px 8px rgba(245,158,11,0.3); cursor:pointer; display:inline-flex; align-items:center; gap:5px;" title="${isEn ? `Click to buy for ₹${price}` : `क्लिक करके ₹${price} में खरीदें`}">🔒 ${isEn ? 'Paid Series' : 'पेड श्रेणी'} • ₹${price} <span style="font-size:0.72rem; text-decoration:underline; opacity:0.95;">(${isEn ? 'Unlock ➔' : 'अनलॉक ➔'})</span></span>`
                   }
                 </div>
                 <div style="font-size:0.86rem; color:var(--text-muted); display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-top:3px;">
-                  <span style="font-weight:700; color:var(--text-main);">📊 <strong>${passageCount}</strong> कुल टेस्ट</span>
+                  <span style="font-weight:700; color:var(--text-main);">📊 <strong>${passageCount}</strong> ${isEn ? 'Total Tests' : 'कुल टेस्ट'}</span>
                   <span style="color:var(--border);">•</span>
-                  <span style="color:#059669; font-weight:800;">🎁 <strong>${freeCount}</strong> फ्री डेमो टेस्ट</span>
+                  <span style="color:#059669; font-weight:800;">🎁 <strong>${freeCount}</strong> ${isEn ? 'Free Demo Tests' : 'फ्री डेमो टेस्ट'}</span>
                 </div>
               </div>
             </div>
@@ -5459,16 +5504,16 @@ ${link}`;
                   ⚡ 80 - 100 WPM
                 </span>
                 <span style="background:rgba(99,102,241,0.1); color:#4f46e5; border:1px solid rgba(99,102,241,0.25); font-weight:800; font-size:0.8rem; padding:4px 10px; border-radius:8px; display:inline-flex; align-items:center; gap:4px;">
-                  ⏱️ 5-10 मिनट डिक्टेशन
+                  ⏱️ ${isEn ? '5-10 Mins Dictation' : '5-10 मिनट डिक्टेशन'}
                 </span>
                 <span style="background:rgba(16,185,129,0.1); color:#059669; border:1px solid rgba(16,185,129,0.25); font-weight:800; font-size:0.8rem; padding:4px 10px; border-radius:8px; display:inline-flex; align-items:center; gap:4px;">
-                  🎙️ ऑडियो + आउटलाइन
+                  🎙️ ${isEn ? 'Audio + Steno Notes' : 'ऑडियो + आउटलाइन'}
                 </span>
               </div>
               <div style="font-size:0.82rem; color:var(--text-muted); font-weight:600; display:flex; align-items:center; gap:6px; flex-wrap:wrap; line-height:1.4;">
-                <span>⌨️ मंगल (रेमिंगटन गेल/CBI) एवं कृति देव 010</span>
+                <span>⌨️ ${isEn ? 'Mangal & Kruti Dev 010' : 'मंगल (रेमिंगटन गेल/CBI) एवं कृति देव 010'}</span>
                 <span>•</span>
-                <span>तुरंत AI मूल्यांकन</span>
+                <span>${isEn ? 'Instant AI Evaluation' : 'तुरंत AI मूल्यांकन'}</span>
               </div>
             </div>
 
@@ -5476,10 +5521,10 @@ ${link}`;
             <div style="display:flex; align-items:center; justify-content:flex-end; gap:10px; flex-shrink:0;">
               ${(isUnlocked || price === 0)
                 ? `<button type="button" class="btn-primary" style="padding:10px 22px; font-size:0.92rem; font-weight:800; border-radius:12px; background:linear-gradient(135deg, #0284c7, #2563eb); border:none; box-shadow:0 4px 14px rgba(2,132,199,0.35); display:inline-flex; align-items:center; gap:6px; cursor:pointer;" onclick="event.stopPropagation(); stenoApp.openCategoryDetail(${cat.id})">
-                    <span>🎯 अभ्यास करें</span> <span style="font-size:1.1rem; line-height:1;">➔</span>
+                    <span>🎯 ${isEn ? 'Practice Now' : 'अभ्यास करें'}</span> <span style="font-size:1.1rem; line-height:1;">➔</span>
                   </button>`
                 : `<button type="button" class="btn-primary" style="padding:10px 22px; font-size:0.92rem; font-weight:800; border-radius:12px; background:linear-gradient(135deg, #10b981, #059669); border:none; box-shadow:0 4px 14px rgba(16,185,129,0.35); display:inline-flex; align-items:center; gap:6px; cursor:pointer;" onclick="event.stopPropagation(); stenoApp.openMultiCategoryCheckout(${cat.id})">
-                    <span>🔒 ₹${price} में खरीदें</span> <span style="font-size:1.1rem; line-height:1;">➔</span>
+                    <span>🔒 ${isEn ? `Buy for ₹${price}` : `₹${price} में खरीदें`}</span> <span style="font-size:1.1rem; line-height:1;">➔</span>
                   </button>`
               }
             </div>
@@ -5515,12 +5560,27 @@ ${link}`;
     const cIdInt = parseInt(categoryId, 10);
     let cached = this._categoryDetailCache.get(cIdInt);
 
+    const isEn = this.currentLang === 'en';
+    const fAll = document.getElementById('catFilterAll');
+    if (fAll) fAll.textContent = isEn ? 'All Classes' : 'सभी कक्षाएं (All)';
+    const fFree = document.getElementById('catFilterFree');
+    if (fFree) fFree.textContent = isEn ? '🎁 Free Demo' : '🎁 फ्री डेमो (Free Demo)';
+
     // 0ms Instant Header Hydration from categories in memory
     const catMeta = (this.categories || []).find(c => c.id === cIdInt || String(c.id) === String(categoryId));
     if (catMeta) {
-      if (nameEl) nameEl.textContent = catMeta.name || 'डिक्टेशन टेस्ट सीरीज';
+      if (nameEl) {
+        nameEl.textContent = catMeta.name || 'डिक्टेशन टेस्ट सीरीज';
+        nameEl.classList.add('notranslate');
+        nameEl.setAttribute('translate', 'no');
+        nameEl.setAttribute('lang', 'hi');
+      }
       if (iconEl) iconEl.textContent = catMeta.icon_emoji || '📘';
-      if (subEl) subEl.textContent = `कुल ${catMeta.passage_count || 0} डिक्टेशन्स • 80-100 WPM • ऑडियो सहित`;
+      if (subEl) {
+        subEl.textContent = isEn 
+          ? `Total ${catMeta.passage_count || 0} Dictations • 80-100 WPM • With Audio`
+          : `कुल ${catMeta.passage_count || 0} डिक्टेशन्स • 80-100 WPM • ऑडियो सहित`;
+      }
     }
 
     // 0ms Instant Passages Hydration from allPassages in memory
@@ -5557,20 +5617,33 @@ ${link}`;
       this.currentCategoryData = cat;
       this.currentCategoryPassages = res.passages || [];
 
-      if (nameEl) nameEl.textContent = cat.name || 'डिक्टेशन टेस्ट सीरीज';
+      if (nameEl) {
+        nameEl.textContent = cat.name || 'डिक्टेशन टेस्ट सीरीज';
+        nameEl.classList.add('notranslate');
+        nameEl.setAttribute('translate', 'no');
+        nameEl.setAttribute('lang', 'hi');
+      }
       if (iconEl) iconEl.textContent = cat.icon_emoji || '📘';
-      if (subEl) subEl.textContent = `कुल ${this.currentCategoryPassages.length} डिक्टेशन्स • 80-100 WPM • ऑडियो सहित`;
+      if (subEl) {
+        subEl.textContent = isEn 
+          ? `Total ${this.currentCategoryPassages.length} Dictations • 80-100 WPM • With Audio`
+          : `कुल ${this.currentCategoryPassages.length} डिक्टेशन्स • 80-100 WPM • ऑडियो सहित`;
+      }
 
       if (badgeEl) {
         badgeEl.innerHTML = isUnlocked
-          ? '<span class="badge badge-success" style="font-size:0.78rem; padding:5px 12px; font-weight:800;">🟢 पूर्ण अनलॉक्ड</span>'
-          : `<button type="button" class="btn-primary" onclick="stenoApp.openMultiCategoryCheckout(${cat.id})" style="font-size:0.82rem; padding:7px 16px; font-weight:800; background:linear-gradient(135deg, #10b981, #059669); border:none; border-radius:10px; box-shadow:0 3px 10px rgba(16,185,129,0.3); cursor:pointer;">🔒 पेड श्रेणी • ₹${cat.price || 49} में अभी अनलॉक करें ➔</button>`;
+          ? `<span class="badge badge-success" style="font-size:0.78rem; padding:5px 12px; font-weight:800;">${isEn ? '🟢 FULLY UNLOCKED' : '🟢 पूर्ण अनलॉक्ड'}</span>`
+          : `<button type="button" class="btn-primary" onclick="stenoApp.openMultiCategoryCheckout(${cat.id})" style="font-size:0.82rem; padding:7px 16px; font-weight:800; background:linear-gradient(135deg, #10b981, #059669); border:none; border-radius:10px; box-shadow:0 3px 10px rgba(16,185,129,0.3); cursor:pointer;">${isEn ? `🔒 Paid Series • Unlock for ₹${cat.price || 49} ➔` : `🔒 पेड श्रेणी • ₹${cat.price || 49} में अभी अनलॉक करें ➔`}</button>`;
       }
 
       if (stickyBar) {
         if (!isUnlocked) {
           stickyBar.style.display = 'block';
-          if (stickyPrice) stickyPrice.textContent = `₹${cat.price || 49} (एकमुश्त / Full Access)`;
+          const stickySubText = document.getElementById('catStickySub');
+          if (stickySubText) stickySubText.textContent = isEn ? 'Unlock all classes in this series:' : 'इस पूरी कैटेगरी की सभी कक्षाएं अनलॉक करें:';
+          if (stickyPrice) stickyPrice.textContent = `₹${cat.price || 49} (${isEn ? 'Full Access' : 'एकमुश्त / Full Access'})`;
+          const enrollBtn = document.getElementById('catStickyEnrollBtn');
+          if (enrollBtn) enrollBtn.textContent = isEn ? '⚡ Enroll Now →' : '⚡ Enroll Now (अभी अनलॉक करें) →';
         } else {
           stickyBar.style.display = 'none';
         }
@@ -5711,6 +5784,7 @@ ${link}`;
       }
     ];
 
+    const isEn = this.currentLang === 'en';
     const catPrice = (this.currentCategoryData && this.currentCategoryData.price) || 49;
     container.innerHTML = passages.map((p, idx) => {
       const userUnlockedIds = (this.user && (this.user.unlocked_category_ids || this.user.unlocked_categories)) || [];
@@ -5720,28 +5794,34 @@ ${link}`;
       const durationMins = p.duration_seconds ? Math.round(p.duration_seconds / 60) : 10;
       const palette = colorPalettes[idx % colorPalettes.length];
 
-      // Check for user attempt result (server result or local cache)
+      // Check for user attempt result (genuine completed attempt only)
       const localRes = this.getRecentPassageResult ? this.getRecentPassageResult(p.id) : null;
       const res = p.user_result || localRes;
 
       let resultHTML = '';
-      if (res && res.net_wpm !== undefined) {
+      const hasRealAttempt = Boolean(
+        res &&
+        res.net_wpm !== undefined &&
+        ((res.total_words && res.total_words > 0) || (res.time_taken_seconds && res.time_taken_seconds >= 5 && (res.net_wpm > 0 || res.accuracy > 0)))
+      );
+
+      if (hasRealAttempt) {
         const isPass = Boolean(res.is_passed);
         const wpmVal = res.net_wpm || 0;
         const accVal = res.accuracy !== undefined ? res.accuracy : 0;
         const errVal = res.total_errors !== undefined && res.total_errors !== null ? res.total_errors : null;
 
         resultHTML = `
-          <div class="class-mini-result-box ${isPass ? 'result-pass' : 'result-fail'}" title="${isPass ? 'परीक्षा उत्तीर्ण' : 'पुनः प्रयास आवश्यक'}">
+          <div class="class-mini-result-box ${isPass ? 'result-pass' : 'result-fail'}" title="${isPass ? (isEn ? 'Exam Passed' : 'परीक्षा उत्तीर्ण') : (isEn ? 'Practice Required' : 'पुनः प्रयास आवश्यक')}">
             <div class="result-badge-head">
               <span class="result-badge-icon">${isPass ? '✓' : '✕'}</span>
-              <span>${isPass ? 'उत्तीर्ण (PASS)' : 'अनुत्तीर्ण (FAIL)'}</span>
+              <span>${isPass ? (isEn ? 'PASSED' : 'उत्तीर्ण (PASS)') : (isEn ? 'FAILED' : 'अनुत्तीर्ण (FAIL)')}</span>
             </div>
             <div class="result-badge-stats">
               <span>⚡ ${wpmVal} WPM</span>
               <span>•</span>
               <span>🎯 ${accVal}%</span>
-              ${errVal !== null ? `<span>•</span><span>❌ ${errVal} त्रुटि</span>` : ''}
+              ${errVal !== null ? `<span>•</span><span>❌ ${errVal} ${isEn ? 'err' : 'त्रुटि'}</span>` : ''}
             </div>
           </div>
         `;
@@ -5751,23 +5831,23 @@ ${link}`;
         <div class="category-passage-card category-passage-card-3d" style="background:${palette.bg}; border:${palette.border}; border-bottom:${palette.borderBottom}; box-shadow:${palette.boxShadow};">
           <div style="min-width:0;">
             <div style="display:flex; align-items:center; gap:8px; margin-bottom:5px; flex-wrap:wrap;">
-              <h4 style="margin:0; font-size:1rem; font-weight:700; color:var(--text-main);">${this.escapeHtml(p.title)}</h4>
-              ${p.is_free_tier ? '<span class="badge badge-success" style="font-size:0.65rem; padding:2px 7px; border-radius:6px; font-weight:800;">🎁 FREE DEMO</span>' : ''}
+              <h4 class="class-title hindi-text notranslate" translate="no" lang="hi" style="margin:0; font-size:1rem; font-weight:700; color:var(--text-main);">${this.escapeHtml(p.title)}</h4>
+              ${p.is_free_tier ? `<span class="badge badge-success" style="font-size:0.65rem; padding:2px 7px; border-radius:6px; font-weight:800;">🎁 ${isEn ? 'FREE DEMO' : 'फ्री डेमो'}</span>` : ''}
             </div>
             <div style="display:flex; gap:8px; font-size:0.75rem; color:var(--text-muted); flex-wrap:wrap; margin-bottom:5px;">
               <span style="background:var(--bg-subtle); padding:2px 8px; border-radius:6px; font-weight:700; color:${palette.accent}; border:1px solid rgba(0,0,0,0.04);">⚡ ${p.target_wpm || 80} WPM</span>
-              <span style="background:var(--bg-subtle); padding:2px 8px; border-radius:6px; border:1px solid rgba(0,0,0,0.04);">📝 ${p.word_count || 400} शब्द</span>
-              <span style="background:var(--bg-subtle); padding:2px 8px; border-radius:6px; border:1px solid rgba(0,0,0,0.04);">⏱️ ${durationMins} मिनट</span>
+              <span style="background:var(--bg-subtle); padding:2px 8px; border-radius:6px; border:1px solid rgba(0,0,0,0.04);">📝 ${p.word_count || 400} ${isEn ? 'words' : 'शब्द'}</span>
+              <span style="background:var(--bg-subtle); padding:2px 8px; border-radius:6px; border:1px solid rgba(0,0,0,0.04);">⏱️ ${durationMins} ${isEn ? 'mins' : 'मिनट'}</span>
             </div>
             <div style="font-size:0.72rem; color:var(--text-muted);">
-              🔤 मंगल एवं कृति देव 010 • आधिकारिक ऑडियो सहित
+              🔤 ${isEn ? 'Mangal & Kruti Dev 010 • With Official Audio' : 'मंगल एवं कृति देव 010 • आधिकारिक ऑडियो सहित'}
             </div>
           </div>
           <div class="card-actions-wrapper" style="display:flex; align-items:center; gap:12px; flex-wrap:wrap; justify-content:flex-end; flex-shrink:0;">
             ${resultHTML}
             ${isAcc 
-              ? `<button type="button" class="btn-primary" style="padding:9px 20px; font-size:0.85rem; font-weight:800; border-radius:24px; white-space:nowrap; box-shadow:0 4px 12px rgba(2,132,199,0.35); transition:all 0.2s ease;" onclick="stenoApp.openPractice(${p.id})">${res ? '🔄 पुनः टेस्ट दें →' : '🎯 Start Test →'}</button>`
-              : `<button type="button" class="btn-secondary" style="padding:8px 16px; font-size:0.82rem; font-weight:800; border-radius:24px; color:#10b981; border-color:#10b981; white-space:nowrap; box-shadow:0 2px 8px rgba(16,185,129,0.15);" onclick="stenoApp.openMultiCategoryCheckout(${p.category_id})">🔒 अनलॉक करें (₹${catPrice})</button>`
+              ? `<button type="button" class="btn-primary" style="padding:9px 20px; font-size:0.85rem; font-weight:800; border-radius:24px; white-space:nowrap; box-shadow:0 4px 12px rgba(2,132,199,0.35); transition:all 0.2s ease;" onclick="stenoApp.openPractice(${p.id})">${hasRealAttempt ? (isEn ? '🔄 Retake Test →' : '🔄 पुनः टेस्ट दें →') : (isEn ? '🎯 Start Test →' : '🎯 टेस्ट शुरू करें →')}</button>`
+              : `<button type="button" class="btn-secondary" style="padding:8px 16px; font-size:0.82rem; font-weight:800; border-radius:24px; color:#10b981; border-color:#10b981; white-space:nowrap; box-shadow:0 2px 8px rgba(16,185,129,0.15);" onclick="stenoApp.openMultiCategoryCheckout(${p.category_id})">🔒 ${isEn ? 'Unlock' : 'अनलॉक करें'} (₹${catPrice})</button>`
             }
           </div>
         </div>

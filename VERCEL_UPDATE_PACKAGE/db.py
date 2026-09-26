@@ -4681,9 +4681,9 @@ def get_passages_by_category(category_id: int, user_id: Optional[int] = None) ->
             conn = get_db()
             c = conn.cursor()
             c.execute("""
-                SELECT passage_id, net_wpm, accuracy, error_rate, total_errors, time_taken_seconds, report_json, created_at
+                SELECT passage_id, net_wpm, accuracy, error_rate, total_errors, time_taken_seconds, total_words, report_json, created_at
                 FROM practice_attempts
-                WHERE user_id = ?
+                WHERE user_id = ? AND total_words > 0 AND time_taken_seconds >= 5
                 ORDER BY id DESC
             """, (user_id,))
             rows = c.fetchall()
@@ -4719,6 +4719,7 @@ def get_passages_by_category(category_id: int, user_id: Optional[int] = None) ->
                         'accuracy': round(float(r_dict.get('accuracy') or 0), 1),
                         'total_errors': int(r_dict.get('total_errors') or 0),
                         'time_taken_seconds': int(r_dict.get('time_taken_seconds') or 0),
+                        'total_words': int(r_dict.get('total_words') or 0),
                         'is_passed': is_passed,
                         'created_at': r_dict.get('created_at')
                     }
