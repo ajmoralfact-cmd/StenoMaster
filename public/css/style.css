@@ -7495,3 +7495,153 @@ body.dark-mode .ww-tip-row {
   min-height: 45vh;
   height: 55vh;
 }
+
+/* ==========================================================================
+   3D Transparent Multi-Color Class Cards & Mini Result Badges
+   ========================================================================== */
+.category-passage-card-3d {
+  position: relative;
+  overflow: hidden;
+  border-radius: 16px;
+  padding: 18px 22px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 18px;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  transition: all 0.24s cubic-bezier(0.16, 1, 0.3, 1);
+  cursor: default;
+}
+
+.category-passage-card-3d:hover {
+  transform: translateY(-3px);
+}
+
+.category-passage-card-3d:active {
+  transform: translateY(-1px);
+}
+
+/* 3D Mini Result Badges */
+.class-mini-result-box {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 7px 14px;
+  border-radius: 12px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  user-select: none;
+  min-width: 140px;
+}
+
+.class-mini-result-box:hover {
+  transform: scale(1.02);
+}
+
+.class-mini-result-box.result-pass {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.14) 0%, rgba(5, 150, 105, 0.08) 100%);
+  border: 1.5px solid rgba(16, 185, 129, 0.45);
+  border-bottom: 3.5px solid #059669;
+  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+.class-mini-result-box.result-fail {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.14) 0%, rgba(220, 38, 38, 0.08) 100%);
+  border: 1.5px solid rgba(239, 68, 68, 0.45);
+  border-bottom: 3.5px solid #dc2626;
+  box-shadow: 0 4px 14px rgba(239, 68, 68, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+.result-badge-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 800;
+  font-size: 0.8rem;
+  letter-spacing: 0.02em;
+}
+
+.result-pass .result-badge-head {
+  color: #065f46;
+}
+
+.result-fail .result-badge-head {
+  color: #991b1b;
+}
+
+[data-theme="dark"] .result-pass .result-badge-head {
+  color: #34d399;
+}
+
+[data-theme="dark"] .result-fail .result-badge-head {
+  color: #f87171;
+}
+
+.result-badge-icon {
+  width: 17px;
+  height: 17px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.68rem;
+  font-weight: 900;
+  color: #ffffff;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.18);
+  flex-shrink: 0;
+}
+
+.result-pass .result-badge-icon {
+  background: #10b981;
+}
+
+.result-fail .result-badge-icon {
+  background: #ef4444;
+}
+
+.result-badge-stats {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.74rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.result-pass .result-badge-stats {
+  color: #047857;
+}
+
+.result-fail .result-badge-stats {
+  color: #b91c1c;
+}
+
+[data-theme="dark"] .result-pass .result-badge-stats {
+  color: #6ee7b7;
+}
+
+[data-theme="dark"] .result-fail .result-badge-stats {
+  color: #fca5a5;
+}
+
+@media (max-width: 640px) {
+  .category-passage-card-3d {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 14px 16px;
+  }
+  .category-passage-card-3d > .card-actions-wrapper {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .category-passage-card-3d > .card-actions-wrapper .class-mini-result-box {
+    flex: 1;
+    min-width: 0;
+  }
+}
+

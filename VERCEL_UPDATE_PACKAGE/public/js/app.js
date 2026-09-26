@@ -3532,6 +3532,26 @@ class StenoApp {
     `;
   }
 
+  saveRecentPassageResult(passageId, resultObj) {
+    if (!passageId || !resultObj) return;
+    try {
+      const key = 'stenomaster_recent_results';
+      const stored = JSON.parse(localStorage.getItem(key) || '{}');
+      stored[Number(passageId)] = resultObj;
+      localStorage.setItem(key, JSON.stringify(stored));
+    } catch (e) {}
+  }
+
+  getRecentPassageResult(passageId) {
+    if (!passageId) return null;
+    try {
+      const stored = JSON.parse(localStorage.getItem('stenomaster_recent_results') || '{}');
+      return stored[Number(passageId)] || null;
+    } catch (e) {
+      return null;
+    }
+  }
+
   async submitPractice(autoSubmit = false) {
     const text = stenoTypingEngine.getText().trim();
     if (!text && !autoSubmit) {
@@ -3583,6 +3603,36 @@ class StenoApp {
         }
       } catch (e) {
         console.warn('Post-submit live summary error:', e);
+      }
+
+      // Cache latest passage result locally for instant zero-latency UI update in category-detail
+      try {
+        if (evalReport && evalReport.metrics && this.currentPassage && this.currentPassage.id) {
+          const m = evalReport.metrics;
+          const es = evalReport.exam_summary || {};
+          const ssc = es.ssc || {};
+          const upsssc = es.upsssc || {};
+          let isPassed = false;
+          if (es.is_qualified !== undefined && es.is_qualified !== null) isPassed = Boolean(es.is_qualified);
+          else if (ssc.is_qualified_any !== undefined && ssc.is_qualified_any !== null) isPassed = Boolean(ssc.is_qualified_any);
+          else if (upsssc.is_qualified !== undefined && upsssc.is_qualified !== null) isPassed = Boolean(upsssc.is_qualified);
+          else isPassed = Boolean(Number(m.accuracy || 0) >= 90.0 && Number(m.net_wpm || 0) >= 25.0);
+
+          this.saveRecentPassageResult(this.currentPassage.id, {
+            net_wpm: Math.round(Number(m.net_wpm || 0) * 10) / 10,
+            accuracy: Math.round(Number(m.accuracy || 0) * 10) / 10,
+            total_errors: Number(m.total_errors || 0),
+            time_taken_seconds: Number(m.time_taken_seconds || timeTaken || 0),
+            is_passed: isPassed,
+            created_at: new Date().toISOString()
+          });
+
+          if (this.currentPassage.category_id && this._categoryDetailCache) {
+            this._categoryDetailCache.delete(Number(this.currentPassage.category_id));
+          }
+        }
+      } catch (cacheErr) {
+        console.warn('Post-submit passage result caching error:', cacheErr);
       }
 
       // Render Result Report Card (Ensure comparison_view is loaded)
@@ -5615,34 +5665,108 @@ ${link}`;
       return;
     }
 
+    const colorPalettes = [
+      {
+        bg: 'linear-gradient(135deg, rgba(37, 99, 235, 0.07) 0%, rgba(56, 189, 248, 0.03) 100%)',
+        border: '1.5px solid rgba(59, 130, 246, 0.25)',
+        borderBottom: '3.5px solid rgba(37, 99, 235, 0.45)',
+        boxShadow: '0 6px 18px -3px rgba(37, 99, 235, 0.08), 0 2px 5px rgba(0,0,0,0.02), inset 0 1px 0 rgba(255,255,255,0.85)',
+        accent: '#2563eb'
+      },
+      {
+        bg: 'linear-gradient(135deg, rgba(16, 185, 129, 0.07) 0%, rgba(20, 184, 166, 0.03) 100%)',
+        border: '1.5px solid rgba(16, 185, 129, 0.25)',
+        borderBottom: '3.5px solid rgba(16, 185, 129, 0.45)',
+        boxShadow: '0 6px 18px -3px rgba(16, 185, 129, 0.08), 0 2px 5px rgba(0,0,0,0.02), inset 0 1px 0 rgba(255,255,255,0.85)',
+        accent: '#059669'
+      },
+      {
+        bg: 'linear-gradient(135deg, rgba(147, 51, 234, 0.07) 0%, rgba(168, 85, 247, 0.03) 100%)',
+        border: '1.5px solid rgba(147, 51, 234, 0.25)',
+        borderBottom: '3.5px solid rgba(147, 51, 234, 0.45)',
+        boxShadow: '0 6px 18px -3px rgba(147, 51, 234, 0.08), 0 2px 5px rgba(0,0,0,0.02), inset 0 1px 0 rgba(255,255,255,0.85)',
+        accent: '#7c3aed'
+      },
+      {
+        bg: 'linear-gradient(135deg, rgba(245, 158, 11, 0.07) 0%, rgba(251, 191, 36, 0.03) 100%)',
+        border: '1.5px solid rgba(245, 158, 11, 0.28)',
+        borderBottom: '3.5px solid rgba(217, 119, 6, 0.45)',
+        boxShadow: '0 6px 18px -3px rgba(245, 158, 11, 0.08), 0 2px 5px rgba(0,0,0,0.02), inset 0 1px 0 rgba(255,255,255,0.85)',
+        accent: '#d97706'
+      },
+      {
+        bg: 'linear-gradient(135deg, rgba(244, 63, 94, 0.07) 0%, rgba(251, 113, 133, 0.03) 100%)',
+        border: '1.5px solid rgba(244, 63, 94, 0.25)',
+        borderBottom: '3.5px solid rgba(225, 29, 72, 0.45)',
+        boxShadow: '0 6px 18px -3px rgba(244, 63, 94, 0.08), 0 2px 5px rgba(0,0,0,0.02), inset 0 1px 0 rgba(255,255,255,0.85)',
+        accent: '#e11d48'
+      },
+      {
+        bg: 'linear-gradient(135deg, rgba(6, 182, 212, 0.07) 0%, rgba(14, 165, 233, 0.03) 100%)',
+        border: '1.5px solid rgba(6, 182, 212, 0.25)',
+        borderBottom: '3.5px solid rgba(8, 145, 178, 0.45)',
+        boxShadow: '0 6px 18px -3px rgba(6, 182, 212, 0.08), 0 2px 5px rgba(0,0,0,0.02), inset 0 1px 0 rgba(255,255,255,0.85)',
+        accent: '#0891b2'
+      }
+    ];
+
     const catPrice = (this.currentCategoryData && this.currentCategoryData.price) || 49;
-    container.innerHTML = passages.map(p => {
+    container.innerHTML = passages.map((p, idx) => {
       const userUnlockedIds = (this.user && (this.user.unlocked_category_ids || this.user.unlocked_categories)) || [];
       const hasFullAccess = Boolean(this.user && (this.user.role === 'admin' || this.user.subscription_status === 'active' || this.user.is_free_access));
       const isCatUnlocked = hasFullAccess || userUnlockedIds.map(Number).includes(Number(p.category_id || this.currentCategoryId)) || (this.currentCategoryData && this.currentCategoryData.is_unlocked);
       const isAcc = Boolean(p.is_free_tier || isCatUnlocked);
       const durationMins = p.duration_seconds ? Math.round(p.duration_seconds / 60) : 10;
+      const palette = colorPalettes[idx % colorPalettes.length];
+
+      // Check for user attempt result (server result or local cache)
+      const localRes = this.getRecentPassageResult ? this.getRecentPassageResult(p.id) : null;
+      const res = p.user_result || localRes;
+
+      let resultHTML = '';
+      if (res && res.net_wpm !== undefined) {
+        const isPass = Boolean(res.is_passed);
+        const wpmVal = res.net_wpm || 0;
+        const accVal = res.accuracy !== undefined ? res.accuracy : 0;
+        const errVal = res.total_errors !== undefined && res.total_errors !== null ? res.total_errors : null;
+
+        resultHTML = `
+          <div class="class-mini-result-box ${isPass ? 'result-pass' : 'result-fail'}" title="${isPass ? 'परीक्षा उत्तीर्ण' : 'पुनः प्रयास आवश्यक'}">
+            <div class="result-badge-head">
+              <span class="result-badge-icon">${isPass ? '✓' : '✕'}</span>
+              <span>${isPass ? 'उत्तीर्ण (PASS)' : 'अनुत्तीर्ण (FAIL)'}</span>
+            </div>
+            <div class="result-badge-stats">
+              <span>⚡ ${wpmVal} WPM</span>
+              <span>•</span>
+              <span>🎯 ${accVal}%</span>
+              ${errVal !== null ? `<span>•</span><span>❌ ${errVal} त्रुटि</span>` : ''}
+            </div>
+          </div>
+        `;
+      }
 
       return `
-        <div class="category-passage-card" style="background:var(--bg-card); border:1.5px solid var(--border); border-radius:14px; padding:16px 18px; display:flex; justify-content:space-between; align-items:center; gap:14px; transition:border-color 0.15s, box-shadow 0.15s; box-shadow:0 2px 6px rgba(0,0,0,0.02);">
+        <div class="category-passage-card category-passage-card-3d" style="background:${palette.bg}; border:${palette.border}; border-bottom:${palette.borderBottom}; box-shadow:${palette.boxShadow};">
           <div style="min-width:0;">
-            <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px; flex-wrap:wrap;">
-              <h4 style="margin:0; font-size:0.98rem; font-weight:700; color:var(--text-main);">${this.escapeHtml(p.title)}</h4>
-              ${p.is_free_tier ? '<span class="badge badge-success" style="font-size:0.65rem; padding:2px 6px;">🎁 FREE DEMO</span>' : ''}
+            <div style="display:flex; align-items:center; gap:8px; margin-bottom:5px; flex-wrap:wrap;">
+              <h4 style="margin:0; font-size:1rem; font-weight:700; color:var(--text-main);">${this.escapeHtml(p.title)}</h4>
+              ${p.is_free_tier ? '<span class="badge badge-success" style="font-size:0.65rem; padding:2px 7px; border-radius:6px; font-weight:800;">🎁 FREE DEMO</span>' : ''}
             </div>
-            <div style="display:flex; gap:8px; font-size:0.75rem; color:var(--text-muted); flex-wrap:wrap; margin-bottom:4px;">
-              <span style="background:var(--bg-subtle); padding:2px 8px; border-radius:4px; font-weight:600; color:var(--primary);">⚡ ${p.target_wpm || 80} WPM</span>
-              <span style="background:var(--bg-subtle); padding:2px 8px; border-radius:4px;">📝 ${p.word_count || 400} शब्द</span>
-              <span style="background:var(--bg-subtle); padding:2px 8px; border-radius:4px;">⏱️ ${durationMins} मिनट</span>
+            <div style="display:flex; gap:8px; font-size:0.75rem; color:var(--text-muted); flex-wrap:wrap; margin-bottom:5px;">
+              <span style="background:var(--bg-subtle); padding:2px 8px; border-radius:6px; font-weight:700; color:${palette.accent}; border:1px solid rgba(0,0,0,0.04);">⚡ ${p.target_wpm || 80} WPM</span>
+              <span style="background:var(--bg-subtle); padding:2px 8px; border-radius:6px; border:1px solid rgba(0,0,0,0.04);">📝 ${p.word_count || 400} शब्द</span>
+              <span style="background:var(--bg-subtle); padding:2px 8px; border-radius:6px; border:1px solid rgba(0,0,0,0.04);">⏱️ ${durationMins} मिनट</span>
             </div>
             <div style="font-size:0.72rem; color:var(--text-muted);">
               🔤 मंगल एवं कृति देव 010 • आधिकारिक ऑडियो सहित
             </div>
           </div>
-          <div style="flex-shrink:0;">
+          <div class="card-actions-wrapper" style="display:flex; align-items:center; gap:12px; flex-wrap:wrap; justify-content:flex-end; flex-shrink:0;">
+            ${resultHTML}
             ${isAcc 
-              ? `<button type="button" class="btn-primary" style="padding:8px 18px; font-size:0.84rem; font-weight:700; border-radius:20px; white-space:nowrap; box-shadow:0 3px 10px rgba(2,132,199,0.3);" onclick="stenoApp.openPractice(${p.id})">🎯 Start Test →</button>`
-              : `<button type="button" class="btn-secondary" style="padding:8px 14px; font-size:0.8rem; font-weight:700; border-radius:20px; color:#10b981; border-color:#10b981; white-space:nowrap;" onclick="stenoApp.openMultiCategoryCheckout(${p.category_id})">🔒 अनलॉक करें (₹${catPrice})</button>`
+              ? `<button type="button" class="btn-primary" style="padding:9px 20px; font-size:0.85rem; font-weight:800; border-radius:24px; white-space:nowrap; box-shadow:0 4px 12px rgba(2,132,199,0.35); transition:all 0.2s ease;" onclick="stenoApp.openPractice(${p.id})">${res ? '🔄 पुनः टेस्ट दें →' : '🎯 Start Test →'}</button>`
+              : `<button type="button" class="btn-secondary" style="padding:8px 16px; font-size:0.82rem; font-weight:800; border-radius:24px; color:#10b981; border-color:#10b981; white-space:nowrap; box-shadow:0 2px 8px rgba(16,185,129,0.15);" onclick="stenoApp.openMultiCategoryCheckout(${p.category_id})">🔒 अनलॉक करें (₹${catPrice})</button>`
             }
           </div>
         </div>
