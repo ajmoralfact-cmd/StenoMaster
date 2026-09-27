@@ -7,6 +7,63 @@
  * - Diagnostic weak-area recommendations
  * - Grammar & style suggestions
  */
+// Shield Root Hindi Shorthand Content from Chrome / Browser Auto-Translation
+if (!customElements.get('hindi-root')) {
+  class HindiRootElement extends HTMLElement {
+    static get observedAttributes() { return ['text']; }
+    constructor() {
+      super();
+      this._shadow = null;
+    }
+    connectedCallback() {
+      this._render();
+    }
+    attributeChangedCallback(name, oldVal, newVal) {
+      if (name === 'text' && oldVal !== newVal) {
+        this._render();
+      }
+    }
+    get text() {
+      return this.getAttribute('text') || '';
+    }
+    set text(val) {
+      this.setAttribute('text', val || '');
+    }
+    _render() {
+      let rawText = this.getAttribute('text');
+      if (rawText === null || rawText === undefined) {
+        rawText = this.textContent || '';
+      }
+      this.textContent = '';
+      if (!this._shadow) {
+        try {
+          this._shadow = this.attachShadow({ mode: 'closed' });
+        } catch (e) {
+          this._shadow = this.shadowRoot;
+        }
+      }
+      const safeText = String(rawText || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+      const content = `
+        <style>
+          :host { display: inline !important; font-family: inherit; font-size: inherit; font-weight: inherit; color: inherit; line-height: inherit; }
+          .steno-hindi-inner { font-family: inherit; font-size: inherit; font-weight: inherit; color: inherit; line-height: inherit; }
+        </style>
+        <span class="steno-hindi-inner notranslate skiptranslate" translate="no" lang="hi">${safeText}</span>
+      `;
+      if (this._shadow) {
+        this._shadow.innerHTML = content;
+      } else {
+        this.innerHTML = content;
+      }
+    }
+  }
+  customElements.define('hindi-root', HindiRootElement);
+}
 
 class StenoComparisonView {
   constructor() {
@@ -366,7 +423,7 @@ class StenoComparisonView {
       <div class="result-header-banner">
         <div class="result-header-left">
           <h2>अभ्यास पूर्ण! 🎉 (Practice Completed)</h2>
-          <p>${report.passage_title || 'Stenographer Dictation'} • ${report.language === 'hindi' ? 'हिंदी डिक्टेशन' : 'English Dictation'}</p>
+          <p><hindi-root text="${this.escapeHtml(report.passage_title || 'Stenographer Dictation')}"></hindi-root> • ${report.language === 'hindi' ? 'हिंदी डिक्टेशन' : 'English Dictation'}</p>
         </div>
         <div class="result-header-right">
           <button class="btn-secondary" onclick="stenoApp.retryPractice()" style="color:#fff; border-color:rgba(255,255,255,0.4); background:rgba(255,255,255,0.15)">
@@ -556,7 +613,7 @@ class StenoComparisonView {
       const isTokenKruti = !/[\u0900-\u097F]/.test(displayText) && /[a-zA-Z]/.test(displayText);
       const fontClass = isTokenKruti ? ' font-krutidev' : ' font-mangal';
 
-      return `<span class="eval-token ${cssClass}${fontClass} notranslate" translate="no" data-idx="${idx}">${displayText}</span>`;
+      return `<span class="eval-token ${cssClass}${fontClass} notranslate skiptranslate" translate="no" data-idx="${idx}"><hindi-root text="${this.escapeHtml(displayText)}"></hindi-root></span>`;
     }).join(' ');
   }
 
@@ -821,8 +878,8 @@ class StenoComparisonView {
             <div class="result-box-tag notranslate" translate="no" style="color:#0284c7; background:#e0f2fe;">
               ✓ आधिकारिक मूल पाठ (Official Reference Text)
             </div>
-            <div class="result-passage-text-content font-mangal notranslate" id="masterOfficialTextDisplay" translate="no">
-              ${this.escapeHtml(mangalText || krutiText)}
+            <div class="result-passage-text-content font-mangal notranslate skiptranslate" id="masterOfficialTextDisplay" translate="no">
+              <hindi-root text="${this.escapeHtml(mangalText || krutiText)}"></hindi-root>
             </div>
           </div>
 
@@ -832,8 +889,8 @@ class StenoComparisonView {
               <div class="result-box-tag notranslate" translate="no" style="color:#7c3aed; background:#f3e8ff;">
                 ⌨️ आपका टाइप किया हुआ पाठ (Your Raw Typing)
               </div>
-              <div class="result-passage-text-content font-mangal notranslate" id="studentRawTextDisplay" translate="no">
-                ${this.escapeHtml(studentText)}
+              <div class="result-passage-text-content font-mangal notranslate skiptranslate" id="studentRawTextDisplay" translate="no">
+                <hindi-root text="${this.escapeHtml(studentText)}"></hindi-root>
               </div>
             </div>
           ` : ''}
@@ -853,14 +910,14 @@ class StenoComparisonView {
       if (btnM) btnM.classList.remove('active');
       if (btnK) btnK.classList.add('active');
       const text = this.currentReport.official_text_krutidev || this.currentReport.official_text || '';
-      display.textContent = text;
+      display.innerHTML = `<hindi-root text="${this.escapeHtml(text)}"></hindi-root>`;
       display.classList.remove('font-mangal');
       display.classList.add('font-krutidev');
     } else {
       if (btnK) btnK.classList.remove('active');
       if (btnM) btnM.classList.add('active');
       const text = this.currentReport.official_text || this.currentReport.official_text_krutidev || '';
-      display.textContent = text;
+      display.innerHTML = `<hindi-root text="${this.escapeHtml(text)}"></hindi-root>`;
       display.classList.remove('font-krutidev');
       display.classList.add('font-mangal');
     }

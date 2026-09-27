@@ -44,8 +44,67 @@
   <!-- Performance Preconnects for Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Mukta:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/css/style.css?v=12.7">
+  <link rel="stylesheet" href="/css/style.css?v=13.5">
+
+  <!-- Shield Root Hindi Shorthand Content from Chrome / Browser Auto-Translation -->
+  <script>
+    class HindiRootElement extends HTMLElement {
+      static get observedAttributes() { return ['text']; }
+      constructor() {
+        super();
+        this._shadow = null;
+      }
+      connectedCallback() {
+        this._render();
+      }
+      attributeChangedCallback(name, oldVal, newVal) {
+        if (name === 'text' && oldVal !== newVal) {
+          this._render();
+        }
+      }
+      get text() {
+        return this.getAttribute('text') || '';
+      }
+      set text(val) {
+        this.setAttribute('text', val || '');
+      }
+      _render() {
+        let rawText = this.getAttribute('text');
+        if (rawText === null || rawText === undefined) {
+          rawText = this.textContent || '';
+        }
+        this.textContent = '';
+        if (!this._shadow) {
+          try {
+            this._shadow = this.attachShadow({ mode: 'closed' });
+          } catch (e) {
+            this._shadow = this.shadowRoot;
+          }
+        }
+        const safeText = String(rawText || '')
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#039;');
+        const content = `
+          <style>
+            :host { display: inline !important; font-family: inherit; font-size: inherit; font-weight: inherit; color: inherit; line-height: inherit; }
+            .steno-hindi-inner { font-family: inherit; font-size: inherit; font-weight: inherit; color: inherit; line-height: inherit; }
+          </style>
+          <span class="steno-hindi-inner notranslate skiptranslate" translate="no" lang="hi">${safeText}</span>
+        `;
+        if (this._shadow) {
+          this._shadow.innerHTML = content;
+        } else {
+          this.innerHTML = content;
+        }
+      }
+    }
+    if (!customElements.get('hindi-root')) {
+      customElements.define('hindi-root', HindiRootElement);
+    }
+  </script>
 
   <!-- Google Schema.org JSON-LD Structured Data -->
   <script type="application/ld+json">
@@ -1051,9 +1110,9 @@
             ← वापस (Back)
           </button>
           <div style="flex:1; min-width:200px;">
-            <h2 id="catDetailTitle" style="margin:0; font-size:1.35rem; font-weight:800; color:var(--text-main); display:flex; align-items:center; gap:8px;">
+            <h2 id="catDetailTitle" class="notranslate" translate="no" lang="hi" style="margin:0; font-size:1.35rem; font-weight:800; color:var(--text-main); display:flex; align-items:center; gap:8px;">
               <span id="catDetailIcon">📘</span>
-              <span id="catDetailName" class="notranslate" translate="no" lang="hi">रामधारी गुप्ता खंड 1</span>
+              <span id="catDetailName" class="notranslate skiptranslate" translate="no" lang="hi"><hindi-root text="रामधारी गुप्ता खंड 1"></hindi-root></span>
             </h2>
             <p id="catDetailSub" style="margin:2px 0 0 0; font-size:0.8rem; color:var(--text-muted);">
               कुल डिक्टेशन्स • 80-100 WPM • ऑडियो सहित
@@ -1124,8 +1183,8 @@
           <div class="audio-player-card">
             <div class="audio-title-bar">
               <div class="audio-passage-info">
-                <h3 id="practicePassageTitle" class="hindi-text notranslate" translate="no" lang="hi">आलेख शीर्षक</h3>
-                <p id="practiceCategoryName" class="notranslate" translate="no" lang="hi">श्रेणी नाम</p>
+                <h3 id="practicePassageTitle" class="hindi-text notranslate skiptranslate" translate="no" lang="hi"><hindi-root text="आलेख शीर्षक"></hindi-root></h3>
+                <p id="practiceCategoryName" class="notranslate skiptranslate" translate="no" lang="hi"><hindi-root text="श्रेणी नाम"></hindi-root></p>
               </div>
               <div style="display:flex; align-items:center; gap:8px;">
                 <div style="font-size:0.8rem; color:var(--text-muted);" class="hide-mobile">
@@ -2815,12 +2874,12 @@
   <!-- Cashfree Payment Gateway SDK (v3) - Defer to prevent blocking page render -->
   <script defer src="https://sdk.cashfree.com/js/v3/cashfree.js"></script>
 
-  <!-- Core Lightweight Scripts (charts.js & comparison_view.js?v=9.7 are lazy-loaded on demand for 50% faster startup) -->
+  <!-- Core Lightweight Scripts (charts.js & comparison_view.js?v=13.5 are lazy-loaded on demand for 50% faster startup) -->
   <script src="/js/audio_player.js?v=8.1"></script>
   <script src="/js/keyboard_map.js?v=8.1"></script>
-  <script src="/js/typing_engine.js?v=12.0"></script>
+  <script src="/js/typing_engine.js?v=13.5"></script>
   <script src="/js/ocr_service.js?v=1.1"></script>
-  <script src="/js/app.js?v=12.7"></script>
+  <script src="/js/app.js?v=13.5"></script>
   <!-- Strict Exam Hall Anti-Cheat Warning Modal -->
   <div class="modal-overlay" id="examHallWarningModal" style="z-index:99999;">
     <div class="modal-card" style="max-width: 480px; text-align:center; border:2px solid #ef4444; box-shadow:0 10px 40px rgba(239,68,68,0.3);">

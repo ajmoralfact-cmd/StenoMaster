@@ -3,6 +3,64 @@
  * Master Controller for State, Routing, Views, Authentication, and Interactions
  */
 
+// Shield Root Hindi Shorthand Content from Chrome / Browser Auto-Translation
+if (!customElements.get('hindi-root')) {
+  class HindiRootElement extends HTMLElement {
+    static get observedAttributes() { return ['text']; }
+    constructor() {
+      super();
+      this._shadow = null;
+    }
+    connectedCallback() {
+      this._render();
+    }
+    attributeChangedCallback(name, oldVal, newVal) {
+      if (name === 'text' && oldVal !== newVal) {
+        this._render();
+      }
+    }
+    get text() {
+      return this.getAttribute('text') || '';
+    }
+    set text(val) {
+      this.setAttribute('text', val || '');
+    }
+    _render() {
+      let rawText = this.getAttribute('text');
+      if (rawText === null || rawText === undefined) {
+        rawText = this.textContent || '';
+      }
+      this.textContent = '';
+      if (!this._shadow) {
+        try {
+          this._shadow = this.attachShadow({ mode: 'closed' });
+        } catch (e) {
+          this._shadow = this.shadowRoot;
+        }
+      }
+      const safeText = String(rawText || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+      const content = `
+        <style>
+          :host { display: inline !important; font-family: inherit; font-size: inherit; font-weight: inherit; color: inherit; line-height: inherit; }
+          .steno-hindi-inner { font-family: inherit; font-size: inherit; font-weight: inherit; color: inherit; line-height: inherit; }
+        </style>
+        <span class="steno-hindi-inner notranslate skiptranslate" translate="no" lang="hi">${safeText}</span>
+      `;
+      if (this._shadow) {
+        this._shadow.innerHTML = content;
+      } else {
+        this.innerHTML = content;
+      }
+    }
+  }
+  customElements.define('hindi-root', HindiRootElement);
+}
+
 const I18N_DICTIONARY = {
   hi: {
     nav_home: 'डैशबोर्ड (Dashboard)',
@@ -708,7 +766,7 @@ class StenoApp {
     } catch (e) {}
 
     // 2. Auto purge all browser caches when app version updates
-    const APP_VERSION = 'v9.1';
+    const APP_VERSION = 'v13.5';
     if (localStorage.getItem('stenomaster_client_version') !== APP_VERSION) {
       localStorage.setItem('stenomaster_client_version', APP_VERSION);
       if ('caches' in window) {
@@ -717,7 +775,7 @@ class StenoApp {
     }
 
     if ('serviceWorker' in navigator) {
-      const CURRENT_SW_VERSION = 'v12.2';
+      const CURRENT_SW_VERSION = 'v13.5';
 
       // Step 1: Unregister ALL stale/old service workers first
       navigator.serviceWorker.getRegistrations().then((registrations) => {
@@ -734,7 +792,7 @@ class StenoApp {
               if ('caches' in window) {
                 caches.keys().then((keys) => {
                   keys.forEach((key) => {
-                    if (!key.includes('v12.2')) {
+                    if (!key.includes('v13.5')) {
                       caches.delete(key);
                       console.log('[SW] Cleared stale cache:', key);
                     }
@@ -746,7 +804,7 @@ class StenoApp {
       }).catch(() => {});
 
       // Step 2: Register the current SW
-      navigator.serviceWorker.register('/service-worker.js?v=12.2')
+      navigator.serviceWorker.register('/service-worker.js?v=13.5')
         .then((reg) => {
           reg.update().catch(() => {});
           reg.addEventListener('updatefound', () => {
@@ -3172,8 +3230,8 @@ class StenoApp {
             </button>
           </div>
 
-          <h4 class="class-title hindi-text notranslate" translate="no" lang="hi" style="margin-top:10px;">${this.escapeHtml(p.title)}</h4>
-          <div class="class-category notranslate" translate="no" lang="hi" style="font-size:0.82rem; color:var(--text-muted); margin-bottom:12px;">📂 ${this.escapeHtml(p.category_name || '')}</div>
+          <h4 class="class-title hindi-text notranslate skiptranslate" translate="no" lang="hi" style="margin-top:10px;"><hindi-root text="${this.escapeHtml(p.title)}"></hindi-root></h4>
+          <div class="class-category notranslate skiptranslate" translate="no" lang="hi" style="font-size:0.82rem; color:var(--text-muted); margin-bottom:12px;">📂 <hindi-root text="${this.escapeHtml(p.category_name || '')}"></hindi-root></div>
 
           <div class="class-stats-row">
             <div class="class-stat-item">
@@ -3395,16 +3453,17 @@ class StenoApp {
     // Populate Practice Header Info safely
     const titleEl = document.getElementById('practicePassageTitle');
     if (titleEl) {
-      titleEl.textContent = this.currentPassage.title || 'आलेख अभ्यास';
-      titleEl.classList.add('notranslate');
+      titleEl.innerHTML = '<hindi-root text="' + this.escapeHtml(this.currentPassage.title || 'आलेख अभ्यास') + '"></hindi-root>';
+      titleEl.classList.add('notranslate', 'skiptranslate');
       titleEl.setAttribute('translate', 'no');
       titleEl.setAttribute('lang', 'hi');
     }
     const catEl = document.getElementById('practiceCategoryName');
     const foundCat = (this.categories || []).find(c => c.id === this.currentPassage.category_id);
     if (catEl) {
-      catEl.textContent = this.currentPassage.category_name || (foundCat && foundCat.name) || '';
-      catEl.classList.add('notranslate');
+      const catText = this.currentPassage.category_name || (foundCat && foundCat.name) || '';
+      catEl.innerHTML = catText ? '<hindi-root text="' + this.escapeHtml(catText) + '"></hindi-root>' : '';
+      catEl.classList.add('notranslate', 'skiptranslate');
       catEl.setAttribute('translate', 'no');
       catEl.setAttribute('lang', 'hi');
     }
@@ -5487,7 +5546,7 @@ ${link}`;
               </div>
               <div>
                 <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:4px;">
-                  <h4 class="notranslate" translate="no" lang="hi" style="margin:0; font-size:1.18rem; font-weight:800; color:var(--text-main); line-height:1.35;">${this.escapeHtml(cat.name)}</h4>
+                  <h4 class="notranslate skiptranslate" translate="no" lang="hi" style="margin:0; font-size:1.18rem; font-weight:800; color:var(--text-main); line-height:1.35;"><hindi-root text="${this.escapeHtml(cat.name)}"></hindi-root></h4>
                   ${isUnlocked 
                     ? `<span class="badge" style="background:#10b981; color:#fff; font-size:0.75rem; font-weight:800; padding:4px 10px; border-radius:6px;">✓ ${isEn ? 'UNLOCKED' : 'अनलॉक्ड'}</span>` 
                     : `<span class="badge badge-paid" onclick="event.stopPropagation(); stenoApp.openMultiCategoryCheckout(${cat.id})" style="background:linear-gradient(135deg, #f59e0b, #d97706); color:#fff; font-weight:800; font-size:0.78rem; padding:4px 11px; border-radius:8px; box-shadow:0 2px 8px rgba(245,158,11,0.3); cursor:pointer; display:inline-flex; align-items:center; gap:5px;" title="${isEn ? `Click to buy for ₹${price}` : `क्लिक करके ₹${price} में खरीदें`}">🔒 ${isEn ? 'Paid Series' : 'पेड श्रेणी'} • ₹${price} <span style="font-size:0.72rem; text-decoration:underline; opacity:0.95;">(${isEn ? 'Unlock ➔' : 'अनलॉक ➔'})</span></span>`
@@ -5574,8 +5633,8 @@ ${link}`;
     const catMeta = (this.categories || []).find(c => c.id === cIdInt || String(c.id) === String(categoryId));
     if (catMeta) {
       if (nameEl) {
-        nameEl.textContent = catMeta.name || 'डिक्टेशन टेस्ट सीरीज';
-        nameEl.classList.add('notranslate');
+        nameEl.innerHTML = '<hindi-root text="' + this.escapeHtml(catMeta.name || 'डिक्टेशन टेस्ट सीरीज') + '"></hindi-root>';
+        nameEl.classList.add('notranslate', 'skiptranslate');
         nameEl.setAttribute('translate', 'no');
         nameEl.setAttribute('lang', 'hi');
       }
@@ -5622,8 +5681,8 @@ ${link}`;
       this.currentCategoryPassages = res.passages || [];
 
       if (nameEl) {
-        nameEl.textContent = cat.name || 'डिक्टेशन टेस्ट सीरीज';
-        nameEl.classList.add('notranslate');
+        nameEl.innerHTML = '<hindi-root text="' + this.escapeHtml(cat.name || 'डिक्टेशन टेस्ट सीरीज') + '"></hindi-root>';
+        nameEl.classList.add('notranslate', 'skiptranslate');
         nameEl.setAttribute('translate', 'no');
         nameEl.setAttribute('lang', 'hi');
       }
@@ -5835,7 +5894,7 @@ ${link}`;
         <div class="category-passage-card category-passage-card-3d" style="background:${palette.bg}; border:${palette.border}; border-bottom:${palette.borderBottom}; box-shadow:${palette.boxShadow};">
           <div style="min-width:0;">
             <div style="display:flex; align-items:center; gap:8px; margin-bottom:5px; flex-wrap:wrap;">
-              <h4 class="class-title hindi-text notranslate" translate="no" lang="hi" style="margin:0; font-size:1rem; font-weight:700; color:var(--text-main);">${this.escapeHtml(p.title)}</h4>
+              <h4 class="class-title hindi-text notranslate skiptranslate" translate="no" lang="hi" style="margin:0; font-size:1rem; font-weight:700; color:var(--text-main);"><hindi-root text="${this.escapeHtml(p.title)}"></hindi-root></h4>
               ${p.is_free_tier ? `<span class="badge badge-success" style="font-size:0.65rem; padding:2px 7px; border-radius:6px; font-weight:800;">🎁 ${isEn ? 'FREE DEMO' : 'फ्री डेमो'}</span>` : ''}
             </div>
             <div style="display:flex; gap:8px; font-size:0.75rem; color:var(--text-muted); flex-wrap:wrap; margin-bottom:5px;">
@@ -6093,7 +6152,7 @@ ${link}`;
           <div style="display:flex; align-items:center; gap:10px;">
             <input type="checkbox" class="cat-checkout-checkbox" value="${cat.id}" data-price="${price}" ${isPre ? 'checked' : ''} ${isAlreadyUnlocked ? 'disabled checked' : ''} onchange="stenoApp.updateCheckoutTotal()" style="width:18px; height:18px; accent-color:#0284c7; cursor:pointer;">
             <div>
-              <div style="font-weight:700; font-size:0.88rem; color:var(--text-main);">${this.escapeHtml(cat.name)}</div>
+              <div style="font-weight:700; font-size:0.88rem; color:var(--text-main);"><hindi-root text="${this.escapeHtml(cat.name)}"></hindi-root></div>
               <div style="font-size:0.72rem; color:var(--text-muted);">${cat.passage_count || 0} डिक्टेशन्स • 80-100 WPM</div>
             </div>
           </div>

@@ -1,11 +1,11 @@
 /**
- * StenoMaster Service Worker — v12.2
+ * StenoMaster Service Worker — v13.5
  * Zero-Cache / Auto-Purging Service Worker
  * Ensures all users get fresh updates immediately without manual hard refresh or cache clear.
  * API calls and admin portal pages are NEVER intercepted — native browser networking handles them.
  */
 
-const CACHE_NAME = 'stenomaster-v12.2-shell';
+const CACHE_NAME = 'stenomaster-v13.5-shell';
 const ALWAYS_NETWORK = ['/api/', '/uploads/', '/admin', 'admin.html', 'admin.js'];
 
 self.addEventListener('install', (event) => {
@@ -19,7 +19,7 @@ self.addEventListener('activate', (event) => {
       return Promise.all(
         keys.map((key) => {
           if (key !== CACHE_NAME) {
-            console.log('[SW v12.2] Deleting obsolete cache:', key);
+            console.log('[SW v13.5] Deleting obsolete cache:', key);
             return caches.delete(key);
           }
         })

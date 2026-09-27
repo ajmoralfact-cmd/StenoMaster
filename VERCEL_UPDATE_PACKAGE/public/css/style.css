@@ -39,6 +39,15 @@
   font-display: swap;
 }
 
+hindi-root {
+  display: inline !important;
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  color: inherit;
+  line-height: inherit;
+}
+
 :root {
   /* Color Palette - Light Theme */
   --bg-primary: #f8fafc;

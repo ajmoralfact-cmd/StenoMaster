@@ -15,8 +15,67 @@
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Mukta:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/css/style.css?v=12.0">
+  <link rel="stylesheet" href="/css/style.css?v=13.5">
+
+  <!-- Shield Root Hindi Shorthand Content from Chrome / Browser Auto-Translation -->
+  <script>
+    class HindiRootElement extends HTMLElement {
+      static get observedAttributes() { return ['text']; }
+      constructor() {
+        super();
+        this._shadow = null;
+      }
+      connectedCallback() {
+        this._render();
+      }
+      attributeChangedCallback(name, oldVal, newVal) {
+        if (name === 'text' && oldVal !== newVal) {
+          this._render();
+        }
+      }
+      get text() {
+        return this.getAttribute('text') || '';
+      }
+      set text(val) {
+        this.setAttribute('text', val || '');
+      }
+      _render() {
+        let rawText = this.getAttribute('text');
+        if (rawText === null || rawText === undefined) {
+          rawText = this.textContent || '';
+        }
+        this.textContent = '';
+        if (!this._shadow) {
+          try {
+            this._shadow = this.attachShadow({ mode: 'closed' });
+          } catch (e) {
+            this._shadow = this.shadowRoot;
+          }
+        }
+        const safeText = String(rawText || '')
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#039;');
+        const content = `
+          <style>
+            :host { display: inline !important; font-family: inherit; font-size: inherit; font-weight: inherit; color: inherit; line-height: inherit; }
+            .steno-hindi-inner { font-family: inherit; font-size: inherit; font-weight: inherit; color: inherit; line-height: inherit; }
+          </style>
+          <span class="steno-hindi-inner notranslate skiptranslate" translate="no" lang="hi">${safeText}</span>
+        `;
+        if (this._shadow) {
+          this._shadow.innerHTML = content;
+        } else {
+          this.innerHTML = content;
+        }
+      }
+    }
+    if (!customElements.get('hindi-root')) {
+      customElements.define('hindi-root', HindiRootElement);
+    }
+  </script>
 
   <!-- Font Preloads for Instant Hindi Typography -->
   <link rel="preload" href="/assets/fonts/Mangal.ttf" as="font" type="font/ttf" crossorigin>
@@ -153,8 +212,8 @@
           <div class="audio-player-card">
             <div class="audio-title-bar">
               <div class="audio-passage-info">
-                <h3 id="practicePassageTitle" class="hindi-text notranslate" translate="no">आलेख शीर्षक</h3>
-                <p id="practiceCategoryName">श्रेणी नाम</p>
+                <h3 id="practicePassageTitle" class="hindi-text notranslate skiptranslate" translate="no" lang="hi"><hindi-root text="आलेख शीर्षक"></hindi-root></h3>
+                <p id="practiceCategoryName" class="notranslate skiptranslate" translate="no" lang="hi"><hindi-root text="श्रेणी नाम"></hindi-root></p>
               </div>
               <div style="display:flex; align-items:center; gap:8px;">
                 <div style="font-size:0.8rem; color:var(--text-muted);" class="hide-mobile">
@@ -465,13 +524,13 @@
 
   <!-- Scripts (same as index.html) -->
   <script defer src="https://sdk.cashfree.com/js/v3/cashfree.js"></script>
-  <script src="/js/charts.js?v=12.5"></script>
-  <script src="/js/comparison_view.js?v=12.5"></script>
+  <script src="/js/charts.js?v=13.5"></script>
+  <script src="/js/comparison_view.js?v=13.5"></script>
   <script src="/js/audio_player.js?v=8.1"></script>
   <script src="/js/keyboard_map.js?v=8.1"></script>
-  <script src="/js/typing_engine.js?v=12.0"></script>
+  <script src="/js/typing_engine.js?v=13.5"></script>
   <script src="/js/ocr_service.js?v=1.1"></script>
-  <script src="/js/app.js?v=12.6"></script>
+  <script src="/js/app.js?v=13.5"></script>
 
   <!-- Practice Page Bootstrap -->
   <script>
