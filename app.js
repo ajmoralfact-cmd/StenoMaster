@@ -162,7 +162,8 @@ const I18N_DICTIONARY = {
     leaderboard_title: 'लाइव स्टेनो लीडरबोर्ड (Steno Leaderboard)',
     bookmarks_title: 'मेरे पसंदीदा बुकमार्क किए गए लेख (My Bookmarks)',
     notifications_title: 'सूचनाएं व अपडेट्स (Notifications)',
-    rules_title: '📜 परीक्षा नियम (Exam Rules)'
+    rules_title: '📜 परीक्षा नियम (Exam Rules)',
+    pwa_install_btn: 'ऐप इंस्टॉल करें'
   },
   en: {
     nav_home: 'Dashboard',
@@ -264,7 +265,8 @@ const I18N_DICTIONARY = {
     leaderboard_title: 'Live Steno Leaderboard',
     bookmarks_title: 'My Bookmarks',
     notifications_title: 'Notifications & Updates',
-    rules_title: '📜 Exam Evaluation Rules'
+    rules_title: '📜 Exam Evaluation Rules',
+    pwa_install_btn: 'Install App'
   }
 };
 
