@@ -281,6 +281,17 @@ class StenoMasterHandler(http.server.SimpleHTTPRequestHandler):
                     content = f.read()
                 self.send_header('Content-Length', str(len(content)))
                 self.end_headers()
+        # Serve practice portal
+        if path in ('/practice', '/practice/'):
+            practice_file = os.path.join(STATIC_DIR, 'practice.html')
+            if os.path.exists(practice_file):
+                self.send_response(200)
+                self.send_header('Content-Type', 'text/html; charset=utf-8')
+                self.send_header('Cache-Control', 'no-cache')
+                with open(practice_file, 'rb') as f:
+                    content = f.read()
+                self.send_header('Content-Length', str(len(content)))
+                self.end_headers()
                 self.wfile.write(content)
                 return
 

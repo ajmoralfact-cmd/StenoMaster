@@ -21,6 +21,14 @@
     {
       "source": "/admin/(.*)",
       "destination": "/admin.html"
+    },
+    {
+      "source": "/practice",
+      "destination": "/practice.html"
+    },
+    {
+      "source": "/practice/(.*)",
+      "destination": "/practice.html"
     }
   ],
   "headers": [

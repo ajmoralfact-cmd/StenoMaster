@@ -1650,32 +1650,33 @@ def get_free_passage_ids(limit: int = 2) -> List[int]:
 def is_passage_accessible(user_id: Optional[int], passage_id: int) -> bool:
     """
     Checks if a passage is accessible by the user.
-    - Free demo passages are completely free for all users.
+    - Non-premium passages (is_premium=0) or free demo passages are completely free for all users.
     - Pro users have access to everything.
     - Individual category buyers have access to all passages in their purchased categories.
     """
-    free_ids = get_free_passage_ids(2)
-    if passage_id in free_ids:
-        return True
-    if not user_id:
-        return False
-    if is_user_premium(user_id):
+    if user_id and is_user_premium(user_id):
         return True
 
-    # Check if category of passage is unlocked for this user
     try:
         conn = get_db()
         c = conn.cursor()
-        c.execute("SELECT category_id FROM passages WHERE id = ?", (passage_id,))
+        c.execute("SELECT category_id, is_premium FROM passages WHERE id = ?", (passage_id,))
         p_row = c.fetchone()
         conn.close()
         if p_row:
             p_dict = dict(p_row)
             cat_id = p_dict.get('category_id')
-            if cat_id and is_category_unlocked_for_user(user_id, cat_id):
+            is_prem = bool(p_dict.get('is_premium'))
+            if not is_prem:
+                return True
+            if user_id and cat_id and is_category_unlocked_for_user(user_id, cat_id):
                 return True
     except Exception as e:
-        print(f"is_passage_accessible category check error: {e}")
+        print(f"is_passage_accessible error: {e}")
+
+    free_ids = get_free_passage_ids(2)
+    if passage_id in free_ids:
+        return True
 
     return False
 
@@ -1875,8 +1876,8 @@ def get_passages(
 
         cat_id = item.get('category_id')
         is_cat_unlocked = user_has_pro or (cat_id in unlocked_category_ids)
-        is_free_tier = (item['id'] in free_ids) or is_cat_unlocked
-        is_locked = False if is_cat_unlocked else (item['id'] not in free_ids)
+        is_free_tier = (not bool(item.get('is_premium'))) or (item['id'] in free_ids) or is_cat_unlocked
+        is_locked = False if (is_cat_unlocked or not bool(item.get('is_premium'))) else (item['id'] not in free_ids)
 
         if summary:
             clean_item = {
@@ -1963,9 +1964,9 @@ def get_passage_detail(passage_id: int, user_id: Optional[int] = None, include_o
         free_ids = set(get_free_passage_ids(2))
         user_has_pro = is_user_premium(user_id) if user_id else False
         p_cat_id = res_dict.get('category_id')
-        is_cat_unlocked = user_has_pro or (p_cat_id and is_category_unlocked_for_user(user_id, p_cat_id))
-        res_dict['is_free_tier'] = (res_dict['id'] in free_ids) or is_cat_unlocked
-        res_dict['is_locked'] = False if is_cat_unlocked else (res_dict['id'] not in free_ids)
+        is_free_passage = not bool(res_dict.get('is_premium'))
+        res_dict['is_free_tier'] = is_free_passage or (res_dict['id'] in free_ids) or is_cat_unlocked
+        res_dict['is_locked'] = False if (is_free_passage or is_cat_unlocked) else (res_dict['id'] not in free_ids)
         conn.close()
         return res_dict
 
