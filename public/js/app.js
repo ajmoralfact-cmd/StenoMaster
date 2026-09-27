@@ -800,10 +800,8 @@ class StenoApp {
     // Instantly update user UI (validity badge, header role)
     this.updateUserUI();
 
-    // Instantly update dashboard metrics cards if user summary exists
-    if (this.userSummary) {
-      this._applySummaryToDOM(this.userSummary);
-    }
+    // Instantly update dashboard metrics cards
+    this._applySummaryToDOM(this.userSummary || {});
 
     if (showToast) {
       this.showToast(isEn ? '🌐 Interface language set to English' : '🌐 भाषा हिंदी + English (Default) में सेट की गई', 'info');
@@ -3014,8 +3012,8 @@ class StenoApp {
   }
 
   _applySummaryToDOM(res) {
-    if (!res) return;
-    this.userSummary = res;
+    if (!res) res = this.userSummary || {};
+    else this.userSummary = res;
     const isEn = this.currentLang === 'en';
     const goal = res.today_goal || {};
     const stats = res.stats || {};
