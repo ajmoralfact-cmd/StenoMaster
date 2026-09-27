@@ -137,7 +137,32 @@ const I18N_DICTIONARY = {
     cat_filter_all: 'सभी कक्षाएं (All)',
     cat_filter_free: '🎁 फ्री डेमो (Free Demo)',
     cat_sticky_sub: 'इस पूरी कैटेगरी की सभी कक्षाएं अनलॉक करें:',
-    btn_enroll_cat: '⚡ Enroll Now (अभी अनलॉक करें) →'
+    btn_enroll_cat: '⚡ Enroll Now (अभी अनलॉक करें) →',
+    nav_dashboard: 'डैशबोर्ड (Dashboard)',
+    live_sync_active: 'लाइव सिंक सक्रिय',
+    btn_refresh: 'रिफ्रेश',
+    home_classes_title: 'अभ्यास कक्षाएं (Practice Classes)',
+    home_classes_sub: 'रामधारी गुप्ता खंड 1 एवं हर्ष स्पेशल डिक्टेशन्स',
+    btn_view_all: 'सभी देखें (View All) →',
+    card_streak_lbl: 'स्ट्रीक (Streak)',
+    card_goal_lbl: 'दैनिक लक्ष्य (Daily Goal)',
+    card_avgwpm_lbl: 'औसत गति (Avg WPM)',
+    card_acc_lbl: 'सटीकता (Accuracy)',
+    card_practices_lbl: 'कुल अभ्यास (Practices)',
+    card_points_lbl: 'रिवॉर्ड अंक (Rewards)',
+    card_bestwpm_lbl: 'सर्वश्रेष्ठ गति (Best WPM)',
+    card_time_lbl: 'कुल समय (Total Time)',
+    bnav_home: 'होम',
+    bnav_classes: 'क्लासेस',
+    bnav_practice: 'अभ्यास',
+    bnav_rules: 'नियम',
+    bnav_profile: 'प्रोफ़ाइल',
+    self_practice_title: 'स्वयं डिक्टेशन अभ्यास (Custom Dictation Practice)',
+    history_title: 'मेरा अभ्यास इतिहास (My Practice History)',
+    leaderboard_title: 'लाइव स्टेनो लीडरबोर्ड (Steno Leaderboard)',
+    bookmarks_title: 'मेरे पसंदीदा बुकमार्क किए गए लेख (My Bookmarks)',
+    notifications_title: 'सूचनाएं व अपडेट्स (Notifications)',
+    rules_title: '📜 परीक्षा नियम (Exam Rules)'
   },
   en: {
     nav_home: 'Dashboard',
@@ -214,7 +239,32 @@ const I18N_DICTIONARY = {
     cat_filter_all: 'All Classes',
     cat_filter_free: '🎁 Free Demo',
     cat_sticky_sub: 'Unlock all classes in this series:',
-    btn_enroll_cat: '⚡ Enroll Now →'
+    btn_enroll_cat: '⚡ Enroll Now →',
+    nav_dashboard: 'Dashboard',
+    live_sync_active: 'Live Sync Active',
+    btn_refresh: 'Refresh',
+    home_classes_title: 'Practice Classes',
+    home_classes_sub: 'Ramdhari Gupta Khand 1 & Harsh Special Dictations',
+    btn_view_all: 'View All Classes →',
+    card_streak_lbl: 'Streak',
+    card_goal_lbl: 'Daily Goal',
+    card_avgwpm_lbl: 'Average Speed (WPM)',
+    card_acc_lbl: 'Accuracy',
+    card_practices_lbl: 'Total Practices',
+    card_points_lbl: 'Reward Points',
+    card_bestwpm_lbl: 'Best Speed (WPM)',
+    card_time_lbl: 'Total Time',
+    bnav_home: 'Home',
+    bnav_classes: 'Classes',
+    bnav_practice: 'History',
+    bnav_rules: 'Rules',
+    bnav_profile: 'Profile',
+    self_practice_title: 'Custom Dictation Practice',
+    history_title: 'My Practice History',
+    leaderboard_title: 'Live Steno Leaderboard',
+    bookmarks_title: 'My Bookmarks',
+    notifications_title: 'Notifications & Updates',
+    rules_title: '📜 Exam Evaluation Rules'
   }
 };
 
@@ -742,6 +792,17 @@ class StenoApp {
       if (typeof stenoTypingEngine.updateExamModeUI === 'function') stenoTypingEngine.updateExamModeUI();
       if (typeof stenoTypingEngine.updateFullscreenUI === 'function') stenoTypingEngine.updateFullscreenUI();
       if (typeof stenoTypingEngine.applyOtgMode === 'function') stenoTypingEngine.applyOtgMode();
+    }
+
+    // Instantly update active plan banner
+    this.renderActivePlanBanner();
+
+    // Instantly update user UI (validity badge, header role)
+    this.updateUserUI();
+
+    // Instantly update dashboard metrics cards if user summary exists
+    if (this.userSummary) {
+      this._applySummaryToDOM(this.userSummary);
     }
 
     if (showToast) {
@@ -1992,6 +2053,7 @@ class StenoApp {
     const subtitle = document.getElementById('planBannerSubtitle');
     const actionBtn = document.getElementById('planBannerActionBtn');
 
+    const isEn = this.currentLang === 'en';
     const isPremium = Boolean(this.user && (this.user.is_premium || this.user.is_free_access || (this.user.subscription_days_left && this.user.subscription_days_left > 0)));
     let planName = (this.user && this.user.subscription_plan) || 'StenoMaster Pro';
     if (planName === 'System Administrator' || planName.toLowerCase().includes('admin')) {
@@ -2000,7 +2062,7 @@ class StenoApp {
     const daysLeft = (this.user && typeof this.user.subscription_days_left === 'number') ? this.user.subscription_days_left : 0;
 
     // Pricing mapping
-    const planPriceMap = {
+    const planPriceMapHi = {
       'StenoMaster Basic (30 Days)': '₹100 (1 माह / 30 दिन)',
       'StenoMaster Standard (90 Days)': '₹250 (3 माह / 90 दिन)',
       'StenoMaster Extended (180 Days)': '₹450 (6 माह / 180 दिन)',
@@ -2010,7 +2072,17 @@ class StenoApp {
       'StenoMaster Pro — 30 दिन (₹100)': '₹100 (1 माह / 30 दिन)',
       'StenoMaster Pro (30 दिन फ्री)': '30 दिन फ्री एक्सेस'
     };
-    const priceText = planPriceMap[planName] || '₹100 मासिक प्लान';
+    const planPriceMapEn = {
+      'StenoMaster Basic (30 Days)': '₹100 (1 Month / 30 Days)',
+      'StenoMaster Standard (90 Days)': '₹250 (3 Months / 90 Days)',
+      'StenoMaster Extended (180 Days)': '₹450 (6 Months / 180 Days)',
+      'StenoMaster Annual Pro (365 Days)': '₹800 (1 Year / 365 Days)',
+      'StenoMaster Pro': '₹100 per Month',
+      'StenoMaster Pro (₹100/माह)': '₹100 per Month',
+      'StenoMaster Pro — 30 दिन (₹100)': '₹100 (1 Month / 30 Days)',
+      'StenoMaster Pro (30 दिन फ्री)': '30 Days Free Access'
+    };
+    const priceText = isEn ? (planPriceMapEn[planName] || '₹100 Monthly Plan') : (planPriceMapHi[planName] || '₹100 मासिक प्लान');
 
     if (isPremium && daysLeft > 0) {
       // GREEN STYLISH HORIZONTAL BOX (ACTIVE PLAN)
@@ -2020,24 +2092,30 @@ class StenoApp {
 
       if (icon) icon.textContent = '🟢';
       if (tag) {
-        tag.textContent = 'सक्रिय प्लान (ACTIVE PLAN)';
+        tag.textContent = isEn ? 'ACTIVE PLAN' : 'सक्रिय प्लान (ACTIVE PLAN)';
         tag.style.background = '#10b981';
         tag.style.color = '#ffffff';
       }
       if (title) {
-        title.innerHTML = `StenoMaster Pro • <span style="color:#059669; font-weight:700;">${priceText}</span> सक्रिय है`;
+        title.innerHTML = isEn
+          ? `StenoMaster Pro • <span style="color:#059669; font-weight:700;">${priceText}</span> is Active`
+          : `StenoMaster Pro • <span style="color:#059669; font-weight:700;">${priceText}</span> सक्रिय है`;
         title.style.color = '#065f46';
       }
       if (subtitle) {
         if (daysLeft >= 1000) {
-          subtitle.innerHTML = `♾️ <strong>लाइफटाइम प्रो एक्सेस</strong> • असीमित डिक्टेशन, परीक्षा हॉल मोड एवं विस्तृत मूल्यांकन सक्रिय है।`;
+          subtitle.innerHTML = isEn
+            ? `♾️ <strong>Lifetime Pro Access</strong> • Unlimited dictations, Exam Hall mode & Detailed evaluation active.`
+            : `♾️ <strong>लाइफटाइम प्रो एक्सेस</strong> • असीमित डिक्टेशन, परीक्षा हॉल मोड एवं विस्तृत मूल्यांकन सक्रिय है।`;
         } else {
-          subtitle.innerHTML = `⏳ <strong>${daysLeft} दिन शेष बचे हैं</strong> • असीमित डिक्टेशन, परीक्षा हॉल मोड एवं विस्तृत मूल्यांकन सक्रिय है।`;
+          subtitle.innerHTML = isEn
+            ? `⏳ <strong>${daysLeft} Days Remaining</strong> • Unlimited dictations, Exam Hall mode & Detailed evaluation active.`
+            : `⏳ <strong>${daysLeft} दिन शेष बचे हैं</strong> • असीमित डिक्टेशन, परीक्षा हॉल मोड एवं विस्तृत मूल्यांकन सक्रिय है।`;
         }
         subtitle.style.color = '#047857';
       }
       if (actionBtn) {
-        actionBtn.textContent = '👑 प्लान अपग्रेड / रिन्यू करें →';
+        actionBtn.textContent = isEn ? '👑 Upgrade / Renew Plan →' : '👑 प्लान अपग्रेड / रिन्यू करें →';
         actionBtn.style.background = '#10b981';
         actionBtn.style.borderColor = '#10b981';
       }
@@ -2049,20 +2127,22 @@ class StenoApp {
 
       if (icon) icon.textContent = '🔴';
       if (tag) {
-        tag.textContent = 'कोई प्लान सक्रिय नहीं (NO ACTIVE PLAN)';
+        tag.textContent = isEn ? 'NO ACTIVE PLAN' : 'कोई प्लान सक्रिय नहीं (NO ACTIVE PLAN)';
         tag.style.background = '#ef4444';
         tag.style.color = '#ffffff';
       }
       if (title) {
-        title.textContent = 'वर्तमान में आपका कोई सशुल्क प्लान सक्रिय नहीं है';
+        title.textContent = isEn ? 'No active subscription plan found' : 'वर्तमान में आपका कोई सशुल्क प्लान सक्रिय नहीं है';
         title.style.color = '#b91c1c';
       }
       if (subtitle) {
-        subtitle.innerHTML = '⚠️ आपकी वर्तमान योजना समाप्त है या आप सीमित फ्री मोड में हैं। असीमित डिक्टेशन अभ्यास एवं लाइव रैंकिंग के लिए तुरंत प्लान सक्रिय करें।';
+        subtitle.innerHTML = isEn
+          ? '⚠️ Your current plan has expired or you are on limited free mode. Activate a plan to unlock unlimited dictations and live ranking.'
+          : '⚠️ आपकी वर्तमान योजना समाप्त है या आप सीमित फ्री मोड में हैं। असीमित डिक्टेशन अभ्यास एवं लाइव रैंकिंग के लिए तुरंत प्लान सक्रिय करें।';
         subtitle.style.color = '#b91c1c';
       }
       if (actionBtn) {
-        actionBtn.textContent = '⚡ अभी प्लान चुनें (मात्र ₹100 से शुरू) →';
+        actionBtn.textContent = isEn ? '⚡ Choose Plan (Starting @ ₹100) →' : '⚡ अभी प्लान चुनें (मात्र ₹100 से शुरू) →';
         actionBtn.style.background = '#ef4444';
         actionBtn.style.borderColor = '#ef4444';
       }
@@ -2078,6 +2158,7 @@ class StenoApp {
     const adminNav = document.getElementById('adminNavItem');
     const areaBadge = document.getElementById('areaIndicatorBadge');
     const validityPill = document.getElementById('headerPlanValidityBadge');
+    const isEn = this.currentLang === 'en';
 
     if (this.user) {
       const name = this.user.display_name || this.user.username || 'Student';
@@ -2104,8 +2185,8 @@ class StenoApp {
         if (validityPill) {
           validityPill.style.display = 'inline-flex';
           validityPill.className = 'plan-validity-pill is-pro';
-          validityPill.innerHTML = '👑 ऑल एक्सेस (Pro Active)';
-          validityPill.title = 'प्रो प्लान सक्रिय है';
+          validityPill.innerHTML = isEn ? '👑 All Access (Pro Active)' : '👑 ऑल एक्सेस (Pro Active)';
+          validityPill.title = isEn ? 'Pro plan is active' : 'प्रो प्लान सक्रिय है';
           validityPill.onclick = () => { window.location.href = '/plans'; };
         }
         if (avatarEl) {
@@ -2130,8 +2211,10 @@ class StenoApp {
             validityPill.style.display = 'inline-flex';
             validityPill.className = 'plan-validity-pill is-pro';
             validityPill.style.background = isFreeAccess ? 'linear-gradient(135deg, #059669, #10b981)' : '';
-            validityPill.innerHTML = isFreeAccess ? '🎁 30D फ्री प्रो (Active)' : ((daysLeft >= 1000) ? '👑 Pro: Active' : `👑 Pro: ${daysLeft} दिन शेष`);
-            validityPill.title = 'प्रो प्लान सक्रिय है';
+            validityPill.innerHTML = isFreeAccess 
+              ? (isEn ? '🎁 30D Free Pro (Active)' : '🎁 30D फ्री प्रो (Active)') 
+              : ((daysLeft >= 1000) ? '👑 Pro: Active' : (isEn ? `👑 Pro: ${daysLeft} Days Left` : `👑 Pro: ${daysLeft} दिन शेष`));
+            validityPill.title = isEn ? 'Pro plan is active' : 'प्रो प्लान सक्रिय है';
             validityPill.onclick = () => { window.location.href = '/plans'; };
           }
           if (avatarEl) {
@@ -2142,8 +2225,10 @@ class StenoApp {
             validityPill.style.display = 'inline-flex';
             validityPill.className = 'plan-validity-pill is-pro';
             validityPill.style.background = 'linear-gradient(135deg, #4f46e5, #4338ca)';
-            validityPill.innerHTML = `🎯 ${unlockedCats.length} कैटेगरीज अनलॉक्ड (Free)`;
-            validityPill.title = 'विशिष्ट कैटेगरीज निःशुल्क सक्रिय हैं';
+            validityPill.innerHTML = isEn 
+              ? `🎯 ${unlockedCats.length} Categories Unlocked (Free)` 
+              : `🎯 ${unlockedCats.length} कैटेगरीज अनलॉक्ड (Free)`;
+            validityPill.title = isEn ? 'Specific categories unlocked free' : 'विशिष्ट कैटेगरीज निःशुल्क सक्रिय हैं';
             validityPill.onclick = () => { this.navigate('classes'); };
           }
           if (avatarEl) {
@@ -2154,8 +2239,8 @@ class StenoApp {
             validityPill.style.display = 'inline-flex';
             validityPill.className = 'plan-validity-pill is-free';
             validityPill.style.background = '';
-            validityPill.innerHTML = '🔒 2 फ्री कक्षाएं • ₹100 में Pro लें';
-            validityPill.title = 'प्रीमियम अनलॉक करने के लिए क्लिक करें';
+            validityPill.innerHTML = isEn ? '🔒 2 Free Classes • Get Pro for ₹100' : '🔒 2 फ्री कक्षाएं • ₹100 में Pro लें';
+            validityPill.title = isEn ? 'Click to upgrade to premium' : 'प्रीमियम अनलॉक करने के लिए क्लिक करें';
             validityPill.onclick = () => { window.location.href = '/plans'; };
           }
           if (avatarEl) {
@@ -2931,6 +3016,7 @@ class StenoApp {
   _applySummaryToDOM(res) {
     if (!res) return;
     this.userSummary = res;
+    const isEn = this.currentLang === 'en';
     const goal = res.today_goal || {};
     const stats = res.stats || {};
     const realPoints = stats.points !== undefined && stats.points !== null ? stats.points : 0;
@@ -2967,17 +3053,27 @@ class StenoApp {
     const hStreakSub = document.getElementById('hStatStreakSub');
     const hStreakTag = document.getElementById('hStatStreakTag');
     const hStreakRecord = document.getElementById('hStatStreakRecord');
-    if (hStreak) hStreak.textContent = `${streakDays} दिन`;
+    if (hStreak) hStreak.textContent = isEn ? `${streakDays} Days` : `${streakDays} दिन`;
     if (hStreakSub) {
-      hStreakSub.textContent = streakDays > 0 
-        ? '🔥 लगातार अभ्यास जारी है' 
-        : 'आज 1 डिक्टेशन कर स्ट्रीक शुरू करें';
+      if (isEn) {
+        hStreakSub.textContent = streakDays > 0 
+          ? '🔥 Consistent daily practice active' 
+          : 'Complete 1 dictation today to start streak';
+      } else {
+        hStreakSub.textContent = streakDays > 0 
+          ? '🔥 लगातार अभ्यास जारी है' 
+          : 'आज 1 डिक्टेशन कर स्ट्रीक शुरू करें';
+      }
     }
     if (hStreakTag) {
-      hStreakTag.textContent = streakDays > 0 ? `${streakDays} दिन स्ट्रीक` : 'दैनिक नियमितता';
+      if (isEn) {
+        hStreakTag.textContent = streakDays > 0 ? `${streakDays} Days Streak` : 'Consistency';
+      } else {
+        hStreakTag.textContent = streakDays > 0 ? `${streakDays} दिन स्ट्रीक` : 'दैनिक नियमितता';
+      }
     }
     if (hStreakRecord) {
-      hStreakRecord.textContent = `अधिकतम रिकॉर्ड: ${longestStreak} दिन`;
+      hStreakRecord.textContent = isEn ? `Record High: ${longestStreak} Days` : `अधिकतम रिकॉर्ड: ${longestStreak} दिन`;
     }
 
     // 2. Daily Goal Card
@@ -2988,17 +3084,21 @@ class StenoApp {
     const completedDict = goal.completed_dictations || 0;
     const targetDict = goal.target_dictations || 3;
     const pct = goal.percent_completed || Math.min(100, Math.round((completedDict / targetDict) * 100));
-    if (hGoal) hGoal.textContent = `${completedDict} / ${targetDict} डिक्टेशन`;
+    if (hGoal) hGoal.textContent = isEn ? `${completedDict} / ${targetDict} Dictations` : `${completedDict} / ${targetDict} डिक्टेशन`;
     if (hGoalSub) {
       if (completedDict >= targetDict) {
-        hGoalSub.textContent = '🎉 आज का लक्ष्य पूर्ण (+20 Pts बोनस)';
+        hGoalSub.textContent = isEn ? '🎉 Daily goal achieved (+20 Pts Bonus)' : '🎉 आज का लक्ष्य पूर्ण (+20 Pts बोनस)';
       } else {
         const left = targetDict - completedDict;
-        hGoalSub.textContent = `आज ${left} डिक्टेशन शेष हैं (${pct}% पूर्ण)`;
+        hGoalSub.textContent = isEn ? `${left} dictations left today (${pct}% done)` : `आज ${left} डिक्टेशन शेष हैं (${pct}% पूर्ण)`;
       }
     }
     if (hGoalTag) {
-      hGoalTag.textContent = completedDict >= targetDict ? 'लक्ष्य सिद्ध ✓' : `${pct}% पूर्ण`;
+      if (isEn) {
+        hGoalTag.textContent = completedDict >= targetDict ? 'Goal Met ✓' : `${pct}% Done`;
+      } else {
+        hGoalTag.textContent = completedDict >= targetDict ? 'लक्ष्य सिद्ध ✓' : `${pct}% पूर्ण`;
+      }
     }
     if (hGoalBar) {
       hGoalBar.style.width = `${pct}%`;
@@ -3011,18 +3111,32 @@ class StenoApp {
     const hAvgWpmTier = document.getElementById('hStatAvgWpmTier');
     const avgWpm = stats.avg_wpm !== undefined ? Number(stats.avg_wpm) : 0;
     if (hAvgWpm) hAvgWpm.textContent = `${avgWpm} WPM`;
-    if (hAvgWpmSub) hAvgWpmSub.textContent = 'नेट शुद्ध टंकण गति';
+    if (hAvgWpmSub) hAvgWpmSub.textContent = isEn ? 'Net accurate typing speed' : 'नेट शुद्ध टंकण गति';
     if (hAvgWpmTag) {
-      if (avgWpm >= 100) hAvgWpmTag.textContent = 'कोर्ट / ग्रेड C';
-      else if (avgWpm >= 80) hAvgWpmTag.textContent = 'SSC ग्रेड D';
-      else if (avgWpm >= 60) hAvgWpmTag.textContent = 'मध्यम स्तर';
-      else hAvgWpmTag.textContent = 'प्रारंभिक';
+      if (isEn) {
+        if (avgWpm >= 100) hAvgWpmTag.textContent = 'Court / Grade C';
+        else if (avgWpm >= 80) hAvgWpmTag.textContent = 'SSC Grade D';
+        else if (avgWpm >= 60) hAvgWpmTag.textContent = 'Intermediate';
+        else hAvgWpmTag.textContent = 'Beginner';
+      } else {
+        if (avgWpm >= 100) hAvgWpmTag.textContent = 'कोर्ट / ग्रेड C';
+        else if (avgWpm >= 80) hAvgWpmTag.textContent = 'SSC ग्रेड D';
+        else if (avgWpm >= 60) hAvgWpmTag.textContent = 'मध्यम स्तर';
+        else hAvgWpmTag.textContent = 'प्रारंभिक';
+      }
     }
     if (hAvgWpmTier) {
-      if (avgWpm >= 100) hAvgWpmTier.textContent = '🏆 परीक्षा तैयार: उत्कृष्ट उच्च गति';
-      else if (avgWpm >= 80) hAvgWpmTier.textContent = '🎯 SSC Grade D मानक गति पूर्ण';
-      else if (avgWpm >= 60) hAvgWpmTier.textContent = '⚡ मध्यम स्तर: 80 WPM का लक्ष्य रखें';
-      else hAvgWpmTier.textContent = '🌱 नियमित अभ्यास से गति 60+ ले जाएं';
+      if (isEn) {
+        if (avgWpm >= 100) hAvgWpmTier.textContent = '🏆 Exam Ready: Excellent High Speed';
+        else if (avgWpm >= 80) hAvgWpmTier.textContent = '🎯 SSC Grade D Standard Speed Met';
+        else if (avgWpm >= 60) hAvgWpmTier.textContent = '⚡ Intermediate: Target 80+ WPM';
+        else hAvgWpmTier.textContent = '🌱 Regular practice pushes speed to 60+';
+      } else {
+        if (avgWpm >= 100) hAvgWpmTier.textContent = '🏆 परीक्षा तैयार: उत्कृष्ट उच्च गति';
+        else if (avgWpm >= 80) hAvgWpmTier.textContent = '🎯 SSC Grade D मानक गति पूर्ण';
+        else if (avgWpm >= 60) hAvgWpmTier.textContent = '⚡ मध्यम स्तर: 80 WPM का लक्ष्य रखें';
+        else hAvgWpmTier.textContent = '🌱 नियमित अभ्यास से गति 60+ ले जाएं';
+      }
     }
 
     // 4. Accuracy Card
@@ -3033,17 +3147,29 @@ class StenoApp {
     const avgAcc = stats.avg_accuracy !== undefined ? Number(stats.avg_accuracy) : 0;
     if (hAcc) hAcc.textContent = `${avgAcc}%`;
     if (hAccSub) {
-      if (avgAcc >= 95) hAccSub.textContent = '💎 उत्कृष्ट शुद्धता (गलतियां < 5%)';
-      else if (avgAcc >= 90) hAccSub.textContent = '✅ मानक शुद्धता (गलतियां < 10%)';
-      else hAccSub.textContent = '⚠️ शुद्धता पर ध्यान दें (त्रुटियां कम करें)';
+      if (isEn) {
+        if (avgAcc >= 95) hAccSub.textContent = '💎 Excellent Accuracy (Mistakes < 5%)';
+        else if (avgAcc >= 90) hAccSub.textContent = '✅ Standard Accuracy (Mistakes < 10%)';
+        else hAccSub.textContent = '⚠️ Focus on accuracy (reduce mistakes)';
+      } else {
+        if (avgAcc >= 95) hAccSub.textContent = '💎 उत्कृष्ट शुद्धता (गलतियां < 5%)';
+        else if (avgAcc >= 90) hAccSub.textContent = '✅ मानक शुद्धता (गलतियां < 10%)';
+        else hAccSub.textContent = '⚠️ शुद्धता पर ध्यान दें (त्रुटियां कम करें)';
+      }
     }
     if (hAccTag) {
-      if (avgAcc >= 95) hAccTag.textContent = 'उत्कृष्ट 💎';
-      else if (avgAcc >= 90) hAccTag.textContent = 'मानक शुद्धता';
-      else hAccTag.textContent = 'सुधार अपेक्षित';
+      if (isEn) {
+        if (avgAcc >= 95) hAccTag.textContent = 'Excellent 💎';
+        else if (avgAcc >= 90) hAccTag.textContent = 'Standard';
+        else hAccTag.textContent = 'Needs Improvement';
+      } else {
+        if (avgAcc >= 95) hAccTag.textContent = 'उत्कृष्ट 💎';
+        else if (avgAcc >= 90) hAccTag.textContent = 'मानक शुद्धता';
+        else hAccTag.textContent = 'सुधार अपेक्षित';
+      }
     }
     if (hAccTier) {
-      hAccTier.textContent = 'आधिकारिक परीक्षा लक्ष्य: 95%+';
+      hAccTier.textContent = isEn ? 'Official Exam Benchmark: 95%+' : 'आधिकारिक परीक्षा लक्ष्य: 95%+';
     }
 
     // 5. Total Practices Card
@@ -3053,11 +3179,13 @@ class StenoApp {
     const hTotalWords = document.getElementById('hStatTotalWords');
     const totalPrac = stats.total_practices || 0;
     const totalWords = stats.total_words || 0;
-    if (hPractices) hPractices.textContent = `${totalPrac} सत्र`;
-    if (hPracticesSub) hPracticesSub.textContent = 'सफलतापूर्वक पूर्ण डिक्टेशन';
-    if (hPracticesTag) hPracticesTag.textContent = `${totalPrac} पूर्ण`;
+    if (hPractices) hPractices.textContent = isEn ? `${totalPrac} Sessions` : `${totalPrac} सत्र`;
+    if (hPracticesSub) hPracticesSub.textContent = isEn ? 'Successfully completed dictations' : 'सफलतापूर्वक पूर्ण डिक्टेशन';
+    if (hPracticesTag) hPracticesTag.textContent = isEn ? `${totalPrac} Completed` : `${totalPrac} पूर्ण`;
     if (hTotalWords) {
-      hTotalWords.textContent = `कुल ${Number(totalWords).toLocaleString('hi-IN')} शब्द टाइप`;
+      hTotalWords.textContent = isEn 
+        ? `Total ${Number(totalWords).toLocaleString('en-US')} Words Typed` 
+        : `कुल ${Number(totalWords).toLocaleString('hi-IN')} शब्द टाइप`;
     }
 
     // 6. Reward Points Card
@@ -3066,9 +3194,9 @@ class StenoApp {
     const hPointsTag = document.getElementById('hStatPointsTag');
     const hPointsTier = document.getElementById('hStatPointsTier');
     if (hPoints) hPoints.textContent = `${realPoints} Pts`;
-    if (hPointsSub) hPointsSub.textContent = 'सटीकता व नियमितता से अर्जित';
-    if (hPointsTag) hPointsTag.textContent = 'सत्यापित अंक';
-    if (hPointsTier) hPointsTier.textContent = '+10 Pts प्रति पूर्ण डिक्टेशन';
+    if (hPointsSub) hPointsSub.textContent = isEn ? 'Earned from accuracy & consistency' : 'सटीकता व नियमितता से अर्जित';
+    if (hPointsTag) hPointsTag.textContent = isEn ? 'Verified Points' : 'सत्यापित अंक';
+    if (hPointsTier) hPointsTier.textContent = isEn ? '+10 Pts per completed dictation' : '+10 Pts प्रति पूर्ण डिक्टेशन';
 
     // 7. Best Speed Card
     const hBestWpm = document.getElementById('hStatBestWpm');
@@ -3077,19 +3205,19 @@ class StenoApp {
     const hBestWpmTier = document.getElementById('hStatBestWpmTier');
     const bestWpm = stats.best_wpm !== undefined ? Number(stats.best_wpm) : 0;
     if (hBestWpm) hBestWpm.textContent = `${bestWpm} WPM`;
-    if (hBestWpmSub) hBestWpmSub.textContent = 'उच्चतम रिकॉर्ड गति';
-    if (hBestWpmTag) hBestWpmTag.textContent = 'ऑल-टाइम हाई 🚀';
-    if (hBestWpmTier) hBestWpmTier.textContent = 'व्यक्तिगत सर्वश्रेष्ठ टंकण रिकॉर्ड';
+    if (hBestWpmSub) hBestWpmSub.textContent = isEn ? 'Highest record speed' : 'उच्चतम रिकॉर्ड गति';
+    if (hBestWpmTag) hBestWpmTag.textContent = isEn ? 'All-Time High 🚀' : 'ऑल-टाइम हाई 🚀';
+    if (hBestWpmTier) hBestWpmTier.textContent = isEn ? 'Personal best typing record' : 'व्यक्तिगत सर्वश्रेष्ठ टंकण रिकॉर्ड';
 
     // 8. Total Time Card
     const hTotalTime = document.getElementById('hStatTotalTime');
     const hTotalTimeSub = document.getElementById('hStatTotalTimeSub');
     const hTotalTimeTag = document.getElementById('hStatTotalTimeTag');
     const hTotalTimeMicro = document.getElementById('hStatTotalTimeMicro');
-    if (hTotalTime) hTotalTime.textContent = `${stats.total_time_formatted || '0 mins'}`;
-    if (hTotalTimeSub) hTotalTimeSub.textContent = 'सक्रिय टाइपिंग अभ्यास';
-    if (hTotalTimeTag) hTotalTimeTag.textContent = 'समय निवेश';
-    if (hTotalTimeMicro) hTotalTimeMicro.textContent = 'दैनिक 15-30 मिनट अभ्यास रखें';
+    if (hTotalTime) hTotalTime.textContent = `${stats.total_time_formatted || (isEn ? '0 mins' : '0 mins')}`;
+    if (hTotalTimeSub) hTotalTimeSub.textContent = isEn ? 'Active typing practice' : 'सक्रिय टाइपिंग अभ्यास';
+    if (hTotalTimeTag) hTotalTimeTag.textContent = isEn ? 'Time Invested' : 'समय निवेश';
+    if (hTotalTimeMicro) hTotalTimeMicro.textContent = isEn ? 'Maintain 15-30 mins daily practice' : 'दैनिक 15-30 मिनट अभ्यास रखें';
   }
 
   async refreshDashboardLive(showToast = false) {

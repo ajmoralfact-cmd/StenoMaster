@@ -664,9 +664,9 @@
             <p class="section-subtitle" data-i18n="dash_welcome_sub">आपकी दैनिक स्टेनो अभ्यास प्रगति, गति एवं सटीकता का संपूर्ण विवरण</p>
           </div>
           <div style="display:inline-flex; align-items:center; gap:8px;">
-            <span class="live-pulse-badge" id="liveSyncStatus"><span class="pulse-dot"></span> लाइव सिंक सक्रिय</span>
+            <span class="live-pulse-badge" id="liveSyncStatus"><span class="pulse-dot"></span> <span id="liveSyncStatusText" data-i18n="live_sync_active">लाइव सिंक सक्रिय</span></span>
             <button type="button" class="btn-sm btn-secondary" onclick="stenoApp.refreshDashboardLive(true)" title="लाइव आंकड़े रिफ्रेश करें" style="display:inline-flex; align-items:center; gap:6px; font-weight:700; font-size:0.78rem; padding:6px 12px; border-radius:8px; cursor:pointer;">
-              <span>🔄</span> <span>रिफ्रेश</span>
+              <span>🔄</span> <span data-i18n="btn_refresh">रिफ्रेश</span>
             </button>
           </div>
         </div>
@@ -698,7 +698,7 @@
             <div class="h-stat-top">
               <div class="h-stat-icon icon-flame">🔥</div>
               <div class="h-stat-meta">
-                <div class="h-stat-label">स्ट्रीक (Streak)</div>
+                <div class="h-stat-label" data-i18n="card_streak_lbl">स्ट्रीक (Streak)</div>
                 <div class="h-stat-tag tag-flame" id="hStatStreakTag">नियमितता</div>
               </div>
             </div>
@@ -712,7 +712,7 @@
             <div class="h-stat-top">
               <div class="h-stat-icon icon-target">🎯</div>
               <div class="h-stat-meta">
-                <div class="h-stat-label">दैनिक लक्ष्य (Daily Goal)</div>
+                <div class="h-stat-label" data-i18n="card_goal_lbl">दैनिक लक्ष्य (Daily Goal)</div>
                 <div class="h-stat-tag tag-target" id="hStatGoalTag">0% पूर्ण</div>
               </div>
             </div>
@@ -728,7 +728,7 @@
             <div class="h-stat-top">
               <div class="h-stat-icon icon-zap">⚡</div>
               <div class="h-stat-meta">
-                <div class="h-stat-label">औसत गति (Avg WPM)</div>
+                <div class="h-stat-label" data-i18n="card_avgwpm_lbl">औसत गति (Avg WPM)</div>
                 <div class="h-stat-tag tag-zap" id="hStatAvgWpmTag">नेट स्पीड</div>
               </div>
             </div>
@@ -742,7 +742,7 @@
             <div class="h-stat-top">
               <div class="h-stat-icon icon-check">💎</div>
               <div class="h-stat-meta">
-                <div class="h-stat-label">सटीकता (Accuracy)</div>
+                <div class="h-stat-label" data-i18n="card_acc_lbl">सटीकता (Accuracy)</div>
                 <div class="h-stat-tag tag-check" id="hStatAccTag">शुद्धता स्तर</div>
               </div>
             </div>
@@ -757,7 +757,7 @@
             <div class="h-stat-top">
               <div class="h-stat-icon icon-book">📝</div>
               <div class="h-stat-meta">
-                <div class="h-stat-label">कुल अभ्यास (Practices)</div>
+                <div class="h-stat-label" data-i18n="card_practices_lbl">कुल अभ्यास (Practices)</div>
                 <div class="h-stat-tag tag-book" id="hStatPracticesTag">सत्र पूर्ण</div>
               </div>
             </div>
@@ -771,7 +771,7 @@
             <div class="h-stat-top">
               <div class="h-stat-icon icon-star" style="background:linear-gradient(135deg, rgba(245,158,11,0.2), rgba(234,179,8,0.35)); font-size:1.5rem;">🏆</div>
               <div class="h-stat-meta">
-                <div class="h-stat-label">रिवॉर्ड अंक (Rewards)</div>
+                <div class="h-stat-label" data-i18n="card_points_lbl">रिवॉर्ड अंक (Rewards)</div>
                 <div class="h-stat-tag tag-star" id="hStatPointsTag" style="background:rgba(245,158,11,0.18); color:#b45309; font-weight:800;">सत्यापित • नियम देखें ℹ️</div>
               </div>
             </div>
@@ -787,7 +787,7 @@
             <div class="h-stat-top">
               <div class="h-stat-icon icon-rocket">🚀</div>
               <div class="h-stat-meta">
-                <div class="h-stat-label">सर्वश्रेष्ठ गति (Best WPM)</div>
+                <div class="h-stat-label" data-i18n="card_bestwpm_lbl">सर्वश्रेष्ठ गति (Best WPM)</div>
                 <div class="h-stat-tag tag-rocket" id="hStatBestWpmTag">ऑल-टाइम हाई</div>
               </div>
             </div>
@@ -801,7 +801,7 @@
             <div class="h-stat-top">
               <div class="h-stat-icon icon-clock">⏱️</div>
               <div class="h-stat-meta">
-                <div class="h-stat-label">कुल समय (Total Time)</div>
+                <div class="h-stat-label" data-i18n="card_time_lbl">कुल समय (Total Time)</div>
                 <div class="h-stat-tag tag-clock" id="hStatTotalTimeTag">समय निवेश</div>
               </div>
             </div>
@@ -814,10 +814,10 @@
         <!-- Section: Practice Classes -->
         <div class="section-header">
           <div>
-            <h3 class="section-title">अभ्यास कक्षाएं (Practice Classes)</h3>
-            <p class="section-subtitle">रामधारी गुप्ता खंड 1 एवं हर्ष स्पेशल डिक्टेशन्स</p>
+            <h3 class="section-title" data-i18n="home_classes_title">अभ्यास कक्षाएं (Practice Classes)</h3>
+            <p class="section-subtitle" data-i18n="home_classes_sub">रामधारी गुप्ता खंड 1 एवं हर्ष स्पेशल डिक्टेशन्स</p>
           </div>
-          <button class="btn-secondary" onclick="stenoApp.navigate('classes')">सभी देखें (View All) →</button>
+          <button class="btn-secondary" onclick="stenoApp.navigate('classes')" data-i18n="btn_view_all">सभी देखें (View All) →</button>
         </div>
 
         
@@ -840,7 +840,7 @@
         </div>
         <div class="section-header">
           <div>
-            <h2 class="section-title">🎙️ सेल्फ प्रैक्टिस (Custom Dictation Practice)</h2>
+            <h2 class="section-title" data-i18n="self_practice_title">🎙️ सेल्फ प्रैक्टिस (Custom Dictation Practice)</h2>
             <p class="section-subtitle">अपनी कोचिंग या ऑफलाइन का कोई भी ऑडियो व आलेख अपलोड करके असली परीक्षा जैसा अभ्यास करें।</p>
           </div>
         </div>
@@ -1394,7 +1394,7 @@
         </div>
         <div class="section-header">
           <div>
-            <h2 class="section-title">मेरा अभ्यास इतिहास (My Practice History)</h2>
+            <h2 class="section-title" data-i18n="history_title">मेरा अभ्यास इतिहास (My Practice History)</h2>
             <p class="section-subtitle">आपके द्वारा पूर्ण किए गए सभी डिक्टेशन अभ्यासों का संपूर्ण विवरण</p>
           </div>
         </div>
@@ -1618,7 +1618,7 @@
         </div>
         <div class="section-header">
           <div>
-            <h2 class="section-title">स्टेनो रैंकिंग लीडरबोर्ड (Steno Leaderboard)</h2>
+            <h2 class="section-title" data-i18n="leaderboard_title">स्टेनो रैंकिंग लीडरबोर्ड (Steno Leaderboard)</h2>
             <p class="section-subtitle">शीर्ष अभ्यर्थियों के साथ अपनी गति और सटीकता की तुलना करें</p>
           </div>
         </div>
@@ -1669,7 +1669,7 @@
         </div>
         <div class="section-header">
           <div>
-            <h2 class="section-title">मेरे बुकमार्क किए गए आलेख (My Bookmarks)</h2>
+            <h2 class="section-title" data-i18n="bookmarks_title">मेरे बुकमार्क किए गए आलेख (My Bookmarks)</h2>
             <p class="section-subtitle">दोहराव और विशेष अभ्यास हेतु सहेजे गए कठिन आलेख</p>
           </div>
         </div>
@@ -1705,7 +1705,7 @@
         </div>
         <div class="section-header">
           <div>
-            <h2 class="section-title">सूचनाएं व अलर्ट (Notifications)</h2>
+            <h2 class="section-title" data-i18n="notifications_title">सूचनाएं व अलर्ट (Notifications)</h2>
             <p class="section-subtitle">दैनिक रिमाइंडर, नई कक्षाएं और उपलब्धियों के अलर्ट</p>
           </div>
         </div>
@@ -1766,7 +1766,7 @@
         </div>
         <div class="section-header">
           <div>
-            <h2 class="section-title">📜 परीक्षा नियम (Exam Rules)</h2>
+            <h2 class="section-title" data-i18n="rules_title">📜 परीक्षा नियम (Exam Rules)</h2>
             <p class="section-subtitle">UPSSSC और SSC स्टेनो परीक्षाओं के आधिकारिक मूल्यांकन नियम — पास/फेल मानदंड, भ्रांति वर्गीकरण एवं टंकण निर्देश</p>
           </div>
         </div>
@@ -2088,19 +2088,19 @@
          ===================================================================== -->
     <nav class="mobile-bottom-nav">
       <button class="mobile-nav-btn active" data-nav="home">
-        <span>🏠</span> <span>होम</span>
+        <span>🏠</span> <span data-i18n="bnav_home">होम</span>
       </button>
       <button class="mobile-nav-btn" data-nav="classes">
-        <span>📚</span> <span>क्लासेस</span>
+        <span>📚</span> <span data-i18n="bnav_classes">क्लासेस</span>
       </button>
       <button class="mobile-nav-btn" data-nav="my-practice">
-        <span>✍️</span> <span>अभ्यास</span>
+        <span>✍️</span> <span data-i18n="bnav_practice">अभ्यास</span>
       </button>
       <button class="mobile-nav-btn" data-nav="rules">
-        <span>📜</span> <span>नियम</span>
+        <span>📜</span> <span data-i18n="bnav_rules">नियम</span>
       </button>
       <button class="mobile-nav-btn" data-nav="profile">
-        <span>👤</span> <span>प्रोफ़ाइल</span>
+        <span>👤</span> <span data-i18n="bnav_profile">प्रोफ़ाइल</span>
       </button>
     </nav>
 
@@ -2879,7 +2879,7 @@
   <script src="/js/keyboard_map.js?v=8.1"></script>
   <script src="/js/typing_engine.js?v=13.5"></script>
   <script src="/js/ocr_service.js?v=1.1"></script>
-  <script src="/js/app.js?v=13.5"></script>
+  <script src="/js/app.js?v=13.6"></script>
   <!-- Strict Exam Hall Anti-Cheat Warning Modal -->
   <div class="modal-overlay" id="examHallWarningModal" style="z-index:99999;">
     <div class="modal-card" style="max-width: 480px; text-align:center; border:2px solid #ef4444; box-shadow:0 10px 40px rgba(239,68,68,0.3);">
