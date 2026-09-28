@@ -2877,12 +2877,22 @@
   <!-- Core Lightweight Scripts (charts.js & comparison_view.js?v=13.5 are lazy-loaded on demand for 50% faster startup) -->
   <script src="/js/audio_player.js?v=8.1"></script>
   <script src="/js/keyboard_map.js?v=8.1"></script>
-  <script src="/js/typing_engine.js?v=13.5"></script>
+  <script src="/js/typing_engine.js?v=13.7"></script>
   <script src="/js/ocr_service.js?v=1.1"></script>
   <script src="/js/app.js?v=13.6"></script>
   <!-- Strict Exam Hall Anti-Cheat Warning Modal -->
-  <div class="modal-overlay" id="examHallWarningModal" style="z-index:99999;">
-    <div class="modal-card" style="max-width: 480px; text-align:center; border:2px solid #ef4444; box-shadow:0 10px 40px rgba(239,68,68,0.3);">
+  <div class="modal-overlay" id="examHallWarningModal" style="z-index:99999;" onclick="if(event.target === this) stenoTypingEngine.exitExamModeFromModal()">
+    <div class="modal-card" style="max-width: 480px; text-align:center; border:2px solid #ef4444; box-shadow:0 10px 40px rgba(239,68,68,0.3); position:relative; padding:28px 24px;">
+      <!-- Small Cross (✕) Close / Exit Button -->
+      <button type="button" 
+              class="modal-close-btn exam-warning-close-btn" 
+              onclick="stenoTypingEngine.exitExamModeFromModal()" 
+              title="परीक्षा हॉल मोड बंद करें और बाहर निकलें (Exit Exam Mode)"
+              style="position:absolute; top:14px; right:14px; width:34px; height:34px; border-radius:50%; background:#f3f4f6; border:1px solid #e5e7eb; color:#4b5563; font-size:1.15rem; font-weight:700; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:all 0.2s; z-index:10; padding:0; line-height:1;"
+              onmouseover="this.style.background='#fee2e2'; this.style.color='#dc2626'; this.style.borderColor='#fca5a5';"
+              onmouseout="this.style.background='#f3f4f6'; this.style.color='#4b5563'; this.style.borderColor='#e5e7eb';">
+        ✕
+      </button>
       <div style="font-size:3rem; margin-bottom:10px;">🚨</div>
       <h3 class="modal-title" style="color:#b91c1c; font-size:1.25rem; margin-bottom:6px;">परीक्षा हॉल सुरक्षा चेतावनी</h3>
       <p id="examWarningModalSubtitle" style="font-weight:700; color:#dc2626; font-size:0.95rem; margin-bottom:12px;">
@@ -2894,9 +2904,14 @@
       <p style="font-size:0.82rem; color:var(--text-muted); line-height:1.5; margin-bottom:20px;">
         SSC एवं UPSSSC आशुलिपिक परीक्षा नियमों के अनुसार टाइपिंग सत्र के दौरान टैब बदलना, विंडो मिनिमाइज करना या बाहर क्लिक करना सख्त वर्जित है।
       </p>
-      <div style="display:flex; justify-content:center; gap:10px;">
-        <button type="button" class="btn-primary" onclick="stenoTypingEngine.resumeExamFullScreen()" style="background:#dc2626; border-color:#dc2626; padding:10px 24px; font-weight:700; font-size:0.9rem;">
+      <div style="display:flex; flex-direction:column; align-items:center; gap:10px; width:100%;">
+        <button type="button" class="btn-primary" onclick="stenoTypingEngine.resumeExamFullScreen()" style="background:#dc2626; border-color:#dc2626; padding:10px 24px; font-weight:700; font-size:0.9rem; width:100%; max-width:340px;">
           📺 फुल-स्क्रीन करें और परीक्षा जारी रखें →
+        </button>
+        <button type="button" class="btn-secondary" onclick="stenoTypingEngine.exitExamModeFromModal()" style="background:transparent; border:1px solid #d1d5db; color:#4b5563; padding:8px 18px; font-size:0.85rem; font-weight:600; border-radius:8px; cursor:pointer; width:100%; max-width:340px; transition:all 0.15s ease;"
+          onmouseover="this.style.background='#f3f4f6'; this.style.color='#111827'; this.style.borderColor='#9ca3af';"
+          onmouseout="this.style.background='transparent'; this.style.color='#4b5563'; this.style.borderColor='#d1d5db';">
+          ✕ परीक्षा मोड बंद करें (Exit Exam Mode)
         </button>
       </div>
     </div>

@@ -529,6 +529,15 @@ class StenoTypingEngine {
         this.showFullScreenExitAlert();
       }
     });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        const modal = document.getElementById('examHallWarningModal');
+        if (modal && modal.classList.contains('active')) {
+          this.exitExamModeFromModal();
+        }
+      }
+    });
   }
 
   showTabViolationAlert() {
@@ -537,12 +546,13 @@ class StenoTypingEngine {
     const badge = document.getElementById('examWarningStrikeBadge');
     const sub = document.getElementById('examWarningModalSubtitle');
 
-    if (sub) sub.textContent = 'आपने परीक्षा विंडो से बाहर स्विच किया है!';
-    if (badge) badge.textContent = `चेतावनी स्ट्राइक: ${this.tabSwitchCount} / 3 बार विंडो छोड़ी गई`;
+    const isEn = (window.stenoApp && window.stenoApp.currentLang === 'en') || localStorage.getItem('stenomaster_app_lang') === 'en';
+    if (sub) sub.textContent = isEn ? 'You switched away from the exam window!' : 'आपने परीक्षा विंडो से बाहर स्विच किया है!';
+    if (badge) badge.textContent = isEn ? `Warning Strike: ${this.tabSwitchCount} / 3 window exits` : `चेतावनी स्ट्राइक: ${this.tabSwitchCount} / 3 बार विंडो छोड़ी गई`;
 
     if (modal) modal.classList.add('active');
     if (window.stenoApp) {
-      stenoApp.showToast(`🚨 चेतावनी (${this.tabSwitchCount}): परीक्षा के दौरान अन्य टैब खोलना वर्जित है!`, 'error');
+      stenoApp.showToast(isEn ? `🚨 Warning (${this.tabSwitchCount}): Switching tabs is prohibited during exam!` : `🚨 चेतावनी (${this.tabSwitchCount}): परीक्षा के दौरान अन्य टैब खोलना वर्जित है!`, 'error');
     }
   }
 
@@ -552,8 +562,9 @@ class StenoTypingEngine {
     const badge = document.getElementById('examWarningStrikeBadge');
     const sub = document.getElementById('examWarningModalSubtitle');
 
-    if (sub) sub.textContent = 'फुल-स्क्रीन मोड बंद किया गया है!';
-    if (badge) badge.textContent = `चेतावनी: कृपया परीक्षा हॉल मोड में बने रहें`;
+    const isEn = (window.stenoApp && window.stenoApp.currentLang === 'en') || localStorage.getItem('stenomaster_app_lang') === 'en';
+    if (sub) sub.textContent = isEn ? 'Full-Screen mode was exited!' : 'फुल-स्क्रीन मोड बंद किया गया है!';
+    if (badge) badge.textContent = isEn ? `Warning: Please remain in Exam Hall mode` : `चेतावनी: कृपया परीक्षा हॉल मोड में बने रहें`;
 
     if (modal) modal.classList.add('active');
   }
@@ -563,6 +574,18 @@ class StenoTypingEngine {
     if (modal) modal.classList.remove('active');
     this.enterFullScreen();
     if (this.textarea) this.textarea.focus();
+  }
+
+  exitExamModeFromModal() {
+    const modal = document.getElementById('examHallWarningModal');
+    if (modal) modal.classList.remove('active');
+    this.toggleExamMode(false);
+    this.tabSwitchCount = 0;
+    if (this.textarea) {
+      setTimeout(() => {
+        try { this.textarea.focus(); } catch (e) {}
+      }, 100);
+    }
   }
 
   onTextInput() {
