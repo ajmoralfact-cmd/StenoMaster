@@ -57,7 +57,9 @@ class StenoTypingEngine {
     this.tabSwitchCount = 0;
     this.oneMinuteAlertFired = false;
     this.isPracticeActive = false;
-    this.targetDurationSeconds = 300;
+    const savedTimerMins = localStorage.getItem('stenomaster_typing_timer_mins');
+    this.typingTimerMinutes = savedTimerMins !== null ? parseInt(savedTimerMins) : 40;
+    this.targetDurationSeconds = this.typingTimerMinutes > 0 ? (this.typingTimerMinutes * 60) : 0;
     this._antiCheatInitialized = false;
 
     // OTG Physical Keyboard, Screen WakeLock & Mobile Optimization
@@ -137,6 +139,8 @@ class StenoTypingEngine {
     this.initOtgMode();
     this.initMobilePlayerState();
     this.updateFullscreenUI();
+    this.updateTypingTimerUI();
+    this.updateTimerDisplay();
 
     document.addEventListener('fullscreenchange', () => this.updateFullscreenUI());
     document.addEventListener('webkitfullscreenchange', () => this.updateFullscreenUI());
@@ -162,7 +166,12 @@ class StenoTypingEngine {
     this.elapsedSeconds = 0;
     this.tabSwitchCount = 0;
     this.oneMinuteAlertFired = false;
-    this.targetDurationSeconds = (passage && passage.duration_seconds) ? parseInt(passage.duration_seconds) : 300;
+    // Set target duration based on user-selected typing timer (40 Min, 30 Min, or OFF)
+    if (this.typingTimerMinutes > 0) {
+      this.targetDurationSeconds = this.typingTimerMinutes * 60;
+    } else {
+      this.targetDurationSeconds = 0;
+    }
 
     const banner = document.getElementById('practiceExamAlertBanner');
     if (banner) banner.style.display = 'none';
@@ -184,6 +193,7 @@ class StenoTypingEngine {
     this.timerInterval = null;
     this.isTimerRunning = false;
     this.updateTimerDisplay();
+    this.updateTypingTimerUI();
 
     const timerPill = this.timerEl ? this.timerEl.closest('.stat-pill') : null;
     if (timerPill) {
@@ -676,6 +686,51 @@ class StenoTypingEngine {
     if (this.wordCountEl) this.wordCountEl.textContent = words;
   }
 
+  setTypingTimer(mins) {
+    mins = parseInt(mins);
+    if (isNaN(mins)) mins = 40;
+    this.typingTimerMinutes = mins;
+    localStorage.setItem('stenomaster_typing_timer_mins', mins);
+    this.targetDurationSeconds = mins > 0 ? (mins * 60) : 0;
+
+    this.updateTypingTimerUI();
+    this.updateTimerDisplay();
+
+    if (window.stenoApp) {
+      const isEn = (window.stenoApp && window.stenoApp.currentLang === 'en') || localStorage.getItem('stenomaster_app_lang') === 'en';
+      if (mins === 40) {
+        stenoApp.showToast(isEn ? '⏱️ Typing Timer: 40 Minutes Set (SSC Steno Standard)' : '⏱️ टंकण समय: 40 मिनट सेट किया गया (SSC Steno मानक)', 'info');
+      } else if (mins === 30) {
+        stenoApp.showToast(isEn ? '⏱️ Typing Timer: 30 Minutes Set (Fast Practice)' : '⏱️ टंकण समय: 30 मिनट सेट किया गया (तीव्र अभ्यास)', 'info');
+      } else {
+        stenoApp.showToast(isEn ? '🔓 Typing Timer: OFF (Unlimited Practice)' : '🔓 टंकण टाइमर बंद (असीमित अभ्यास)', 'info');
+      }
+    }
+
+    if (this.isTimerRunning && this.targetDurationSeconds > 0) {
+      const remaining = this.targetDurationSeconds - this.elapsedSeconds;
+      if (remaining <= 0 && !this.hasSubmitted) {
+        this.handleTimeUpAutoSubmit();
+      }
+    }
+  }
+
+  updateTypingTimerUI() {
+    const btn40 = document.getElementById('timerOption40Btn');
+    const btn30 = document.getElementById('timerOption30Btn');
+    const btnOff = document.getElementById('timerOptionOffBtn');
+
+    if (btn40) {
+      btn40.className = 'timer-slider-pill' + (this.typingTimerMinutes === 40 ? ' active-40' : '');
+    }
+    if (btn30) {
+      btn30.className = 'timer-slider-pill' + (this.typingTimerMinutes === 30 ? ' active-30' : '');
+    }
+    if (btnOff) {
+      btnOff.className = 'timer-slider-pill' + (this.typingTimerMinutes === 0 ? ' active-off' : '');
+    }
+  }
+
   updateTimerDisplay() {
     if (!this.timerEl) return;
     if (this.targetDurationSeconds > 0) {
@@ -683,10 +738,26 @@ class StenoTypingEngine {
       const mins = Math.floor(remaining / 60);
       const secs = remaining % 60;
       this.timerEl.textContent = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+
+      const timerPill = this.timerEl.closest('.stat-pill');
+      if (timerPill) {
+        if (remaining <= 60 && this.isTimerRunning) {
+          timerPill.classList.add('timer-one-minute-alert');
+          timerPill.style.color = '#dc2626';
+        } else {
+          timerPill.classList.remove('timer-one-minute-alert');
+          timerPill.style.color = '';
+        }
+      }
     } else {
       const mins = Math.floor(this.elapsedSeconds / 60);
       const secs = this.elapsedSeconds % 60;
       this.timerEl.textContent = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+      const timerPill = this.timerEl.closest('.stat-pill');
+      if (timerPill) {
+        timerPill.classList.remove('timer-one-minute-alert');
+        timerPill.style.color = '';
+      }
     }
   }
 

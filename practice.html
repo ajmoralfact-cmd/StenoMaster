@@ -15,7 +15,7 @@
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="/css/style.css?v=13.5">
+  <link rel="stylesheet" href="/css/style.css?v=13.8">
 
   <!-- Shield Root Hindi Shorthand Content from Chrome / Browser Auto-Translation -->
   <script>
@@ -293,6 +293,24 @@
                   </div>
                 </div>
 
+                <!-- Colorful Typing Timer Slider (40m / 30m / OFF) -->
+                <div class="typing-timer-group">
+                  <label class="mode-label" style="margin:0; font-weight:700; font-size:0.82rem;" data-i18n="practice_timer_label">⏱️ टंकण समय:</label>
+                  <div class="colorful-timer-slider" id="colorfulTimerSlider">
+                    <button type="button" id="timerOption40Btn" class="timer-slider-pill active-40" onclick="stenoTypingEngine.setTypingTimer(40)" title="SSC Steno मानक टंकण समय (40 मिनट)">
+                      <span class="timer-dot"></span>
+                      <span data-i18n="practice_timer_40">40 मिनट</span>
+                    </button>
+                    <button type="button" id="timerOption30Btn" class="timer-slider-pill" onclick="stenoTypingEngine.setTypingTimer(30)" title="तीव्र अभ्यास टंकण समय (30 मिनट)">
+                      <span class="timer-dot"></span>
+                      <span data-i18n="practice_timer_30">30 मिनट</span>
+                    </button>
+                    <button type="button" id="timerOptionOffBtn" class="timer-slider-pill" onclick="stenoTypingEngine.setTypingTimer(0)" title="असीमित समय (बिना ऑटो-सबमिट)">
+                      <span data-i18n="practice_timer_off">🔓 OFF</span>
+                    </button>
+                  </div>
+                </div>
+
                 <div class="typing-mode-group">
                   <label class="mode-label" for="typingModeSelect">Typing Mode:</label>
                   <select id="typingModeSelect" class="select-typing-mode">
@@ -541,9 +559,9 @@
   <script src="/js/comparison_view.js?v=13.5"></script>
   <script src="/js/audio_player.js?v=8.1"></script>
   <script src="/js/keyboard_map.js?v=8.1"></script>
-  <script src="/js/typing_engine.js?v=13.7"></script>
+  <script src="/js/typing_engine.js?v=13.8"></script>
   <script src="/js/ocr_service.js?v=1.1"></script>
-  <script src="/js/app.js?v=13.6"></script>
+  <script src="/js/app.js?v=13.8"></script>
 
   <!-- Practice Page Bootstrap -->
   <script>
