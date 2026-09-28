@@ -242,7 +242,7 @@ class StenoMasterHandler(http.server.SimpleHTTPRequestHandler):
         user = self._get_auth_user()
         user_id = user['user_id'] if user else None
 
-        # Serve uploaded audio files with Range support and persistent database fallback
+        # Serve uploaded audio files with Range support, local disk cache, and high-speed CDN redirect
         if path.startswith('/uploads/'):
             filename = urllib.parse.unquote(os.path.basename(path))
             file_path = os.path.join(UPLOADS_DIR, filename)
@@ -251,24 +251,35 @@ class StenoMasterHandler(http.server.SimpleHTTPRequestHandler):
                 if os.path.exists(fallback_path):
                     file_path = fallback_path
 
-            # Fallback: retrieve from persistent database (Supabase / SQLite) if not on local disk
-            if not os.path.exists(file_path):
-                file_rec = db.get_uploaded_file(filename)
-                if file_rec:
-                    try:
-                        os.makedirs(os.path.dirname(file_path), exist_ok=True)
-                        with open(file_path, 'wb') as f:
-                            f.write(file_rec[1])
-                    except Exception:
-                        self._serve_in_memory_file(filename, file_rec[0], file_rec[1])
-                        return
-
+            # 1. If found on local disk (local server dev), serve directly with HTTP 206 Range support
             if os.path.exists(file_path):
                 self._serve_audio_file(file_path)
                 return
-            else:
-                self.send_error(404, "File not found")
+
+            # 2. High-speed global CDN redirect for audio on Vercel serverless
+            if filename.startswith('audio_') or filename.endswith('.mp3'):
+                cdn_url = f"https://github.com/ajmoralfact-cmd/StenoMaster/releases/download/audio-v1/{filename}"
+                self.send_response(302)
+                self.send_header('Location', cdn_url)
+                self.send_header('Cache-Control', 'public, max-age=604800, immutable')
+                self.end_headers()
                 return
+
+            # 3. Fallback: retrieve from persistent database (Supabase / SQLite) for other assets (images, PDFs)
+            file_rec = db.get_uploaded_file(filename)
+            if file_rec:
+                try:
+                    os.makedirs(os.path.dirname(file_path), exist_ok=True)
+                    with open(file_path, 'wb') as f:
+                        f.write(file_rec[1])
+                    self._serve_audio_file(file_path)
+                    return
+                except Exception:
+                    self._serve_in_memory_file(filename, file_rec[0], file_rec[1])
+                    return
+
+            self.send_error(404, "File not found")
+            return
 
         # Serve admin portal
         if path in ('/admin', '/admin/'):
