@@ -238,6 +238,17 @@ def run_postgres_migrations(conn):
                     is_used INTEGER DEFAULT 0
                 );
                 CREATE INDEX IF NOT EXISTS idx_email_otps_email ON email_otps(email);
+
+                CREATE TABLE IF NOT EXISTS user_unlocked_categories (
+                    id SERIAL PRIMARY KEY,
+                    user_id INTEGER NOT NULL,
+                    category_id INTEGER NOT NULL,
+                    order_id TEXT,
+                    expires_at TEXT,
+                    created_at TEXT,
+                    UNIQUE(user_id, category_id)
+                );
+                CREATE INDEX IF NOT EXISTS idx_uuc_user ON user_unlocked_categories(user_id);
             """)
             ensure_postgres_default_data(cur)
         raw_conn.autocommit = prev_autocommit
@@ -4516,18 +4527,22 @@ def admin_grant_category_access(
 def get_user_unlocked_category_ids(user_id: Optional[int]) -> List[int]:
     if not user_id:
         return []
-    conn = get_db()
-    c = conn.cursor()
-    c.execute("SELECT category_id, expires_at FROM user_unlocked_categories WHERE user_id = ?", (user_id,))
-    rows = c.fetchall()
-    conn.close()
-    unlocked = []
-    for r in rows:
-        row_dict = dict(r)
-        exp = row_dict.get('expires_at')
-        if not exp or not is_expired_datetime(exp):
-            unlocked.append(row_dict['category_id'])
-    return unlocked
+    try:
+        conn = get_db()
+        c = conn.cursor()
+        c.execute("SELECT category_id, expires_at FROM user_unlocked_categories WHERE user_id = ?", (user_id,))
+        rows = c.fetchall()
+        conn.close()
+        unlocked = []
+        for r in rows:
+            row_dict = dict(r)
+            exp = row_dict.get('expires_at')
+            if not exp or not is_expired_datetime(exp):
+                unlocked.append(row_dict['category_id'])
+        return unlocked
+    except Exception as e:
+        print(f"Notice in get_user_unlocked_category_ids: {e}")
+        return []
 
 
 def unlock_categories_for_user(user_id: int, category_ids: List[int], order_id: Optional[str] = None, duration_days: int = 365) -> Dict[str, Any]:

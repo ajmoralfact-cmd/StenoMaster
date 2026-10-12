@@ -1751,7 +1751,7 @@ class StenoAdmin {
     }
   }
 
-  openGrantProModal(userId, userName, studentCode, currentStatus, daysLeft) {
+  async openGrantProModal(userId, userName, studentCode, currentStatus, daysLeft) {
     const infoBox = document.getElementById('grantProStudentInfo');
     const idInput = document.getElementById('grantProUserId');
     const daysSelect = document.getElementById('grantProDaysSelect');
@@ -1842,19 +1842,46 @@ class StenoAdmin {
     const listEl = document.getElementById('grantCategoryChecklist');
     if (!listEl) return;
 
-    let cats = this._allCategoriesCache || [];
-    if (!cats.length) {
+    // 1. Show immediate responsive loading spinner
+    listEl.innerHTML = '<div style="padding:14px; text-align:center; color:var(--text-muted); font-size:0.84rem;"><div class="spinner-small" style="display:inline-block; margin-right:8px;"></div>कैटेगरीज लोड हो रही हैं...</div>';
+
+    // 2. Multi-tier cache lookup (check memory cache, categoriesList, and stenoApp)
+    let cats = (this._allCategoriesCache && this._allCategoriesCache.length) ? this._allCategoriesCache : null;
+    if (!cats && this.categoriesList && this.categoriesList.length) cats = this.categoriesList;
+    if (!cats && window.stenoApp && window.stenoApp.categories && window.stenoApp.categories.length) cats = window.stenoApp.categories;
+
+    // 3. If still empty, fetch from API with resilient fallback
+    if (!cats || !cats.length) {
       try {
-        const res = await stenoApp.apiCall('/api/categories');
+        const res = await stenoApp.apiCall('/api/categories?_t=' + Date.now());
         cats = res.categories || [];
-        this._allCategoriesCache = cats;
       } catch (e) {
-        cats = [];
+        try {
+          // Public unauthenticated fallback
+          const raw = await fetch('/api/categories?_t=' + Date.now());
+          const data = await raw.json();
+          cats = data.categories || [];
+        } catch (e2) {
+          cats = [];
+        }
       }
     }
 
-    if (!cats.length) {
-      listEl.innerHTML = '<div style="padding:10px; color:var(--text-muted); font-size:0.8rem;">कोई कैटेगरी लोड नहीं हो सकी।</div>';
+    if (cats && cats.length) {
+      this._allCategoriesCache = cats;
+      this.categoriesList = cats;
+      if (window.stenoApp) window.stenoApp.categories = cats;
+    }
+
+    if (!cats || !cats.length) {
+      listEl.innerHTML = `
+        <div style="padding:14px; text-align:center; color:var(--text-muted); font-size:0.82rem;">
+          <div>कोई कैटेगरी लोड नहीं हो सकी।</div>
+          <button type="button" class="btn-secondary" style="margin-top:8px; padding:3px 10px; font-size:0.75rem;" onclick="stenoAdmin.populateGrantCategories()">
+            🔄 पुनः प्रयास करें (Retry)
+          </button>
+        </div>
+      `;
       return;
     }
 
@@ -1864,14 +1891,14 @@ class StenoAdmin {
       const isChecked = selSet.has(Number(c.id));
       const icon = this.getCategoryIconDisplay(c.icon, c.slug, c.name);
       return `
-        <label class="grant-cat-item" data-cat-name="${this.escapeHtml((c.name || '').toLowerCase())}" style="display:flex; align-items:center; justify-content:space-between; padding:6px 10px; border-radius:6px; cursor:pointer; margin-bottom:4px; background:${isChecked ? 'rgba(16,185,129,0.08)' : 'var(--bg-subtle)'}; border:1px solid ${isChecked ? '#10b981' : 'transparent'};">
+        <label class="grant-cat-item" data-cat-name="${this.escapeHtml((c.name || '').toLowerCase())}" style="display:flex; align-items:center; justify-content:space-between; padding:8px 10px; border-radius:8px; cursor:pointer; margin-bottom:5px; background:${isChecked ? 'rgba(16,185,129,0.08)' : 'var(--bg-subtle)'}; border:1.5px solid ${isChecked ? '#10b981' : 'var(--border-subtle)'}; transition:all 0.18s ease;">
           <div style="display:flex; align-items:center; gap:8px;">
             <input type="checkbox" class="grant-cat-checkbox" value="${c.id}" ${isChecked ? 'checked' : ''} onchange="stenoAdmin.onGrantCatCheckboxChange(this)" style="width:16px; height:16px; cursor:pointer; accent-color:#059669;">
-            <span style="font-size:1.1rem;">${icon}</span>
-            <span style="font-size:0.84rem; font-weight:600; color:var(--text-main);">${this.escapeHtml(c.name)}</span>
+            <span style="font-size:1.15rem;">${icon}</span>
+            <span style="font-size:0.86rem; font-weight:700; color:var(--text-main);">${this.escapeHtml(c.name)}</span>
           </div>
           <div style="display:flex; gap:6px; align-items:center;">
-            <span class="badge" style="background:var(--bg-body); font-size:0.72rem; color:var(--text-secondary);">${c.passage_count || 0} क्लासेस</span>
+            <span class="badge" style="background:var(--bg-body); font-size:0.72rem; color:var(--text-secondary); font-weight:600;">${c.passage_count || 0} क्लासेस</span>
           </div>
         </label>
       `;
