@@ -3771,7 +3771,7 @@ html.is-mobile-device .classes-grid {
 
 @media (max-width: 1024px), (orientation: portrait) {
   .stats-carousel-section {
-    margin-bottom: 18px;
+    margin-bottom: 20px;
     width: 100%;
   }
 
@@ -3779,12 +3779,12 @@ html.is-mobile-device .classes-grid {
     display: flex !important;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 8px;
-    padding: 0 2px;
+    margin-bottom: 10px;
+    padding: 0 4px;
   }
 
   .stats-carousel-title {
-    font-size: 1.05rem !important;
+    font-size: 1.18rem !important;
     font-weight: 800 !important;
     color: var(--text-main) !important;
     margin: 0 !important;
@@ -3796,21 +3796,21 @@ html.is-mobile-device .classes-grid {
     display: flex !important;
     align-items: center !important;
     width: 100% !important;
-    gap: 2px;
+    gap: 4px;
   }
 
   .carousel-nav-btn {
-    width: 26px !important;
-    height: 26px !important;
-    min-width: 26px !important;
+    width: 32px !important;
+    height: 32px !important;
+    min-width: 32px !important;
     border-radius: 50% !important;
     background: var(--bg-surface, #ffffff) !important;
-    border: 1px solid var(--border-subtle, #cbd5e1) !important;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08) !important;
+    border: 1.5px solid var(--border-subtle, #cbd5e1) !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08) !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
-    font-size: 1.2rem !important;
+    font-size: 1.35rem !important;
     font-weight: 800 !important;
     color: var(--text-secondary, #475569) !important;
     cursor: pointer !important;
@@ -3824,7 +3824,7 @@ html.is-mobile-device .classes-grid {
     display: none !important;
   }
 
-  /* Mobile Top Header Optimization (Clean Row 1 matching Option 3) */
+  /* Mobile Top Header: Touch-friendly & Clean */
   .top-header #langToggleBtn,
   .top-header #themeToggleBtn,
   .top-header .header-logout-btn,
@@ -3834,15 +3834,16 @@ html.is-mobile-device .classes-grid {
   }
 
   .top-header {
-    padding: 0 10px !important;
-    height: 56px !important;
-    min-height: 56px !important;
+    padding: 0 12px !important;
+    height: 60px !important;
+    min-height: 60px !important;
   }
 
   .plan-validity-pill {
-    padding: 3px 8px !important;
-    font-size: 0.72rem !important;
-    max-width: 125px !important;
+    padding: 5px 10px !important;
+    font-size: 0.80rem !important;
+    font-weight: 700 !important;
+    max-width: 145px !important;
     white-space: nowrap !important;
     overflow: hidden !important;
     text-overflow: ellipsis !important;
@@ -3850,12 +3851,44 @@ html.is-mobile-device .classes-grid {
   }
 
   .streak-badge {
-    padding: 3px 7px !important;
-    font-size: 0.72rem !important;
-    gap: 3px !important;
+    padding: 5px 9px !important;
+    font-size: 0.80rem !important;
+    font-weight: 700 !important;
+    gap: 4px !important;
   }
 
-  /* Horizontal Snap Scrolling for Stats Grid */
+  /* Mobile Sub-Toolbar: Generous Touch Buttons */
+  .mobile-sub-toolbar {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 10px !important;
+    padding: 10px 14px !important;
+    background: var(--bg-surface, #ffffff) !important;
+    border-bottom: 1px solid var(--border-subtle, #e2e8f0) !important;
+  }
+
+  .sub-tool-btn {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 6px !important;
+    padding: 7px 15px !important;
+    border-radius: 9999px !important;
+    border: 1.5px solid var(--border-subtle, #cbd5e1) !important;
+    background: var(--bg-subtle, #f8fafc) !important;
+    color: var(--text-main, #334155) !important;
+    font-size: 0.88rem !important;
+    font-weight: 700 !important;
+    cursor: pointer !important;
+    min-height: 36px !important;
+  }
+
+  .sub-tool-btn span {
+    font-size: 0.88rem !important;
+  }
+
+  /* Horizontal Snap Scrolling for Stats Grid: Exactly 4 Cards Fill Screen */
   .horizontal-stats-grid {
     display: flex !important;
     flex-direction: row !important;
@@ -3863,8 +3896,8 @@ html.is-mobile-device .classes-grid {
     overflow-x: auto !important;
     scroll-snap-type: x mandatory !important;
     scroll-behavior: smooth !important;
-    gap: 6px !important;
-    padding: 4px 1px 6px 1px !important;
+    gap: 8px !important;
+    padding: 4px 2px 8px 2px !important;
     width: 100% !important;
     -webkit-overflow-scrolling: touch !important;
     scrollbar-width: none !important;
@@ -3875,27 +3908,27 @@ html.is-mobile-device .classes-grid {
     display: none !important;
   }
 
-  /* Option 3 Compact Stat Card (Icon + Value on Row 1, Label on Row 2) */
+  /* Option 3 Large Stat Card (Big Emoji, Large Bold Number, Clear Title) */
   .h-stat-card {
-    flex: 0 0 calc((100% - 18px) / 4) !important;
-    min-width: 68px !important;
-    max-width: 78px !important;
-    height: 64px !important;
-    min-height: 64px !important;
-    max-height: 64px !important;
-    padding: 5px 2px !important;
-    border-radius: 12px !important;
+    flex: 0 0 calc((100% - 24px) / 4) !important;
+    min-width: 82px !important;
+    max-width: none !important;
+    height: 76px !important;
+    min-height: 76px !important;
+    max-height: 76px !important;
+    padding: 7px 4px !important;
+    border-radius: 14px !important;
     background: var(--bg-surface, #ffffff) !important;
-    border: 1px solid var(--border-subtle, #e2e8f0) !important;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03) !important;
+    border: 1.5px solid var(--border-subtle, #e2e8f0) !important;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04) !important;
     display: grid !important;
-    grid-template-columns: 18px 1fr !important;
-    grid-template-rows: auto auto !important;
+    grid-template-columns: 24px 1fr !important;
+    grid-template-rows: 24px 1fr !important;
     justify-content: center !important;
     align-content: center !important;
     align-items: center !important;
-    column-gap: 2px !important;
-    row-gap: 1px !important;
+    column-gap: 3px !important;
+    row-gap: 2px !important;
     scroll-snap-align: start !important;
     box-sizing: border-box !important;
     overflow: hidden !important;
@@ -3908,7 +3941,7 @@ html.is-mobile-device .classes-grid {
   .h-stat-card .h-stat-icon {
     grid-column: 1 !important;
     grid-row: 1 !important;
-    font-size: 0.92rem !important;
+    font-size: 1.25rem !important;
     width: auto !important;
     height: auto !important;
     background: none !important;
@@ -3916,12 +3949,13 @@ html.is-mobile-device .classes-grid {
     margin: 0 !important;
     padding: 0 !important;
     line-height: 1 !important;
+    text-align: center !important;
   }
 
   .h-stat-card .h-stat-val {
     grid-column: 2 !important;
     grid-row: 1 !important;
-    font-size: 0.80rem !important;
+    font-size: 1.02rem !important;
     font-weight: 800 !important;
     color: var(--text-main, #0f172a) !important;
     margin: 0 !important;
@@ -3935,20 +3969,20 @@ html.is-mobile-device .classes-grid {
     width: 100% !important;
     text-align: center !important;
     overflow: hidden !important;
-    margin: 0 !important;
+    margin-top: 2px !important;
     padding: 0 !important;
   }
 
   .h-stat-card .h-stat-meta .h-stat-label,
   .h-stat-card .h-stat-label {
-    font-size: 0.58rem !important;
+    font-size: 0.72rem !important;
     font-weight: 700 !important;
     color: var(--text-muted, #64748b) !important;
     white-space: nowrap !important;
     overflow: hidden !important;
     text-overflow: ellipsis !important;
     display: block !important;
-    max-width: 66px !important;
+    max-width: 100% !important;
     margin: 0 auto !important;
     line-height: 1.2 !important;
     text-transform: none !important;
@@ -3967,14 +4001,14 @@ html.is-mobile-device .classes-grid {
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
-    gap: 5px !important;
-    margin-top: 4px !important;
-    margin-bottom: 14px !important;
+    gap: 6px !important;
+    margin-top: 6px !important;
+    margin-bottom: 16px !important;
   }
 
   .carousel-dot {
-    width: 6px !important;
-    height: 6px !important;
+    width: 7px !important;
+    height: 7px !important;
     border-radius: 50% !important;
     background: #cbd5e1 !important;
     transition: all 0.25s ease !important;
@@ -3982,7 +4016,7 @@ html.is-mobile-device .classes-grid {
   }
 
   .carousel-dot.active {
-    width: 18px !important;
+    width: 22px !important;
     border-radius: 9999px !important;
     background: var(--primary, #0284c7) !important;
   }
@@ -3990,14 +4024,14 @@ html.is-mobile-device .classes-grid {
   /* Option 3 Active Plan Banner */
   #dashboardActivePlanBanner {
     background: #ecfdf5 !important;
-    border: 1px solid #a7f3d0 !important;
-    border-radius: 14px !important;
-    padding: 10px 14px !important;
-    margin-bottom: 14px !important;
+    border: 1.5px solid #a7f3d0 !important;
+    border-radius: 16px !important;
+    padding: 12px 16px !important;
+    margin-bottom: 16px !important;
   }
 
   #dashboardActivePlanBanner #planBannerTitle {
-    font-size: 0.88rem !important;
+    font-size: 0.98rem !important;
     color: #065f46 !important;
     font-weight: 800 !important;
   }
@@ -4005,15 +4039,81 @@ html.is-mobile-device .classes-grid {
   #dashboardActivePlanBanner #planBannerTag {
     background: #059669 !important;
     color: #ffffff !important;
-    font-size: 0.65rem !important;
+    font-size: 0.70rem !important;
     font-weight: 800 !important;
-    padding: 2px 6px !important;
+    padding: 2px 8px !important;
+    border-radius: 6px !important;
   }
 
   #dashboardActivePlanBanner #planBannerSubtitle {
-    font-size: 0.72rem !important;
+    font-size: 0.78rem !important;
     color: #047857 !important;
-    line-height: 1.3 !important;
+    line-height: 1.35 !important;
+    margin-top: 2px !important;
+  }
+
+  #dashboardActivePlanBanner #planBannerActionBtn {
+    padding: 9px 16px !important;
+    font-size: 0.86rem !important;
+    font-weight: 800 !important;
+    border-radius: 10px !important;
+  }
+
+  /* Option 3 Practice Classes Header */
+  .page-view .section-header .section-title {
+    font-size: 1.22rem !important;
+    font-weight: 800 !important;
+  }
+
+  .page-view .section-header .btn-secondary {
+    font-size: 0.86rem !important;
+    font-weight: 700 !important;
+    padding: 7px 14px !important;
+    border-radius: 10px !important;
+  }
+
+  /* Mobile Bottom Navigation: Larger Touch Targets & Icons */
+  .mobile-bottom-nav {
+    height: 64px !important;
+    padding: 4px 0 !important;
+  }
+
+  .mobile-nav-btn {
+    font-size: 0.78rem !important;
+    font-weight: 700 !important;
+    gap: 3px !important;
+  }
+
+  .mobile-nav-btn svg,
+  .mobile-nav-btn img {
+    width: 24px !important;
+    height: 24px !important;
+  }
+
+  /* Mobile Footer: Single column stacked layout */
+  .footer-container {
+    padding: 20px 16px !important;
+  }
+
+  .footer-top-row {
+    grid-template-columns: 1fr !important;
+    gap: 22px !important;
+  }
+
+  .footer-brand-title {
+    font-size: 1.25rem !important;
+  }
+
+  .footer-tagline {
+    font-size: 0.84rem !important;
+    line-height: 1.5 !important;
+  }
+
+  .footer-bottom-row {
+    flex-direction: column !important;
+    gap: 10px !important;
+    text-align: center !important;
+    padding-top: 14px !important;
   }
 }
 
@@ -7423,50 +7523,69 @@ body.dark-mode .ww-tip-row {
   .category-series-card {
     flex-direction: column !important;
     align-items: stretch !important;
-    gap: 10px !important;
-    padding: 14px 16px !important;
-    border-radius: 18px !important;
+    gap: 14px !important;
+    padding: 18px 18px !important;
+    border-radius: 20px !important;
     background: #ffffff !important;
     border: 1.5px solid #d1fae5 !important;
-    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.03) !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04) !important;
+    box-sizing: border-box !important;
+    width: 100% !important;
   }
-  .category-series-card > div:first-child {
-    min-width: 0 !important;
-  }
+  .category-series-card .cat-left-section,
   .category-series-card > div:nth-child(2) {
     min-width: 0 !important;
+    width: 100% !important;
     flex: none !important;
-    gap: 12px !important;
+    gap: 14px !important;
     display: flex !important;
     align-items: center !important;
+  }
+  .category-series-card .cat-left-section h4 {
+    font-size: 1.22rem !important;
+    font-weight: 800 !important;
+    line-height: 1.35 !important;
   }
   .category-series-card .cat-middle-specs {
     border-left: none !important;
     border-right: none !important;
     border-top: 1px dashed var(--border-subtle, #e2e8f0) !important;
     border-bottom: none !important;
-    padding: 8px 0 2px 0 !important;
+    padding: 10px 0 4px 0 !important;
     min-width: 0 !important;
+    width: 100% !important;
+    flex: none !important;
+    gap: 8px !important;
   }
+  .category-series-card .cat-middle-specs span {
+    font-size: 0.82rem !important;
+    padding: 5px 12px !important;
+    border-radius: 9999px !important;
+  }
+  .category-series-card .cat-action-section,
   .category-series-card > div:last-child {
     justify-content: stretch !important;
     width: 100% !important;
+    flex: none !important;
     margin-top: 4px !important;
   }
+  .category-series-card .cat-action-section > div,
   .category-series-card > div:last-child > div {
     display: flex !important;
     width: 100% !important;
-    gap: 8px !important;
+    gap: 10px !important;
     justify-content: stretch !important;
   }
+  .category-series-card .cat-action-section button,
   .category-series-card > div:last-child button {
     flex: 1 !important;
     width: 100% !important;
     justify-content: center !important;
-    padding: 10px 14px !important;
-    border-radius: 12px !important;
-    font-size: 0.88rem !important;
+    padding: 13px 20px !important;
+    border-radius: 14px !important;
+    font-size: 1.02rem !important;
     font-weight: 800 !important;
+    box-shadow: 0 4px 14px rgba(2, 132, 199, 0.28) !important;
   }
 }
 
@@ -8848,3 +8967,80 @@ html.is-mobile-device .category-series-card .cat-middle-specs { border-left: non
 html.is-mobile-device .category-series-card > div:last-child { justify-content: stretch !important; width: 100% !important; margin-top: 4px !important; }
 html.is-mobile-device .category-series-card > div:last-child > div { display: flex !important; width: 100% !important; gap: 8px !important; justify-content: stretch !important; }
 html.is-mobile-device .category-series-card > div:last-child button { flex: 1 !important; width: 100% !important; justify-content: center !important; padding: 10px 14px !important; border-radius: 12px !important; font-size: 0.88rem !important; font-weight: 800 !important; }
+
+
+/* Desktop defaults for Category Series Cards */
+.cat-left-section {
+  min-width: 280px;
+  flex: 1.2;
+}
+.cat-middle-specs {
+  min-width: 240px;
+  flex: 1.4;
+  padding: 0 14px;
+  border-left: 1px dashed var(--border);
+  border-right: 1px dashed var(--border);
+}
+.cat-action-section {
+  flex-shrink: 0;
+}
+
+
+/* Automatic Zoom/Scale Compensation for Mobile Devices in Wide/Desktop Site Mode */
+html.is-mobile-device.mobile-wide-viewport {
+  font-size: 18px !important; /* Scale base font by 112.5% */
+}
+html.is-mobile-device.mobile-wide-viewport .top-header {
+  height: 68px !important;
+  padding: 0 16px !important;
+}
+html.is-mobile-device.mobile-wide-viewport .top-header .brand-name-text {
+  font-size: 1.35rem !important;
+}
+html.is-mobile-device.mobile-wide-viewport .sub-tool-btn {
+  font-size: 0.98rem !important;
+  padding: 9px 18px !important;
+}
+html.is-mobile-device.mobile-wide-viewport #dashboardActivePlanBanner {
+  padding: 16px 22px !important;
+}
+html.is-mobile-device.mobile-wide-viewport #dashboardActivePlanBanner #planBannerTitle {
+  font-size: 1.15rem !important;
+}
+html.is-mobile-device.mobile-wide-viewport .stats-carousel-title {
+  font-size: 1.3rem !important;
+}
+html.is-mobile-device.mobile-wide-viewport .h-stat-card {
+  flex: 0 0 calc((100% - 32px) / 4) !important;
+  height: 90px !important;
+  min-height: 90px !important;
+  max-height: 90px !important;
+  padding: 10px 6px !important;
+  grid-template-columns: 28px 1fr !important;
+  grid-template-rows: 28px 1fr !important;
+}
+html.is-mobile-device.mobile-wide-viewport .h-stat-card .h-stat-icon {
+  font-size: 1.5rem !important;
+}
+html.is-mobile-device.mobile-wide-viewport .h-stat-card .h-stat-val {
+  font-size: 1.25rem !important;
+}
+html.is-mobile-device.mobile-wide-viewport .h-stat-card .h-stat-label {
+  font-size: 0.85rem !important;
+}
+html.is-mobile-device.mobile-wide-viewport .category-series-card {
+  padding: 22px 24px !important;
+}
+html.is-mobile-device.mobile-wide-viewport .category-series-card .cat-left-section h4 {
+  font-size: 1.35rem !important;
+}
+html.is-mobile-device.mobile-wide-viewport .category-series-card button {
+  font-size: 1.15rem !important;
+  padding: 16px 24px !important;
+}
+html.is-mobile-device.mobile-wide-viewport .mobile-bottom-nav {
+  height: 72px !important;
+}
+html.is-mobile-device.mobile-wide-viewport .mobile-nav-btn {
+  font-size: 0.88rem !important;
+}

@@ -5754,7 +5754,7 @@ ${link}`;
             <div style="position:absolute; top:0; left:0; width:5px; height:100%; background:${theme.accentColor};"></div>
 
             <!-- LEFT SECTION: Emblem Avatar + Title & Badges -->
-            <div style="display:flex; align-items:center; gap:16px; min-width:280px; flex:1.2;">
+            <div class="cat-left-section" style="display:flex; align-items:center; gap:16px;">
               <div style="width:60px; height:60px; min-width:60px; border-radius:16px; background:${theme.emblemBg}; border:1.5px solid ${theme.emblemBorder}; display:flex; align-items:center; justify-content:center; font-size:2rem; flex-shrink:0; box-shadow:0 3px 10px rgba(0,0,0,0.05);">
                 ${iconDisplay}
               </div>
@@ -5775,7 +5775,7 @@ ${link}`;
             </div>
 
             <!-- MIDDLE SECTION: Rich Specifications & Feature Highlights (Filling the empty space!) -->
-            <div class="cat-middle-specs" style="flex:1.4; display:flex; flex-direction:column; gap:6px; min-width:240px; padding:0 14px; border-left:1px dashed var(--border); border-right:1px dashed var(--border);">
+            <div class="cat-middle-specs" style="display:flex; flex-direction:column; gap:6px;">
               <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
                 <span style="background:rgba(2,132,199,0.1); color:#0284c7; border:1px solid rgba(2,132,199,0.25); font-weight:800; font-size:0.8rem; padding:4px 10px; border-radius:8px; display:inline-flex; align-items:center; gap:4px;">
                   ⚡ 80 - 100 WPM
@@ -5795,7 +5795,7 @@ ${link}`;
             </div>
 
             <!-- RIGHT SECTION: Action / Unlock Button -->
-            <div style="display:flex; align-items:center; justify-content:flex-end; gap:8px; flex-shrink:0;">
+            <div class="cat-action-section" style="display:flex; align-items:center; justify-content:flex-end; gap:8px;">
               ${(isUnlocked || price === 0)
                 ? `<button type="button" class="btn-primary" style="padding:10px 22px; font-size:0.92rem; font-weight:800; border-radius:12px; background:linear-gradient(135deg, #0284c7, #2563eb); border:none; box-shadow:0 4px 14px rgba(2,132,199,0.35); display:inline-flex; align-items:center; gap:6px; cursor:pointer;" onclick="event.stopPropagation(); stenoApp.openCategoryDetail(${cat.id})">
                     <span>🎯 ${isEn ? 'Practice Now' : 'अभ्यास करें'}</span> <span style="font-size:1.1rem; line-height:1;">➔</span>
