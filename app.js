@@ -3114,7 +3114,7 @@ class StenoApp {
     const hStreakSub = document.getElementById('hStatStreakSub');
     const hStreakTag = document.getElementById('hStatStreakTag');
     const hStreakRecord = document.getElementById('hStatStreakRecord');
-    if (hStreak) hStreak.textContent = isEn ? `${streakDays} Days` : `${streakDays} दिन`;
+    if (hStreak) hStreak.innerHTML = `<span class="h-stat-num">${streakDays}</span><span class="h-stat-unit hide-mobile">${isEn ? ' Days' : ' दिन'}</span>`;
     if (hStreakSub) {
       if (isEn) {
         hStreakSub.textContent = streakDays > 0 
@@ -3145,7 +3145,7 @@ class StenoApp {
     const completedDict = goal.completed_dictations || 0;
     const targetDict = goal.target_dictations || 3;
     const pct = goal.percent_completed || Math.min(100, Math.round((completedDict / targetDict) * 100));
-    if (hGoal) hGoal.textContent = isEn ? `${completedDict} / ${targetDict} Dictations` : `${completedDict} / ${targetDict} डिक्टेशन`;
+    if (hGoal) hGoal.innerHTML = `<span class="h-stat-num">${completedDict} / ${targetDict}</span><span class="h-stat-unit hide-mobile">${isEn ? ' Dictations' : ' डिक्टेशन'}</span>`;
     if (hGoalSub) {
       if (completedDict >= targetDict) {
         hGoalSub.textContent = isEn ? '🎉 Daily goal achieved (+20 Pts Bonus)' : '🎉 आज का लक्ष्य पूर्ण (+20 Pts बोनस)';
@@ -3171,7 +3171,7 @@ class StenoApp {
     const hAvgWpmTag = document.getElementById('hStatAvgWpmTag');
     const hAvgWpmTier = document.getElementById('hStatAvgWpmTier');
     const avgWpm = stats.avg_wpm !== undefined ? Number(stats.avg_wpm) : 0;
-    if (hAvgWpm) hAvgWpm.textContent = `${avgWpm} WPM`;
+    if (hAvgWpm) hAvgWpm.innerHTML = `<span class="h-stat-num">${avgWpm}</span><span class="h-stat-unit"> WPM</span>`;
     if (hAvgWpmSub) hAvgWpmSub.textContent = isEn ? 'Net accurate typing speed' : 'नेट शुद्ध टंकण गति';
     if (hAvgWpmTag) {
       if (isEn) {
@@ -3206,7 +3206,7 @@ class StenoApp {
     const hAccTag = document.getElementById('hStatAccTag');
     const hAccTier = document.getElementById('hStatAccTier');
     const avgAcc = stats.avg_accuracy !== undefined ? Number(stats.avg_accuracy) : 0;
-    if (hAcc) hAcc.textContent = `${avgAcc}%`;
+    if (hAcc) hAcc.innerHTML = `<span class="h-stat-num">${avgAcc}%</span>`;
     if (hAccSub) {
       if (isEn) {
         if (avgAcc >= 95) hAccSub.textContent = '💎 Excellent Accuracy (Mistakes < 5%)';
@@ -3240,7 +3240,7 @@ class StenoApp {
     const hTotalWords = document.getElementById('hStatTotalWords');
     const totalPrac = stats.total_practices || 0;
     const totalWords = stats.total_words || 0;
-    if (hPractices) hPractices.textContent = isEn ? `${totalPrac} Sessions` : `${totalPrac} सत्र`;
+    if (hPractices) hPractices.innerHTML = `<span class="h-stat-num">${totalPrac}</span><span class="h-stat-unit hide-mobile">${isEn ? ' Sessions' : ' सत्र'}</span>`;
     if (hPracticesSub) hPracticesSub.textContent = isEn ? 'Successfully completed dictations' : 'सफलतापूर्वक पूर्ण डिक्टेशन';
     if (hPracticesTag) hPracticesTag.textContent = isEn ? `${totalPrac} Completed` : `${totalPrac} पूर्ण`;
     if (hTotalWords) {
@@ -3254,7 +3254,7 @@ class StenoApp {
     const hPointsSub = document.getElementById('hStatPointsSub');
     const hPointsTag = document.getElementById('hStatPointsTag');
     const hPointsTier = document.getElementById('hStatPointsTier');
-    if (hPoints) hPoints.textContent = `${realPoints} Pts`;
+    if (hPoints) hPoints.innerHTML = `<span class="h-stat-num">${realPoints}</span><span class="h-stat-unit"> Pts</span>`;
     if (hPointsSub) hPointsSub.textContent = isEn ? 'Earned from accuracy & consistency' : 'सटीकता व नियमितता से अर्जित';
     if (hPointsTag) hPointsTag.textContent = isEn ? 'Verified Points' : 'सत्यापित अंक';
     if (hPointsTier) hPointsTier.textContent = isEn ? '+10 Pts per completed dictation' : '+10 Pts प्रति पूर्ण डिक्टेशन';
@@ -3265,7 +3265,7 @@ class StenoApp {
     const hBestWpmTag = document.getElementById('hStatBestWpmTag');
     const hBestWpmTier = document.getElementById('hStatBestWpmTier');
     const bestWpm = stats.best_wpm !== undefined ? Number(stats.best_wpm) : 0;
-    if (hBestWpm) hBestWpm.textContent = `${bestWpm} WPM`;
+    if (hBestWpm) hBestWpm.innerHTML = `<span class="h-stat-num">${bestWpm}</span><span class="h-stat-unit"> WPM</span>`;
     if (hBestWpmSub) hBestWpmSub.textContent = isEn ? 'Highest record speed' : 'उच्चतम रिकॉर्ड गति';
     if (hBestWpmTag) hBestWpmTag.textContent = isEn ? 'All-Time High 🚀' : 'ऑल-टाइम हाई 🚀';
     if (hBestWpmTier) hBestWpmTier.textContent = isEn ? 'Personal best typing record' : 'व्यक्तिगत सर्वश्रेष्ठ टंकण रिकॉर्ड';
@@ -3275,7 +3275,7 @@ class StenoApp {
     const hTotalTimeSub = document.getElementById('hStatTotalTimeSub');
     const hTotalTimeTag = document.getElementById('hStatTotalTimeTag');
     const hTotalTimeMicro = document.getElementById('hStatTotalTimeMicro');
-    if (hTotalTime) hTotalTime.textContent = `${stats.total_time_formatted || (isEn ? '0 mins' : '0 mins')}`;
+    if (hTotalTime) hTotalTime.innerHTML = `<span class="h-stat-num">${stats.total_time_formatted || (isEn ? '0 mins' : '0 mins')}</span>`;
     if (hTotalTimeSub) hTotalTimeSub.textContent = isEn ? 'Active typing practice' : 'सक्रिय टाइपिंग अभ्यास';
     if (hTotalTimeTag) hTotalTimeTag.textContent = isEn ? 'Time Invested' : 'समय निवेश';
     if (hTotalTimeMicro) hTotalTimeMicro.textContent = isEn ? 'Maintain 15-30 mins daily practice' : 'दैनिक 15-30 मिनट अभ्यास रखें';
