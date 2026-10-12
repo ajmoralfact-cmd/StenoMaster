@@ -652,6 +652,7 @@ class StenoApp {
         this.updateUserUI();
       }
       this.restoreRouteOnLoad();
+      this.initStatsCarousel();
 
       // Parallel background refresh without blocking page render
       Promise.all([
@@ -710,11 +711,54 @@ class StenoApp {
     if (toggleBtn) {
       toggleBtn.textContent = theme === 'dark' ? '☀️' : '🌙';
     }
+    const subTheme = document.getElementById('mobileSubThemeIcon');
+    if (subTheme) {
+      subTheme.textContent = theme === 'dark' ? '☀️' : '🌙';
+    }
   }
 
   toggleTheme() {
     const current = document.documentElement.getAttribute('data-theme') || 'light';
     this.setTheme(current === 'dark' ? 'light' : 'dark');
+  }
+
+  // -------------------------------------------------------------------------
+  // Option 3: Stats Carousel Controls (Mobile)
+  // -------------------------------------------------------------------------
+  initStatsCarousel() {
+    const grid = document.getElementById('horizontalStatsGrid');
+    if (!grid || grid._carouselInited) return;
+    grid._carouselInited = true;
+    grid.addEventListener('scroll', () => {
+      const maxScroll = grid.scrollWidth - grid.clientWidth;
+      if (maxScroll <= 0) return;
+      const progress = grid.scrollLeft / maxScroll;
+      const pageIndex = Math.min(2, Math.max(0, Math.round(progress * 2)));
+      this.updateStatsCarouselDots(pageIndex);
+    }, { passive: true });
+  }
+
+  scrollStatsCarousel(dir) {
+    const grid = document.getElementById('horizontalStatsGrid');
+    if (!grid) return;
+    const scrollAmount = grid.clientWidth * 0.75;
+    grid.scrollBy({ left: dir * scrollAmount, behavior: 'smooth' });
+  }
+
+  goToStatsPage(pageIndex) {
+    const grid = document.getElementById('horizontalStatsGrid');
+    if (!grid) return;
+    const maxScroll = grid.scrollWidth - grid.clientWidth;
+    const targetScroll = (maxScroll / 2) * pageIndex;
+    grid.scrollTo({ left: targetScroll, behavior: 'smooth' });
+    this.updateStatsCarouselDots(pageIndex);
+  }
+
+  updateStatsCarouselDots(activeIdx) {
+    const dots = document.querySelectorAll('#statsCarouselDots .carousel-dot');
+    dots.forEach((dot, idx) => {
+      dot.classList.toggle('active', idx === activeIdx);
+    });
   }
 
   // -------------------------------------------------------------------------
@@ -751,6 +795,11 @@ class StenoApp {
       btn.title = isEn ? 'Switch to Hindi + English UI' : 'Switch to Pure English UI';
       btn.setAttribute('aria-label', btn.title);
     });
+
+    const subLang = document.getElementById('mobileSubLangText');
+    if (subLang) {
+      subLang.textContent = isEn ? '🌐 हिंदी' : '🌐 EN';
+    }
 
     // Update settings dropdown if present on current page
     const select = document.getElementById('profileInterfaceLangSelect');

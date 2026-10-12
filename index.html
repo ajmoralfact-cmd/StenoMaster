@@ -638,6 +638,22 @@
         </div>
       </header>
 
+      <!-- Mobile Sub-Toolbar (Option 3 Style - Visible strictly on mobile) -->
+      <div class="mobile-sub-toolbar" id="mobileSubToolbar">
+        <button type="button" class="sub-tool-btn" onclick="stenoApp.toggleAppLanguage()" title="भाषा बदलें">
+          <span id="mobileSubLangText">🌐 हिंदी</span>
+        </button>
+        <button type="button" class="sub-tool-btn" onclick="stenoApp.toggleTheme()" title="थीम बदलें">
+          <span id="mobileSubThemeIcon">🌙</span>
+        </button>
+        <button type="button" class="sub-tool-btn" onclick="stenoApp.openRewardsModal()" title="रिवॉर्ड्स एवं घोषणाएं">
+          <span>📢</span>
+        </button>
+        <button type="button" class="sub-tool-btn sub-tool-logout" onclick="stenoApp.logout()" title="लॉगआउट">
+          <span>👤 Logout</span>
+        </button>
+      </div>
+
       <!-- ===================================================================
            VIEW: HOME (DASHBOARD)
            =================================================================== -->
@@ -675,8 +691,14 @@
           </div>
         </div>
 
-        <!-- Phase 3: Compact Horizontal Metrics Dashboard (2 rows of 4 landscape cards) -->
-        <div class="horizontal-stats-grid" id="horizontalStatsGrid">
+        <!-- Option 3: Stats Carousel Section (Horizontal on Mobile, 2x4 Grid on Desktop) -->
+        <div class="stats-carousel-section">
+          <div class="stats-carousel-header hide-desktop">
+            <h3 class="stats-carousel-title" id="statsCarouselTitle">Your Progress</h3>
+          </div>
+          <div class="stats-carousel-container">
+            <button type="button" class="carousel-nav-btn prev hide-desktop" onclick="stenoApp.scrollStatsCarousel(-1)" aria-label="Previous">‹</button>
+            <div class="horizontal-stats-grid" id="horizontalStatsGrid">
           <!-- Row 1 -->
           <!-- 1. Streak Card -->
           <div class="h-stat-card">
@@ -794,9 +816,16 @@
             <div class="h-stat-sub" id="hStatTotalTimeSub">सक्रिय टाइपिंग अभ्यास</div>
             <div class="h-stat-micro" id="hStatTotalTimeMicro">नियमितता बनाए रखें</div>
           </div>
-        </div>
-
-        <!-- Section: Practice Classes -->
+        </div><!-- End #horizontalStatsGrid -->
+            <button type="button" class="carousel-nav-btn next hide-desktop" onclick="stenoApp.scrollStatsCarousel(1)" aria-label="Next">›</button>
+          </div><!-- End .stats-carousel-container -->
+          <!-- Carousel Indicator Dots (Option 3 Mobile) -->
+          <div class="stats-carousel-dots hide-desktop" id="statsCarouselDots">
+            <span class="carousel-dot active" onclick="stenoApp.goToStatsPage(0)"></span>
+            <span class="carousel-dot" onclick="stenoApp.goToStatsPage(1)"></span>
+            <span class="carousel-dot" onclick="stenoApp.goToStatsPage(2)"></span>
+          </div>
+        </div><!-- End .stats-carousel-section -->
         <div class="section-header">
           <div>
             <h3 class="section-title" data-i18n="home_classes_title">अभ्यास कक्षाएं (Practice Classes)</h3>
