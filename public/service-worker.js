@@ -1,11 +1,11 @@
 /**
- * StenoMaster Service Worker — v14.0
+ * StenoMaster Service Worker — v15.0
  * Zero-Cache / Auto-Purging Service Worker
  * Ensures all users get fresh updates immediately without manual hard refresh or cache clear.
  * API calls and admin portal pages are NEVER intercepted — native browser networking handles them.
  */
 
-const CACHE_NAME = 'stenomaster-v14.0-shell';
+const CACHE_NAME = 'stenomaster-v15.0-shell';
 const ALWAYS_NETWORK = ['/api/', '/uploads/', '/admin', 'admin.html', 'admin.js'];
 
 self.addEventListener('install', (event) => {
@@ -19,7 +19,7 @@ self.addEventListener('activate', (event) => {
       return Promise.all(
         keys.map((key) => {
           if (key !== CACHE_NAME) {
-            console.log('[SW v13.6] Deleting obsolete cache:', key);
+            console.log('[SW v15.0] Deleting obsolete cache:', key);
             return caches.delete(key);
           }
         })
@@ -31,13 +31,11 @@ self.addEventListener('activate', (event) => {
 // Fetch handler:
 // 1. Non-GET requests (POST, PUT, DELETE, PATCH): NEVER intercept. Let browser handle natively.
 // 2. API endpoints and Admin routes: NEVER intercept. Let browser handle natively.
-// 3. HTML and JS: network first with no-store to ensure latest code, no stale cache.
-// 4. Static assets (images, fonts, CSS): network first, cache fallback.
+// 3. HTML, JS, and CSS: network first with no-store to ensure latest code, no stale cache.
+// 4. Static media/fonts: network first, cache fallback.
 self.addEventListener('fetch', (event) => {
   const req = event.request;
 
-  // Never intercept non-GET requests (e.g. POST /api/auth/login, POST /api/test-results)
-  // Intercepting POST requests can strip request body stream or cause TypeErrors in mobile & desktop browsers.
   if (req.method !== 'GET') {
     return;
   }
@@ -47,11 +45,11 @@ self.addEventListener('fetch', (event) => {
   // API calls, admin portal, uploads: strictly native browser network
   const isAlwaysNetwork = ALWAYS_NETWORK.some((p) => url.includes(p));
   if (isAlwaysNetwork) {
-    return; // Do NOT call event.respondWith - lets browser process natively
+    return;
   }
 
-  const isHtmlOrJs = url.match(/\.(html|js)(\?.*)?$/);
-  if (isHtmlOrJs) {
+  const isHtmlOrJsOrCss = url.match(/\.(html|js|css)(\?.*)?$/) || url.endsWith('/') || url.endsWith('.vercel.app');
+  if (isHtmlOrJsOrCss) {
     event.respondWith(
       fetch(req, { cache: 'no-store' }).catch(() => {
         return caches.match(req).then((cached) => {
@@ -66,7 +64,7 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Assets (images, fonts, CSS): network first, cache fallback
+  // Assets (images, fonts): network first, cache fallback
   event.respondWith(
     fetch(req).catch(() => caches.match(req))
   );

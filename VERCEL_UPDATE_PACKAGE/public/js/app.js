@@ -851,7 +851,7 @@ class StenoApp {
     }
 
     if ('serviceWorker' in navigator) {
-      const CURRENT_SW_VERSION = 'v13.5';
+      const CURRENT_SW_VERSION = 'v15.0';
 
       // Step 1: Unregister ALL stale/old service workers first
       navigator.serviceWorker.getRegistrations().then((registrations) => {
@@ -868,7 +868,7 @@ class StenoApp {
               if ('caches' in window) {
                 caches.keys().then((keys) => {
                   keys.forEach((key) => {
-                    if (!key.includes('v13.5')) {
+                    if (!key.includes('v15.0')) {
                       caches.delete(key);
                       console.log('[SW] Cleared stale cache:', key);
                     }
@@ -880,7 +880,7 @@ class StenoApp {
       }).catch(() => {});
 
       // Step 2: Register the current SW
-      navigator.serviceWorker.register('/service-worker.js?v=13.5')
+      navigator.serviceWorker.register('/service-worker.js?v=15.0')
         .then((reg) => {
           reg.update().catch(() => {});
           reg.addEventListener('updatefound', () => {
@@ -5026,6 +5026,10 @@ ${link}`;
   // Modals & Toast Utilities
   // -------------------------------------------------------------------------
   openModal(modalId) {
+    if (modalId === 'loginModal') {
+      this.showAuthGateway('student');
+      return;
+    }
     const modal = document.getElementById(modalId);
     if (modal) {
       modal.style.display = 'flex';
@@ -5037,6 +5041,10 @@ ${link}`;
   }
 
   closeModal(modalId) {
+    if (modalId === 'loginModal') {
+      this.hideAuthGateway();
+      return;
+    }
     const modal = document.getElementById(modalId);
     if (modal) {
       modal.classList.remove('active');
