@@ -2,7 +2,24 @@
 <html lang="hi" data-theme="light">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, interactive-widget=resizes-content">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <script>
+    (function() {
+      function detectMobile() {
+        var isMob = (window.innerWidth <= 1024) || 
+                    (window.innerHeight > window.innerWidth) || 
+                    /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Mobile/i.test(navigator.userAgent);
+        if (isMob) {
+          document.documentElement.classList.add('is-mobile-device');
+        } else {
+          document.documentElement.classList.remove('is-mobile-device');
+        }
+      }
+      detectMobile();
+      window.addEventListener('resize', detectMobile);
+      window.addEventListener('orientationchange', detectMobile);
+    })();
+  </script>
   <title>StenoMaster — #1 Shorthand & Typing Practice Platform | SSC, UPSSSC, Court Steno</title>
   <meta name="description" content="भारत का #1 ऑनलाइन स्टेनोग्राफी एवं टाइपिंग प्रैक्टिस प्लेटफॉर्म। SSC Steno Grade C & D, UPSSSC व कोर्ट परीक्षा हेतु 80 व 100 WPM ऑडियो डिक्टेशन, लाइव रिजल्ट और मिस्टेक एनालिसिस।">
   <meta name="keywords" content="StenoMaster, SSC Stenographer, Hindi Shorthand, English Shorthand, हिंदी आशुलिपि, रामधारी गुप्ता खंड 1, रामधारी गुप्ता खंड 2, Ramdhari Gupta Dictation, 80 WPM Audio Dictation, 100 WPM Steno, UPSSSC Steno, High Court Steno, Mangal Font Typing, Kruti Dev 010, Shorthand Speed Test, Shorthand Online Practice">
@@ -44,7 +61,7 @@
   <!-- Performance Preconnects for Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="/css/style.css?v=15.0">
+  <link rel="stylesheet" href="/css/style.css?v=15.3">
 
   <!-- Shield Root Hindi Shorthand Content from Chrome / Browser Auto-Translation -->
   <script>
@@ -659,7 +676,7 @@
            =================================================================== -->
       <main class="page-view active" id="view-home">
         <!-- Dashboard Section Title & Real-Time Sync Bar -->
-        <div class="section-header" style="margin-bottom: 20px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+        <div class="section-header hide-mobile" style="margin-bottom: 20px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
           <div>
             <h2 class="section-title" data-i18n="nav_dashboard">डैशबोर्ड (Dashboard)</h2>
             <p class="section-subtitle" data-i18n="dash_welcome_sub">आपकी दैनिक स्टेनो अभ्यास प्रगति, गति एवं सटीकता का संपूर्ण विवरण</p>
@@ -829,7 +846,7 @@
         <div class="section-header">
           <div>
             <h3 class="section-title" data-i18n="home_classes_title">अभ्यास कक्षाएं (Practice Classes)</h3>
-            <p class="section-subtitle" data-i18n="home_classes_sub">रामधारी गुप्ता खंड 1, खंड 2 एवं हर्ष स्पेशल डिक्टेशन्स</p>
+            <p class="section-subtitle hide-mobile" data-i18n="home_classes_sub">रामधारी गुप्ता खंड 1, खंड 2 एवं हर्ष स्पेशल डिक्टेशन्स</p>
           </div>
           <button class="btn-secondary" onclick="stenoApp.navigate('classes')" data-i18n="btn_view_all">सभी देखें (View All) →</button>
         </div>
@@ -2911,7 +2928,7 @@
   <script src="/js/keyboard_map.js?v=8.1"></script>
   <script src="/js/typing_engine.js?v=15.0"></script>
   <script src="/js/ocr_service.js?v=1.1"></script>
-  <script src="/js/app.js?v=15.0"></script>
+  <script src="/js/app.js?v=15.3"></script>
   <!-- Strict Exam Hall Anti-Cheat Warning Modal -->
   <div class="modal-overlay" id="examHallWarningModal" style="z-index:99999;" onclick="if(event.target === this) stenoTypingEngine.exitExamModeFromModal()">
     <div class="modal-card" style="max-width: 480px; text-align:center; border:2px solid #ef4444; box-shadow:0 10px 40px rgba(239,68,68,0.3); position:relative; padding:28px 24px;">
