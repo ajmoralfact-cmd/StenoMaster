@@ -103,3 +103,4 @@ SQLite database with 15 structured tables:
 4. **Branding & Target Settings**:
    - Rename platform name and tagline in real-time.
    - Configure daily dictation count and time targets.
+<!-- trigger: mobile-layout-v2 -->
