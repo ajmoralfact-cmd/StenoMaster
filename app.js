@@ -1046,67 +1046,35 @@ class StenoApp {
   }
 
   loadSavedCredentials() {
-    // 1. Student Saved Credentials (Only shown if previously saved ON THIS SPECIFIC DEVICE)
+    // 1. Student Saved Credentials
     try {
       const stuRaw = localStorage.getItem('stenomaster_saved_student_creds');
       const emailInp = document.getElementById('stuAuthEmail');
       const passInp = document.getElementById('stuAuthPassword');
-      const card = document.getElementById('stuQuickLoginCard');
-      const subTitleEl = document.getElementById('stuQuickLoginSubtitle');
-      const nameEl = document.getElementById('stuQuickLoginName');
-      const clearBtn = document.getElementById('stuClearSavedCredsBtn');
 
       if (stuRaw) {
         const stuCreds = JSON.parse(stuRaw);
         if (stuCreds && (stuCreds.email_or_username || stuCreds.password)) {
-          if (emailInp) emailInp.value = stuCreds.email_or_username || '';
-          if (passInp) passInp.value = stuCreds.password || '';
-          if (card) card.style.display = 'block';
-          if (subTitleEl) subTitleEl.textContent = 'इस डिवाइस पर सहेजा गया छात्र खाता:';
-          if (nameEl) nameEl.textContent = stuCreds.name || stuCreds.email_or_username;
-          if (clearBtn) clearBtn.style.display = 'inline-block';
-        } else {
-          if (card) card.style.display = 'none';
-          if (clearBtn) clearBtn.style.display = 'none';
+          if (emailInp && !emailInp.value) emailInp.value = stuCreds.email_or_username || '';
+          if (passInp && !passInp.value) passInp.value = stuCreds.password || '';
         }
-      } else {
-        // Fresh device or link shared with someone else: strictly leave empty
-        if (emailInp) emailInp.value = '';
-        if (passInp) passInp.value = '';
-        if (card) card.style.display = 'none';
-        if (clearBtn) clearBtn.style.display = 'none';
       }
     } catch (e) {
       console.warn('Failed to load saved student credentials', e);
     }
 
-    // 2. Admin Saved Credentials (Only shown if previously saved ON THIS SPECIFIC DEVICE)
+    // 2. Admin Saved Credentials
     try {
       const adminRaw = localStorage.getItem('stenomaster_saved_admin_creds');
       const emailInp = document.getElementById('adminAuthEmail');
       const passInp = document.getElementById('adminAuthPassword');
-      const card = document.getElementById('adminQuickLoginCard');
-      const nameEl = document.getElementById('adminQuickLoginName');
-      const clearBtn = document.getElementById('adminClearSavedCredsBtn');
 
       if (adminRaw) {
         const adminCreds = JSON.parse(adminRaw);
         if (adminCreds && (adminCreds.email_or_username || adminCreds.password)) {
-          if (emailInp) emailInp.value = adminCreds.email_or_username || '';
-          if (passInp) passInp.value = adminCreds.password || '';
-          if (card) card.style.display = 'block';
-          if (nameEl) nameEl.textContent = adminCreds.name || adminCreds.email_or_username || 'Administrator';
-          if (clearBtn) clearBtn.style.display = 'inline-block';
-        } else {
-          if (card) card.style.display = 'none';
-          if (clearBtn) clearBtn.style.display = 'none';
+          if (emailInp && !emailInp.value) emailInp.value = adminCreds.email_or_username || '';
+          if (passInp && !passInp.value) passInp.value = adminCreds.password || '';
         }
-      } else {
-        // Fresh device: strictly leave empty
-        if (emailInp) emailInp.value = '';
-        if (passInp) passInp.value = '';
-        if (card) card.style.display = 'none';
-        if (clearBtn) clearBtn.style.display = 'none';
       }
     } catch (e) {
       console.warn('Failed to load saved admin credentials', e);
@@ -1303,26 +1271,27 @@ class StenoApp {
   }
 
   switchStudentAuthMode(mode) {
-    const loginBtn = document.getElementById('subTabLoginBtn');
-    const signupBtn = document.getElementById('subTabSignupBtn');
     const loginForm = document.getElementById('studentSubLoginForm');
     const signupForm = document.getElementById('studentSubSignupForm');
+    const googleSec = document.getElementById('googleAuthSection');
     const errBox = document.getElementById('stuAuthError');
     const signErr = document.getElementById('stuSignupError');
     if (errBox) { errBox.style.display = 'none'; errBox.textContent = ''; }
     if (signErr) { signErr.style.display = 'none'; signErr.textContent = ''; }
 
     if (mode === 'signup') {
-      if (loginBtn) { loginBtn.style.background = 'transparent'; loginBtn.style.color = 'var(--text-secondary)'; }
-      if (signupBtn) { signupBtn.style.background = 'var(--primary)'; signupBtn.style.color = '#fff'; }
       if (loginForm) loginForm.style.display = 'none';
       if (signupForm) signupForm.style.display = 'block';
+      if (googleSec) googleSec.style.display = 'none';
       this.applyPendingReferralUI(localStorage.getItem('stenomaster_pending_referral') || '');
+      const firstInp = document.getElementById('stuRegFullName');
+      if (firstInp) setTimeout(() => firstInp.focus(), 80);
     } else {
-      if (loginBtn) { loginBtn.style.background = 'var(--primary)'; loginBtn.style.color = '#fff'; }
-      if (signupBtn) { signupBtn.style.background = 'transparent'; signupBtn.style.color = 'var(--text-secondary)'; }
       if (loginForm) loginForm.style.display = 'block';
       if (signupForm) signupForm.style.display = 'none';
+      if (googleSec && this.googleAuthEnabled !== false) googleSec.style.display = 'block';
+      const firstInp = document.getElementById('stuAuthEmail');
+      if (firstInp && !firstInp.value) setTimeout(() => firstInp.focus(), 80);
     }
   }
 

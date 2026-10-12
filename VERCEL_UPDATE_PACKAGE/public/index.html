@@ -287,18 +287,8 @@
         <div class="auth-panels-wrapper">
           <!-- Student Login & Registration Panel -->
           <div class="auth-panel" id="studentLoginPanel">
-            <!-- Student Sub-Segmented Control (Login vs Sign Up) -->
-            <div class="student-sub-segmented" style="display:flex; background:var(--bg-card); border:1px solid var(--border-subtle); border-radius:10px; padding:3px; margin-bottom:16px;">
-              <button type="button" class="sub-tab-btn active" id="subTabLoginBtn" onclick="stenoApp.switchStudentAuthMode('login')" style="flex:1; padding:7px 10px; border:none; border-radius:8px; font-weight:600; font-size:0.85rem; cursor:pointer; background:var(--primary); color:#fff;">
-                👨‍🎓 लॉगिन (Login)
-              </button>
-              <button type="button" class="sub-tab-btn" id="subTabSignupBtn" onclick="stenoApp.switchStudentAuthMode('signup')" style="flex:1; padding:7px 10px; border:none; border-radius:8px; font-weight:600; font-size:0.85rem; cursor:pointer; background:transparent; color:var(--text-secondary);">
-                ✨ नया खाता बनाएं (Sign Up)
-              </button>
-            </div>
-
             <!-- Google 1-Click Fast Sign-In / Sign-Up Container -->
-            <div id="googleAuthSection" style="margin-bottom:14px;">
+            <div id="googleAuthSection" style="margin-bottom:16px;">
               <div id="googleSignInButtonContainer" style="display:flex; justify-content:center; width:100%; min-height:42px;">
                 <button type="button" class="google-auth-btn" id="googleCustomAuthBtn" onclick="stenoApp.triggerGoogleAuth()" style="width:100%; display:flex; align-items:center; justify-content:center; gap:10px; padding:10px 16px; border:1.5px solid var(--border-subtle, #cbd5e1); border-radius:10px; background:var(--bg-card, #ffffff); color:var(--text-main, #374151); font-weight:700; font-size:0.9rem; cursor:pointer; box-shadow:0 1px 3px rgba(0,0,0,0.06); transition:all 0.2s;">
                   <svg width="20" height="20" viewBox="0 0 24 24">
@@ -320,21 +310,7 @@
             </div>
 
             <!-- 1. Student Login Sub-Form -->
-                        <!-- 1. Student Login Sub-Form -->
             <div id="studentSubLoginForm">
-              <!-- Quick 1-Click Login Card (Single Smart Card for Student) -->
-              <div id="stuQuickLoginCard" style="display:none; background:linear-gradient(135deg, rgba(2, 132, 199, 0.08), rgba(99, 102, 241, 0.08)); border:1.5px solid #0284c7; border-radius:12px; padding:12px 14px; margin-bottom:14px;">
-                <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
-                  <div style="min-width:0;">
-                    <div id="stuQuickLoginSubtitle" style="font-size:0.75rem; color:var(--text-muted);">सहेजा गया छात्र खाता (Saved Account):</div>
-                    <strong id="stuQuickLoginName" style="color:#0284c7; font-size:0.92rem; word-break:break-all;">student@stenomaster.com</strong>
-                  </div>
-                  <button type="button" class="btn-primary" onclick="stenoApp.oneClickStudentLogin()" style="padding:7px 14px; font-size:0.82rem; font-weight:700; background:#0284c7; border-color:#0284c7; white-space:nowrap; flex-shrink:0;">
-                    ⚡ 1-क्लिक लॉगिन →
-                  </button>
-                </div>
-              </div>
-
               <form onsubmit="stenoApp.handleStudentLogin(event)">
                 <div class="form-group">
                   <label class="form-label">मोबाइल नंबर, ईमेल, या छात्र आईडी (Mobile Number, Email or Student ID)</label>
@@ -354,15 +330,12 @@
                   </div>
                 </div>
 
-                <!-- Remember Me & Forget Option -->
+                <!-- Remember Me Option -->
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
                   <label style="display:inline-flex; align-items:center; gap:6px; font-size:0.82rem; color:var(--text-secondary); cursor:pointer; user-select:none;">
                     <input type="checkbox" id="stuRememberMe" checked aria-label="आईडी-पासवर्ड याद रखें (Remember Me)" style="width:16px; height:16px; accent-color:#0284c7; cursor:pointer;">
                     <span>आईडी-पासवर्ड याद रखें (Remember Me)</span>
                   </label>
-                  <button type="button" id="stuClearSavedCredsBtn" onclick="stenoApp.clearSavedStudentCreds()" style="display:none; background:none; border:none; color:var(--accent-red); font-size:0.75rem; cursor:pointer; text-decoration:underline;">
-                    खाता हटाएं (Forget)
-                  </button>
                 </div>
 
                 <div id="stuAuthError" class="auth-inline-error" style="display:none;"></div>
@@ -370,19 +343,17 @@
                   <span>लॉगिन करें (Login)</span> <span>→</span>
                 </button>
               </form>
-              <div class="auth-footer-link" style="margin-top:14px;">
-                Don't have an account?
-                <a href="javascript:void(0)" onclick="stenoApp.switchStudentAuthMode('signup')">Create Free Account</a>
-              </div>
-              <div style="margin-top:14px; padding-top:12px; border-top:1px dashed var(--border-subtle, #e2e8f0); text-align:center;">
-                <a href="javascript:void(0)" onclick="stenoApp.switchAuthTab('admin')" style="color:var(--text-muted, #64748b); font-size:0.84rem; font-weight:600; text-decoration:none; display:inline-flex; align-items:center; gap:6px;">
-                  <span>🛡️</span> <span>एडमिन पोर्टल लॉगिन (Admin Login)</span> <span>➔</span>
-                </a>
+              <div class="auth-footer-link" style="margin-top:16px;">
+                खाता नहीं है? <a href="javascript:void(0)" onclick="stenoApp.switchStudentAuthMode('signup')">नया खाता बनाएं (Create Free Account) →</a>
               </div>
             </div>
 
             <!-- 2. Student Sign Up Sub-Form -->
             <div id="studentSubSignupForm" style="display:none;">
+              <div style="margin-bottom:14px; text-align:center;">
+                <h3 style="font-size:1.05rem; font-weight:700; margin:0 0 4px 0; color:var(--text-main);">✨ नया छात्र खाता बनाएं</h3>
+                <p style="font-size:0.8rem; color:var(--text-muted); margin:0;">निःशुल्क साइनअप करें और तुरंत अभ्यास शुरू करें</p>
+              </div>
               <form onsubmit="stenoApp.handleStudentSignup(event)">
                 <div class="form-group">
                   <label class="form-label">पूरा नाम (Full Name) *</label>
@@ -469,9 +440,8 @@
                   <span>खाता बनाएं और अभ्यास शुरू करें (Create Account)</span> <span>→</span>
                 </button>
               </form>
-              <div class="auth-footer-link" style="margin-top:14px;">
-                Already have an account?
-                <a href="javascript:void(0)" onclick="stenoApp.switchStudentAuthMode('login')">Login Instead</a>
+              <div class="auth-footer-link" style="margin-top:16px;">
+                पहले से खाता है? <a href="javascript:void(0)" onclick="stenoApp.switchStudentAuthMode('login')">लॉगिन करें (Login) →</a>
               </div>
             </div>
           </div>
@@ -480,19 +450,6 @@
           <div class="auth-panel" id="adminLoginPanel" style="display:none;">
             <div class="auth-panel-badge admin-badge">
               <span>🛡️</span> <span>प्रशासनिक नियंत्रण (Admin Security Console)</span>
-            </div>
-
-            <!-- Quick One-Click Admin Login Card (Shown when admin credentials saved) -->
-            <div id="adminQuickLoginCard" style="display:none; background:rgba(239, 68, 68, 0.08); border:1.5px solid #ef4444; border-radius:12px; padding:12px 14px; margin-bottom:14px;">
-              <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
-                <div style="min-width:0;">
-                  <div style="font-size:0.75rem; color:var(--text-muted);">सहेजा गया एडमिन (Saved Admin):</div>
-                  <strong id="adminQuickLoginName" style="color:#ef4444; font-size:0.95rem; word-break:break-all;">Administrator</strong>
-                </div>
-                <button type="button" class="btn-primary" onclick="stenoApp.oneClickAdminLogin()" style="padding:7px 14px; font-size:0.82rem; font-weight:700; background:#ef4444; border-color:#ef4444; white-space:nowrap; flex-shrink:0;">
-                  ⚡ 1-क्लिक एडमिन लॉगिन →
-                </button>
-              </div>
             </div>
 
             <form onsubmit="stenoApp.handleAdminLogin(event)">
@@ -511,15 +468,12 @@
                 </div>
               </div>
 
-              <!-- Admin Remember Me & Forget Option -->
+              <!-- Admin Remember Me Option -->
               <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
                 <label style="display:inline-flex; align-items:center; gap:6px; font-size:0.82rem; color:var(--text-secondary); cursor:pointer; user-select:none;">
                   <input type="checkbox" id="adminRememberMe" checked aria-label="एडमिन आईडी-पासवर्ड याद रखें (Admin Remember Me)" style="width:16px; height:16px; accent-color:#ef4444; cursor:pointer;">
                   <span>एडमिन आईडी-पासवर्ड याद रखें (Remember Me)</span>
                 </label>
-                <button type="button" id="adminClearSavedCredsBtn" onclick="stenoApp.clearSavedAdminCreds()" style="display:none; background:none; border:none; color:var(--accent-red); font-size:0.75rem; cursor:pointer; text-decoration:underline;">
-                  हटाएं (Forget)
-                </button>
               </div>
 
               <div id="adminAuthError" class="auth-inline-error" style="display:none;"></div>
@@ -529,11 +483,6 @@
             </form>
             <div class="auth-security-notice">
               <span>🔒</span> Authorized administrative personnel only. Unauthorized access attempts are monitored and logged.
-            </div>
-            <div style="margin-top:14px; padding-top:12px; border-top:1px dashed var(--border-subtle, #e2e8f0); text-align:center;">
-              <a href="javascript:void(0)" onclick="stenoApp.switchAuthTab('student')" style="color:var(--text-muted, #64748b); font-size:0.84rem; font-weight:600; text-decoration:none; display:inline-flex; align-items:center; gap:6px;">
-                <span>👨‍🎓</span> <span>छात्र लॉगिन पर वापस जाएं (Student Login)</span> <span>➔</span>
-              </a>
             </div>
           </div>
         </div>
