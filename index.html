@@ -6,13 +6,19 @@
   <script>
     (function() {
       function detectMobile() {
-        var isMob = (window.innerWidth <= 1024) || 
-                    (window.innerHeight > window.innerWidth) || 
-                    /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Mobile/i.test(navigator.userAgent);
+        var isMob = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Mobile/i.test(navigator.userAgent) || 
+                    (window.innerWidth <= 1024 && window.innerHeight > window.innerWidth) ||
+                    (window.innerWidth <= 800);
         if (isMob) {
           document.documentElement.classList.add('is-mobile-device');
+          if (window.innerWidth >= 650) {
+            document.documentElement.classList.add('mobile-wide-viewport');
+          } else {
+            document.documentElement.classList.remove('mobile-wide-viewport');
+          }
         } else {
           document.documentElement.classList.remove('is-mobile-device');
+          document.documentElement.classList.remove('mobile-wide-viewport');
         }
       }
       detectMobile();
@@ -61,7 +67,7 @@
   <!-- Performance Preconnects for Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="/css/style.css?v=15.4">
+  <link rel="stylesheet" href="/css/style.css?v=15.5">
 
   <!-- Shield Root Hindi Shorthand Content from Chrome / Browser Auto-Translation -->
   <script>
@@ -2928,7 +2934,7 @@
   <script src="/js/keyboard_map.js?v=8.1"></script>
   <script src="/js/typing_engine.js?v=15.0"></script>
   <script src="/js/ocr_service.js?v=1.1"></script>
-  <script src="/js/app.js?v=15.4"></script>
+  <script src="/js/app.js?v=15.5"></script>
   <!-- Strict Exam Hall Anti-Cheat Warning Modal -->
   <div class="modal-overlay" id="examHallWarningModal" style="z-index:99999;" onclick="if(event.target === this) stenoTypingEngine.exitExamModeFromModal()">
     <div class="modal-card" style="max-width: 480px; text-align:center; border:2px solid #ef4444; box-shadow:0 10px 40px rgba(239,68,68,0.3); position:relative; padding:28px 24px;">
