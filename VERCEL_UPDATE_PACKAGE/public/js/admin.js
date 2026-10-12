@@ -1015,6 +1015,9 @@ class StenoAdmin {
       const wpmEl = document.getElementById('adminDailyWpmInput');
       if (wpmEl) wpmEl.value = this.settings.daily_target_wpm || '40';
 
+      const themeEl = document.getElementById('adminLoginThemeSelect');
+      if (themeEl) themeEl.value = this.settings.login_theme || 'yellow';
+
       const hostEl = document.getElementById('settingSmtpHost');
       if (hostEl) hostEl.value = this.settings.smtp_host || 'smtp.gmail.com';
 
@@ -1041,6 +1044,7 @@ class StenoAdmin {
     const daily_target_dictations = document.getElementById('adminDailyDictInput').value;
     const daily_target_minutes = document.getElementById('adminDailyMinInput').value;
     const daily_target_wpm = document.getElementById('adminDailyWpmInput').value;
+    const login_theme = document.getElementById('adminLoginThemeSelect')?.value || 'yellow';
 
     try {
       await stenoApp.apiCall('/api/admin/settings/update', 'POST', {
@@ -1048,9 +1052,14 @@ class StenoAdmin {
         tagline,
         daily_target_dictations,
         daily_target_minutes,
-        daily_target_wpm
+        daily_target_wpm,
+        login_theme
       });
-      stenoApp.showToast('सिस्टम ब्रांडिंग व सेटिंग्स सहेजी गईं! 🎉', 'success');
+      if (this.settings) this.settings.login_theme = login_theme;
+      if (window.stenoApp && typeof window.stenoApp.applyAuthTheme === 'function') {
+        window.stenoApp.applyAuthTheme(login_theme);
+      }
+      stenoApp.showToast('सिस्टम ब्रांडिंग व लॉगिन थीम सहेजी गईं! 🎉', 'success');
       // Update UI title immediately
       document.querySelectorAll('.brand-name-text').forEach(el => el.textContent = app_name);
       document.querySelectorAll('.brand-tagline-text').forEach(el => el.textContent = tagline);

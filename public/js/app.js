@@ -605,6 +605,7 @@ class StenoApp {
 
   async init() {
     this.initTheme();
+    this.applyAuthTheme(localStorage.getItem('stenomaster_auth_theme') || 'yellow');
     this.initLanguage();
     this.initPWA();
     this.initNavigation();
@@ -1140,6 +1141,9 @@ class StenoApp {
       if (this._googleAuthInitialized) return;
       const res = await this.apiCall('/api/settings');
       const settings = res.settings || {};
+      if (settings.login_theme) {
+        this.applyAuthTheme(settings.login_theme);
+      }
       this.googleClientId = (settings.google_client_id || '').trim();
       this.googleAuthEnabled = settings.google_auth_enabled !== '0';
 
@@ -1235,14 +1239,28 @@ class StenoApp {
     }
   }
 
+  applyAuthTheme(theme) {
+    const validThemes = ['yellow', 'blue', 'dark'];
+    const activeTheme = validThemes.includes(theme) ? theme : 'yellow';
+    const card = document.getElementById('mainAuthCard');
+    const view = document.getElementById('authGatewayView');
+    if (card) card.setAttribute('data-auth-theme', activeTheme);
+    if (view) view.setAttribute('data-auth-theme', activeTheme);
+    localStorage.setItem('stenomaster_auth_theme', activeTheme);
+  }
+
   switchAuthTab(tab) {
     const studentBtn = document.getElementById('tabStudentBtn');
     const adminBtn = document.getElementById('tabAdminBtn');
     const indicator = document.getElementById('authSliderIndicator');
     const studentPanel = document.getElementById('studentLoginPanel');
     const adminPanel = document.getElementById('adminLoginPanel');
+    const mainTitle = document.getElementById('authModalMainTitle');
+    const subTitle = document.getElementById('authModalSubTitle');
 
     if (tab === 'admin') {
+      if (mainTitle) mainTitle.textContent = 'Admin Security Console';
+      if (subTitle) subTitle.textContent = 'सुरक्षित प्रशासनिक नियंत्रण एवं प्रबंधन पैनल';
       if (studentBtn) { studentBtn.classList.remove('active'); studentBtn.setAttribute('aria-selected', 'false'); }
       if (adminBtn) { adminBtn.classList.add('active'); adminBtn.setAttribute('aria-selected', 'true'); }
       if (indicator) indicator.classList.add('slide-right');
@@ -1254,6 +1272,9 @@ class StenoApp {
         if (inp && !inp.value) setTimeout(() => inp.focus(), 80);
       }
     } else {
+      const isSignup = document.getElementById('studentSubSignupForm')?.style.display === 'block';
+      if (mainTitle) mainTitle.textContent = isSignup ? 'Create an account' : 'Welcome Back';
+      if (subTitle) subTitle.textContent = isSignup ? 'नया खाता बनाएं और ऑल-इंडिया स्टेनो टेस्ट शुरू करें' : 'लॉगिन करें और दैनिक रामधारी डिक्टेशन अभ्यास शुरू करें';
       if (studentBtn) { studentBtn.classList.add('active'); studentBtn.setAttribute('aria-selected', 'true'); }
       if (adminBtn) { adminBtn.classList.remove('active'); adminBtn.setAttribute('aria-selected', 'false'); }
       if (indicator) indicator.classList.remove('slide-right');
@@ -1276,10 +1297,14 @@ class StenoApp {
     const googleSec = document.getElementById('googleAuthSection');
     const errBox = document.getElementById('stuAuthError');
     const signErr = document.getElementById('stuSignupError');
+    const mainTitle = document.getElementById('authModalMainTitle');
+    const subTitle = document.getElementById('authModalSubTitle');
     if (errBox) { errBox.style.display = 'none'; errBox.textContent = ''; }
     if (signErr) { signErr.style.display = 'none'; signErr.textContent = ''; }
 
     if (mode === 'signup') {
+      if (mainTitle) mainTitle.textContent = 'Create an account';
+      if (subTitle) subTitle.textContent = 'नया खाता बनाएं और ऑल-इंडिया स्टेनो टेस्ट शुरू करें';
       if (loginForm) loginForm.style.display = 'none';
       if (signupForm) signupForm.style.display = 'block';
       if (googleSec) googleSec.style.display = 'none';
@@ -1287,6 +1312,8 @@ class StenoApp {
       const firstInp = document.getElementById('stuRegFullName');
       if (firstInp) setTimeout(() => firstInp.focus(), 80);
     } else {
+      if (mainTitle) mainTitle.textContent = 'Welcome Back';
+      if (subTitle) subTitle.textContent = 'लॉगिन करें और दैनिक रामधारी डिक्टेशन अभ्यास शुरू करें';
       if (loginForm) loginForm.style.display = 'block';
       if (signupForm) signupForm.style.display = 'none';
       if (googleSec && this.googleAuthEnabled !== false) googleSec.style.display = 'block';

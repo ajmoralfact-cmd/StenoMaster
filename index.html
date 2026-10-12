@@ -263,27 +263,36 @@
        ===================================================================== -->
   <div class="auth-gateway-overlay" id="authGatewayView" style="display:none;">
     <div class="auth-card-container">
-      <div class="auth-card">
+      <div class="auth-card" id="mainAuthCard" data-auth-theme="yellow">
         
-        <!-- Logo & Branding -->
-        <div class="auth-header">
-          <img src="/assets/logo.png" alt="StenoMaster Logo" class="auth-logo-img" width="84" height="84" fetchpriority="high">
-          <h1 class="auth-brand-title">StenoMaster</h1>
-          <p class="auth-brand-tagline">Listen. Type. Improve. Master Steno.</p>
-        </div>
+        <!-- LEFT COLUMN: Form & Auth -->
+        <div class="auth-form-column">
+          <!-- Top Bar: Brand Pill & Role Toggle -->
+          <div class="auth-top-bar">
+            <div class="auth-brand-pill">
+              <img src="/assets/logo.png" alt="StenoMaster" style="width:20px; height:20px; border-radius:4px;">
+              <span>StenoMaster</span>
+            </div>
 
-        <!-- Modern Sliding / Tab Segmented Control -->
-        <div class="auth-segmented-control" role="tablist" aria-label="Login Role Selection">
-          <div class="auth-slider-indicator" id="authSliderIndicator"></div>
-          <button type="button" class="auth-segment-btn active" id="tabStudentBtn" onclick="stenoApp.switchAuthTab('student')" role="tab" aria-selected="true">
-            <span>👨‍🎓 Student Login</span>
-          </button>
-          <button type="button" class="auth-segment-btn" id="tabAdminBtn" onclick="stenoApp.switchAuthTab('admin')" role="tab" aria-selected="false">
-            <span>🛡️ Admin Login</span>
-          </button>
-        </div>
+            <!-- Modern Sliding / Tab Segmented Control -->
+            <div class="auth-segmented-control" role="tablist" aria-label="Login Role Selection">
+              <div class="auth-slider-indicator" id="authSliderIndicator"></div>
+              <button type="button" class="auth-segment-btn active" id="tabStudentBtn" onclick="stenoApp.switchAuthTab('student')" role="tab" aria-selected="true">
+                <span>👨‍🎓 Student</span>
+              </button>
+              <button type="button" class="auth-segment-btn" id="tabAdminBtn" onclick="stenoApp.switchAuthTab('admin')" role="tab" aria-selected="false">
+                <span>🛡️ Admin</span>
+              </button>
+            </div>
+          </div>
 
-        <!-- Tab Panels -->
+          <!-- Form Header -->
+          <div class="auth-heading-box" style="margin-bottom:14px;">
+            <h2 id="authModalMainTitle" style="font-size:1.45rem; font-weight:800; letter-spacing:-0.3px; margin:0 0 3px 0;">Welcome Back</h2>
+            <p id="authModalSubTitle" style="font-size:0.8rem; color:var(--text-muted); margin:0; font-weight:500;">लॉगिन करें और दैनिक रामधारी डिक्टेशन अभ्यास शुरू करें</p>
+          </div>
+
+          <!-- Tab Panels -->
         <div class="auth-panels-wrapper">
           <!-- Student Login & Registration Panel -->
           <div class="auth-panel" id="studentLoginPanel">
@@ -486,10 +495,56 @@
             </div>
           </div>
         </div>
+      </div><!-- End .auth-form-column -->
 
-      </div>
-    </div>
-  </div>
+      <!-- RIGHT COLUMN: Visual Showcase (Steno Artwork & Frosted Glass Widgets) -->
+      <div class="auth-visual-column">
+        <div class="auth-visual-inner">
+          <!-- Close Button (if modal opened over app) -->
+          <button type="button" class="auth-close-icon-btn" onclick="stenoApp.closeModal('loginModal')" title="Close" aria-label="Close">✕</button>
+
+          <!-- Floating Widget 1: Top Notification Tag -->
+          <div class="glass-top-tag">
+            <strong>🎯 कोर्ट डिक्टेशन सत्र • 80 WPM</strong>
+            <small>हाई कोर्ट / SSC परीक्षा विशेष अभ्यास</small>
+          </div>
+
+          <!-- Floating Widget 2: Center Frosted Streak Calendar -->
+          <div class="glass-streak">
+            <div class="streak-hdr">
+              <span>🔥 7-Day Practice Streak</span>
+              <span>October 2026</span>
+            </div>
+            <div class="streak-grid">
+              <div class="streak-day"><span>रवि</span><div class="streak-num">22</div></div>
+              <div class="streak-day"><span>सोम</span><div class="streak-num">23</div></div>
+              <div class="streak-day"><span>मंगल</span><div class="streak-num">24</div></div>
+              <div class="streak-day active"><span>बुध</span><div class="streak-num">25</div></div>
+              <div class="streak-day active"><span>गुरु</span><div class="streak-num">26</div></div>
+              <div class="streak-day active"><span>शुक्र</span><div class="streak-num">27</div></div>
+              <div class="streak-day"><span>शनि</span><div class="streak-num">28</div></div>
+            </div>
+          </div>
+
+          <!-- Floating Widget 3: Bottom Stat Card -->
+          <div class="glass-bottom-card">
+            <div>
+              <h4>⚖️ 100% कोर्ट व SSC आशुलिपिक ओरिएंटेड</h4>
+              <p>15,000+ छात्र रोजाना टाइपिंग व स्टेनो का अभ्यास कर रहे हैं</p>
+            </div>
+            <div class="avatar-stack">
+              <div class="avatar-circle">🇮🇳</div>
+              <div class="avatar-circle">98%</div>
+              <div class="avatar-circle">+5k</div>
+            </div>
+          </div>
+
+        </div>
+      </div><!-- End .auth-visual-column -->
+
+    </div><!-- End .auth-card -->
+  </div><!-- End .auth-card-container -->
+</div><!-- End #authGatewayView -->
 
   <div class="app-container" id="appContainer">
 
