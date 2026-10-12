@@ -2590,14 +2590,14 @@ def get_user_bookmarks(user_id: int) -> List[Dict[str, Any]]:
                c.name as category_name,
                COALESCE(MAX(pa.net_wpm), 0) as best_wpm,
                COALESCE(MAX(pa.accuracy), 0) as best_accuracy,
-               b.created_at as bookmarked_at
+               MAX(b.created_at) as bookmarked_at
         FROM bookmarks b
         JOIN passages p ON b.passage_id = p.id
         JOIN categories c ON p.category_id = c.id
         LEFT JOIN practice_attempts pa ON pa.user_id = b.user_id AND pa.passage_id = p.id
         WHERE b.user_id = ?
-        GROUP BY p.id
-        ORDER BY b.id DESC
+        GROUP BY p.id, p.title, p.language, p.difficulty, p.duration_seconds, p.target_wpm, c.name
+        ORDER BY MAX(b.id) DESC
     """, (user_id,))
     rows = c.fetchall()
     conn.close()
@@ -4631,8 +4631,35 @@ def get_categories_with_user_status(user_id: Optional[int] = None) -> List[Dict[
     return result
 
 
-def get_passages_by_category(category_id: int, user_id: Optional[int] = None) -> Dict[str, Any]:
+def get_passages_by_category(category_id: Any, user_id: Optional[int] = None) -> Dict[str, Any]:
     global _CATEGORY_DETAIL_CACHE
+    # Resolve category_id if it's a string slug or number
+    resolved_id = None
+    if isinstance(category_id, int):
+        resolved_id = category_id
+    elif str(category_id).isdigit():
+        resolved_id = int(category_id)
+    else:
+        slug_str = str(category_id).strip().lower()
+        if 'khand-1' in slug_str or 'khand_1' in slug_str:
+            resolved_id = 126
+        elif 'khand-2' in slug_str or 'khand_2' in slug_str:
+            resolved_id = 129
+        else:
+            try:
+                conn_tmp = get_db()
+                c_tmp = conn_tmp.cursor()
+                c_tmp.execute("SELECT id FROM categories WHERE slug = ? LIMIT 1", (slug_str,))
+                r = c_tmp.fetchone()
+                conn_tmp.close()
+                resolved_id = (r[0] if isinstance(r, (list, tuple)) else r['id']) if r else None
+            except Exception:
+                resolved_id = None
+    
+    if not resolved_id:
+        return {"category": None, "passages": []}
+    category_id = resolved_id
+
     now = time.time()
     cached_entry = _CATEGORY_DETAIL_CACHE.get(category_id)
 

@@ -360,11 +360,11 @@ class StenoMasterHandler(http.server.SimpleHTTPRequestHandler):
         if path == '/api/categories/detail':
             user = self._get_auth_user()
             user_id = user['user_id'] if user else None
-            cat_id = params.get('id', [None])[0] or params.get('category_id', [None])[0]
+            cat_id = params.get('id', [None])[0] or params.get('category_id', [None])[0] or params.get('category', [None])[0] or params.get('slug', [None])[0]
             if not cat_id:
                 self._send_json(400, {"error": "Category ID is required"})
                 return
-            data = db.get_passages_by_category(int(cat_id), user_id)
+            data = db.get_passages_by_category(cat_id, user_id)
             cache_ctrl = 'private, no-cache, no-store, must-revalidate' if user_id else 'public, max-age=10, stale-while-revalidate=30'
             self._send_json(200, data, cache_control=cache_ctrl)
             return
@@ -372,13 +372,20 @@ class StenoMasterHandler(http.server.SimpleHTTPRequestHandler):
         if path == '/api/passages':
             lang = params.get('language', [None])[0]
             diff = params.get('difficulty', [None])[0]
-            cat_id = params.get('category_id', [None])[0]
+            cat_id = params.get('category_id', [None])[0] or params.get('category', [None])[0] or params.get('id', [None])[0]
             search = params.get('search', [None])[0]
             if cat_id:
-                try:
+                if str(cat_id).isdigit():
                     cat_id = int(cat_id)
-                except ValueError:
-                    cat_id = None
+                elif 'khand-1' in str(cat_id).lower() or 'khand_1' in str(cat_id).lower():
+                    cat_id = 126
+                elif 'khand-2' in str(cat_id).lower() or 'khand_2' in str(cat_id).lower():
+                    cat_id = 129
+                else:
+                    try:
+                        cat_id = int(cat_id)
+                    except ValueError:
+                        cat_id = None
 
             passages = db.get_passages(
                 language=lang,
