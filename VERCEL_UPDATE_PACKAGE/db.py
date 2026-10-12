@@ -315,7 +315,7 @@ def ensure_postgres_default_data(cur):
 
 
 def manual_run_migrations() -> Dict[str, Any]:
-    database_url = os.environ.get('DATABASE_URL') or 'postgresql://postgres.dtsqqdxveiyvmtjyerui:Harsh%401997Hk@aws-0-ap-northeast-1.pooler.supabase.com:6543/postgres'
+    database_url = os.environ.get('DATABASE_URL') or 'postgresql://postgres.syaqgrvxxbcxyndjbeyw:qKi8%25%2F%57%3F73Ag%26u8@aws-0-ap-northeast-1.pooler.supabase.com:6543/postgres'
     logs = []
     if database_url and HAS_PSYCOPG2:
         try:
@@ -362,7 +362,7 @@ _pg_pool = None
 
 def get_pg_pool():
     global _pg_pool
-    default_pg_url = 'postgresql://postgres.dtsqqdxveiyvmtjyerui:Harsh%401997Hk@aws-0-ap-northeast-1.pooler.supabase.com:6543/postgres'
+    default_pg_url = 'postgresql://postgres.syaqgrvxxbcxyndjbeyw:qKi8%25%2F%57%3F73Ag%26u8@aws-0-ap-northeast-1.pooler.supabase.com:6543/postgres'
     database_url = os.environ.get('DATABASE_URL') or default_pg_url
     if _pg_pool is None and database_url and HAS_PSYCOPG2:
         try:
@@ -414,7 +414,7 @@ def get_db():
                 print(f"Postgres pool connection warning attempt {attempt+1}: {e}")
                 time.sleep(0.1)
 
-    default_pg_url = 'postgresql://postgres.dtsqqdxveiyvmtjyerui:Harsh%401997Hk@aws-0-ap-northeast-1.pooler.supabase.com:6543/postgres'
+    default_pg_url = 'postgresql://postgres.syaqgrvxxbcxyndjbeyw:qKi8%25%2F%57%3F73Ag%26u8@aws-0-ap-northeast-1.pooler.supabase.com:6543/postgres'
     database_url = os.environ.get('DATABASE_URL') or default_pg_url
     if database_url and HAS_PSYCOPG2:
         try:

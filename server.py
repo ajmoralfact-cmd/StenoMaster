@@ -245,6 +245,8 @@ class StenoMasterHandler(http.server.SimpleHTTPRequestHandler):
         # Serve uploaded audio files with Range support, local disk cache, and high-speed CDN redirect
         if path.startswith('/uploads/'):
             filename = urllib.parse.unquote(os.path.basename(path))
+            if filename.startswith('audio_rk_class_'):
+                filename = filename.replace('audio_rk_class_', 'audio_rk1_class_')
             file_path = os.path.join(UPLOADS_DIR, filename)
             if not os.path.exists(file_path):
                 fallback_path = os.path.join(BASE_DIR, 'uploads', filename)
