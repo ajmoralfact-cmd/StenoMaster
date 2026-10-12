@@ -1437,7 +1437,7 @@ class StenoAdmin {
     const tbody = document.getElementById('adminSubscribersTableBody');
     if (!tbody) return;
     if (!silent) {
-      tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding:24px; color:var(--text-muted);"><div class="spinner-small" style="display:inline-block; margin-right:8px;"></div>सब्सक्राइबर सूची लोड हो रही है...</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:24px; color:var(--text-muted);"><div class="spinner-small" style="display:inline-block; margin-right:8px;"></div>सब्सक्राइबर सूची लोड हो रही है...</td></tr>';
     }
     try {
       const res = await stenoApp.apiCall(`/api/admin/users?_t=${Date.now()}`);
@@ -1459,12 +1459,94 @@ class StenoAdmin {
         countBadge.textContent = `${this.subscribersList.length} छात्र (लाइव)`;
       }
 
+      this.updateSubscribersStats();
       this.renderSubscribersTable();
     } catch (err) {
       if (!silent) {
-        tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; padding:24px; color:var(--accent-red);">त्रुटि: ${this.escapeHtml(err.message)}</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:24px; color:var(--accent-red);">त्रुटि: ${this.escapeHtml(err.message)}</td></tr>`;
       }
     }
+  }
+
+  updateSubscribersStats() {
+    const list = this.subscribersList || [];
+    const totalCount = list.length;
+    const activeProCount = list.filter(u => u.effective_status === 'active' || u.is_free_access).length;
+    const freeTierCount = list.filter(u => !u.is_free_access && u.effective_status !== 'active').length;
+    const totalAttempts = list.reduce((sum, u) => sum + (Number(u.attempts_count) || 0), 0);
+    const freeAccessCount = list.filter(u => !!u.is_free_access).length;
+    const expiredCount = list.filter(u => u.effective_status === 'expired').length;
+
+    // Update 4 Top KPI Cards
+    const elTotal = document.getElementById('subscribersStatTotal');
+    const elPro = document.getElementById('subscribersStatPro');
+    const elFree = document.getElementById('subscribersStatFree');
+    const elAttempts = document.getElementById('subscribersStatAttempts');
+    if (elTotal) elTotal.textContent = totalCount;
+    if (elPro) elPro.textContent = activeProCount;
+    if (elFree) elFree.textContent = freeTierCount;
+    if (elAttempts) elAttempts.textContent = totalAttempts;
+
+    // Update Filter Pills with dynamic counts
+    const pillAll = document.getElementById('subFilterPillAll');
+    const pillActive = document.getElementById('subFilterPillActive');
+    const pillFreeAccess = document.getElementById('subFilterPillFreeAccess');
+    const pillFree = document.getElementById('subFilterPillFree');
+    const pillExpired = document.getElementById('subFilterPillExpired');
+
+    if (pillAll) pillAll.innerHTML = `सभी छात्र <span style="font-size:0.75rem; opacity:0.85;">(${totalCount})</span>`;
+    if (pillActive) pillActive.innerHTML = `👑 सक्रिय प्रो <span style="font-size:0.75rem; opacity:0.85;">(${activeProCount})</span>`;
+    if (pillFreeAccess) pillFreeAccess.innerHTML = `🎁 30D फ्री <span style="font-size:0.75rem; opacity:0.85;">(${freeAccessCount})</span>`;
+    if (pillFree) pillFree.innerHTML = `🆓 फ्री टियर <span style="font-size:0.75rem; opacity:0.85;">(${freeTierCount})</span>`;
+    if (pillExpired) pillExpired.innerHTML = `⏳ समाप्त <span style="font-size:0.75rem; opacity:0.85;">(${expiredCount})</span>`;
+  }
+
+  exportSubscribersCSV() {
+    const list = this.subscribersList || [];
+    if (list.length === 0) {
+      stenoApp.showToast('एक्सपोर्ट करने के लिए कोई छात्र डेटा नहीं है।', 'info');
+      return;
+    }
+    const headers = ['छात्र ID', 'छात्र कोड', 'नाम', 'ईमेल', 'फोन', 'सदस्यता स्थिति', 'प्लान', 'शेष दिन', 'कुल अभ्यास', 'स्ट्रीक दिन', 'रिवॉर्ड अंक', 'रेफरल कोड'];
+    const rows = list.map(u => {
+      const isFreeAccess = !!u.is_free_access;
+      const isPro = u.effective_status === 'active' || isFreeAccess;
+      let statusStr = 'Free Tier';
+      if (isFreeAccess) statusStr = '30D Free Pro';
+      else if (isPro) statusStr = 'Active Pro';
+      else if (u.effective_status === 'expired') statusStr = 'Expired';
+
+      const planName = u.subscription_plan || (isFreeAccess ? 'StenoMaster Pro (Free 30D)' : (isPro ? 'StenoMaster Pro' : 'Free Tier'));
+      const days = u.subscription_days_left || 0;
+      const daysStr = isPro ? (days >= 9999 ? 'Unlimited' : `${days} दिन`) : '0';
+
+      return [
+        u.id || '',
+        `"${(u.student_code || '').replace(/"/g, '""')}"`,
+        `"${(u.display_name || u.username || '').replace(/"/g, '""')}"`,
+        `"${(u.email || '').replace(/"/g, '""')}"`,
+        `"${(u.phone || '').replace(/"/g, '""')}"`,
+        `"${statusStr}"`,
+        `"${planName.replace(/"/g, '""')}"`,
+        `"${daysStr}"`,
+        u.attempts_count || 0,
+        u.streak_days || 0,
+        u.points || 0,
+        `"${(u.referral_code || '').replace(/"/g, '""')}"`
+      ].join(',');
+    });
+
+    const csvContent = '\uFEFF' + [headers.join(','), ...rows].join('\r\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `stenomaster_students_${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    stenoApp.showToast(`✓ ${list.length} छात्रों का डेटा CSV में डाउनलोड हो गया!`, 'success');
   }
 
   filterSubscribers(filter, btnEl) {
@@ -1515,7 +1597,7 @@ class StenoAdmin {
     });
 
     if (filtered.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding:28px; color:var(--text-muted);">कोई छात्र/सब्सक्राइबर नहीं मिला।</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:32px; color:var(--text-muted); font-size:0.9rem;">कोई छात्र/सब्सक्राइबर नहीं मिला।</td></tr>';
       return;
     }
 
@@ -1526,83 +1608,114 @@ class StenoAdmin {
       const hasCatAccess = !isPro && Array.isArray(u.unlocked_categories) && u.unlocked_categories.length > 0;
 
       let statusBadge = `<span class="sub-status-badge free">🆓 Free Tier</span>`;
-      let daysBadge = `<span style="color:var(--text-muted);">—</span>`;
+      let daysBadge = `लाइफटाइम`;
 
       const days = u.subscription_days_left || 0;
       if (isFreeAccess) {
         statusBadge = `<span class="sub-status-badge active-pro" style="background:#ecfdf5; color:#059669; border-color:#a7f3d0;">🎁 30D फ्री प्रो</span>`;
-        daysBadge = `<span style="font-weight:700; color:#059669;">${days > 0 ? `${days} दिन शेष` : 'समाप्त'}</span>`;
+        daysBadge = `${days > 0 ? `${days} दिन शेष` : 'समाप्त'}`;
       } else if (isPro) {
         statusBadge = `<span class="sub-status-badge active-pro">👑 Active Pro</span>`;
-        daysBadge = `<span style="font-weight:700; color:#d97706;">${days >= 9999 ? 'असीमित' : (days > 0 ? `${days} दिन शेष` : 'समाप्त')}</span>`;
+        daysBadge = `${days >= 9999 ? 'असीमित' : (days > 0 ? `${days} दिन शेष` : 'समाप्त')}`;
       } else if (hasCatAccess) {
         const catNames = u.unlocked_categories.map(c => c.category_name).join(', ');
-        statusBadge = `<span class="sub-status-badge active-pro" style="background:#e0e7ff; color:#3730a3; border-color:#c7d2fe;" title="${this.escapeHtml(catNames)}">🎯 ${u.unlocked_categories.length} कैटेगरीज फ्री</span>`;
-        daysBadge = `<span style="font-weight:700; color:#3730a3;" title="${this.escapeHtml(catNames)}">सक्रिय</span>`;
+        statusBadge = `<span class="sub-status-badge active-pro" style="background:#e0e7ff; color:#3730a3; border-color:#c7d2fe;" title="${this.escapeHtml(catNames)}">🎯 ${u.unlocked_categories.length} कैटेगरीज</span>`;
+        daysBadge = `सक्रिय`;
       } else if (isExpired) {
         statusBadge = `<span class="sub-status-badge expired">⏳ Expired</span>`;
-        daysBadge = `<span style="color:#dc2626; font-size:0.8rem; font-weight:600;">समाप्त</span>`;
+        daysBadge = `<span style="color:#dc2626; font-weight:700;">समाप्त</span>`;
       }
 
-      const freeToggleCol = `
-        <div style="display:flex; align-items:center; justify-content:center;">
-          <label style="display:inline-flex; align-items:center; gap:6px; cursor:pointer; background:${isFreeAccess ? 'rgba(16,185,129,0.14)' : 'var(--bg-subtle)'}; border:1.5px solid ${isFreeAccess ? '#10b981' : 'var(--border)'}; padding:4px 10px; border-radius:20px; transition:all 0.2s;" title="इस छात्र को 30 दिन का प्रो प्लान फ्री दें">
-            <input type="checkbox" ${isFreeAccess ? 'checked' : ''} 
-                   onchange="stenoAdmin.toggleUserFreeAccess(${u.id}, this.checked, '${this.escapeHtml(u.display_name || u.username).replace(/'/g, "\\'")}')" 
-                   style="width:16px; height:16px; cursor:pointer; accent-color:#059669;">
-            <span style="font-size:0.78rem; font-weight:700; color:${isFreeAccess ? '#059669' : 'var(--text-secondary)'};">
-              ${isFreeAccess ? '✓ 30D फ्री' : 'फ्री टिक करें'}
-            </span>
-          </label>
-        </div>
-      `;
-
-      let endDateStr = '—';
-      if (u.subscription_end) {
-        const d = new Date(u.subscription_end);
-        if (!isNaN(d.getTime())) {
-          endDateStr = d.toLocaleDateString('hi-IN', { day: 'numeric', month: 'short', year: 'numeric' });
-        }
-      }
-
-      let planName = u.subscription_plan || (isFreeAccess ? 'StenoMaster Pro (30 दिन फ्री)' : (isPro ? 'StenoMaster Pro' : 'Free Tier'));
+      let planName = u.subscription_plan || (isFreeAccess ? 'StenoMaster Pro (30D फ्री)' : (isPro ? 'StenoMaster Pro' : 'निःशुल्क (Free Tier)'));
       if (hasCatAccess) {
         const catNames = u.unlocked_categories.map(c => c.category_name).join(', ');
-        planName = `🎯 ${u.unlocked_categories.length} कैटेगरीज (${catNames})`;
+        planName = `🎯 ${u.unlocked_categories.length} श्रेणियां (${catNames})`;
       }
+
+      const initialChar = (u.display_name || u.username || 'S').trim().charAt(0).toUpperCase();
 
       return `
         <tr>
+          <!-- 1. छात्र (Student Info) -->
           <td>
-            <div style="font-weight:700; color:var(--text-main);">${this.escapeHtml(u.display_name || u.username)}</div>
-            <div style="font-size:0.75rem; color:var(--primary); font-weight:700;">${this.escapeHtml(u.student_code || `#${u.id}`)}</div>
-            <div style="display:flex; gap:6px; align-items:center; margin-top:3px; flex-wrap:wrap;">
-              ${u.referral_code ? `<span class="badge" style="background:rgba(2,132,199,0.1); color:#0284c7; font-size:0.7rem; font-weight:700;" title="छात्र का रेफरल कोड">🔑 ${this.escapeHtml(u.referral_code)}</span>` : ''}
-              ${u.referrals_count > 0 ? `<span class="badge" style="background:rgba(16,185,129,0.12); color:#059669; font-size:0.7rem; font-weight:700;" title="सफल रेफरल्स">👥 ${u.referrals_count} रेफरल (+${u.referral_points_earned || 0} Pts)</span>` : ''}
+            <div style="display:flex; align-items:center; gap:10px;">
+              <div style="width:36px; height:36px; min-width:36px; border-radius:50%; background:var(--bg-subtle); display:flex; align-items:center; justify-content:center; font-weight:800; font-size:0.95rem; color:var(--primary); border:1.5px solid var(--border);">
+                ${initialChar}
+              </div>
+              <div style="min-width:0;">
+                <div style="font-weight:700; color:var(--text-main); font-size:0.9rem; line-height:1.2; word-break:break-word;">
+                  ${this.escapeHtml(u.display_name || u.username)}
+                </div>
+                <div style="font-size:0.75rem; color:var(--primary); font-weight:700; margin-top:2px;">
+                  ${this.escapeHtml(u.student_code || `#${u.id}`)}
+                </div>
+                ${u.referral_code ? `
+                  <div style="margin-top:2px;">
+                    <span class="badge" style="background:rgba(2,132,199,0.08); color:#0284c7; font-size:0.68rem; font-weight:600; padding:1px 6px;" title="रेफरल कोड">
+                      🔑 ${this.escapeHtml(u.referral_code)}
+                    </span>
+                  </div>
+                ` : ''}
+              </div>
             </div>
           </td>
+
+          <!-- 2. संपर्क (Contact) -->
           <td>
-            <div style="font-size:0.82rem;">${this.escapeHtml(u.email)}</div>
-            <div style="font-size:0.75rem; color:var(--text-muted);">${this.escapeHtml(u.phone || '—')}</div>
+            <div style="font-size:0.82rem; color:var(--text-main); font-weight:500; display:flex; align-items:center; gap:5px; word-break:break-all;">
+              <span style="opacity:0.7;">✉️</span>
+              <span title="${this.escapeHtml(u.email)}">${this.escapeHtml(u.email)}</span>
+            </div>
+            <div style="font-size:0.76rem; color:var(--text-muted); margin-top:3px; display:flex; align-items:center; gap:5px;">
+              <span style="opacity:0.7;">📞</span>
+              <span>${this.escapeHtml(u.phone || '—')}</span>
+            </div>
           </td>
-          <td>${statusBadge}</td>
-          <td style="text-align:center;">${freeToggleCol}</td>
-          <td><span style="font-size:0.8rem; font-weight:600;">${this.escapeHtml(planName)}</span></td>
-          <td>${daysBadge}</td>
+
+          <!-- 3. प्लान व वैधता (Plan & Status) -->
           <td>
-            <span class="badge" style="background:var(--bg-subtle); color:var(--text-main); font-weight:700; font-size:0.75rem;">
-              ${u.attempts_count || 0} अभ्यास
-            </span>
+            <div style="display:flex; flex-direction:column; gap:4px;">
+              <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+                ${statusBadge}
+                <span style="font-size:0.76rem; font-weight:700; color:var(--text-muted);">• ${daysBadge}</span>
+              </div>
+              <div style="font-size:0.75rem; color:var(--text-secondary); font-weight:600; margin-top:1px;">
+                ${this.escapeHtml(planName)}
+              </div>
+              <!-- 1-Click 30D Free Quick Toggle -->
+              <div style="margin-top:3px;">
+                <label style="display:inline-flex; align-items:center; gap:5px; cursor:pointer; font-size:0.73rem; color:${isFreeAccess ? '#059669' : 'var(--text-muted)'}; font-weight:600; background:${isFreeAccess ? 'rgba(16,185,129,0.1)' : 'var(--bg-subtle)'}; padding:2px 7px; border-radius:12px; border:1px solid ${isFreeAccess ? 'rgba(16,185,129,0.3)' : 'var(--border)'};" title="इस छात्र को 30 दिन का प्रो प्लान फ्री दें/हटाएं">
+                  <input type="checkbox" ${isFreeAccess ? 'checked' : ''} 
+                         onchange="stenoAdmin.toggleUserFreeAccess(${u.id}, this.checked, '${this.escapeHtml(u.display_name || u.username).replace(/'/g, "\\'")}')" 
+                         style="width:13px; height:13px; cursor:pointer; accent-color:#059669;">
+                  <span>${isFreeAccess ? '✓ 30D फ्री चालू' : '🎁 30D फ्री दें'}</span>
+                </label>
+              </div>
+            </div>
           </td>
+
+          <!-- 4. एक्टिविटी (Activity) -->
+          <td>
+            <div style="font-weight:700; font-size:0.86rem; color:var(--text-main);">
+              🎯 ${u.attempts_count || 0} अभ्यास
+            </div>
+            <div style="font-size:0.73rem; color:var(--text-muted); margin-top:2px;">
+              🔥 ${u.streak_days || 0} दिन • ⭐ ${u.points || 0} Pts
+            </div>
+          </td>
+
+          <!-- 5. एक्शन (Actions) -->
           <td style="text-align:right;">
-            <div style="display:inline-flex; gap:6px;">
-              <button class="btn-primary" style="padding:4px 10px; font-size:0.75rem; background:linear-gradient(135deg, #10b981, #059669); border-color:#059669;"
-                      onclick="stenoAdmin.openGrantProModal(${u.id}, '${this.escapeHtml(u.display_name || u.username).replace(/'/g, "\\'")}', '${this.escapeHtml(u.student_code || '')}', '${u.effective_status}', ${u.subscription_days_left || 0})">
+            <div style="display:inline-flex; gap:6px; align-items:center; justify-content:flex-end; flex-wrap:wrap;">
+              <button class="btn-primary" style="padding:5px 10px; font-size:0.75rem; background:linear-gradient(135deg, #10b981, #059669); border-color:#059669; font-weight:700; display:inline-flex; align-items:center; gap:4px;"
+                      onclick="stenoAdmin.openGrantProModal(${u.id}, '${this.escapeHtml(u.display_name || u.username).replace(/'/g, "\\'")}', '${this.escapeHtml(u.student_code || '')}', '${u.effective_status}', ${u.subscription_days_left || 0})"
+                      title="प्रो प्लान अवधि या विशिष्ट कैटेगरीज सेट करें">
                 👑 Pro दें
               </button>
               ${isPro && !isFreeAccess ? `
-                <button class="btn-secondary" style="padding:4px 10px; font-size:0.75rem; color:var(--accent-red);"
-                        onclick="stenoAdmin.revokePro(${u.id}, '${this.escapeHtml(u.display_name || u.username).replace(/'/g, "\\'")}')">
+                <button class="btn-secondary" style="padding:5px 8px; font-size:0.75rem; color:var(--accent-red); border-color:rgba(239,68,68,0.3); font-weight:600;"
+                        onclick="stenoAdmin.revokePro(${u.id}, '${this.escapeHtml(u.display_name || u.username).replace(/'/g, "\\'")}')"
+                        title="प्रो प्लान तुरंत रद्द करें">
                   ✕ रद्द
                 </button>
               ` : ''}
