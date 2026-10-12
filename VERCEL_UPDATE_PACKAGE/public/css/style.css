@@ -2748,20 +2748,221 @@ body {
   border: 1px solid rgba(255, 255, 255, 0.15);
 }
 
-/* Responsive Media Queries */
+/* Responsive Media Queries (Mobile Viewport: Picture 2 Experience) */
 @media (max-width: 960px) {
+  .auth-gateway-overlay {
+    padding: 0 !important;
+    margin: 0 !important;
+    align-items: flex-start !important;
+    justify-content: flex-start !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch;
+    height: auto !important;
+    min-height: 100vh !important;
+  }
+
   .auth-gateway-layout {
-    flex-direction: column;
-    justify-content: center;
-    padding: 16px 0;
-    min-height: auto;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: flex-start !important;
+    align-items: center !important;
+    width: 100% !important;
+    min-height: 100vh !important;
+    padding: 0 !important;
+    margin: 0 !important;
   }
-  .auth-card {
-    margin: 0 auto;
-    max-width: 440px;
-  }
+
+  /* 1. TOP HERO BANNER (Picture 2) */
   .auth-hero-canvas {
-    display: none;
+    display: flex !important;
+    order: 1 !important; /* Positions hero on top of card */
+    width: 100% !important;
+    max-width: 100% !important;
+    height: auto !important;
+    max-height: none !important;
+    margin: 0 !important;
+    padding: 12px 14px 4px 14px !important;
+    position: relative !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    box-sizing: border-box !important;
+    flex-shrink: 0 !important;
+  }
+
+  .hero-corner-tag {
+    position: relative !important;
+    top: auto !important;
+    right: auto !important;
+    left: auto !important;
+    bottom: auto !important;
+    margin: 0 auto 6px auto !important;
+    padding: 4px 12px !important;
+    font-size: 0.74rem !important;
+    font-weight: 700 !important;
+    background: rgba(255, 255, 255, 0.95) !important;
+    backdrop-filter: blur(8px) !important;
+    -webkit-backdrop-filter: blur(8px) !important;
+    border-radius: 9999px !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06) !important;
+    border: 1px solid rgba(0, 0, 0, 0.05) !important;
+    z-index: 5 !important;
+    display: inline-flex !important;
+  }
+
+  .auth-hero-img {
+    width: 100% !important;
+    max-width: 340px !important;
+    height: 125px !important;
+    max-height: 130px !important;
+    object-fit: contain !important;
+    display: block !important;
+    margin: 0 auto !important;
+  }
+
+  .hero-bottom-tag {
+    display: none !important;
+  }
+
+  /* 2. MAIN LOGIN CARD BELOW HERO (Picture 2) */
+  .auth-card {
+    order: 2 !important; /* Positions card below hero */
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    border-radius: 26px 26px 0 0 !important; /* Rounded top corners matching Picture 2 */
+    padding: 18px 18px 24px 18px !important;
+    background: #ffffff !important;
+    box-shadow: 0 -8px 25px rgba(0, 0, 0, 0.05) !important;
+    flex-grow: 1 !important;
+    box-sizing: border-box !important;
+    border-bottom: none !important;
+  }
+
+  .auth-gateway-overlay[data-auth-theme="dark"] .auth-card {
+    background: #1e293b !important;
+    box-shadow: 0 -8px 25px rgba(0, 0, 0, 0.4) !important;
+  }
+
+  /* Top Bar & Segmented Switch on Mobile */
+  .auth-top-bar {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    margin-bottom: 10px !important;
+  }
+
+  .auth-heading-box {
+    margin-bottom: 10px !important;
+  }
+
+  #authModalMainTitle {
+    font-size: 1.3rem !important;
+    font-weight: 800 !important;
+    margin: 0 0 2px 0 !important;
+    letter-spacing: -0.3px !important;
+  }
+
+  #authModalSubTitle {
+    font-size: 0.76rem !important;
+    margin: 0 !important;
+  }
+
+  #googleAuthSection {
+    margin-bottom: 10px !important;
+  }
+
+  .google-auth-btn {
+    padding: 8px 14px !important;
+    font-size: 0.84rem !important;
+    border-radius: 12px !important;
+  }
+
+  .auth-divider {
+    margin: 8px 0 !important;
+  }
+
+  .auth-card .form-group {
+    margin-bottom: 9px !important;
+  }
+
+  .auth-card .form-label {
+    font-size: 0.78rem !important;
+    margin-bottom: 3px !important;
+  }
+
+  .auth-card .form-input {
+    padding: 9px 12px 9px 36px !important;
+    font-size: 0.84rem !important;
+    border-radius: 12px !important;
+  }
+
+  .auth-card .input-icon {
+    left: 11px !important;
+    font-size: 0.9rem !important;
+  }
+
+  .btn-primary.auth-submit-btn {
+    padding: 11px 16px !important;
+    font-size: 0.92rem !important;
+    border-radius: 12px !important;
+  }
+
+  .auth-footer-link {
+    margin-top: 10px !important;
+    font-size: 0.78rem !important;
+  }
+
+  /* Close Icon on Mobile */
+  .auth-close-icon-btn {
+    top: 10px !important;
+    right: 12px !important;
+    width: 32px !important;
+    height: 32px !important;
+    font-size: 14px !important;
+    z-index: 50 !important;
+  }
+
+  /* Mobile Trust Badges inside card (Picture 2) */
+  .auth-card-trust-badges {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 8px !important;
+    margin-top: 12px !important;
+    padding-top: 10px !important;
+    border-top: 1px dashed var(--border-subtle, #e2e8f0) !important;
+    width: 100% !important;
+  }
+
+  .auth-trust-chip {
+    flex: 1 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 5px !important;
+    padding: 5px 6px !important;
+    background: rgba(245, 158, 11, 0.08) !important;
+    border: 1px solid rgba(245, 158, 11, 0.2) !important;
+    border-radius: 8px !important;
+    font-size: 0.7rem !important;
+    font-weight: 700 !important;
+    color: #92400e !important;
+    text-align: center !important;
+    line-height: 1.2 !important;
+  }
+
+  .auth-gateway-overlay[data-auth-theme="dark"] .auth-trust-chip {
+    background: rgba(245, 158, 11, 0.12) !important;
+    border-color: rgba(245, 158, 11, 0.3) !important;
+    color: #fde68a !important;
+  }
+}
+
+/* Hide mobile trust badges on desktop */
+@media (min-width: 961px) {
+  .auth-card-trust-badges {
+    display: none !important;
   }
 }
 
