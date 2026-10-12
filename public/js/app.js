@@ -71,10 +71,10 @@ const I18N_DICTIONARY = {
     nav_progress: 'प्रगति विश्लेषण (Progress)',
     nav_leaderboard: 'लीडरबोर्ड (Leaderboard)',
     nav_bookmarks: 'सहेजे गए आलेख (Bookmarks)',
-    nav_profile: 'मेरी प्रोफ़ाइल (My Profile)',
+    nav_profile: 'सेटिंग्स (Settings)',
     nav_refer: 'रेफरल एवं पुरस्कार (Refer & Earn)',
     nav_notifications: 'सूचनाएं (Notifications)',
-    nav_settings: 'प्राथमिकताएं (Settings)',
+    nav_settings: 'सेटिंग्स (Settings)',
     nav_rules: '📜 परीक्षा नियम',
     nav_admin: 'एडमिन कंसोल (Admin Console)',
     nav_logout: 'लॉगआउट (Logout)',
@@ -160,7 +160,8 @@ const I18N_DICTIONARY = {
     bnav_classes: 'क्लासेस',
     bnav_practice: 'अभ्यास',
     bnav_rules: 'नियम',
-    bnav_profile: 'प्रोफ़ाइल',
+    bnav_profile: 'सेटिंग्स',
+    bnav_settings: 'सेटिंग्स',
     self_practice_title: 'स्वयं डिक्टेशन अभ्यास (Custom Dictation Practice)',
     history_title: 'मेरा अभ्यास इतिहास (My Practice History)',
     leaderboard_title: 'लाइव स्टेनो लीडरबोर्ड (Steno Leaderboard)',
@@ -178,10 +179,10 @@ const I18N_DICTIONARY = {
     nav_progress: 'Progress Analytics',
     nav_leaderboard: 'Leaderboard',
     nav_bookmarks: 'Saved Bookmarks',
-    nav_profile: 'My Profile',
+    nav_profile: 'Settings',
     nav_refer: 'Refer & Earn',
     nav_notifications: 'Notifications',
-    nav_settings: 'Preferences & Settings',
+    nav_settings: 'Settings',
     nav_rules: '📜 Exam Rules',
     nav_admin: 'Admin Console',
     nav_logout: 'Logout',
@@ -267,7 +268,8 @@ const I18N_DICTIONARY = {
     bnav_classes: 'Classes',
     bnav_practice: 'History',
     bnav_rules: 'Rules',
-    bnav_profile: 'Profile',
+    bnav_profile: 'Settings',
+    bnav_settings: 'Settings',
     self_practice_title: 'Custom Dictation Practice',
     history_title: 'My Practice History',
     leaderboard_title: 'Live Steno Leaderboard',
@@ -2327,7 +2329,7 @@ class StenoApp {
     if (!navContainer) return;
 
     const isAdmin = Boolean(this.user && this.user.role === 'admin');
-    const currentView = this.activeView || 'home';
+    const currentView = this.activeView || (window.location.pathname.includes('profile') || window.location.pathname.includes('settings') ? 'settings' : 'home');
 
     if (false) {
       // Disabled: Admin portal items strictly excluded from student app
@@ -2344,9 +2346,8 @@ class StenoApp {
         { id: 'leaderboard', icon: '🏆', label: 'Leaderboard', sub: 'Student Rankings' },
         { id: 'bookmarks', icon: '🔖', label: 'Bookmarks', sub: 'Saved Passages' },
         { id: 'rules', icon: '📋', label: 'Exam Rules', sub: 'UPSSSC & SSC Rules' },
-        { id: 'profile', icon: '👤', label: 'My Profile', sub: 'Account Settings', url: '/profile' },
         { id: 'refer', icon: '🎁', label: 'Refer & Dual-Wallet', sub: 'Earnings & Credits', url: '/wallet' },
-        { id: 'settings', icon: '⚙️', label: 'Settings', sub: 'Preferences', url: '/profile' }
+        { id: 'settings', icon: '⚙️', label: 'Settings', sub: 'Profile & Preferences', url: '/profile' }
       ] : [
         { id: 'home', icon: '🏠', label: 'डैशबोर्ड (Dashboard)', sub: 'होम एवं आंकड़े' },
         { id: 'classes', icon: '🎧', label: 'अभ्यास कक्षाएं (Classes)', sub: 'दैनिक डिक्टेशन' },
@@ -2357,9 +2358,8 @@ class StenoApp {
         { id: 'leaderboard', icon: '🏆', label: 'लीडरबोर्ड (Leaderboard)', sub: 'रैंकिंग बोर्ड' },
         { id: 'bookmarks', icon: '🔖', label: 'सहेजे गए आलेख (Bookmarks)', sub: 'सहेजे गए आलेख' },
         { id: 'rules', icon: '📋', label: 'परीक्षा नियम (Exam Rules)', sub: 'UPSSSC & SSC Rules' },
-        { id: 'profile', icon: '👤', label: 'मेरी प्रोफ़ाइल (Profile)', sub: 'खाता सेटिंग्स', url: '/profile' },
         { id: 'refer', icon: '🎁', label: 'वॉलेट व रेफरल (Wallet)', sub: 'कमीशन व वॉलेट', url: '/wallet' },
-        { id: 'settings', icon: '⚙️', label: 'प्राथमिकताएं (Settings)', sub: 'टंकण वरीयताएँ', url: '/profile' }
+        { id: 'settings', icon: '⚙️', label: 'सेटिंग्स (Settings)', sub: 'प्रोफ़ाइल व प्राथमिकताएँ', url: '/profile' }
       ];
 
       navContainer.innerHTML = `

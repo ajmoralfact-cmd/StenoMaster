@@ -29,6 +29,14 @@
     {
       "source": "/practice/(.*)",
       "destination": "/practice.html"
+    },
+    {
+      "source": "/settings",
+      "destination": "/profile.html"
+    },
+    {
+      "source": "/settings/(.*)",
+      "destination": "/profile.html"
     }
   ],
   "headers": [

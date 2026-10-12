@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>मेरी प्रोफ़ाइल एवं सेटिंग्स (My Profile) — StenoMaster</title>
-  <meta name="description" content="StenoMaster Student Profile — Manage your target exam, shorthand language, typing preferences, and account security.">
+  <title>सेटिंग्स (Settings) — StenoMaster</title>
+  <meta name="description" content="StenoMaster Student Settings — Manage your target exam, shorthand language, typing preferences, and account security.">
   <meta name="robots" content="noindex, nofollow">
 
   <!-- PWA -->
@@ -93,7 +93,7 @@
           <a href="/" class="header-brand-link" title="StenoMaster">
             <img src="/assets/logo.png" alt="StenoMaster" class="header-brand-logo" width="34" height="34">
             <span class="header-brand-name">StenoMaster</span>
-            <span class="header-view-badge" id="activeViewBadge">My Profile</span>
+            <span class="header-view-badge" id="activeViewBadge">Settings</span>
           </a>
         </div>
         <div class="header-right">
@@ -107,7 +107,7 @@
           </div>
           <button class="lang-toggle-btn" id="langToggleBtn" onclick="stenoApp.toggleAppLanguage()" title="भाषा बदलें / Change Language" aria-label="Change Language">🌐 EN</button>
           <button class="theme-toggle-btn" id="themeToggleBtn" onclick="stenoApp.toggleTheme()" title="थीम बदलें (Light/Dark)">🌙</button>
-          <button class="user-profile-btn" id="headerUserBtn" onclick="window.location.href='/profile'" title="मेरी प्रोफ़ाइल">
+          <button class="user-profile-btn" id="headerUserBtn" onclick="window.location.href='/profile'" title="सेटिंग्स (Settings)">
             <div class="user-avatar" id="headerUserAvatar">S</div>
             <div class="header-user-meta hide-mobile">
               <span class="header-user-name" id="headerUserName">Student</span>
@@ -121,7 +121,7 @@
       </header>
 
       <!-- ==============================================================
-           VIEW: MY PROFILE
+           VIEW: SETTINGS (PROFILE & PREFERENCES)
            ============================================================== -->
       <main class="page-view active" id="view-profile">
         <div class="profile-page-container">

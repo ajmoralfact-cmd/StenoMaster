@@ -308,6 +308,20 @@ class StenoMasterHandler(http.server.SimpleHTTPRequestHandler):
                 self.wfile.write(content)
                 return
 
+        # Serve settings & profile portal
+        if path in ('/settings', '/settings/', '/profile', '/profile/'):
+            profile_file = os.path.join(STATIC_DIR, 'profile.html')
+            if os.path.exists(profile_file):
+                self.send_response(200)
+                self.send_header('Content-Type', 'text/html; charset=utf-8')
+                self.send_header('Cache-Control', 'no-cache')
+                with open(profile_file, 'rb') as f:
+                    content = f.read()
+                self.send_header('Content-Length', str(len(content)))
+                self.end_headers()
+                self.wfile.write(content)
+                return
+
         # API Routes
         if path == '/api/auth/session-status':
             token = self._get_auth_token()
