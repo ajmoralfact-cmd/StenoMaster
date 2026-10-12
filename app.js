@@ -605,7 +605,10 @@ class StenoApp {
 
   async init() {
     this.initTheme();
-    this.applyAuthTheme(localStorage.getItem('stenomaster_auth_theme') || 'yellow');
+    const urlParams = new URLSearchParams(window.location.search);
+    const queryTheme = urlParams.get('theme') || urlParams.get('auth_theme');
+    const cachedAuthTheme = queryTheme || localStorage.getItem('stenomaster_auth_theme') || 'yellow';
+    this.applyAuthTheme(cachedAuthTheme);
     this.initLanguage();
     this.initPWA();
     this.initNavigation();
@@ -1141,7 +1144,11 @@ class StenoApp {
       if (this._googleAuthInitialized) return;
       const res = await this.apiCall('/api/settings');
       const settings = res.settings || {};
-      if (settings.login_theme) {
+      const urlParams = new URLSearchParams(window.location.search);
+      const queryTheme = urlParams.get('theme') || urlParams.get('auth_theme');
+      if (queryTheme) {
+        this.applyAuthTheme(queryTheme);
+      } else if (settings.login_theme) {
         this.applyAuthTheme(settings.login_theme);
       }
       this.googleClientId = (settings.google_client_id || '').trim();
