@@ -1976,6 +1976,11 @@ def get_passage_detail(passage_id: int, user_id: Optional[int] = None, include_o
         user_has_pro = is_user_premium(user_id) if user_id else False
         p_cat_id = res_dict.get('category_id')
         is_free_passage = not bool(res_dict.get('is_premium'))
+        is_cat_unlocked = False
+        if is_admin or user_has_pro:
+            is_cat_unlocked = True
+        elif user_id and p_cat_id:
+            is_cat_unlocked = is_category_unlocked_for_user(user_id, p_cat_id)
         res_dict['is_free_tier'] = is_free_passage or (res_dict['id'] in free_ids) or is_cat_unlocked
         res_dict['is_locked'] = False if (is_free_passage or is_cat_unlocked) else (res_dict['id'] not in free_ids)
         conn.close()
