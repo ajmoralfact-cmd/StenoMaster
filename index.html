@@ -730,6 +730,26 @@
           </div>
         </div>
 
+        <!-- Prominent 'Continue Practice' Action Card (Always Accessible) -->
+        <div class="continue-practice-card" id="continuePracticeCard" onclick="stenoApp.continueLastPractice()" style="margin-bottom:16px; padding:14px 18px; border-radius:14px; background:linear-gradient(135deg, #0284c7 0%, #1d4ed8 100%); color:#ffffff; display:flex; align-items:center; justify-content:space-between; gap:12px; box-shadow:0 6px 18px rgba(2, 132, 199, 0.25); cursor:pointer; transition:transform 0.15s ease;">
+          <div style="display:flex; align-items:center; gap:12px; min-width:0;">
+            <div style="width:44px; height:44px; min-width:44px; border-radius:12px; background:rgba(255,255,255,0.18); display:flex; align-items:center; justify-content:center; font-size:1.4rem;">
+              ▶️
+            </div>
+            <div style="min-width:0;">
+              <div style="font-size:0.72rem; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; opacity:0.9;">
+                ⚡ अगला अभ्यास जारी रखें (Continue Practice)
+              </div>
+              <div id="continuePracticeTitle" style="font-size:0.98rem; font-weight:800; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-top:2px;">
+                रामधारी गुप्ता खंड 1 - अभ्यास 1 (80 WPM)
+              </div>
+            </div>
+          </div>
+          <button type="button" class="btn-continue-go" style="background:#ffffff; color:#0284c7; border:none; padding:8px 16px; border-radius:10px; font-weight:800; font-size:0.85rem; white-space:nowrap; cursor:pointer; box-shadow:0 2px 8px rgba(0,0,0,0.1); flex-shrink:0;">
+            प्रारंभ करें →
+          </button>
+        </div>
+
         <!-- Option 3: Stats Carousel Section (Horizontal on Mobile, 2x4 Grid on Desktop) -->
         <div class="stats-carousel-section">
           <div class="stats-carousel-header hide-desktop">
@@ -1715,7 +1735,7 @@
           </button>
         </div>
 
-        <div class="stat-card" style="overflow-x: auto;">
+        <div class="stat-card hide-mobile" style="overflow-x: auto;">
           <table class="data-table" id="leaderboardTable">
             <thead>
               <tr>
@@ -1732,6 +1752,9 @@
             </tbody>
           </table>
         </div>
+
+        <!-- Mobile Leaderboard Cards Container -->
+        <div class="mobile-leaderboard-cards-container hide-desktop" id="mobileLeaderboardCardsContainer" style="display:flex; flex-direction:column; gap:10px; margin-bottom:24px;"></div>
       </main>
 
       <!-- ===================================================================

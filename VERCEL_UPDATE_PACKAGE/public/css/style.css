@@ -10061,3 +10061,139 @@ html.is-mobile-device.mobile-wide-viewport .mobile-nav-btn {
   justify-content: center;
 }
 
+/* ==========================================================================
+   StenoMaster v16 — Mobile UX Defect Fix & Complete UI Polish Rules
+   ========================================================================== */
+
+/* 1. Continue Practice Card */
+.continue-practice-card {
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.continue-practice-card:active {
+  transform: scale(0.985);
+}
+
+/* 2. Mobile 2-Column Primary Statistics Grid & Secondary Toggle */
+@media (max-width: 640px) {
+  /* When on mobile devices, display the 4 primary stats in a clean 2-column grid */
+  html.is-mobile-device .horizontal-stats-grid,
+  .horizontal-stats-grid {
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 10px !important;
+    overflow-x: visible !important;
+    scroll-snap-type: none !important;
+    padding: 0 !important;
+  }
+
+  html.is-mobile-device .h-stat-card,
+  .h-stat-card {
+    flex: unset !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    height: auto !important;
+    min-height: 82px !important;
+    max-height: none !important;
+    padding: 10px 12px !important;
+    border-radius: 14px !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04) !important;
+    border: 1.5px solid var(--border-subtle, #e2e8f0) !important;
+    background: var(--bg-surface, #ffffff) !important;
+  }
+
+  /* Keep cards 5 through 8 collapsible/cleanly spaced */
+  .horizontal-stats-grid > .h-stat-card:nth-child(n+5) {
+    display: flex !important;
+  }
+
+  /* Hide horizontal carousel arrows & dots since 2x2 grid is fully readable */
+  .carousel-nav-btn,
+  .stats-carousel-dots {
+    display: none !important;
+  }
+}
+
+/* 3. Mobile Header: Prevent 320px clipping and optimize subscription badge */
+@media (max-width: 360px) {
+  .top-header {
+    padding: 0 6px !important;
+    gap: 4px !important;
+  }
+  .top-header .header-brand-logo {
+    width: 24px !important;
+    height: 24px !important;
+  }
+  .top-header .header-brand-name {
+    font-size: 0.90rem !important;
+    letter-spacing: -0.3px !important;
+  }
+  .plan-validity-pill {
+    max-width: 76px !important;
+    padding: 2px 5px !important;
+    font-size: 0.68rem !important;
+  }
+  .plan-validity-pill .validity-text {
+    display: none !important;
+  }
+  .plan-validity-pill::after {
+    content: " प्रो";
+    font-size: 0.68rem;
+    font-weight: 800;
+  }
+}
+
+/* 4. Install App Banner: Compact non-blocking positioning */
+@media (max-width: 640px) {
+  .mobile-pwa-popup {
+    bottom: calc(var(--bottom-nav-height, 64px) + 8px + env(safe-area-inset-bottom)) !important;
+    padding: 8px 12px !important;
+    border-radius: 14px !important;
+    box-shadow: 0 8px 24px rgba(2, 132, 199, 0.25) !important;
+    max-height: 58px !important;
+  }
+  .mobile-pwa-app-icon {
+    width: 34px !important;
+    height: 34px !important;
+    min-width: 34px !important;
+    font-size: 1.1rem !important;
+    border-radius: 8px !important;
+  }
+  .mobile-pwa-app-title strong {
+    font-size: 0.85rem !important;
+  }
+  .mobile-pwa-app-desc {
+    display: none !important;
+  }
+  .btn-pwa-download {
+    padding: 6px 12px !important;
+    font-size: 0.78rem !important;
+    border-radius: 8px !important;
+  }
+  .btn-pwa-close {
+    width: 24px !important;
+    height: 24px !important;
+    font-size: 0.85rem !important;
+  }
+}
+
+/* 5. Typing Editor Space & Virtual Keyboard Safety */
+@media (max-width: 640px) {
+  .typing-textarea {
+    min-height: 260px !important;
+    height: 42vh !important;
+  }
+  .typing-editor-card {
+    margin-bottom: 24px !important;
+  }
+}
+
+/* 6. Settings & Profile Touch Rows */
+.profile-info-item,
+.form-group input,
+.form-group select {
+  min-height: 44px;
+}
+
+

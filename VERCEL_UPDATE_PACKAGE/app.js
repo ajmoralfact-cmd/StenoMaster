@@ -1061,7 +1061,12 @@ class StenoApp {
   showPwaInstallPopup() {
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
     if (isStandalone) return;
-    if (sessionStorage.getItem('pwa_popup_dismissed') === '1') return;
+    if (sessionStorage.getItem('pwa_popup_dismissed') === '1' || localStorage.getItem('pwa_installed_permanent') === '1') return;
+
+    // Never show install popup on typing or practice pages to prevent covering editor/controls
+    if (window.location.pathname.startsWith('/practice') || window.location.pathname.endsWith('practice.html') || this.activeView === 'practice') {
+      return;
+    }
 
     const popup = document.getElementById('mobilePwaInstallPopup');
     if (popup) {
@@ -3257,6 +3262,15 @@ class StenoApp {
     if (totalPracEl) totalPracEl.textContent = `${stats.total_practices || 0}`;
     if (pointsEl) pointsEl.textContent = `${realPoints} Pts`;
 
+    // Hydrate 'Continue Practice' Card with actual last practiced passage
+    const contTitle = document.getElementById('continuePracticeTitle');
+    if (contTitle) {
+      const lastTitle = localStorage.getItem('stenomaster_last_passage_title');
+      if (lastTitle) {
+        contTitle.innerHTML = `<hindi-root text="${this.escapeHtml(lastTitle)}"></hindi-root>`;
+      }
+    }
+
     // -------------------------------------------------------------------------
     // 8 Dashboard Metric Cards — Attractive, Actionable & Live-Updated
     // -------------------------------------------------------------------------
@@ -3710,6 +3724,14 @@ class StenoApp {
         this.handleLockedPassageClick(pId);
         return;
       }
+
+      // Save last practiced passage ID
+      try {
+        localStorage.setItem('stenomaster_last_passage_id', String(pId));
+        if (passage && passage.title) {
+          localStorage.setItem('stenomaster_last_passage_title', passage.title);
+        }
+      } catch(e) {}
 
       // Multi-page routing: Launch in dedicated ultra-fast /practice studio
       if (!customPassage && !window.location.pathname.includes('/practice')) {
@@ -4468,39 +4490,96 @@ class StenoApp {
     try {
       const res = await this.apiCall(`/api/leaderboard?period=${period}`);
       const tbody = document.querySelector('#leaderboardTable tbody');
-      if (!tbody) return;
+      const mobileContainer = document.getElementById('mobileLeaderboardCardsContainer');
+      if (!tbody && !mobileContainer) return;
 
       const records = res.leaderboard || [];
+      const isEn = this.currentLang === 'en';
+
       if (records.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:30px;">इस अवधि में कोई लीडरबोर्ड रिकॉर्ड उपलब्ध नहीं है।</td></tr>';
+        const emptyMsg = isEn ? 'No leaderboard records available for this period.' : 'इस अवधि में कोई लीडरबोर्ड रिकॉर्ड उपलब्ध नहीं है।';
+        if (tbody) tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:30px;">${emptyMsg}</td></tr>`;
+        if (mobileContainer) {
+          mobileContainer.innerHTML = `
+            <div style="text-align:center; padding:30px 16px; background:var(--bg-card); border:1px dashed var(--border); border-radius:14px; color:var(--text-muted);">
+              <div style="font-size:1.8rem; margin-bottom:6px;">🏆</div>
+              <div style="font-weight:700; color:var(--text-main);">${emptyMsg}</div>
+            </div>
+          `;
+        }
         return;
       }
 
-      tbody.innerHTML = records.map(r => {
-        let rankBadge = r.rank;
-        if (r.rank === 1) rankBadge = '🥇 1';
-        else if (r.rank === 2) rankBadge = '🥈 2';
-        else if (r.rank === 3) rankBadge = '🥉 3';
+      if (tbody) {
+        tbody.innerHTML = records.map(r => {
+          let rankBadge = r.rank;
+          if (r.rank === 1) rankBadge = '🥇 1';
+          else if (r.rank === 2) rankBadge = '🥈 2';
+          else if (r.rank === 3) rankBadge = '🥉 3';
 
-        return `
-          <tr>
-            <td><strong class="rank-medal">${rankBadge}</strong></td>
-            <td>
-              <div style="display:flex; align-items:center; gap:10px;">
-                <div class="user-avatar" style="width:32px; height:32px; font-size:0.8rem;">${r.display_name.charAt(0)}</div>
-                <div>
-                  <div style="font-weight:700; color:var(--text-main);">${r.display_name}</div>
-                  <div style="font-size:0.75rem; color:var(--text-muted);">${r.target_exam || 'Steno Aspirant'}</div>
+          return `
+            <tr>
+              <td><strong class="rank-medal">${rankBadge}</strong></td>
+              <td>
+                <div style="display:flex; align-items:center; gap:10px;">
+                  <div class="user-avatar" style="width:32px; height:32px; font-size:0.8rem;">${(r.display_name || 'S').charAt(0)}</div>
+                  <div>
+                    <div style="font-weight:700; color:var(--text-main);">${this.escapeHtml(r.display_name || '')}</div>
+                    <div style="font-size:0.75rem; color:var(--text-muted);">${this.escapeHtml(r.target_exam || 'Steno Aspirant')}</div>
+                  </div>
+                </div>
+              </td>
+              <td><span class="badge" style="background:rgba(245, 158, 11, 0.15); color:#b45309; font-weight:800; font-size:0.92rem; padding:4px 10px; border-radius:8px; border:1px solid rgba(245,158,11,0.3);">⭐ ${r.points} PTS</span></td>
+              <td><strong style="color:var(--primary); font-size:1rem;">${r.best_wpm} WPM</strong></td>
+              <td><strong style="color:var(--accent-green); font-size:0.95rem;">${r.avg_accuracy}%</strong></td>
+              <td style="font-weight:600;">${r.attempts_count}</td>
+            </tr>
+          `;
+        }).join('');
+      }
+
+      if (mobileContainer) {
+        mobileContainer.innerHTML = records.map(r => {
+          let rankBadge = `#${r.rank}`;
+          let rankColor = 'var(--text-muted)';
+          let rankBg = 'var(--bg-subtle)';
+          if (r.rank === 1) { rankBadge = '🥇 1'; rankColor = '#b45309'; rankBg = '#fef3c7'; }
+          else if (r.rank === 2) { rankBadge = '🥈 2'; rankColor = '#475569'; rankBg = '#f1f5f9'; }
+          else if (r.rank === 3) { rankBadge = '🥉 3'; rankColor = '#9a3412'; rankBg = '#ffedd5'; }
+
+          return `
+            <div class="mobile-leaderboard-card" style="background:var(--bg-card); border:1.5px solid var(--border); border-radius:14px; padding:12px 14px; display:flex; flex-direction:column; gap:10px; box-shadow:0 2px 6px rgba(0,0,0,0.03);">
+              <div style="display:flex; justify-content:space-between; align-items:center;">
+                <div style="display:flex; align-items:center; gap:10px;">
+                  <span style="display:inline-flex; align-items:center; justify-content:center; min-width:38px; height:28px; border-radius:8px; background:${rankBg}; color:${rankColor}; font-weight:800; font-size:0.85rem; padding:0 6px;">${rankBadge}</span>
+                  <div class="user-avatar" style="width:34px; height:34px; font-size:0.85rem; border-radius:50%; background:linear-gradient(135deg, #0284c7, #2563eb); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:800;">${(r.display_name || 'S').charAt(0)}</div>
+                  <div>
+                    <strong style="font-size:0.94rem; color:var(--text-main); display:block; line-height:1.2;">${this.escapeHtml(r.display_name || '')}</strong>
+                    <span style="font-size:0.72rem; color:var(--text-muted);">${this.escapeHtml(r.target_exam || 'Steno Aspirant')}</span>
+                  </div>
+                </div>
+                <div style="text-align:right;">
+                  <span class="badge" style="background:rgba(245, 158, 11, 0.15); color:#b45309; font-weight:800; font-size:0.82rem; padding:3px 8px; border-radius:8px; border:1px solid rgba(245,158,11,0.3);">⭐ ${r.points} PTS</span>
                 </div>
               </div>
-            </td>
-            <td><span class="badge" style="background:rgba(245, 158, 11, 0.15); color:#b45309; font-weight:800; font-size:0.92rem; padding:4px 10px; border-radius:8px; border:1px solid rgba(245,158,11,0.3);">⭐ ${r.points} PTS</span></td>
-            <td><strong style="color:var(--primary); font-size:1rem;">${r.best_wpm} WPM</strong></td>
-            <td><strong style="color:var(--accent-green); font-size:0.95rem;">${r.avg_accuracy}%</strong></td>
-            <td style="font-weight:600;">${r.attempts_count}</td>
-          </tr>
-        `;
-      }).join('');
+              <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:6px; background:var(--bg-subtle); padding:8px 10px; border-radius:10px; text-align:center;">
+                <div>
+                  <div style="font-size:0.68rem; color:var(--text-muted); font-weight:600;">${isEn ? 'Best Speed' : 'उच्चतम गति'}</div>
+                  <strong style="color:var(--primary); font-size:0.95rem;">${r.best_wpm} <small style="font-size:0.7rem;">WPM</small></strong>
+                </div>
+                <div>
+                  <div style="font-size:0.68rem; color:var(--text-muted); font-weight:600;">${isEn ? 'Accuracy' : 'सटीकता'}</div>
+                  <strong style="color:var(--accent-green); font-size:0.95rem;">${r.avg_accuracy}%</strong>
+                </div>
+                <div>
+                  <div style="font-size:0.68rem; color:var(--text-muted); font-weight:600;">${isEn ? 'Attempts' : 'प्रयास'}</div>
+                  <strong style="color:var(--text-main); font-size:0.95rem;">${r.attempts_count}</strong>
+                </div>
+              </div>
+            </div>
+          `;
+        }).join('');
+      }
     } catch (err) {
       console.error('Failed to load leaderboard:', err);
     }
@@ -6043,8 +6122,15 @@ ${link}`;
     if (this.activeView && this.activeView !== 'category-detail') {
       this.categoryOrigin = this.activeView;
     }
-    this.currentCategoryId = categoryId;
-    this.navigate('category-detail', { id: categoryId });
+
+    // Defensive fallback: If categoryId is undefined/null or NaN, fallback to Khand 1 (126)
+    if (!categoryId || isNaN(parseInt(categoryId, 10))) {
+      const firstCat = (this.categories && this.categories[0]) ? this.categories[0].id : 126;
+      categoryId = firstCat;
+    }
+    const cIdInt = parseInt(categoryId, 10);
+    this.currentCategoryId = cIdInt;
+    this.navigate('category-detail', { id: cIdInt });
 
     const titleEl = document.getElementById('catDetailTitle');
     const nameEl = document.getElementById('catDetailName');
@@ -6056,7 +6142,6 @@ ${link}`;
     const stickyPrice = document.getElementById('catStickyPrice');
 
     if (!this._categoryDetailCache) this._categoryDetailCache = new Map();
-    const cIdInt = parseInt(categoryId, 10);
     let cached = this._categoryDetailCache.get(cIdInt);
 
     const isEn = this.currentLang === 'en';
@@ -6178,21 +6263,23 @@ ${link}`;
     }
 
     try {
-      const res = await this.apiCall(`/api/categories/detail?id=${categoryId}`);
+      const res = await this.apiCall(`/api/categories/detail?id=${cIdInt}`);
       if (res && res.category) {
         this._categoryDetailCache.set(cIdInt, res);
-        if (this.currentCategoryId === categoryId || this.currentCategoryId === cIdInt) {
+        if (this.currentCategoryId === cIdInt) {
           applyDetailData(res);
         }
+      } else {
+        throw new Error('श्रेणी डेटा लोड नहीं हो सका');
       }
     } catch (err) {
       if (!cached && listEl) {
         listEl.innerHTML = `
           <div style="text-align:center; padding:30px 20px; background:rgba(239,68,68,0.04); border-radius:12px; border:1px dashed rgba(239,68,68,0.25); margin-top:10px;">
             <div style="font-size:1.8rem; margin-bottom:8px;">⚠️</div>
-            <div style="color:var(--accent-red); font-weight:700; font-size:0.95rem; margin-bottom:6px;">त्रुटि: ${this.escapeHtml(err.message)}</div>
+            <div style="color:var(--accent-red); font-weight:700; font-size:0.95rem; margin-bottom:6px;">त्रुटि: ${this.escapeHtml(err.message || 'Server request failed')}</div>
             <div style="font-size:0.8rem; color:var(--text-muted); margin-bottom:14px;">सर्वर या इंटरनेट में क्षणिक देरी हुई। कृपया दोबारा प्रयास करें।</div>
-            <button type="button" class="btn-primary" onclick="stenoApp.openCategoryDetail(${categoryId})" style="padding:7px 20px; font-size:0.85rem; font-weight:800; border-radius:10px; cursor:pointer;">🔄 पुनः लोड करें (Retry)</button>
+            <button type="button" class="btn-primary" onclick="stenoApp.openCategoryDetail(${cIdInt})" style="padding:7px 20px; font-size:0.85rem; font-weight:800; border-radius:10px; cursor:pointer;">🔄 पुनः लोड करें (Retry)</button>
           </div>
         `;
       }
@@ -7163,6 +7250,44 @@ ${link}`;
   toggleMobilePlayer() {
     if (window.stenoTypingEngine) {
       window.stenoTypingEngine.toggleMobilePlayer();
+    }
+  }
+
+  // -------------------------------------------------------------------------
+  // Continue Practice Helper (Always Resumes or Starts First Passage)
+  // -------------------------------------------------------------------------
+  continueLastPractice() {
+    let pId = localStorage.getItem('stenomaster_last_passage_id');
+    if (!pId && this.allPassages && this.allPassages.length > 0) {
+      pId = this.allPassages[0].id;
+    }
+    if (!pId) pId = 47; // Default Ramdhari Gupta Khand 1 Class 1
+    this.openPractice(pId);
+  }
+
+  // -------------------------------------------------------------------------
+  // Cashfree Order Verification Callback
+  // -------------------------------------------------------------------------
+  async verifyCashfreeOrder(orderId) {
+    if (!orderId) return;
+    this.showToast('भुगतान स्थिति जांची जा रही है... 🔐', 'info');
+    try {
+      const res = await this.apiCall('/api/payment/cashfree/verify', 'POST', { order_id: orderId });
+      if (res && res.success) {
+        this.showToast('🎉 बधाई! आपकी सदस्यता सफलतापूर्वक सक्रिय हो गई है!', 'success');
+        await this.fetchCurrentUser();
+        await this.loadCategories();
+        await this.loadPassages(true);
+        this.updateHeaderPlanBadge();
+      } else {
+        const msg = res?.message || res?.error || 'भुगतान सत्यापन पूर्ण नहीं हो सका।';
+        this.showToast(`सूचना: ${msg}`, 'warning');
+      }
+    } catch (err) {
+      console.warn('Cashfree verification failed:', err);
+      // Soft fail: refresh current user state in case webhook already processed it
+      await this.fetchCurrentUser().catch(() => {});
+      this.updateHeaderPlanBadge();
     }
   }
 
