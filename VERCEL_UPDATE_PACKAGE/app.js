@@ -900,7 +900,7 @@ class StenoApp {
     }
 
     if ('serviceWorker' in navigator) {
-      const CURRENT_SW_VERSION = 'v15.0';
+      const CURRENT_SW_VERSION = 'v15.5';
 
       // Step 1: Unregister ALL stale/old service workers first
       navigator.serviceWorker.getRegistrations().then((registrations) => {
@@ -917,7 +917,7 @@ class StenoApp {
               if ('caches' in window) {
                 caches.keys().then((keys) => {
                   keys.forEach((key) => {
-                    if (!key.includes('v15.0')) {
+                    if (!key.includes('v15.5')) {
                       caches.delete(key);
                       console.log('[SW] Cleared stale cache:', key);
                     }
@@ -929,7 +929,7 @@ class StenoApp {
       }).catch(() => {});
 
       // Step 2: Register the current SW
-      navigator.serviceWorker.register('/service-worker.js?v=15.0')
+      navigator.serviceWorker.register('/service-worker.js?v=15.5')
         .then((reg) => {
           reg.update().catch(() => {});
           reg.addEventListener('updatefound', () => {
@@ -1051,6 +1051,14 @@ class StenoApp {
   // Authentication Gateway & Role Selection
   // -------------------------------------------------------------------------
   showAuthGateway(tab = 'student', inlineError = null) {
+    // Fix: On practice page, redirect to homepage for re-login instead of showing blank screen
+    if (window.location.pathname.startsWith('/practice') || window.location.pathname.endsWith('practice.html')) {
+      const practiceId = new URLSearchParams(window.location.search).get('id') || '';
+      const returnUrl = practiceId ? `/?auth=login&return_practice=${practiceId}` : '/?auth=login';
+      window.location.replace(returnUrl);
+      return;
+    }
+
     document.documentElement.classList.add('no-auth-session');
     const gateway = document.getElementById('authGatewayView');
     const appContainer = document.getElementById('appContainer');

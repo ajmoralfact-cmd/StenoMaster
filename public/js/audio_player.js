@@ -40,6 +40,7 @@ class StenoAudioPlayer {
 
     this.initListeners();
     this.initCountdownAudios();
+    this.initMediaSession();
   }
 
   initListeners() {
@@ -638,6 +639,33 @@ class StenoAudioPlayer {
     const mins = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  }
+
+  initMediaSession() {
+    if (!('mediaSession' in navigator)) return;
+    navigator.mediaSession.metadata = new MediaMetadata({
+      title: 'StenoMaster Dictation',
+      artist: 'StenoMaster',
+      album: 'Shorthand Practice'
+    });
+    navigator.mediaSession.setActionHandler('play', () => {
+      this.startActualPlayback();
+    });
+    navigator.mediaSession.setActionHandler('pause', () => {
+      this.pause();
+    });
+    navigator.mediaSession.setActionHandler('stop', () => {
+      this.stop();
+    });
+    navigator.mediaSession.setActionHandler('seekbackward', () => {
+      this.seekRelative(-5);
+    });
+    navigator.mediaSession.setActionHandler('seekforward', () => {
+      this.seekRelative(5);
+    });
+    navigator.mediaSession.setActionHandler('previoustrack', () => {
+      this.seek(0);
+    });
   }
 }
 

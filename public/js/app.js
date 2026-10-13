@@ -1051,6 +1051,14 @@ class StenoApp {
   // Authentication Gateway & Role Selection
   // -------------------------------------------------------------------------
   showAuthGateway(tab = 'student', inlineError = null) {
+    // Fix: On practice page, redirect to homepage for re-login instead of showing blank screen
+    if (window.location.pathname.startsWith('/practice') || window.location.pathname.endsWith('practice.html')) {
+      const practiceId = new URLSearchParams(window.location.search).get('id') || '';
+      const returnUrl = practiceId ? `/?auth=login&return_practice=${practiceId}` : '/?auth=login';
+      window.location.replace(returnUrl);
+      return;
+    }
+
     document.documentElement.classList.add('no-auth-session');
     const gateway = document.getElementById('authGatewayView');
     const appContainer = document.getElementById('appContainer');

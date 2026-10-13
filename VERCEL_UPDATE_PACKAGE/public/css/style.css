@@ -460,8 +460,11 @@ body {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 38px;
-  height: 38px;
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  min-height: 44px;
+  position: relative;
   border-radius: var(--radius-md);
   border: 1px solid var(--border-subtle);
   background: var(--bg-subtle);
@@ -2883,7 +2886,8 @@ body {
 
   .google-auth-btn {
     padding: 7px 12px !important;
-    font-size: 0.82rem !important;
+    font-size: 1rem !important;
+    min-height: 44px;
     border-radius: 10px !important;
   }
 
@@ -2902,7 +2906,8 @@ body {
 
   .auth-card .form-input {
     padding: 8px 12px 8px 34px !important;
-    font-size: 0.82rem !important;
+    font-size: 1rem !important;
+    min-height: 44px;
     border-radius: 10px !important;
   }
 
@@ -3800,9 +3805,9 @@ html.is-mobile-device .classes-grid {
   }
 
   .carousel-nav-btn {
-    width: 32px !important;
-    height: 32px !important;
-    min-width: 32px !important;
+    width: 36px !important;
+    height: 36px !important;
+    min-width: 36px !important;
     border-radius: 50% !important;
     background: var(--bg-surface, #ffffff) !important;
     border: 1.5px solid var(--border-subtle, #cbd5e1) !important;
@@ -3818,6 +3823,14 @@ html.is-mobile-device .classes-grid {
     flex-shrink: 0 !important;
     padding: 0 !important;
     line-height: 1 !important;
+    position: relative !important;
+  }
+
+  .carousel-nav-btn::after {
+    content: '';
+    position: absolute;
+    inset: -6px;
+    border-radius: 50%;
   }
 
   .hide-mobile {
@@ -4158,9 +4171,9 @@ html.is-mobile-device .stats-carousel-container {
   gap: 6px !important;
 }
 html.is-mobile-device .carousel-nav-btn {
-  width: 32px !important;
-  height: 32px !important;
-  min-width: 32px !important;
+  width: 36px !important;
+  height: 36px !important;
+  min-width: 36px !important;
   border-radius: 50% !important;
   background: var(--bg-surface, #ffffff) !important;
   border: 1.5px solid var(--border-subtle, #cbd5e1) !important;
@@ -4176,6 +4189,13 @@ html.is-mobile-device .carousel-nav-btn {
   flex-shrink: 0 !important;
   padding: 0 !important;
   line-height: 1 !important;
+  position: relative !important;
+}
+html.is-mobile-device .carousel-nav-btn::after {
+  content: '';
+  position: absolute;
+  inset: -6px;
+  border-radius: 50%;
 }
 html.is-mobile-device .top-header #langToggleBtn,
 html.is-mobile-device .top-header #themeToggleBtn,
@@ -8980,6 +9000,7 @@ body.dark-mode .ww-tip-row {
   .typing-textarea {
     min-height: 180px;
     height: calc(100vh - 125px) !important;
+    height: calc(100dvh - 125px) !important;
     max-height: none !important;
     font-size: 1.2rem;
     padding: 10px 14px;
