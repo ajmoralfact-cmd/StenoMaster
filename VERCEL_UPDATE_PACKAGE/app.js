@@ -2632,9 +2632,23 @@ class StenoApp {
   // -------------------------------------------------------------------------
   initNavigation() {
     // ESC key closes slide drawer
-    document.addEventListener('keydown', (e) => {
+    window.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {
         this.closeSidebar();
+      }
+    });
+
+    // Outside click closes slide drawer
+    document.addEventListener('click', (e) => {
+      const sidebar = document.getElementById('appSidebar');
+      const toggleBtn = document.getElementById('navToggleBtn');
+      const mobileBtn = document.getElementById('mobileMenuBtn');
+      if (sidebar && sidebar.classList.contains('open')) {
+        if (!sidebar.contains(e.target) && 
+            (!toggleBtn || !toggleBtn.contains(e.target)) && 
+            (!mobileBtn || !mobileBtn.contains(e.target))) {
+          this.closeSidebar();
+        }
       }
     });
 

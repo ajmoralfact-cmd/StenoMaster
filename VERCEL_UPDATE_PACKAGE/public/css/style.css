@@ -176,6 +176,7 @@ body {
   z-index: 99;
   opacity: 0;
   pointer-events: none;
+  cursor: pointer;
   transition: opacity 250ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -204,7 +205,7 @@ body {
 }
 
 .sidebar.open {
-  transform: translateX(0);
+  transform: translateX(0) !important;
 }
 
 .sidebar-header {
@@ -3714,11 +3715,15 @@ html.is-mobile-device .classes-grid {
   }
 
   html:not(.is-mobile-device) .sidebar {
+    transform: translateX(-100%);
+  }
+
+  html:not(.is-mobile-device) .sidebar.open {
     transform: translateX(0) !important;
   }
 
   html:not(.is-mobile-device) .main-wrapper {
-    margin-left: var(--sidebar-width) !important;
+    margin-left: 0 !important;
     padding-bottom: 30px !important;
   }
 }
