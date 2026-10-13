@@ -1269,10 +1269,14 @@ class StenoMasterHandler(http.server.SimpleHTTPRequestHandler):
             # Hindi Evaluation: Match real Hindi words to real Hindi words
             if language == 'hindi':
                 eval_language = 'hindi'
-                if effective_typing_system == 'kruti_dev_010':
-                    eval_official_text = hindi_converter.kruti_dev_to_unicode(eval_official_text)
+                # Benchmark standard (TypingBaba / Testbook): Always use clean Unicode official_text as the primary truth source
+                if official_text and official_text.strip():
+                    eval_official_text = official_text
+                elif official_text_krutidev and official_text_krutidev.strip():
+                    eval_official_text = hindi_converter.kruti_dev_to_unicode(official_text_krutidev)
                 else:
-                    eval_official_text = eval_official_text or hindi_converter.kruti_dev_to_unicode(official_text_krutidev)
+                    eval_official_text = eval_official_text or ''
+
                 if typing_mode in ('krutidev', 'devlys'):
                     if re.search(r'[\u0900-\u097F]', raw_input):
                         eval_student_text = hindi_converter.normalize_devanagari_canonical(raw_input)

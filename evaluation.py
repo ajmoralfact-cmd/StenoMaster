@@ -113,9 +113,18 @@ def analyze_hindi_word_difference(official_word: str, student_word: str) -> Tupl
     clean_off = clean_word_for_similarity(official_word, 'hindi')
     clean_stu = clean_word_for_similarity(student_word, 'hindi')
 
-    # 2. Check for pure punctuation error if base words are identical
-    if clean_off == clean_stu:
+    # 2. Check for pure punctuation difference (strip punctuation and check exact canonical match)
+    base_off = re.sub(r'[^\w\u0900-\u097F]', '', norm_off)
+    base_stu = re.sub(r'[^\w\u0900-\u097F]', '', norm_stu)
+    if base_off and base_off == base_stu:
         return ("punctuation", f"विराम चिह्न त्रुटि (अपेक्षित: '{official_word}', आपने टाइप किया: '{student_word}')")
+
+    clean_off = clean_word_for_similarity(official_word, 'hindi')
+    clean_stu = clean_word_for_similarity(student_word, 'hindi')
+
+    # If normalized words are equal only after chandrabindu/anusvara equivalence
+    if clean_off == clean_stu:
+        return ("matra", f"अनुस्वार / चंद्रबिंदु अंतर (अपेक्षित: '{official_word}')")
 
     # 3. Check for Matra / Confusable pairs
     diff_chars = (set(clean_off) - set(clean_stu)) | (set(clean_stu) - set(clean_off))

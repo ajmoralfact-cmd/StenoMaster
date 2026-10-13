@@ -335,7 +335,12 @@ def kruti_dev_to_unicode(text: str) -> str:
     if not text:
         return ""
 
-    modified = text
+    # Smart Preprocessing:
+    # In Kruti Dev, ',' key is 'ए' (used at start of word like ',d' -> 'एक').
+    # But when ',' follows a character or precedes space/period/end-of-line (e.g. 'egksn;,' or 'dks,'),
+    # it is a punctuation comma, NOT the vowel 'ए'.
+    # In Kruti Dev, ']' is the mapping for comma. We convert trailing commas to ']' so they map to ','.
+    modified = re.sub(r'([a-zA-Z0-9;+~#`_])\,(?=[\s\.,।\n\r]|$)', r'\1]', text)
 
     # Phase 1: Multi-character sequences (longest first)
     for kd, uni in KD_MULTI:
