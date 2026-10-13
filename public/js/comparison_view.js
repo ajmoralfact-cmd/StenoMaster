@@ -317,81 +317,100 @@ class StenoComparisonView {
     const list = [];
     const seen = new Set();
 
+    // Priority 1: Words the student actually typed but got wrong (substitutions, matra, spelling)
     for (const t of tokens) {
-      if ((t.status === 'wrong' || t.status === 'missing') || (t.error_type === 'matra' || t.error_type === 'spelling' || t.error_type === 'character')) {
+      if (t.student && (t.status === 'wrong' || t.error_type === 'matra' || t.error_type === 'spelling' || t.error_type === 'character')) {
         const off = (t.official || '').trim().replace(/[.,!?।]/g, '');
         const cleanOff = off.replace(/[^\u0900-\u097F]/g, '');
-        if (cleanOff.length >= 3 && !seen.has(cleanOff)) {
+        if (cleanOff.length >= 2 && !seen.has(cleanOff)) {
           seen.add(cleanOff);
           let reason = t.detail || 'शब्द टंकण अशुद्धि';
-          if (t.status === 'missing') reason = 'डिक्टेशन में यह शब्द छूट गया';
-          else if (t.error_type === 'matra') reason = 'मात्रा अशुद्धि (ह्रस्व/दीर्घ)';
+          if (t.error_type === 'matra') reason = 'मात्रा अशुद्धि';
           else if (t.error_type === 'spelling') reason = 'वर्तनी दोष';
           else if (t.status === 'wrong') reason = 'गलत शब्द प्रतिस्थापन';
 
           list.push({
             word: cleanOff,
-            student_word: t.student ? t.student : '— (छूट गया)',
+            student_word: t.student,
             error_type: t.error_type || t.status,
             reason: reason,
             practice_tip: `‘${cleanOff}’ की स्टेनो आउटलाइन 5 बार बनाएं।`
           });
-          if (list.length >= 20) break;
+          if (list.length >= 6) break;
         }
       }
     }
+
+    // Priority 2: If list is still small (< 6), add up to 3 missed words
+    if (list.length < 6) {
+      for (const t of tokens) {
+        if (t.status === 'missing' && !t.student) {
+          const off = (t.official || '').trim().replace(/[.,!?।]/g, '');
+          const cleanOff = off.replace(/[^\u0900-\u097F]/g, '');
+          if (cleanOff.length >= 3 && !seen.has(cleanOff)) {
+            seen.add(cleanOff);
+            list.push({
+              word: cleanOff,
+              student_word: '— (छूट गया)',
+              error_type: 'missing',
+              reason: 'डिक्टेशन में छूटा शब्द',
+              practice_tip: `‘${cleanOff}’ की स्टेनो आउटलाइन 5 बार बनाएं।`
+            });
+            if (list.length >= 6) break;
+          }
+        }
+      }
+    }
+
     return list;
   }
 
   renderPersonalWeakWordsBank(report) {
-    const words = (report.weak_words_bank && report.weak_words_bank.length > 0)
+    const rawWords = (report.weak_words_bank && report.weak_words_bank.length > 0)
       ? report.weak_words_bank
       : this.generateWeakWordsFromTokens(report);
 
-    // Save to current report instance for copy action
+    // Limit to top 6 most important words so it never overwhelms the screen
+    const words = rawWords.slice(0, 6);
     this.currentWeakWords = words;
+
+    if (words.length === 0) {
+      return '';
+    }
 
     return `
       <div class="weak-words-bank-card">
         <div class="ww-header">
           <div>
-            <span class="ww-tag">🎯 व्यक्तिगत सुधार बैंक</span>
-            <h3 class="ww-title">📝 कमजोर शब्दों का बैंक (Personal Weak Words Bank)</h3>
-            <p class="ww-subtitle">इस अभ्यास में जिन कठिन शब्दों में आपकी त्रुटि हुई, उनकी सूची — अपनी नोटबुक में इनकी स्टेनो आउटलाइन बनाकर अभ्यास करें:</p>
+            <span class="ww-tag">🎯 स्टेनो अभ्यास फोकस</span>
+            <h3 class="ww-title">📝 कमजोर शब्दों की स्टेनो आउटलाइन (Focus Words for Shorthand Practice)</h3>
+            <p class="ww-subtitle">इस अभ्यास में इन मुख्य शब्दों में त्रुटि हुई—अपनी नोटबुक में इनकी स्टेनो आउटलाइन बनाकर अभ्यास करें:</p>
           </div>
           <div class="ww-actions">
-            ${words.length > 0 ? `
-              <button type="button" class="btn-copy-weak-words" onclick="stenoComparisonView.copyWeakWords()">
-                📋 सभी कठिन शब्द कॉपी करें
-              </button>
-            ` : ''}
+            <button type="button" class="btn-copy-weak-words" onclick="stenoComparisonView.copyWeakWords()">
+              📋 शब्द कॉपी करें
+            </button>
           </div>
         </div>
 
-        ${words.length > 0 ? `
-          <div class="weak-words-grid">
-            ${words.map(w => `
-              <div class="weak-word-card">
-                <div class="ww-card-top">
-                  <span class="ww-target-word">${w.word}</span>
-                  <span class="ww-error-chip">${w.reason}</span>
+        <div class="weak-words-grid">
+          ${words.map(w => `
+            <div class="weak-word-card">
+              <div class="ww-card-top">
+                <span class="ww-target-word">${w.word}</span>
+                <span class="ww-error-chip">${w.reason}</span>
+              </div>
+              <div class="ww-card-body">
+                <div class="ww-input-row">
+                  <span>आपने लिखा:</span> <span class="ww-student-val">${w.student_word}</span>
                 </div>
-                <div class="ww-card-body">
-                  <div class="ww-input-row">
-                    <span>आपने लिखा:</span> <span class="ww-student-val">${w.student_word}</span>
-                  </div>
-                  <div class="ww-tip-row">
-                    <span>💡</span> <span>${w.practice_tip}</span>
-                  </div>
+                <div class="ww-tip-row">
+                  <span>💡</span> <span>${w.practice_tip}</span>
                 </div>
               </div>
-            `).join('')}
-          </div>
-        ` : `
-          <div class="ww-empty-box">
-            <span>🎉</span> बहुत खूब! इस अभ्यास में किसी भी कठिन शब्द में कोई त्रुटि नहीं पाई गई। आपकी आउटलाइन और टंकण उत्तम है।
-          </div>
-        `}
+            </div>
+          `).join('')}
+        </div>
       </div>
     `;
   }
@@ -422,7 +441,7 @@ class StenoComparisonView {
     const html = `
       <div class="result-header-banner">
         <div class="result-header-left">
-          <h2>अभ्यास पूर्ण! 🎉 (Practice Completed)</h2>
+          <h2>अभ्यास मूल्यांकन परिणाम 🎉 (Practice Result)</h2>
           <p><hindi-root text="${this.escapeHtml(report.passage_title || 'Stenographer Dictation')}"></hindi-root> • ${report.language === 'hindi' ? 'हिंदी डिक्टेशन' : 'English Dictation'}</p>
         </div>
         <div class="result-header-right">
@@ -432,13 +451,10 @@ class StenoComparisonView {
         </div>
       </div>
 
-      <!-- Official Exam Qualification Card (SSC vs UPSSSC) -->
+      <!-- 1. Official Exam Qualification Card (SSC / UPSSSC) -->
       ${this.renderExamQualificationCard(report)}
 
-      <!-- Official Mistake Formula Card (Full vs Half Mistakes) -->
-      ${this.renderOfficialMistakeFormulaCard(report)}
-
-      <!-- Main Score Metrics Grid -->
+      <!-- 2. Main Score Metrics Grid (6 Clean Cards) -->
       <div class="result-metrics-grid">
         <div class="metric-card highlight">
           <div class="metric-card-label">Net Speed (नेट गति)</div>
@@ -453,7 +469,7 @@ class StenoComparisonView {
           <div class="metric-card-value">${m.accuracy || 0}%</div>
         </div>
         <div class="metric-card">
-          <div class="metric-card-label">Total Errors (कुल त्रुटियां)</div>
+          <div class="metric-card-label">Total Errors (कुल गलतियां)</div>
           <div class="metric-card-value" style="color:var(--accent-red)">${ec.total || 0}</div>
         </div>
         <div class="metric-card">
@@ -466,36 +482,30 @@ class StenoComparisonView {
         </div>
       </div>
 
-      <!-- Error Breakdown -->
+      <!-- 3. Error Breakdown Pills -->
       <div class="error-breakdown-card">
         <div class="error-breakdown-title">त्रुटि विश्लेषण (Error Breakdown)</div>
         <div class="error-pills-row">
-          <div class="error-pill pill-wrong">❌ गलत शब्द (Wrong Words): <strong>${ec.wrong || 0}</strong></div>
-          <div class="error-pill pill-missing">⚠ छूटे हुए शब्द (Missing Words): <strong>${ec.missing || 0}</strong></div>
-          <div class="error-pill pill-extra">➕ अतिरिक्त शब्द (Extra Words): <strong>${ec.extra || 0}</strong></div>
-          <div class="error-pill pill-matra">✎ मात्रा अशुद्धि (Matra Errors): <strong>${ec.matra || 0}</strong></div>
-          <div class="error-pill pill-spelling">🔤 वर्तनी/वर्ण अशुद्धि (Spelling): <strong>${(ec.spelling || 0) + (ec.character || 0)}</strong></div>
+          <div class="error-pill pill-wrong">❌ गलत शब्द: <strong>${ec.wrong || 0}</strong></div>
+          <div class="error-pill pill-missing">⚠ छूटे हुए शब्द: <strong>${ec.missing || 0}</strong></div>
+          <div class="error-pill pill-extra">➕ अतिरिक्त शब्द: <strong>${ec.extra || 0}</strong></div>
+          <div class="error-pill pill-matra">✎ मात्रा अशुद्धि: <strong>${ec.matra || 0}</strong></div>
+          <div class="error-pill pill-spelling">🔤 वर्तनी अशुद्धि: <strong>${(ec.spelling || 0) + (ec.character || 0)}</strong></div>
           <div class="error-pill pill-punctuation" style="background:#e0f2fe; color:#0369a1; border:1px solid #bae6fd">
-            । विराम चिह्न (Punctuation): <strong>${ec.punctuation || 0}</strong>
+            । विराम चिह्न: <strong>${ec.punctuation || 0}</strong>
           </div>
         </div>
       </div>
 
-      <!-- 1. Official Steno Shorthand Notes & Outlines Card -->
+      <!-- 4. Official Steno Shorthand Notes & Outlines Card -->
       ${this.renderStenoNotesSection(report)}
 
-      <!-- 2. Master Reference Passage Box (Official Uploaded Passage Text) -->
-      ${this.renderMasterPassageSection(report)}
-
-      <!-- Personal Weak Words Bank -->
-      ${this.renderPersonalWeakWordsBank(report)}
-
-      <!-- Aligned Stream Comparison Section -->
+      <!-- 5. Aligned Stream Comparison Section (The Visual Core) -->
       <div class="comparison-section">
         <div class="section-header" style="margin-bottom: 12px;">
           <div>
-            <h3 style="font-size:1.15rem; font-weight:700">मूल आलेख बनाम आपका टंकण (Side-by-Side Comparison)</h3>
-            <p class="section-subtitle">किसी भी शब्द पर क्लिक करके उसका विस्तृत विवरण देखें (Click any word for details)</p>
+            <h3 style="font-size:1.15rem; font-weight:700">मूल आलेख बनाम आपका टंकण (Word-by-Word Comparison)</h3>
+            <p class="section-subtitle">प्रत्येक शब्द पर क्लिक करके उसका मिलान व अशुद्धि का विवरण देखें:</p>
           </div>
         </div>
 
@@ -511,74 +521,47 @@ class StenoComparisonView {
         </div>
       </div>
 
-      <!-- Filterable Detailed Error Table -->
-      <div class="error-table-card">
-        <div class="section-header" style="margin-bottom: 16px;">
-          <h3 style="font-size:1.15rem; font-weight:700">विस्तृत त्रुटि सूची (Detailed Error Log)</h3>
-          <span style="font-size:0.85rem; color:var(--text-muted)">कुल ${report.error_table ? report.error_table.length : 0} त्रुटियां दर्ज</span>
-        </div>
+      <!-- 6. Compact Personal Weak Words Bank (Top 6 Focus Words) -->
+      ${this.renderPersonalWeakWordsBank(report)}
 
-        <div class="table-filter-bar">
-          <button class="cat-pill active" onclick="stenoComparisonView.filterTable('all', this)">सभी (All)</button>
-          <button class="cat-pill" onclick="stenoComparisonView.filterTable('wrong', this)">गलत शब्द</button>
-          <button class="cat-pill" onclick="stenoComparisonView.filterTable('missing', this)">छूटे हुए शब्द</button>
-          <button class="cat-pill" onclick="stenoComparisonView.filterTable('extra', this)">अतिरिक्त शब्द</button>
-          <button class="cat-pill" onclick="stenoComparisonView.filterTable('matra', this)">मात्रा अशुद्धि</button>
-          <button class="cat-pill" onclick="stenoComparisonView.filterTable('spelling', this)">वर्तनी / वर्ण</button>
-          <button class="cat-pill" onclick="stenoComparisonView.filterTable('punctuation', this)">विराम चिह्न</button>
-        </div>
-
-        <div style="overflow-x: auto;">
-          <table class="data-table notranslate" id="errorTable" translate="no">
-            <thead>
-              <tr>
-                <th style="width: 60px;">#</th>
-                <th>आपका इनपुट (Your Text)</th>
-                <th>सही शब्द (Correct Text)</th>
-                <th>त्रुटि का प्रकार (Error Type)</th>
-                <th>मार्गदर्शन (Detail)</th>
-              </tr>
-            </thead>
-            <tbody class="notranslate" translate="no">
-              ${this.renderErrorTableRows(report.error_table || [], 'all')}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <!-- Weak Area Diagnostics & Recommendations -->
-      <div class="weak-areas-card">
-        <h3 style="font-size:1.15rem; font-weight:700">कमजोर क्षेत्रों का विश्लेषण (Weak Area Diagnostics)</h3>
-        <p class="section-subtitle">आपकी वास्तविक परीक्षा प्रदर्शन रिपोर्ट के आधार पर स्वचालित सुझाव:</p>
-        <div class="weak-area-list">
-          ${(report.weak_areas || []).map(wa => `
-            <div class="weak-area-item severity-${wa.severity}">
-              <div class="weak-area-item-top">
-                <span class="weak-area-title">${wa.topic}</span>
-                <span class="weak-area-severity">${wa.severity} Priority</span>
-              </div>
-              <p class="weak-area-rec">${wa.recommendation}</p>
+      <!-- 7. Collapsible Detailed Error Table (Accordion) -->
+      ${(report.error_table && report.error_table.length > 0) ? `
+        <details class="error-table-accordion" style="margin-top:20px; background:var(--bg-surface); border:1px solid var(--border-subtle); border-radius:var(--radius-lg); padding:16px;">
+          <summary style="font-weight:700; font-size:1.05rem; cursor:pointer; display:flex; justify-content:space-between; align-items:center; user-select:none; padding:4px 0;">
+            <span>📋 विस्तृत त्रुटि तालिका देखें (Detailed Error Table — ${report.error_table.length} त्रुटियां दर्ज)</span>
+            <span style="font-size:0.85rem; color:var(--primary); font-weight:600;">क्लिक करके खोलें / बंद करें ▼</span>
+          </summary>
+          <div style="margin-top:16px;">
+            <div class="table-filter-bar">
+              <button class="cat-pill active" onclick="stenoComparisonView.filterTable('all', this)">सभी (All)</button>
+              <button class="cat-pill" onclick="stenoComparisonView.filterTable('wrong', this)">गलत शब्द</button>
+              <button class="cat-pill" onclick="stenoComparisonView.filterTable('missing', this)">छूटे हुए शब्द</button>
+              <button class="cat-pill" onclick="stenoComparisonView.filterTable('extra', this)">अतिरिक्त शब्द</button>
+              <button class="cat-pill" onclick="stenoComparisonView.filterTable('matra', this)">मात्रा अशुद्धि</button>
+              <button class="cat-pill" onclick="stenoComparisonView.filterTable('spelling', this)">वर्तनी / वर्ण</button>
+              <button class="cat-pill" onclick="stenoComparisonView.filterTable('punctuation', this)">विराम चिह्न</button>
             </div>
-          `).join('')}
-        </div>
-      </div>
-
-      <!-- Linguistic Suggestions Layer (Non-penalizing) -->
-      ${report.suggestions && report.suggestions.length > 0 ? `
-        <div class="weak-areas-card" style="border-left: 4px solid var(--primary)">
-          <h3 style="font-size:1.15rem; font-weight:700">भाषा एवं मानक वर्तनी सुझाव (Linguistic Suggestions)</h3>
-          <p class="section-subtitle">नोट: ये AI/मानक वर्तनी सुझाव केवल आपके भाषा संवर्धन हेतु हैं, इनसे अंक नहीं काटे गए हैं।</p>
-          <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:12px; margin-top:14px;">
-            ${report.suggestions.map(s => `
-              <div style="background:var(--bg-subtle); padding:14px; border-radius:var(--radius-md)">
-                <div style="font-size:0.85rem; font-weight:700; color:var(--primary); margin-bottom:4px;">💡 ${s.title}</div>
-                <div style="font-size:0.85rem; color:var(--text-secondary)">${s.description}</div>
-              </div>
-            `).join('')}
+            <div style="overflow-x: auto; max-height: 480px;">
+              <table class="data-table notranslate" id="errorTable" translate="no">
+                <thead>
+                  <tr>
+                    <th style="width: 50px;">#</th>
+                    <th>आपका इनपुट (Your Text)</th>
+                    <th>सही शब्द (Correct Text)</th>
+                    <th>त्रुटि का प्रकार (Error Type)</th>
+                    <th>विवरण (Detail)</th>
+                  </tr>
+                </thead>
+                <tbody class="notranslate" translate="no">
+                  ${this.renderErrorTableRows(report.error_table || [], 'all')}
+                </tbody>
+              </table>
+            </div>
           </div>
-        </div>
+        </details>
       ` : ''}
 
+      <!-- Bottom Action Buttons -->
       <div style="display:flex; justify-content:center; gap:16px; margin-top:30px; margin-bottom:40px;">
         <button class="btn-secondary" onclick="stenoApp.goBack()">← वापस जाएं (Back)</button>
         <button class="btn-primary" onclick="stenoApp.retryPractice()">🔄 पुनः अभ्यास करें (Retry)</button>

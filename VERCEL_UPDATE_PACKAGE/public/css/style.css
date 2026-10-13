@@ -10201,4 +10201,23 @@ html.is-mobile-device.mobile-wide-viewport .mobile-nav-btn {
   min-height: 44px;
 }
 
+/* Collapsible Detailed Error Table Accordion */
+.error-table-accordion {
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
+}
+.error-table-accordion summary {
+  list-style: none;
+}
+.error-table-accordion summary::-webkit-details-marker {
+  display: none;
+}
+.error-table-accordion summary:hover {
+  color: var(--primary);
+}
+.error-table-accordion[open] summary {
+  border-bottom: 1px solid var(--border-subtle);
+  padding-bottom: 12px;
+}
+
 

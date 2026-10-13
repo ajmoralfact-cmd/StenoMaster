@@ -3947,7 +3947,7 @@ class StenoApp {
   async ensureComparisonView() {
     if (window.stenoComparisonView) return window.stenoComparisonView;
     try {
-      await this.loadScript('/js/comparison_view.js?v=12.5');
+      await this.loadScript('/js/comparison_view.js?v=16.0');
     } catch (e) {
       console.warn('Failed to dynamic load comparison_view.js:', e);
     }
