@@ -579,24 +579,29 @@ class StenoComparisonView {
 
     return alignedTokens.map((t, idx) => {
       let cssClass = 'eval-token-correct';
-      let displayText = t.official || t.student;
+      let displayText = t.official || t.student || '';
+      let tooltipText = '';
 
       if (t.status === 'wrong') {
         cssClass = 'eval-token-wrong';
-        displayText = t.student;
+        displayText = t.student || '(रिक्त)';
+        tooltipText = `अपेक्षित: ${t.official || '—'}`;
       } else if (t.status === 'missing') {
         cssClass = 'eval-token-missing';
-        displayText = `[छूटा: ${t.official}]`;
+        displayText = t.official || '';
+        tooltipText = 'छूटा हुआ शब्द';
       } else if (t.status === 'extra') {
         cssClass = 'eval-token-extra';
-        displayText = `[+ ${t.student}]`;
+        displayText = t.student || '';
+        tooltipText = 'अतिरिक्त शब्द (Unwanted)';
       }
 
       // If token is in Kruti Dev ASCII, apply font-krutidev; if Hindi Devanagari, apply font-mangal
       const isTokenKruti = !/[\u0900-\u097F]/.test(displayText) && /[a-zA-Z]/.test(displayText);
       const fontClass = isTokenKruti ? ' font-krutidev' : ' font-mangal';
+      const titleAttr = tooltipText ? ` title="${this.escapeHtml(tooltipText)}"` : '';
 
-      return `<span class="eval-token ${cssClass}${fontClass} notranslate skiptranslate" translate="no" data-idx="${idx}"><hindi-root text="${this.escapeHtml(displayText)}"></hindi-root></span>`;
+      return `<span class="eval-token ${cssClass}${fontClass} notranslate skiptranslate" translate="no" data-idx="${idx}"${titleAttr}><hindi-root text="${this.escapeHtml(displayText)}"></hindi-root></span>`;
     }).join(' ');
   }
 

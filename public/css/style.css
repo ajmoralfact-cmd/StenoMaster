@@ -1893,61 +1893,77 @@ body {
   overflow-y: auto;
 }
 
-/* Individual Token Styles */
+/* Individual Token Styles (TypingBaba / Testbook Paragraph Flow) */
 .eval-token {
   display: inline-block;
-  padding: 2px 6px;
-  margin: 2px 3px;
-  border-radius: var(--radius-sm);
+  padding: 1px 4px;
+  margin: 1px 2px;
+  border-radius: 4px;
   cursor: pointer;
   transition: all var(--transition-fast);
   user-select: none;
+  font-size: 1.05rem;
+  line-height: 1.8;
 }
 
 .eval-token:hover {
-  filter: brightness(0.95);
-  transform: scale(1.04);
+  filter: brightness(0.92);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
 }
 
+/* Correct Words: Crisp Emerald Green */
 .eval-token-correct {
-  background-color: rgba(52, 211, 153, 0.18);
-  color: #065f46;
-  border: 1px solid rgba(16, 185, 129, 0.3);
+  color: #047857;
+  background-color: transparent;
+  border-bottom: 2px solid transparent;
 }
 
 [data-theme="dark"] .eval-token-correct {
-  color: #6ee7b7;
+  color: #34d399;
 }
 
+/* Wrong Words: Distinct Red Highlight */
 .eval-token-wrong {
-  background-color: rgba(248, 113, 113, 0.22);
-  color: #991b1b;
-  border: 1px solid rgba(239, 68, 68, 0.4);
-  text-decoration: underline wavy #ef4444;
+  background-color: #fee2e2;
+  color: #b91c1c;
+  border: 1px solid #f87171;
+  text-decoration: underline wavy #dc2626;
+  font-weight: 500;
 }
 
 [data-theme="dark"] .eval-token-wrong {
+  background-color: rgba(185, 28, 28, 0.25);
   color: #fca5a5;
+  border: 1px solid #ef4444;
 }
 
+/* Missing Words: Soft Warm Amber Underline / Dimmed Flow */
 .eval-token-missing {
-  background-color: rgba(251, 191, 36, 0.22);
-  color: #92400e;
-  border: 1px dashed #d97706;
+  background-color: #fef3c7;
+  color: #b45309;
+  border-bottom: 2px dashed #d97706;
+  opacity: 0.85;
 }
 
 [data-theme="dark"] .eval-token-missing {
+  background-color: rgba(217, 119, 6, 0.2);
   color: #fde68a;
+  border-bottom: 2px dashed #f59e0b;
 }
 
+/* Extra / Unwanted Words: Strike-through Purple/Gray */
 .eval-token-extra {
-  background-color: rgba(167, 139, 250, 0.22);
-  color: #5b21b6;
-  border: 1px solid rgba(139, 92, 246, 0.4);
+  background-color: #f3e8ff;
+  color: #6b21a8;
+  border: 1px solid #c084fc;
+  text-decoration: line-through;
 }
 
 [data-theme="dark"] .eval-token-extra {
-  color: #ddd6fe;
+  background-color: rgba(107, 33, 168, 0.25);
+  color: #d8b4fe;
+  border: 1px solid #a855f7;
 }
 
 /* Interactive Token Details Modal / Popover */
