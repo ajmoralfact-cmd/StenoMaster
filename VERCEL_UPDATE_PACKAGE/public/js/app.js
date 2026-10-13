@@ -4077,6 +4077,7 @@ class StenoApp {
     try {
       this.showToast('उत्तर का मूल्यांकन किया जा रहा है... ⚙️', 'info');
 
+      const eng = window.stenoTypingEngine;
       const evalReport = await this.apiCall('/api/practice/submit', 'POST', {
         passage_id: this.currentPassage.id,
         is_custom: Boolean(this.currentPassage.is_custom),
@@ -4086,7 +4087,10 @@ class StenoApp {
         selected_typing_system: this.selectedTypingSystem || (typingMode === 'krutidev' ? 'kruti_dev_010' : 'mangal_unicode'),
         exam_rule: this.currentExamRule || 'ssc_steno',
         time_taken_seconds: timeTaken,
-        tab_switches: (window.stenoTypingEngine && window.stenoTypingEngine.tabSwitchCount) || 0
+        tab_switches: (eng && eng.tabSwitchCount) || 0,
+        total_keystrokes: (eng && eng.totalKeystrokes) || (text ? text.length : 0),
+        backspace_count: (eng && eng.backspaceCount) || 0,
+        pace_history: (eng && eng.paceHistory) || []
       }, 30000);
 
       stenoTypingEngine.stopPractice();

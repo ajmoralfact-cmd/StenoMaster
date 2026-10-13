@@ -1338,6 +1338,9 @@ class StenoMasterHandler(http.server.SimpleHTTPRequestHandler):
             eval_result["official_text"] = passage.get("official_text", "")
             eval_result["official_text_krutidev"] = passage.get("official_text_krutidev", "")
             eval_result["student_text"] = raw_input
+            eval_result["total_keystrokes"] = int(data.get("total_keystrokes") or len(raw_input or ""))
+            eval_result["backspace_count"] = int(data.get("backspace_count") or 0)
+            eval_result["pace_history"] = data.get("pace_history") or []
             eval_result["steno_notes_url"] = passage.get("steno_notes_url", "")
             eval_result["steno_notes_type"] = passage.get("steno_notes_type", "")
 

@@ -310,6 +310,81 @@ class StenoComparisonView {
         </div>
       </div>
     `;
+  renderKeystrokeEfficiencyCard(report) {
+    const totalKeys = report.total_keystrokes || (report.student_text ? report.student_text.length : 0);
+    const backspaces = report.backspace_count || 0;
+    const tabSwitches = report.tab_switches || 0;
+    const efficiency = totalKeys > 0 ? Math.max(0, Math.min(100, Math.round(((totalKeys - (backspaces * 2)) / totalKeys) * 100))) : 100;
+    const paceSamples = report.pace_history || [];
+
+    // Sparkline SVG / Pace Graph
+    let paceGraphHtml = '';
+    if (paceSamples.length >= 2) {
+      const maxWpm = Math.max(...paceSamples.map(p => p.wpm), 40);
+      const minWpm = Math.min(...paceSamples.map(p => p.wpm), 0);
+      const range = Math.max(10, maxWpm - minWpm);
+      const width = 360;
+      const height = 50;
+
+      const points = paceSamples.map((p, idx) => {
+        const x = Math.round((idx / (paceSamples.length - 1)) * width);
+        const y = Math.round(height - (((p.wpm - minWpm) / range) * (height - 10)) - 5);
+        return `${x},${y}`;
+      }).join(' ');
+
+      paceGraphHtml = `
+        <div style="margin-top:12px; background:var(--bg-subtle); padding:10px 14px; border-radius:var(--radius-md); border:1px solid var(--border-subtle);">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; font-size:0.78rem; color:var(--text-secondary);">
+            <span>📈 गति स्थिरता ग्राफ़ (WPM vs Time Consistency)</span>
+            <span>उच्चतम: <strong>${maxWpm} WPM</strong></span>
+          </div>
+          <svg viewBox="0 0 ${width} ${height}" style="width:100%; height:45px; overflow:visible;">
+            <polyline fill="none" stroke="#0284c7" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" points="${points}" />
+          </svg>
+        </div>
+      `;
+    }
+
+    return `
+      <div class="chart-card" style="margin-bottom:20px; padding:16px 20px; border-radius:var(--radius-md); border:1px solid var(--border-subtle); background:var(--bg-card);">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:12px;">
+          <div style="display:flex; align-items:center; gap:8px;">
+            <span style="font-size:1.15rem;">🎯</span>
+            <strong style="font-size:0.95rem; color:var(--text-primary);">कीस्ट्रोक क्षमता व निरंतरता (Keystroke & Input Efficiency)</strong>
+          </div>
+          <span class="badge" style="background:${efficiency >= 85 ? '#d1fae5' : (efficiency >= 70 ? '#fef3c7' : '#fee2e2')}; color:${efficiency >= 85 ? '#065f46' : (efficiency >= 70 ? '#92400e' : '#991b1b')}; font-weight:700;">
+            ${efficiency >= 85 ? '✓ उत्कृष्ट गति नियंत्रण' : (efficiency >= 70 ? '⚠️ औसत सुधार संभव' : '❌ अत्यधिक बैकस्पेस')}
+          </span>
+        </div>
+
+        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(130px, 1fr)); gap:10px;">
+          <div style="background:var(--bg-subtle); padding:10px 12px; border-radius:var(--radius-sm); border:1px solid var(--border-subtle);">
+            <div style="font-size:0.75rem; color:var(--text-muted);">कुल कीस्ट्रोक्स (Total Keys)</div>
+            <div style="font-size:1.15rem; font-weight:800; color:var(--text-primary); margin-top:2px;">${totalKeys}</div>
+          </div>
+          <div style="background:var(--bg-subtle); padding:10px 12px; border-radius:var(--radius-sm); border:1px solid var(--border-subtle);">
+            <div style="font-size:0.75rem; color:var(--text-muted);">बैकस्पेस उपयोग (Backspaces)</div>
+            <div style="font-size:1.15rem; font-weight:800; color:${backspaces > 20 ? 'var(--accent-red)' : '#10b981'}; margin-top:2px;">
+              ${backspaces} <span style="font-size:0.75rem; font-weight:normal; color:var(--text-muted);">बार</span>
+            </div>
+          </div>
+          <div style="background:var(--bg-subtle); padding:10px 12px; border-radius:var(--radius-sm); border:1px solid var(--border-subtle);">
+            <div style="font-size:0.75rem; color:var(--text-muted);">इनपुट क्षमता (Key Efficiency)</div>
+            <div style="font-size:1.15rem; font-weight:800; color:${efficiency >= 80 ? '#10b981' : 'var(--accent-amber)'}; margin-top:2px;">
+              ${efficiency}%
+            </div>
+          </div>
+          <div style="background:var(--bg-subtle); padding:10px 12px; border-radius:var(--radius-sm); border:1px solid var(--border-subtle);">
+            <div style="font-size:0.75rem; color:var(--text-muted);">विंडो विचलन (Tab Switches)</div>
+            <div style="font-size:1.15rem; font-weight:800; color:${tabSwitches === 0 ? '#10b981' : 'var(--accent-red)'}; margin-top:2px;">
+              ${tabSwitches} <span style="font-size:0.75rem; font-weight:normal; color:var(--text-muted);">${tabSwitches === 0 ? '✓ स्वच्छ' : 'चेतावनी'}</span>
+            </div>
+          </div>
+        </div>
+
+        ${paceGraphHtml}
+      </div>
+    `;
   }
 
   generateWeakWordsFromTokens(report) {
@@ -454,7 +529,7 @@ class StenoComparisonView {
       <!-- 1. Official Exam Qualification Card (SSC / UPSSSC) -->
       ${this.renderExamQualificationCard(report)}
 
-      <!-- 2. Main Score Metrics Grid (6 Clean Cards) -->
+      <!-- 2. Main Score Metrics Grid (Clean Cards) -->
       <div class="result-metrics-grid">
         <div class="metric-card highlight">
           <div class="metric-card-label">Net Speed (नेट गति)</div>
@@ -481,6 +556,9 @@ class StenoComparisonView {
           <div class="metric-card-value">${m.total_words_typed || 0} / ${m.total_words_official || 0}</div>
         </div>
       </div>
+
+      <!-- 2b. Keystroke Efficiency & Backspace Analytics Card (Monkeytype / TypingBaba Metric) -->
+      ${this.renderKeystrokeEfficiencyCard(report)}
 
       <!-- 3. Error Breakdown Pills -->
       <div class="error-breakdown-card">
