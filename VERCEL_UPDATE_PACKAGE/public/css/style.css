@@ -9699,7 +9699,18 @@ html.is-mobile-device.mobile-wide-viewport .mobile-nav-btn {
 }
 
 /* --- SECTION H: NATIVE MOBILE APP DESIGN THEME (MATCHING MOCKUP) --- */
+@media (min-width: 641px) {
+  #mobileStudentGreetingCard {
+    display: none !important;
+  }
+}
+
 @media (max-width: 640px) {
+  /* 0. Student Greeting Card on Mobile */
+  #mobileStudentGreetingCard {
+    display: flex !important;
+  }
+
   /* 1. Dashboard Active Plan Card: Green clean modern style */
   #dashboardActivePlanBanner {
     background: #ecfdf5 !important;
