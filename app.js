@@ -4026,34 +4026,97 @@ class StenoApp {
     try {
       const res = await this.apiCall('/api/practice/history');
       const tbody = document.querySelector('#historyTable tbody');
-      if (!tbody) return;
+      const mobileCardsContainer = document.getElementById('mobileHistoryCardsContainer');
+      if (!tbody && !mobileCardsContainer) return;
 
       const history = res.history || [];
+      const isEn = this.currentLang === 'en';
+
       if (history.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding:30px; color:var(--text-muted);">अभी तक कोई अभ्यास नहीं किया गया है। पहला अभ्यास शुरू करें!</td></tr>';
+        const emptyMsg = isEn ? 'No practice attempts recorded yet. Start your first dictation!' : 'अभी तक कोई अभ्यास नहीं किया गया है। पहला अभ्यास शुरू करें!';
+        if (tbody) {
+          tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; padding:30px; color:var(--text-muted);">${emptyMsg}</td></tr>`;
+        }
+        if (mobileCardsContainer) {
+          mobileCardsContainer.innerHTML = `
+            <div style="text-align:center; padding:35px 20px; background:var(--bg-card); border:1px dashed var(--border); border-radius:14px; color:var(--text-muted);">
+              <div style="font-size:2rem; margin-bottom:8px;">📜</div>
+              <div style="font-weight:700; color:var(--text-main); margin-bottom:4px;">${emptyMsg}</div>
+            </div>
+          `;
+        }
         return;
       }
 
-      tbody.innerHTML = history.map(h => {
-        const dt = new Date(h.created_at).toLocaleDateString('hi-IN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
-        return `
-          <tr>
-            <td><span style="font-size:0.82rem; color:var(--text-muted);">${dt}</span></td>
-            <td><strong>${h.passage_title}</strong></td>
-            <td><span style="font-weight:700; color:var(--primary);">${h.net_wpm} WPM</span></td>
-            <td><span style="font-weight:700; color:var(--accent-green);">${h.accuracy}%</span></td>
-            <td style="color:var(--accent-red);">${h.total_errors}</td>
-            <td>${Math.floor(h.time_taken_seconds / 60)}m ${h.time_taken_seconds % 60}s</td>
-            <td><span class="badge" style="background:var(--bg-subtle); color:var(--text-secondary);">${h.typing_mode}</span></td>
-            <td>
-              <div style="display:flex; gap:6px;">
-                <button class="btn-secondary" style="padding:4px 10px; font-size:0.8rem;" onclick="stenoApp.viewSavedAttemptReport(${h.id})">📊 रिपोर्ट</button>
-                <button class="btn-secondary" style="padding:4px 10px; font-size:0.8rem;" onclick="stenoApp.openPractice(${h.passage_id})">🔄 पुनः</button>
+      // Desktop table rows
+      if (tbody) {
+        tbody.innerHTML = history.map(h => {
+          const dt = new Date(h.created_at).toLocaleDateString('hi-IN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+          return `
+            <tr>
+              <td><span style="font-size:0.82rem; color:var(--text-muted);">${dt}</span></td>
+              <td><strong>${this.escapeHtml(h.passage_title || '')}</strong></td>
+              <td><span style="font-weight:700; color:var(--primary);">${h.net_wpm} WPM</span></td>
+              <td><span style="font-weight:700; color:var(--accent-green);">${h.accuracy}%</span></td>
+              <td style="color:var(--accent-red);">${h.total_errors}</td>
+              <td>${Math.floor(h.time_taken_seconds / 60)}m ${h.time_taken_seconds % 60}s</td>
+              <td><span class="badge" style="background:var(--bg-subtle); color:var(--text-secondary);">${this.escapeHtml(h.typing_mode || 'mangal')}</span></td>
+              <td>
+                <div style="display:flex; gap:6px;">
+                  <button class="btn-secondary" style="padding:4px 10px; font-size:0.8rem;" onclick="stenoApp.viewSavedAttemptReport(${h.id})">📊 रिपोर्ट</button>
+                  <button class="btn-secondary" style="padding:4px 10px; font-size:0.8rem;" onclick="stenoApp.openPractice(${h.passage_id})">🔄 पुनः</button>
+                </div>
+              </td>
+            </tr>
+          `;
+        }).join('');
+      }
+
+      // Mobile vertically stacked responsive cards
+      if (mobileCardsContainer) {
+        mobileCardsContainer.innerHTML = history.map(h => {
+          const dt = new Date(h.created_at).toLocaleDateString('hi-IN', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+          const mins = Math.floor(h.time_taken_seconds / 60);
+          const secs = h.time_taken_seconds % 60;
+          return `
+            <div class="mobile-history-card">
+              <div class="mhc-top-bar">
+                <span class="mhc-date">📅 ${dt}</span>
+                <span class="mhc-badge">${this.escapeHtml(h.typing_mode || 'mangal').toUpperCase()}</span>
               </div>
-            </td>
-          </tr>
-        `;
-      }).join('');
+              <h4 class="mhc-title hindi-text notranslate skiptranslate" translate="no" lang="hi">
+                <hindi-root text="${this.escapeHtml(h.passage_title || 'डिक्टेशन अभ्यास')}"></hindi-root>
+              </h4>
+              <div class="mhc-metrics-grid">
+                <div class="mhc-metric-box">
+                  <span class="mhc-metric-label">${isEn ? 'Net Speed' : 'नेट गति'}</span>
+                  <strong class="mhc-metric-val wpm-val">${h.net_wpm} <small>WPM</small></strong>
+                </div>
+                <div class="mhc-metric-box">
+                  <span class="mhc-metric-label">${isEn ? 'Accuracy' : 'सटीकता'}</span>
+                  <strong class="mhc-metric-val acc-val">${h.accuracy}%</strong>
+                </div>
+                <div class="mhc-metric-box">
+                  <span class="mhc-metric-label">${isEn ? 'Errors' : 'त्रुटियां'}</span>
+                  <strong class="mhc-metric-val err-val">${h.total_errors}</strong>
+                </div>
+                <div class="mhc-metric-box">
+                  <span class="mhc-metric-label">${isEn ? 'Time' : 'समय'}</span>
+                  <strong class="mhc-metric-val time-val">${mins}m ${secs}s</strong>
+                </div>
+              </div>
+              <div class="mhc-actions">
+                <button type="button" class="btn-primary mhc-action-btn" onclick="stenoApp.viewSavedAttemptReport(${h.id})">
+                  📊 ${isEn ? 'View Report Card' : 'विस्तृत रिपोर्ट कार्ड देखें'}
+                </button>
+                <button type="button" class="btn-secondary mhc-action-btn" onclick="stenoApp.openPractice(${h.passage_id})">
+                  🔄 ${isEn ? 'Retake' : 'पुनः टेस्ट दें'}
+                </button>
+              </div>
+            </div>
+          `;
+        }).join('');
+      }
     } catch (err) {
       console.error('Failed to load history:', err);
     }

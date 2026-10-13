@@ -1454,7 +1454,7 @@
           </div>
         </div>
 
-        <div class="stat-card" style="margin-bottom:20px; overflow-x: auto;">
+        <div class="stat-card desktop-history-card-wrap" style="margin-bottom:20px; overflow-x: auto;">
           <table class="data-table" id="historyTable">
             <thead>
               <tr>
@@ -1472,6 +1472,11 @@
               <!-- Populated dynamically -->
             </tbody>
           </table>
+        </div>
+
+        <!-- Mobile-first Vertically Stacked Practice History Cards -->
+        <div class="mobile-history-cards-container" id="mobileHistoryCardsContainer" style="display:none; flex-direction:column; gap:12px; margin-bottom:24px;">
+          <!-- Populated dynamically via stenoApp.loadHistory() -->
         </div>
       </main>
 
