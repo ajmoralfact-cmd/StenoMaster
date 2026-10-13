@@ -2238,6 +2238,16 @@ class StenoApp {
       if (nameEl) nameEl.textContent = name;
       if (streakEl) streakEl.textContent = `${this.user.streak_days || 0} Day Streak`;
 
+      // Update Mockup Style Mobile Greeting Card
+      const mobGreetingCard = document.getElementById('mobileStudentGreetingCard');
+      const msgUserName = document.getElementById('msgUserName');
+      const msgAvatar = document.getElementById('msgAvatarInitial');
+      const msgUserId = document.getElementById('msgUserIdBadge');
+      if (mobGreetingCard) mobGreetingCard.style.display = 'flex';
+      if (msgUserName) msgUserName.textContent = `Hello, ${name}`;
+      if (msgAvatar) msgAvatar.textContent = name.charAt(0).toUpperCase();
+      if (msgUserId) msgUserId.textContent = this.user.student_id || ('SM' + String(this.user.id || '20250981').padStart(6, '0'));
+
       if (roleEl) {
         roleEl.textContent = (this.user.role === 'admin' || this.user.is_premium) ? 'Pro Member' : 'Student';
         roleEl.className = 'header-user-role role-student';

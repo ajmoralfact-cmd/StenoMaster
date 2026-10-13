@@ -9698,18 +9698,123 @@ html.is-mobile-device.mobile-wide-viewport .mobile-nav-btn {
   }
 }
 
-/* --- SECTION G: Footer Contact & Spacing --- */
+/* --- SECTION H: NATIVE MOBILE APP DESIGN THEME (MATCHING MOCKUP) --- */
 @media (max-width: 640px) {
-  .site-footer {
-    padding: 24px 14px calc(var(--bottom-nav-height, 65px) + 24px) 14px !important;
+  /* 1. Dashboard Active Plan Card: Green clean modern style */
+  #dashboardActivePlanBanner {
+    background: #ecfdf5 !important;
+    border: 1.5px solid #a7f3d0 !important;
+    border-radius: 16px !important;
+    padding: 14px 16px !important;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.08) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
   }
-  .footer-contact-item a {
-    text-decoration: underline;
-    word-break: break-all;
+  #dashboardActivePlanBanner #planBannerTag {
+    background: #10b981 !important;
+    color: #ffffff !important;
+    font-size: 0.70rem !important;
+    padding: 2px 8px !important;
+    border-radius: 6px !important;
   }
-  .footer-links-list li a {
-    min-height: 36px;
-    display: inline-flex;
-    align-items: center;
+  #dashboardActivePlanBanner #planBannerTitle {
+    color: #065f46 !important;
+    font-size: 1.05rem !important;
+  }
+  #dashboardActivePlanBanner #planBannerActionBtn {
+    background: #0284c7 !important;
+    color: #ffffff !important;
+    font-size: 0.80rem !important;
+    font-weight: 700 !important;
+    padding: 7px 14px !important;
+    border-radius: 20px !important;
+    box-shadow: 0 2px 6px rgba(2, 132, 199, 0.25) !important;
+  }
+
+  /* 2. Dashboard 4 Stats in 2x2 Grid on Mobile (Matching Mockup: Streak, Daily Target, Accuracy, Rewards) */
+  .stats-carousel-section .stats-carousel-header {
+    display: none !important;
+  }
+  .stats-carousel-section .carousel-nav-btn,
+  .stats-carousel-section .stats-carousel-dots {
+    display: none !important;
+  }
+  .horizontal-stats-grid {
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 12px !important;
+    width: 100% !important;
+    overflow: visible !important;
+  }
+  .h-stat-card {
+    min-width: 0 !important;
+    width: 100% !important;
+    border-radius: 16px !important;
+    padding: 14px !important;
+    background: var(--bg-card, #ffffff) !important;
+    border: 1px solid var(--border-subtle, #e2e8f0) !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03) !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: space-between !important;
+  }
+  /* Show only 4 primary mockup cards on mobile home view, hide extra secondary ones */
+  .h-stat-card:nth-child(n+5) {
+    display: none !important;
+  }
+  .h-stat-card .h-stat-top {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    margin-bottom: 6px !important;
+  }
+  .h-stat-card .h-stat-icon {
+    font-size: 1.4rem !important;
+  }
+  .h-stat-card .h-stat-label {
+    font-size: 0.78rem !important;
+    font-weight: 700 !important;
+    color: var(--text-muted, #64748b) !important;
+  }
+  .h-stat-card .h-stat-tag,
+  .h-stat-card .h-stat-sub,
+  .h-stat-card .h-stat-micro {
+    display: none !important;
+  }
+  .h-stat-card .h-stat-val {
+    font-size: 1.35rem !important;
+    font-weight: 800 !important;
+    color: var(--text-main, #0f172a) !important;
+    margin-top: 4px !important;
+  }
+
+  /* 3. Modern Floating Pill Bottom Navigation (Matching Mockup) */
+  .mobile-bottom-nav {
+    height: 64px !important;
+    background: rgba(255, 255, 255, 0.96) !important;
+    backdrop-filter: blur(12px) !important;
+    border-top: 1px solid rgba(226, 232, 240, 0.8) !important;
+    box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.05) !important;
+    padding: 6px 10px calc(6px + env(safe-area-inset-bottom)) 10px !important;
+  }
+  .mobile-nav-btn {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 3px !important;
+    font-size: 0.70rem !important;
+    font-weight: 600 !important;
+    color: #64748b !important;
+    border-radius: 12px !important;
+    transition: all 0.2s ease !important;
+  }
+  .mobile-nav-btn span:first-child {
+    font-size: 1.25rem !important;
+  }
+  .mobile-nav-btn.active {
+    color: #0284c7 !important;
+    font-weight: 800 !important;
   }
 }
