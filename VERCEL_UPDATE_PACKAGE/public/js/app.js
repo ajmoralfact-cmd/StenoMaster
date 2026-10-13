@@ -959,30 +959,158 @@ class StenoApp {
       if (installBtn) {
         installBtn.style.display = 'inline-flex';
       }
+      this.showPwaInstallPopup();
     });
 
     window.addEventListener('appinstalled', () => {
       this.deferredPwaPrompt = null;
       const installBtn = document.getElementById('pwaInstallBtn');
       if (installBtn) installBtn.style.display = 'none';
+      this.dismissPwaPopup(true);
       this.showToast('🎉 StenoMaster ऐप सफलतापूर्वक इंस्टॉल हो गया!', 'success');
     });
+
+    // Mount Mobile Download App Popup on Page Load
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', () => this.mountPwaInstallPopup());
+    } else {
+      this.mountPwaInstallPopup();
+    }
   }
 
-  installPwaApp() {
+  mountPwaInstallPopup() {
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+    if (isStandalone) return;
+
+    if (sessionStorage.getItem('pwa_popup_dismissed') === '1') return;
+
+    if (!document.getElementById('mobilePwaInstallPopup')) {
+      const popupDiv = document.createElement('div');
+      popupDiv.id = 'mobilePwaInstallPopup';
+      popupDiv.className = 'mobile-pwa-popup';
+      popupDiv.innerHTML = `
+        <div class="mobile-pwa-popup-content">
+          <div class="mobile-pwa-popup-left">
+            <div class="mobile-pwa-app-icon">🎓</div>
+            <div class="mobile-pwa-app-info">
+              <div class="mobile-pwa-app-title">
+                <strong>StenoMaster App</strong>
+                <span class="pwa-verified-badge">✓ Free (2MB)</span>
+              </div>
+              <div class="mobile-pwa-app-desc">
+                फ़ास्ट स्टेनो अभ्यास के लिए ऐप डाउनलोड करें
+              </div>
+            </div>
+          </div>
+          <div class="mobile-pwa-popup-actions">
+            <button type="button" class="btn-pwa-download" onclick="stenoApp.triggerPwaInstall()">
+              <span>📲</span> <span>Install App</span>
+            </button>
+            <button type="button" class="btn-pwa-close" onclick="stenoApp.dismissPwaPopup()" aria-label="Close" title="बाद में">✕</button>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(popupDiv);
+    }
+
+    if (!document.getElementById('pwaInstallGuideModal')) {
+      const guideModal = document.createElement('div');
+      guideModal.id = 'pwaInstallGuideModal';
+      guideModal.className = 'pwa-guide-modal';
+      guideModal.innerHTML = `
+        <div class="pwa-guide-card">
+          <button type="button" class="btn-pwa-close" onclick="stenoApp.closePwaGuideModal()" style="position:absolute; top:14px; right:14px;">✕</button>
+          <div style="font-size:2.4rem; margin-bottom:8px;">📱</div>
+          <h3 style="margin:0; font-size:1.15rem; font-weight:800; color:#0f172a;">StenoMaster ऐप डाउनलोड करें</h3>
+          <p style="font-size:0.8rem; color:#64748b; margin:4px 0 16px 0;">क्रोम ब्राउज़र में सिर्फ 2 सेकंड में ऐप इंस्टॉल करें:</p>
+          
+          <div class="pwa-step-row">
+            <div class="pwa-step-num">1</div>
+            <div style="font-size:0.82rem; color:#1e293b; line-height:1.4;">
+              Chrome में सबसे ऊपर दाईं तरफ <strong>⋮ (3 बिंदु मेनू)</strong> पर क्लिक करें।
+            </div>
+          </div>
+
+          <div class="pwa-step-row">
+            <div class="pwa-step-num">2</div>
+            <div style="font-size:0.82rem; color:#1e293b; line-height:1.4;">
+              मेनू में <strong>"Install app"</strong> या <strong>"Add to Home screen"</strong> चुनें।
+            </div>
+          </div>
+
+          <div class="pwa-step-row">
+            <div class="pwa-step-num">3</div>
+            <div style="font-size:0.82rem; color:#1e293b; line-height:1.4;">
+              <strong>"Install"</strong> पर टैप करें — ऐप सीधे आपके मोबाइल स्क्रीन पर आ जाएगा!
+            </div>
+          </div>
+
+          <button type="button" class="btn-primary" onclick="stenoApp.closePwaGuideModal()" style="width:100%; margin-top:18px; padding:10px 16px; font-size:0.9rem; font-weight:800; border-radius:12px; background:linear-gradient(135deg, #0284c7, #2563eb); border:none; color:#fff; cursor:pointer;">
+            समझ गया (Got It)
+          </button>
+        </div>
+      `;
+      document.body.appendChild(guideModal);
+    }
+
+    setTimeout(() => {
+      this.showPwaInstallPopup();
+    }, 1200);
+  }
+
+  showPwaInstallPopup() {
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+    if (isStandalone) return;
+    if (sessionStorage.getItem('pwa_popup_dismissed') === '1') return;
+
+    const popup = document.getElementById('mobilePwaInstallPopup');
+    if (popup) {
+      popup.classList.add('visible');
+    }
+  }
+
+  dismissPwaPopup(permanent = false) {
+    const popup = document.getElementById('mobilePwaInstallPopup');
+    if (popup) {
+      popup.classList.remove('visible');
+    }
+    sessionStorage.setItem('pwa_popup_dismissed', '1');
+    if (permanent) {
+      localStorage.setItem('pwa_installed_permanent', '1');
+    }
+  }
+
+  triggerPwaInstall() {
     if (this.deferredPwaPrompt) {
       this.deferredPwaPrompt.prompt();
       this.deferredPwaPrompt.userChoice.then((choiceResult) => {
-        if (choiceResult.outcome === 'accepted') {
-          console.log('User accepted PWA installation');
+        if (choiceResult && choiceResult.outcome === 'accepted') {
+          this.dismissPwaPopup(true);
+          this.showToast('🎉 StenoMaster ऐप डाउनलोड हो रहा है!', 'success');
         }
         this.deferredPwaPrompt = null;
-        const installBtn = document.getElementById('pwaInstallBtn');
-        if (installBtn) installBtn.style.display = 'none';
       });
     } else {
-      this.showToast('ब्राउज़र मेनू (⋮) से "Add to Home Screen" या "Install" चुनें।', 'info');
+      this.openPwaGuideModal();
     }
+  }
+
+  openPwaGuideModal() {
+    const modal = document.getElementById('pwaInstallGuideModal');
+    if (modal) {
+      modal.classList.add('open');
+    }
+  }
+
+  closePwaGuideModal() {
+    const modal = document.getElementById('pwaInstallGuideModal');
+    if (modal) {
+      modal.classList.remove('open');
+    }
+  }
+
+  installPwaApp() {
+    this.triggerPwaInstall();
   }
 
   // -------------------------------------------------------------------------
@@ -2406,6 +2534,7 @@ class StenoApp {
       // Student Sidebar Items (Strictly NO admin items in DOM)
       const isEn = this.currentLang === 'en';
       const studentItems = isEn ? [
+        { id: 'download-app', icon: '📲', label: 'Download App', sub: 'Install Mobile App', action: 'installPwa' },
         { id: 'home', icon: '🏠', label: 'Dashboard', sub: 'Home & Analytics' },
         { id: 'classes', icon: '🎧', label: 'Practice Classes', sub: 'Dictation Sessions' },
         { id: 'self-practice', icon: '🎙️', label: 'Self Practice', sub: 'Custom Dictation' },
@@ -2418,6 +2547,7 @@ class StenoApp {
         { id: 'refer', icon: '🎁', label: 'Refer & Dual-Wallet', sub: 'Earnings & Credits', url: '/wallet' },
         { id: 'settings', icon: '⚙️', label: 'Settings', sub: 'Profile & Preferences', url: '/profile' }
       ] : [
+        { id: 'download-app', icon: '📲', label: 'ऐप डाउनलोड करें (App)', sub: 'मोबाइल ऐप इंस्टॉल करें', action: 'installPwa' },
         { id: 'home', icon: '🏠', label: 'डैशबोर्ड (Dashboard)', sub: 'होम एवं आंकड़े' },
         { id: 'classes', icon: '🎧', label: 'अभ्यास कक्षाएं (Classes)', sub: 'दैनिक डिक्टेशन' },
         { id: 'self-practice', icon: '🎙️', label: 'सेल्फ प्रैक्टिस (Self)', sub: 'कस्टम डिक्टेशन' },
@@ -2445,7 +2575,7 @@ class StenoApp {
           <span>👨‍🎓</span> <span>${isEn ? 'STUDENT PORTAL' : 'विद्यार्थी पोर्टल (STUDENT)'}</span>
         </div>
         ${studentItems.map(item => `
-          <a href="javascript:void(0)" class="nav-item ${currentView === item.id ? 'active' : ''}" data-sidebar-item="${item.id}" title="${item.label}">
+          <a href="javascript:void(0)" class="nav-item ${currentView === item.id ? 'active' : ''} ${item.action === 'installPwa' ? 'pwa-sidebar-highlight' : ''}" data-sidebar-item="${item.id}" title="${item.label}">
             <span class="nav-item-icon">${item.icon}</span>
             <div style="flex:1; min-width:0;">
               <div style="font-weight:600; font-size:0.86rem; line-height:1.2;">${item.label}</div>
@@ -2462,7 +2592,9 @@ class StenoApp {
         el.addEventListener('click', (e) => {
           e.preventDefault();
           this.closeSidebar();
-          if (item.url) {
+          if (item.action === 'installPwa') {
+            this.triggerPwaInstall();
+          } else if (item.url) {
             window.location.href = item.url;
           } else {
             this.navigate(item.id);

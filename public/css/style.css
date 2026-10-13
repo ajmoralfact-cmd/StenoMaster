@@ -9829,3 +9829,235 @@ html.is-mobile-device.mobile-wide-viewport .mobile-nav-btn {
     font-weight: 800 !important;
   }
 }
+
+/* ==========================================================================
+   PWA MOBILE APP DOWNLOAD POPUP & INSTALLATION GUIDE MODAL
+   ========================================================================== */
+.mobile-pwa-popup {
+  position: fixed;
+  bottom: calc(var(--bottom-nav-height, 64px) + 12px + env(safe-area-inset-bottom));
+  left: 12px;
+  right: 12px;
+  max-width: 440px;
+  margin: 0 auto;
+  z-index: 99999;
+  background: #ffffff;
+  border: 1.5px solid #38bdf8;
+  border-radius: 18px;
+  padding: 12px 14px;
+  box-shadow: 0 12px 36px -4px rgba(2, 132, 199, 0.35), 0 4px 12px rgba(0, 0, 0, 0.08);
+  transform: translateY(180%);
+  opacity: 0;
+  pointer-events: none;
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
+}
+
+@media (min-width: 769px) {
+  .mobile-pwa-popup {
+    bottom: 24px;
+    right: 24px;
+    left: auto;
+    max-width: 380px;
+  }
+}
+
+.mobile-pwa-popup.visible {
+  transform: translateY(0);
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.mobile-pwa-popup-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.mobile-pwa-popup-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
+}
+
+.mobile-pwa-app-icon {
+  width: 42px;
+  height: 42px;
+  min-width: 42px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #0284c7, #2563eb);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.35rem;
+  box-shadow: 0 3px 8px rgba(2, 132, 199, 0.3);
+  border: 1.5px solid #bae6fd;
+}
+
+.mobile-pwa-app-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.mobile-pwa-app-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  line-height: 1.2;
+}
+
+.mobile-pwa-app-title strong {
+  font-size: 0.92rem;
+  font-weight: 800;
+  color: #0f172a;
+  white-space: nowrap;
+}
+
+.pwa-verified-badge {
+  font-size: 0.68rem;
+  font-weight: 800;
+  color: #059669;
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  padding: 1px 6px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.mobile-pwa-app-desc {
+  font-size: 0.72rem;
+  color: #64748b;
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-weight: 600;
+}
+
+.mobile-pwa-popup-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.btn-pwa-download {
+  background: linear-gradient(135deg, #0284c7, #2563eb);
+  color: #ffffff !important;
+  border: none;
+  font-size: 0.82rem;
+  font-weight: 800;
+  padding: 8px 14px;
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+  box-shadow: 0 3px 10px rgba(2, 132, 199, 0.4);
+  white-space: nowrap;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.btn-pwa-download:active {
+  transform: scale(0.96);
+}
+
+.btn-pwa-close {
+  background: #f1f5f9;
+  border: none;
+  color: #64748b;
+  font-size: 0.95rem;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+  flex-shrink: 0;
+}
+
+.btn-pwa-close:active {
+  background: #e2e8f0;
+}
+
+/* Sidebar Highlight for Download App */
+.pwa-sidebar-highlight {
+  background: linear-gradient(135deg, rgba(2, 132, 199, 0.08), rgba(37, 99, 235, 0.12)) !important;
+  border: 1px solid #bae6fd !important;
+  border-radius: 12px !important;
+  margin-bottom: 6px !important;
+}
+
+.pwa-sidebar-highlight .nav-item-icon {
+  font-size: 1.15rem !important;
+}
+
+/* Modal Guide for Chrome and Safari installation */
+.pwa-guide-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(6px);
+  z-index: 100000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+}
+
+.pwa-guide-modal.open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.pwa-guide-card {
+  background: #ffffff;
+  border-radius: 20px;
+  width: 100%;
+  max-width: 400px;
+  padding: 22px 20px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
+  position: relative;
+  text-align: center;
+  animation: pwaCardSlide 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes pwaCardSlide {
+  from { transform: translateY(30px) scale(0.95); opacity: 0; }
+  to { transform: translateY(0) scale(1); opacity: 1; }
+}
+
+.pwa-step-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  text-align: left;
+  margin-top: 12px;
+  background: #f8fafc;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+}
+
+.pwa-step-num {
+  width: 26px;
+  height: 26px;
+  min-width: 26px;
+  border-radius: 50%;
+  background: #0284c7;
+  color: #fff;
+  font-weight: 800;
+  font-size: 0.78rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
