@@ -534,7 +534,7 @@ class StenoApp {
 
     // 4. Known valid student views
     const validViews = [
-      'home', 'classes', 'self-practice', 'subscription', 'result', 'my-practice',
+      'home', 'classes', 'community', 'self-practice', 'subscription', 'result', 'my-practice',
       'progress', 'leaderboard', 'bookmarks', 'profile', 'refer',
       'notifications', 'settings', 'rules', 'category-detail', 'help'
     ];
@@ -7552,7 +7552,7 @@ ${link}`;
       return;
     }
 
-    const currentUserId = this.user ? this.user.user_id : null;
+    const currentUserId = this.user ? (this.user.user_id || this.user.id) : null;
     const isAdmin = Boolean(this.user && this.user.role === 'admin');
 
     feedEl.innerHTML = posts.map(post => {
@@ -7873,7 +7873,7 @@ ${link}`;
     try {
       const res = await this.apiCall(`/api/community/posts/${postId}/replies`);
       const replies = (res && res.replies) || [];
-      const currentUserId = this.user ? this.user.user_id : null;
+      const currentUserId = this.user ? (this.user.user_id || this.user.id) : null;
       const isAdmin = Boolean(this.user && this.user.role === 'admin');
 
       if (replies.length === 0) {
