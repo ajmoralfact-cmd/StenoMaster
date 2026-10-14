@@ -2246,15 +2246,19 @@ class StenoMasterHandler(http.server.SimpleHTTPRequestHandler):
             clean_name = os.path.basename(orig_filename).replace(' ', '_')
             ext = os.path.splitext(clean_name)[1].lower()
             if ext not in ('.png', '.jpg', '.jpeg', '.webp'):
-                self._send_json(400, {"error": "अनुमति प्राप्त फ़ोटो प्रकार: .png, .jpg, .jpeg, .webp"})
-                return
-            b64_data = data.get('data', '')
+                ext = '.jpg'
+                clean_name += '.jpg'
+            b64_data = data.get('data') or data.get('image') or data.get('image_data') or ''
             if ',' in b64_data:
                 b64_data = b64_data.split(',')[1]
             try:
                 raw_bytes = base64.b64decode(b64_data)
             except Exception as e:
                 self._send_json(400, {"error": f"Base64 decode failed: {e}"})
+                return
+
+            if not raw_bytes:
+                self._send_json(400, {"error": "कृपया मान्य फ़ोटो फ़ाइल चुनें (फ़ोटो डेटा रिक्त है)।"})
                 return
 
             if len(raw_bytes) > 8 * 1024 * 1024:

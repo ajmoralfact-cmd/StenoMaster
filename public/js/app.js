@@ -7469,19 +7469,51 @@ ${link}`;
 
     const reader = new FileReader();
     reader.onload = (e) => {
-      const dataUrl = e.target.result;
-      this.selectedCommunityImage = {
-        filename: file.name,
-        data: dataUrl
-      };
+      const rawDataUrl = e.target.result;
+      try {
+        const img = new Image();
+        img.onload = () => {
+          const maxDim = 1400;
+          let w = img.width;
+          let h = img.height;
+          if (w > maxDim || h > maxDim) {
+            if (w > h) {
+              h = Math.round((h * maxDim) / w);
+              w = maxDim;
+            } else {
+              w = Math.round((w * maxDim) / h);
+              h = maxDim;
+            }
+          }
+          const canvas = document.createElement('canvas');
+          canvas.width = w;
+          canvas.height = h;
+          const ctx = canvas.getContext('2d');
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(0, 0, w, h);
+          ctx.drawImage(img, 0, 0, w, h);
+          const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.85);
 
-      const previewBox = document.getElementById('commImagePreviewContainer');
-      const previewImg = document.getElementById('commImagePreviewImg');
-      const previewName = document.getElementById('commImagePreviewName');
-      if (previewBox && previewImg && previewName) {
-        previewImg.src = dataUrl;
-        previewName.textContent = file.name;
-        previewBox.style.display = 'flex';
+          this.selectedCommunityImage = {
+            filename: (file.name || 'steno_photo.jpg').replace(/\.[^.]+$/, '') + '.jpg',
+            data: compressedDataUrl
+          };
+
+          const previewBox = document.getElementById('commImagePreviewContainer');
+          const previewImg = document.getElementById('commImagePreviewImg');
+          const previewName = document.getElementById('commImagePreviewName');
+          if (previewBox && previewImg && previewName) {
+            previewImg.src = compressedDataUrl;
+            previewName.textContent = file.name;
+            previewBox.style.display = 'flex';
+          }
+        };
+        img.onerror = () => {
+          this.selectedCommunityImage = { filename: file.name, data: rawDataUrl };
+        };
+        img.src = rawDataUrl;
+      } catch (err) {
+        this.selectedCommunityImage = { filename: file.name, data: rawDataUrl };
       }
     };
     reader.readAsDataURL(file);
@@ -7721,13 +7753,12 @@ ${link}`;
               </div>
             ` : ''}
 
-            <!-- Steno Notebook Photo Card -->
+            <!-- Telegram Style Photo Message Bubble -->
             ${post.image_url ? `
-              <div class="tg-steno-photo-card" onclick="stenoApp.openCommunityImageZoom('${this.escapeHtml(post.image_url)}')">
-                <img src="${this.escapeHtml(post.image_url)}" alt="Steno Outline" class="tg-steno-photo-thumb" loading="lazy">
-                <div class="tg-steno-photo-caption">
-                  <span class="tg-photo-title">📝 स्टेनो आउटलाइन फ़ोटो</span>
-                  <span class="tg-photo-zoom-tag">🔍 बड़ा देखें</span>
+              <div class="tg-photo-bubble-wrap" onclick="stenoApp.openCommunityImageZoom('${this.escapeHtml(post.image_url)}')">
+                <img src="${this.escapeHtml(post.image_url)}" alt="Steno Outline Photo" class="tg-msg-photo-img" loading="lazy" onerror="this.onerror=null; this.closest('.tg-photo-bubble-wrap').style.display='none';">
+                <div class="tg-photo-overlay-badge">
+                  <span>🔍 बड़ा देखें</span>
                 </div>
               </div>
             ` : ''}
@@ -7836,6 +7867,7 @@ ${link}`;
       // 1. Upload photo if selected
       if (this.selectedCommunityImage) {
         const upRes = await this.apiCall('/api/community/upload-image', 'POST', {
+          data: this.selectedCommunityImage.data,
           image: this.selectedCommunityImage.data,
           filename: this.selectedCommunityImage.filename
         });

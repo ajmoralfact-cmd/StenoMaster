@@ -4010,11 +4010,13 @@ def save_uploaded_file(filename: str, mime_type: str, data: bytes) -> bool:
     conn = get_db()
     c = conn.cursor()
     try:
-        c.execute("""
+        is_pg = HAS_PSYCOPG2 and hasattr(conn, '_conn')
+        col_type = 'BYTEA' if is_pg else 'BLOB'
+        c.execute(f"""
             CREATE TABLE IF NOT EXISTS uploaded_files (
                 filename TEXT PRIMARY KEY,
                 mime_type TEXT NOT NULL,
-                data BLOB,
+                data {col_type},
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """)
