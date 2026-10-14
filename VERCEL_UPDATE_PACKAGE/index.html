@@ -2102,134 +2102,157 @@
       <!-- ===================================================================
            VIEW: STUDENT COMMUNITY CHAT & DOUBT FORUM (100% Free For All)
            =================================================================== -->
+      <!-- ===================================================================
+           VIEW: STUDENT COMMUNITY GROUP CHAT (Telegram / WhatsApp Style UI)
+           =================================================================== -->
       <main class="page-view" id="view-community" style="display:none;">
-        <div class="community-view-container">
-          <!-- Community Top Banner Header -->
-          <div class="community-header-banner">
-            <div class="community-header-info">
-              <div class="community-badge-pill">
-                <span>💬</span> <span>ऑल-स्टूडेंट्स कम्युनिटी चैट व डाउट मंच</span>
-                <span class="community-free-pill">100% FREE</span>
+        <div class="tg-chat-app-wrapper">
+          <div class="tg-chat-card">
+
+            <!-- 1. Top Chat Header Bar (WhatsApp / Telegram Group Header) -->
+            <div class="tg-chat-header">
+              <div class="tg-avatar-wrap">
+                <div class="tg-group-avatar">✍️</div>
+                <span class="tg-online-dot"></span>
               </div>
-              <h2 class="community-title">छात्र चर्चा एवं स्टेनो डाउट समाधान मंच</h2>
-              <p class="community-subtitle">
-                रामधारी गुप्ता व स्टेनो आउटलाइन्स पूछें, अपनी नोटबुक की फ़ोटो अपलोड कर डाउट क्लियर करें और साथी छात्रों से चर्चा करें!
-              </p>
-            </div>
-            <div class="community-header-actions">
-              <button type="button" class="btn-refresh-community" onclick="stenoApp.loadCommunityPosts(true)" title="पोस्ट्स रिफ्रेश करें">
-                <span class="refresh-icon">🔄</span> <span>रिफ्रेश</span>
-              </button>
-            </div>
-          </div>
-
-          <!-- Category Tags Filter Bar -->
-          <div class="community-tags-filter" id="communityTagsFilter">
-            <button type="button" class="comm-tag-btn active" data-tag="सभी" onclick="stenoApp.filterCommunityTag('सभी')">🌟 सभी चर्चाएं</button>
-            <button type="button" class="comm-tag-btn" data-tag="डाउट / प्रश्न" onclick="stenoApp.filterCommunityTag('डाउट / प्रश्न')">❓ डाउट / प्रश्न</button>
-            <button type="button" class="comm-tag-btn" data-tag="आउटलाइन सहायता" onclick="stenoApp.filterCommunityTag('आउटलाइन सहायता')">📝 आउटलाइन सहायता</button>
-            <button type="button" class="comm-tag-btn" data-tag="टिप्स व ट्रिक्स" onclick="stenoApp.filterCommunityTag('टिप्स व ट्रिक्स')">💡 टिप्स व ट्रिक्स</button>
-            <button type="button" class="comm-tag-btn" data-tag="परीक्षा चर्चा" onclick="stenoApp.filterCommunityTag('परीक्षा चर्चा')">🏛️ परीक्षा चर्चा</button>
-            <button type="button" class="comm-tag-btn" data-tag="सामान्य" onclick="stenoApp.filterCommunityTag('सामान्य')">💬 सामान्य</button>
-          </div>
-
-          <!-- Create Post Box (WhatsApp & Colorful Forum Style) -->
-          <div class="comm-create-card">
-            <div class="comm-create-header">
-              <div class="comm-user-info">
-                <div class="comm-avatar" id="commCurrentUserAvatar">S</div>
-                <div>
-                  <strong class="comm-user-name" id="commCurrentUserName">विद्यार्थी</strong>
-                  <div class="comm-subtext">अपनी समस्या या सवाल सभी विद्यार्थियों के साथ साझा करें</div>
+              <div class="tg-group-info">
+                <div class="tg-group-title-row">
+                  <span class="tg-group-name">StenoMaster ऑल-इंडिया छात्र ग्रुप</span>
+                  <span class="tg-free-badge">100% FREE</span>
+                </div>
+                <div class="tg-group-subtitle" id="commActiveMembersSubtitle">
+                  हर्ष, अमन, पूजा, राहुल, विकास, +2,480 विद्यार्थी • 142 ऑनलाइन
                 </div>
               </div>
-              <div class="comm-tag-selector-wrap">
-                <label for="commPostTagSelect">कैटेगरी:</label>
-                <select id="commPostTagSelect" class="comm-tag-dropdown">
-                  <option value="सामान्य">💬 सामान्य</option>
-                  <option value="डाउट / प्रश्न" selected>❓ डाउट / प्रश्न</option>
-                  <option value="आउटलाइन सहायता">📝 आउटलाइन सहायता</option>
-                  <option value="टिप्स व ट्रिक्स">💡 टिप्स व ट्रिक्स</option>
-                  <option value="परीक्षा चर्चा">🏛️ परीक्षा चर्चा</option>
-                </select>
+              <div class="tg-header-actions">
+                <button type="button" class="tg-hdr-btn" onclick="stenoApp.loadCommunityPosts(true)" title="रिफ्रेश करें (Refresh)">🔄</button>
+                <button type="button" class="tg-hdr-btn" onclick="stenoApp.toggleCommunitySearch()" title="सर्च करें (Search)">🔍</button>
               </div>
             </div>
 
-            <!-- Text Input Area -->
-            <div class="comm-input-wrap">
-              <textarea id="commPostTextarea" class="comm-textarea notranslate" translate="no" lang="hi"
-                placeholder="यहाँ अपना स्टेनो डाउट, सवाल या अनुभव लिखें... (उदा: 'अभ्यास 15 में 'आत्मनिर्भरता' की सबसे सरल आउटलाइन क्या होगी?')"></textarea>
+            <!-- 2. Pinned Announcement Strip (Telegram style) -->
+            <div class="tg-pinned-bar" id="tgPinnedMessageBar" style="display:none;">
+              <div class="tg-pinned-indicator"></div>
+              <span class="tg-pinned-icon">📌</span>
+              <div class="tg-pinned-content" id="tgPinnedContentWrap" onclick="stenoApp.scrollToPinnedMessage()">
+                <div class="tg-pinned-label">पिन किया गया संदेश (Admin Announcement)</div>
+                <div class="tg-pinned-text" id="tgPinnedMessageText">...</div>
+              </div>
+              <button type="button" class="tg-pinned-close" onclick="stenoApp.dismissPinnedBanner()" title="छिपाएं">✕</button>
             </div>
 
-            <!-- WhatsApp Style Emoji Quick Toolbar -->
-            <div class="comm-emoji-toolbar">
-              <span class="emoji-bar-label">WhatsApp इमोजी:</span>
-              <div class="emoji-bar-scroll">
-                <button type="button" class="emoji-btn" onclick="stenoApp.insertCommunityEmoji('👍')">👍</button>
-                <button type="button" class="emoji-btn" onclick="stenoApp.insertCommunityEmoji('❤️')">❤️</button>
-                <button type="button" class="emoji-btn" onclick="stenoApp.insertCommunityEmoji('🔥')">🔥</button>
-                <button type="button" class="emoji-btn" onclick="stenoApp.insertCommunityEmoji('👏')">👏</button>
-                <button type="button" class="emoji-btn" onclick="stenoApp.insertCommunityEmoji('🙏')">🙏</button>
-                <button type="button" class="emoji-btn" onclick="stenoApp.insertCommunityEmoji('😊')">😊</button>
-                <button type="button" class="emoji-btn" onclick="stenoApp.insertCommunityEmoji('🎯')">🎯</button>
-                <button type="button" class="emoji-btn" onclick="stenoApp.insertCommunityEmoji('💡')">💡</button>
-                <button type="button" class="emoji-btn" onclick="stenoApp.insertCommunityEmoji('✍️')">✍️</button>
-                <button type="button" class="emoji-btn" onclick="stenoApp.insertCommunityEmoji('📝')">📝</button>
-                <button type="button" class="emoji-btn" onclick="stenoApp.insertCommunityEmoji('💯')">💯</button>
-                <button type="button" class="emoji-btn" onclick="stenoApp.insertCommunityEmoji('🚀')">🚀</button>
-                <button type="button" class="emoji-btn" onclick="stenoApp.insertCommunityEmoji('🤔')">🤔</button>
-                <button type="button" class="emoji-btn" onclick="stenoApp.insertCommunityEmoji('🙌')">🙌</button>
-                <button type="button" class="emoji-btn" onclick="stenoApp.insertCommunityEmoji('✨')">✨</button>
-                <button type="button" class="emoji-btn" onclick="stenoApp.insertCommunityEmoji('⭐')">⭐</button>
-                <button type="button" class="emoji-btn" onclick="stenoApp.insertCommunityEmoji('🎉')">🎉</button>
-                <button type="button" class="emoji-btn" onclick="stenoApp.insertCommunityEmoji('💪')">💪</button>
+            <!-- 3. Category Filter Bar (Telegram Channel Topics Style) -->
+            <div class="tg-category-pills" id="communityTagsFilter">
+              <button type="button" class="tg-cat-btn active" data-tag="सभी" onclick="stenoApp.filterCommunityTag('सभी')">🌟 सभी संदेश</button>
+              <button type="button" class="tg-cat-btn" data-tag="आउटलाइन सहायता" onclick="stenoApp.filterCommunityTag('आउटलाइन सहायता')">📝 आउटलाइन पूछें</button>
+              <button type="button" class="tg-cat-btn" data-tag="डाउट / प्रश्न" onclick="stenoApp.filterCommunityTag('डाउट / प्रश्न')">❓ स्टेनो डाउट</button>
+              <button type="button" class="tg-cat-btn" data-tag="टिप्स व ट्रिक्स" onclick="stenoApp.filterCommunityTag('टिप्स व ट्रिक्स')">💡 टिप्स व ट्रिक्स</button>
+              <button type="button" class="tg-cat-btn" data-tag="परीक्षा चर्चा" onclick="stenoApp.filterCommunityTag('परीक्षा चर्चा')">🏛️ SSC & UPSSSC</button>
+              <button type="button" class="tg-cat-btn" data-tag="सामान्य" onclick="stenoApp.filterCommunityTag('सामान्य')">💬 सामान्य</button>
+            </div>
+
+            <!-- 4. Search Bar (Collapsible Drawer) -->
+            <div class="tg-search-drawer" id="tgSearchDrawer" style="display:none;">
+              <input type="text" id="tgSearchInput" placeholder="ग्रुप में शब्द या आउटलाइन खोजें..." onkeydown="if(event.key==='Enter') stenoApp.searchCommunityMessages()">
+              <button type="button" class="tg-search-submit" onclick="stenoApp.searchCommunityMessages()">खोजें</button>
+              <button type="button" class="tg-search-cancel" onclick="stenoApp.clearCommunitySearch()">✕</button>
+            </div>
+
+            <!-- 5. Chat Messages Viewport (WhatsApp / Telegram Doodle Background) -->
+            <div class="tg-messages-viewport" id="communityChatViewport" onscroll="stenoApp.handleChatScroll(this)">
+              <div id="communityPostsFeed" class="tg-messages-list">
+                <!-- Dynamically populated via renderCommunityPosts() -->
+                <div class="comm-feed-loading">
+                  <div class="comm-spinner"></div>
+                  <span>ग्रुप चैट लोड हो रही है...</span>
+                </div>
               </div>
             </div>
 
-            <!-- Image Attachment Preview Box (if selected) -->
-            <div id="commImagePreviewContainer" class="comm-image-preview-box" style="display:none;">
-              <div class="comm-preview-inner">
+            <!-- 6. Floating Scroll-To-Bottom Button -->
+            <button type="button" class="tg-scroll-bottom-btn" id="tgScrollBottomBtn" style="display:none;" onclick="stenoApp.scrollChatToBottom()" title="नवीनतम संदेश पर जाएं">
+              <span>⬇️</span>
+            </button>
+
+            <!-- 7. Replying To Banner (WhatsApp style above dock when replying) -->
+            <div class="tg-replying-banner" id="tgReplyingBanner" style="display:none;">
+              <div class="tg-reply-bar-indicator"></div>
+              <div class="tg-reply-preview-text">
+                <div class="tg-reply-to-author" id="tgReplyingToName">~ विद्यार्थी</div>
+                <div class="tg-reply-to-snippet" id="tgReplyingToSnippet">मैसेज का संक्षिप्त विवरण...</div>
+              </div>
+              <button type="button" class="tg-reply-cancel-btn" onclick="stenoApp.cancelCommunityReply()" title="रिप्लाई रद्द करें">✕</button>
+            </div>
+
+            <!-- 8. Image Attachment Preview Box (if selected) -->
+            <div id="commImagePreviewContainer" class="tg-image-preview-dock" style="display:none;">
+              <div class="tg-preview-thumb-wrap">
                 <img id="commImagePreviewImg" src="" alt="Doubt Preview">
-                <button type="button" class="comm-remove-preview-btn" onclick="stenoApp.removeCommunitySelectedImage()" title="हटाएं">✕</button>
+                <button type="button" class="tg-remove-preview-btn" onclick="stenoApp.removeCommunitySelectedImage()" title="हटाएं">✕</button>
               </div>
-              <div class="comm-preview-meta">
+              <div class="tg-preview-meta">
                 <span id="commImagePreviewName">आउटलाइन फ़ोटो संलग्न</span>
-                <span class="comm-preview-hint">✓ फ़ोटो अपलोड हेतु तैयार</span>
+                <span class="tg-preview-hint">✓ नोटबुक फ़ोटो भेजने हेतु तैयार</span>
+              </div>
+            </div>
+
+            <!-- 9. Quick WhatsApp Emoji Strip -->
+            <div class="tg-quick-emojis-bar" id="tgQuickEmojiDock">
+              <span class="tg-emoji-label">त्वरित इमोजी:</span>
+              <div class="tg-emoji-chips">
+                <button type="button" onclick="stenoApp.insertCommunityEmoji('👍')">👍</button>
+                <button type="button" onclick="stenoApp.insertCommunityEmoji('❤️')">❤️</button>
+                <button type="button" onclick="stenoApp.insertCommunityEmoji('🔥')">🔥</button>
+                <button type="button" onclick="stenoApp.insertCommunityEmoji('👏')">👏</button>
+                <button type="button" onclick="stenoApp.insertCommunityEmoji('🙏')">🙏</button>
+                <button type="button" onclick="stenoApp.insertCommunityEmoji('🎯')">🎯</button>
+                <button type="button" onclick="stenoApp.insertCommunityEmoji('✍️')">✍️</button>
+                <button type="button" onclick="stenoApp.insertCommunityEmoji('📝')">📝</button>
+                <button type="button" onclick="stenoApp.insertCommunityEmoji('💯')">💯</button>
+                <button type="button" onclick="stenoApp.insertCommunityEmoji('😊')">😊</button>
+                <button type="button" onclick="stenoApp.insertCommunityEmoji('🚀')">🚀</button>
+                <button type="button" onclick="stenoApp.insertCommunityEmoji('🤔')">🤔</button>
+                <button type="button" onclick="stenoApp.insertCommunityEmoji('🎉')">🎉</button>
               </div>
             </div>
 
             <!-- Hidden File Input for Image Upload -->
             <input type="file" id="commPhotoFileInput" accept="image/*" style="display:none;" onchange="stenoApp.handleCommunityPhotoFileSelected(event)">
 
-            <!-- Bottom Actions Row -->
-            <div class="comm-create-actions">
-              <div class="comm-attach-buttons">
-                <button type="button" class="btn-attach-photo" onclick="document.getElementById('commPhotoFileInput').click()" title="नोटबुक से आउटलाइन या प्रश्न की फ़ोटो संलग्न करें">
-                  <span class="cam-icon">📸</span>
-                  <span>आउटलाइन फ़ोटो जोड़ें (Photo)</span>
-                </button>
+            <!-- 10. Bottom WhatsApp / Telegram Input Dock -->
+            <div class="tg-bottom-dock">
+              <button type="button" class="tg-dock-icon-btn tg-emoji-toggle" onclick="stenoApp.toggleEmojiBar()" title="इमोजी बार">😊</button>
+              <button type="button" class="tg-dock-icon-btn tg-attach-btn" onclick="document.getElementById('commPhotoFileInput').click()" title="नोटबुक की आउटलाइन फ़ोटो जोड़ें">📎</button>
+              <button type="button" class="tg-dock-icon-btn tg-camera-btn" onclick="document.getElementById('commPhotoFileInput').click()" title="कैमरा से आउटलाइन फ़ोटो खींचें">📷</button>
+              
+              <div class="tg-input-wrapper">
+                <textarea id="commPostTextarea" class="tg-chat-input notranslate" translate="no" lang="hi"
+                  rows="1"
+                  placeholder="अपना संदेश या स्टेनो सवाल लिखें... (Type a message)"
+                  onkeydown="stenoApp.handleChatInputKeydown(event)"
+                  oninput="stenoApp.autoResizeChatInput(this)"></textarea>
               </div>
-              <button type="button" class="btn-post-submit" id="commPostSubmitBtn" onclick="stenoApp.submitCommunityPost()">
-                <span>🚀 पोस्ट करें (Publish)</span>
+
+              <button type="button" class="tg-send-btn" id="commPostSubmitBtn" onclick="stenoApp.submitCommunityPost()" title="भेजें (Send)">
+                <span>➤</span>
               </button>
             </div>
+
           </div>
+        </div>
 
-          <!-- Feed Posts List Container -->
-          <div class="comm-feed-section">
-            <div class="comm-feed-header">
-              <h3 class="comm-feed-title">
-                <span>💬</span> <span>हाल की चर्चाएं एवं पूछे गए सवाल</span>
-              </h3>
-              <span class="comm-feed-count" id="commPostsTotalCount">लोड हो रहा है...</span>
-            </div>
-
-            <div id="communityPostsFeed" class="community-posts-list">
-              <!-- Dynamically populated via loadCommunityPosts() -->
-              <div class="comm-feed-loading">
-                <div class="comm-spinner"></div>
-                <span>चर्चाएं लोड हो रही हैं...</span>
+        <!-- Full-Screen Image Zoom Modal -->
+        <div id="communityImageZoomModal" class="comm-zoom-modal" style="display:none;" onclick="stenoApp.closeCommunityImageZoom()">
+          <div class="comm-zoom-modal-dialog" onclick="event.stopPropagation()">
+            <div class="comm-zoom-modal-header">
+              <span class="comm-zoom-title">📝 स्टेनो आउटलाइन फ़ोटो (High Resolution)</span>
+              <div style="display:flex; gap:10px;">
+                <a id="commZoomDownloadLink" href="#" target="_blank" download="steno_outline.jpg" class="comm-zoom-download-btn">💾 डाउनलोड</a>
+                <button type="button" class="comm-zoom-close-btn" onclick="stenoApp.closeCommunityImageZoom()">✕</button>
               </div>
+            </div>
+            <div class="comm-zoom-modal-body">
+              <img id="communityZoomedImg" src="" alt="Steno Outline Full View">
             </div>
           </div>
         </div>

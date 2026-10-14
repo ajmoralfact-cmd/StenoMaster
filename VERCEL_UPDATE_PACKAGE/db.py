@@ -5758,7 +5758,7 @@ def admin_review_withdrawal(req_id: int, action: str, admin_id: int, notes: str 
 # COMMUNITY CHAT & DOUBT FORUM FUNCTIONS (Free For All Students)
 # =====================================================================
 
-def get_community_posts(limit: int = 50, offset: int = 0, current_user_id: Optional[int] = None, category_tag: Optional[str] = None, search: Optional[str] = None) -> List[Dict[str, Any]]:
+def get_community_posts(limit: int = 60, offset: int = 0, current_user_id: Optional[int] = None, category_tag: Optional[str] = None, search: Optional[str] = None, order: str = 'asc') -> List[Dict[str, Any]]:
     conn = get_db()
     c = conn.cursor()
     params: List[Any] = []
@@ -5781,17 +5781,20 @@ def get_community_posts(limit: int = 50, offset: int = 0, current_user_id: Optio
         like_subquery = "0 AS is_liked"
         query_params = params + [limit, offset]
 
+    order_clause = "cp.created_at ASC" if order == 'asc' else "cp.is_pinned DESC, cp.created_at DESC"
+
     sql = f"""
         SELECT cp.id, cp.user_id, cp.content, cp.image_url, cp.category_tag,
                cp.likes_count, cp.replies_count, cp.is_pinned, cp.is_solved, cp.created_at,
                u.username, u.role, u.student_code,
                p.display_name, p.avatar,
-               {like_subquery}
+               {like_subquery},
+               cp.reply_to_id, cp.reply_to_author, cp.reply_to_snippet
         FROM community_posts cp
         JOIN users u ON cp.user_id = u.id
         LEFT JOIN profiles p ON u.id = p.user_id
         {where_sql}
-        ORDER BY cp.is_pinned DESC, cp.created_at DESC
+        ORDER BY {order_clause}
         LIMIT ? OFFSET ?
     """
     c.execute(sql, query_params)
@@ -5805,7 +5808,10 @@ def get_community_posts(limit: int = 50, offset: int = 0, current_user_id: Optio
             'category_tag': r[4], 'likes_count': r[5], 'replies_count': r[6],
             'is_pinned': r[7], 'is_solved': r[8], 'created_at': r[9],
             'username': r[10], 'role': r[11], 'student_code': r[12],
-            'display_name': r[13], 'avatar': r[14], 'is_liked': bool(r[15])
+            'display_name': r[13], 'avatar': r[14], 'is_liked': bool(r[15]),
+            'reply_to_id': r[16] if len(r) > 16 else None,
+            'reply_to_author': r[17] if len(r) > 17 else None,
+            'reply_to_snippet': r[18] if len(r) > 18 else None
         }
         if not d.get('display_name'):
             d['display_name'] = d.get('username') or 'छात्र'
@@ -5813,14 +5819,14 @@ def get_community_posts(limit: int = 50, offset: int = 0, current_user_id: Optio
     return posts
 
 
-def create_community_post(user_id: int, content: str, image_url: Optional[str] = None, category_tag: str = 'सामान्य') -> Dict[str, Any]:
+def create_community_post(user_id: int, content: str, image_url: Optional[str] = None, category_tag: str = 'सामान्य', reply_to_id: Optional[int] = None, reply_to_author: Optional[str] = None, reply_to_snippet: Optional[str] = None) -> Dict[str, Any]:
     conn = get_db()
     c = conn.cursor()
     now_iso = datetime.now().isoformat()
     c.execute("""
-        INSERT INTO community_posts (user_id, content, image_url, category_tag, created_at)
-        VALUES (?, ?, ?, ?, ?)
-    """, (user_id, content.strip(), image_url, category_tag, now_iso))
+        INSERT INTO community_posts (user_id, content, image_url, category_tag, created_at, reply_to_id, reply_to_author, reply_to_snippet)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    """, (user_id, content.strip(), image_url, category_tag, now_iso, reply_to_id, reply_to_author, reply_to_snippet))
     post_id = getattr(c, 'lastrowid', None)
     conn.commit()
     conn.close()

@@ -624,13 +624,14 @@ class StenoMasterHandler(http.server.SimpleHTTPRequestHandler):
             self._send_json(200, status, cache_control='public, max-age=15, stale-while-revalidate=60')
             return
 
-        # Community Chat & Doubt Forum (Free For All Students)
+        # Community Chat & Doubt Forum (Free For All Students - Telegram/WhatsApp Style)
         if path == '/api/community/posts':
-            limit = int(params.get('limit', [50])[0])
+            limit = int(params.get('limit', [60])[0])
             offset = int(params.get('offset', [0])[0])
             tag = params.get('tag', [None])[0]
             search = params.get('search', [None])[0]
-            posts = db.get_community_posts(limit=limit, offset=offset, current_user_id=user_id, category_tag=tag, search=search)
+            order = params.get('order', ['asc'])[0]
+            posts = db.get_community_posts(limit=limit, offset=offset, current_user_id=user_id, category_tag=tag, search=search, order=order)
             self._send_json(200, {"posts": posts}, cache_control='private, no-cache, no-store')
             return
 
@@ -1040,12 +1041,23 @@ class StenoMasterHandler(http.server.SimpleHTTPRequestHandler):
             content = (data.get('content') or '').strip()
             image_url = data.get('image_url')
             category_tag = data.get('category_tag') or 'सामान्य'
+            reply_to_id = data.get('reply_to_id')
+            reply_to_author = data.get('reply_to_author')
+            reply_to_snippet = data.get('reply_to_snippet')
 
             if not content and not image_url:
                 self._send_json(400, {"error": "कृपया प्रश्न या संदेश लिखें अथवा फ़ोटो संलग्न करें।"})
                 return
 
-            res = db.create_community_post(user['user_id'], content, image_url, category_tag)
+            res = db.create_community_post(
+                user_id=user['user_id'],
+                content=content,
+                image_url=image_url,
+                category_tag=category_tag,
+                reply_to_id=reply_to_id,
+                reply_to_author=reply_to_author,
+                reply_to_snippet=reply_to_snippet
+            )
             self._send_json(201, res)
             return
 
