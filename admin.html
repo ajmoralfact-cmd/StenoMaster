@@ -25,7 +25,20 @@
   </script>
 
   <style>
-    /* Admin Standalone Portal Custom Styling */
+    /* Complete Mobile-First Responsiveness & Viewport Lock */
+    html, body {
+      width: 100%;
+      max-width: 100vw;
+      overflow-x: hidden;
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      -webkit-text-size-adjust: 100%;
+    }
+    *, *::before, *::after {
+      box-sizing: border-box;
+    }
+
     body {
       background: var(--bg-body, #f8fafc);
       min-height: 100vh;
@@ -43,11 +56,15 @@
       top: 0;
       z-index: 1000;
       box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+      width: 100%;
+      max-width: 100vw;
+      box-sizing: border-box;
     }
     .admin-nav-left {
       display: flex;
       align-items: center;
       gap: 14px;
+      min-width: 0;
     }
     .admin-nav-logo {
       display: flex;
@@ -83,7 +100,8 @@
     .admin-nav-right {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 10px;
+      flex-shrink: 0;
     }
     .btn-student-portal {
       display: inline-flex;
@@ -163,11 +181,155 @@
       margin: 0 auto;
       padding: 16px 20px 40px 20px;
       flex: 1;
+      min-width: 0;
+      overflow-x: hidden;
+      box-sizing: border-box;
     }
     #view-admin.page-view {
       display: block !important;
       opacity: 1 !important;
       transform: none !important;
+      width: 100%;
+      max-width: 100%;
+      min-width: 0;
+    }
+
+    /* Robust table horizontal scroll wrapper */
+    .table-responsive, .data-table-wrap, .admin-table-wrap, #adminCustomTableWrap {
+      width: 100% !important;
+      max-width: 100% !important;
+      overflow-x: auto !important;
+      -webkit-overflow-scrolling: touch !important;
+      display: block !important;
+      box-sizing: border-box !important;
+      border-radius: var(--radius-md, 8px);
+      scrollbar-width: thin;
+    }
+    .data-table, .admin-table {
+      min-width: 640px;
+    }
+
+    /* Mobile media queries for Admin Layout */
+    @media (max-width: 768px) {
+      .admin-navbar {
+        padding: 8px 12px;
+        gap: 8px;
+      }
+      .admin-nav-left {
+        gap: 8px;
+        min-width: 0;
+      }
+      .admin-nav-logo img {
+        height: 28px;
+      }
+      .admin-nav-brand {
+        font-size: 1rem;
+      }
+      .admin-badge-pill {
+        display: none !important;
+      }
+      .admin-nav-right {
+        gap: 6px;
+      }
+      .btn-student-portal {
+        padding: 6px 10px;
+        font-size: 0.75rem;
+      }
+      .btn-student-portal .nav-btn-text {
+        display: none !important;
+      }
+      .admin-user-chip {
+        padding: 3px 5px;
+        gap: 0;
+      }
+      .admin-user-info {
+        display: none !important;
+      }
+      .btn-admin-logout {
+        padding: 6px 10px;
+        font-size: 0.75rem;
+      }
+      .btn-admin-logout .nav-btn-text {
+        display: none !important;
+      }
+      .admin-container {
+        padding: 10px 8px 36px 8px !important;
+      }
+
+      /* Subscribers KPIs & Toolbar */
+      .subscribers-kpi-grid, .stats-summary-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 8px !important;
+        margin-bottom: 14px !important;
+      }
+      .subscribers-kpi-grid .stat-card, .stats-summary-grid .stat-card {
+        padding: 10px 12px !important;
+      }
+      .subscribers-kpi-grid .stat-info-title, .stats-summary-grid .stat-info-title {
+        font-size: 0.72rem !important;
+      }
+      .subscribers-kpi-grid .stat-info-num, .stats-summary-grid .stat-info-num {
+        font-size: 1.25rem !important;
+      }
+      .subscribers-toolbar {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 10px !important;
+      }
+      .sub-filter-pills {
+        display: flex !important;
+        overflow-x: auto !important;
+        flex-wrap: nowrap !important;
+        -webkit-overflow-scrolling: touch !important;
+        gap: 6px !important;
+        padding-bottom: 4px !important;
+        width: 100% !important;
+      }
+      .sub-filter-pill {
+        flex-shrink: 0 !important;
+        white-space: nowrap !important;
+        padding: 5px 11px !important;
+        font-size: 0.76rem !important;
+      }
+      #subscriberSearchInput {
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+      }
+
+      /* Hero sections & titles */
+      .admin-overview-hero, .admin-section-hero, .section-header {
+        padding: 14px 12px !important;
+        border-radius: 12px !important;
+        margin-bottom: 14px !important;
+      }
+      .admin-overview-hero h2, .admin-section-hero h2, .section-header .section-title {
+        font-size: 1.1rem !important;
+        line-height: 1.3 !important;
+      }
+      .admin-overview-hero p, .admin-section-hero p, .section-header .section-subtitle {
+        font-size: 0.78rem !important;
+      }
+      .admin-quick-actions-grid {
+        grid-template-columns: 1fr !important;
+        gap: 8px !important;
+      }
+
+      /* Auto-collapse wide inline grids on mobile */
+      [style*="grid-template-columns: 2fr 1fr"],
+      [style*="grid-template-columns: 1fr 1.3fr 0.9fr"],
+      [style*="grid-template-columns: 1fr 1fr 1fr"],
+      [style*="grid-template-columns: repeat(auto-fit, minmax(320px, 1fr))"] {
+        grid-template-columns: 1fr !important;
+      }
+
+      /* Modal card on mobile */
+      .modal-card {
+        padding: 16px 14px !important;
+        width: 95% !important;
+        max-width: 95vw !important;
+        margin: 10px auto !important;
+      }
     }
   </style>
   <!-- Font Preloads for Instant Hindi Typography -->
@@ -190,7 +352,7 @@
 
     <div class="admin-nav-right">
       <a href="/" target="_blank" class="btn-student-portal" title="छात्र पोर्टल को नई विंडो में खोलें">
-        <span>👨‍🎓</span> <span>छात्र पोर्टल (Student App) ↗</span>
+        <span>👨‍🎓</span> <span class="nav-btn-text">छात्र पोर्टल (Student App) ↗</span>
       </a>
 
       <!-- Theme Toggle -->
@@ -209,7 +371,7 @@
 
       <!-- Logout -->
       <button class="btn-admin-logout" onclick="stenoApp.logout()" title="सुरक्षित लॉगआउट करें">
-        <span>🚪</span> <span>लॉगआउट</span>
+        <span>🚪</span> <span class="nav-btn-text">लॉगआउट</span>
       </button>
     </div>
   </header>

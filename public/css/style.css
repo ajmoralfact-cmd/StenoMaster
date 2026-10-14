@@ -5770,12 +5770,19 @@ html.is-mobile-device .footer-bottom-row {
 @media (max-width: 960px) {
   .admin-workspace-layout {
     flex-direction: column;
-    gap: 16px;
+    gap: 14px;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    overflow-x: hidden;
   }
   .admin-left-tabs {
-    width: 100%;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
     position: static;
-    padding: 10px 12px;
+    padding: 8px 10px;
+    box-sizing: border-box;
   }
   .admin-left-tabs-header {
     display: none;
@@ -5786,6 +5793,8 @@ html.is-mobile-device .footer-bottom-row {
     gap: 8px;
     padding-bottom: 6px;
     -webkit-overflow-scrolling: touch;
+    width: 100%;
+    max-width: 100%;
   }
   .admin-nav-tab {
     flex-shrink: 0;
@@ -5794,6 +5803,12 @@ html.is-mobile-device .footer-bottom-row {
   }
   .admin-tab-sub {
     display: none;
+  }
+  .admin-workspace-content {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    overflow-x: hidden;
   }
 }
 
