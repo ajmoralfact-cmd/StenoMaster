@@ -11508,8 +11508,8 @@ html.is-mobile-device.mobile-wide-viewport .mobile-nav-btn {
   }
   .tg-chat-app-wrapper {
     padding: 0 !important;
-    height: calc(100vh - 160px);
-    height: calc(100dvh - 160px);
+    height: calc(100vh - 185px);
+    height: calc(100dvh - 185px);
     max-width: 100%;
     margin: 0 !important;
   }
