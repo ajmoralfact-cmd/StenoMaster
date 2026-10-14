@@ -820,31 +820,36 @@ class StenoMasterHandler(http.server.SimpleHTTPRequestHandler):
             device_name = self._parse_device_name(user_agent)
 
             ref_code = (data.get('referral_code') or '').strip()
-            result = db.authenticate_or_register_google_user(
-                google_id=google_info.get('sub', ''),
-                email=google_info.get('email', ''),
-                full_name=google_info.get('name', ''),
-                avatar_url=google_info.get('picture', ''),
-                referral_code=ref_code
-            )
-            if not result.get("success"):
-                self._send_json(400, result)
-                return
+            try:
+                result = db.authenticate_or_register_google_user(
+                    google_id=google_info.get('sub', ''),
+                    email=google_info.get('email', ''),
+                    full_name=google_info.get('name', ''),
+                    avatar_url=google_info.get('picture', ''),
+                    referral_code=ref_code
+                )
+                if not result.get("success"):
+                    self._send_json(400, result)
+                    return
 
-            token = db.create_session(
-                result["user_id"],
-                ip_address=client_ip,
-                user_agent=user_agent,
-                device_name=device_name
-            )
-            user_obj = db.verify_session(token)
-            self._send_json(200, {
-                "token": token,
-                "user": user_obj,
-                "is_new": result.get("is_new", False),
-                "login_ip": client_ip,
-                "login_device": device_name
-            })
+                token = db.create_session(
+                    result["user_id"],
+                    ip_address=client_ip,
+                    user_agent=user_agent,
+                    device_name=device_name
+                )
+                user_obj = db.verify_session(token)
+                self._send_json(200, {
+                    "token": token,
+                    "user": user_obj,
+                    "is_new": result.get("is_new", False),
+                    "login_ip": client_ip,
+                    "login_device": device_name
+                })
+            except Exception as e:
+                import traceback
+                traceback.print_exc()
+                self._send_json(500, {"error": f"Google पंजीकरण त्रुटि: {str(e)}"})
             return
 
         if path == '/api/auth/login':

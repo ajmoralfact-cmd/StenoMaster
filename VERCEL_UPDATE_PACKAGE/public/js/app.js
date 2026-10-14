@@ -1426,16 +1426,38 @@ class StenoApp {
       this.closeModal('loginModal');
       this.hideAuthGateway();
       this.updateUserUI();
-      await this.loadCategories();
-      await this.loadPassages();
+
+      // Hydrate categories and passages in background without blocking successful login
+      try {
+        await Promise.all([this.loadCategories(), this.loadPassages()]);
+      } catch (hydrateErr) {
+        console.warn('Background data hydration warning:', hydrateErr);
+      }
 
       const welcomeMsg = res.is_new 
         ? `स्वागतम्, ${this.user.display_name || this.user.username}! आपका नया छात्र खाता (ID: ${this.user.student_code || ''}) बन गया है 🎉` 
         : `स्वागतम्, ${this.user.display_name || this.user.username}! Google से लॉगिन सफल! 👋`;
       this.showToast(welcomeMsg, 'success');
 
-      this.restoreRouteOnLoad('home');
+      // Clear any leftover hash containing 'admin'
+      if (window.location.hash && window.location.hash.toLowerCase().includes('admin')) {
+        history.replaceState(null, document.title, window.location.pathname + window.location.search);
+      }
+
+      const redirectRoute = sessionStorage.getItem('stenomaster_redirect_after_login') || localStorage.getItem('stenomaster_last_route');
+      sessionStorage.removeItem('stenomaster_redirect_after_login');
+      const targetRoute = (redirectRoute && !redirectRoute.startsWith('admin')) ? redirectRoute : 'home';
+      if (redirectRoute && redirectRoute.startsWith('admin')) {
+        localStorage.setItem('stenomaster_last_route', 'home');
+      }
+      this.restoreRouteOnLoad(targetRoute);
     } catch (err) {
+      console.error('Google Auth Error:', err);
+      const stuErr = document.getElementById('stuAuthError');
+      if (stuErr) {
+        stuErr.style.display = 'flex';
+        stuErr.textContent = err.message || 'Google लॉगिन विफल रहा।';
+      }
       this.showToast(err.message || 'Google लॉगिन विफल रहा।', 'error');
     }
   }

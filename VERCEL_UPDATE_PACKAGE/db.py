@@ -1235,7 +1235,8 @@ def authenticate_or_register_google_user(
     email: str,
     full_name: str,
     avatar_url: str = "",
-    target_exam: str = "SSC Stenographer"
+    target_exam: str = "SSC Stenographer",
+    referral_code: str = ""
 ) -> Dict[str, Any]:
     """Authenticates existing user with Google or automatically registers a new student."""
     clean_email = (email or '').lower().strip()
