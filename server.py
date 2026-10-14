@@ -624,6 +624,27 @@ class StenoMasterHandler(http.server.SimpleHTTPRequestHandler):
             self._send_json(200, status, cache_control='public, max-age=15, stale-while-revalidate=60')
             return
 
+        # Community Chat & Doubt Forum (Free For All Students)
+        if path == '/api/community/posts':
+            limit = int(params.get('limit', [50])[0])
+            offset = int(params.get('offset', [0])[0])
+            tag = params.get('tag', [None])[0]
+            search = params.get('search', [None])[0]
+            posts = db.get_community_posts(limit=limit, offset=offset, current_user_id=user_id, category_tag=tag, search=search)
+            self._send_json(200, {"posts": posts}, cache_control='private, no-cache, no-store')
+            return
+
+        if path.startswith('/api/community/posts/') and path.endswith('/replies'):
+            try:
+                parts = path.strip('/').split('/')
+                post_id = int(parts[3])
+                replies = db.get_community_replies(post_id)
+                self._send_json(200, {"replies": replies}, cache_control='private, no-cache, no-store')
+                return
+            except Exception as e:
+                self._send_json(400, {"error": f"अमान्य पोस्ट आईडी: {e}"})
+                return
+
         # ------------------ Admin Routes ------------------
         if path.startswith('/api/admin/'):
             if not user:
@@ -1000,6 +1021,125 @@ class StenoMasterHandler(http.server.SimpleHTTPRequestHandler):
                 "message": "भुगतान अनुरोध सफलतापूर्वक जमा किया गया। एडमिन सत्यापन के बाद सदस्यता सक्रिय होगी।"
             })
             return
+
+        # =====================================================================
+        # Community Chat & Doubt Forum POST Endpoints (100% Free For All Students)
+        # =====================================================================
+        if path == '/api/community/upload-image':
+            if not user:
+                self._send_auth_required()
+                return
+            self._handle_community_image_upload(user)
+            return
+
+        if path == '/api/community/posts':
+            if not user:
+                self._send_auth_required()
+                return
+            data = self._read_json_body() or {}
+            content = (data.get('content') or '').strip()
+            image_url = data.get('image_url')
+            category_tag = data.get('category_tag') or 'सामान्य'
+
+            if not content and not image_url:
+                self._send_json(400, {"error": "कृपया प्रश्न या संदेश लिखें अथवा फ़ोटो संलग्न करें।"})
+                return
+
+            res = db.create_community_post(user['user_id'], content, image_url, category_tag)
+            self._send_json(201, res)
+            return
+
+        if path.startswith('/api/community/posts/') and path.endswith('/replies'):
+            if not user:
+                self._send_auth_required()
+                return
+            try:
+                parts = path.strip('/').split('/')
+                post_id = int(parts[3])
+                data = self._read_json_body() or {}
+                content = (data.get('content') or '').strip()
+                image_url = data.get('image_url')
+
+                if not content and not image_url:
+                    self._send_json(400, {"error": "कृपया उत्तर या संदेश लिखें।"})
+                    return
+
+                res = db.add_community_reply(post_id, user['user_id'], content, image_url)
+                self._send_json(201, res)
+                return
+            except Exception as e:
+                self._send_json(400, {"error": f"अमान्य अनुरोध: {e}"})
+                return
+
+        if path.startswith('/api/community/posts/') and path.endswith('/like'):
+            if not user:
+                self._send_auth_required()
+                return
+            try:
+                parts = path.strip('/').split('/')
+                post_id = int(parts[3])
+                res = db.toggle_community_like(post_id, user['user_id'])
+                self._send_json(200, res)
+                return
+            except Exception as e:
+                self._send_json(400, {"error": f"अमान्य अनुरोध: {e}"})
+                return
+
+        if path.startswith('/api/community/posts/') and path.endswith('/solve'):
+            if not user:
+                self._send_auth_required()
+                return
+            try:
+                parts = path.strip('/').split('/')
+                post_id = int(parts[3])
+                res = db.toggle_solve_community_post(post_id, user['user_id'], is_admin=(user.get('role') == 'admin'))
+                self._send_json(200, res)
+                return
+            except Exception as e:
+                self._send_json(400, {"error": f"अमान्य अनुरोध: {e}"})
+                return
+
+        if path.startswith('/api/community/posts/') and path.endswith('/delete'):
+            if not user:
+                self._send_auth_required()
+                return
+            try:
+                parts = path.strip('/').split('/')
+                post_id = int(parts[3])
+                res = db.delete_community_post(post_id, user['user_id'], is_admin=(user.get('role') == 'admin'))
+                self._send_json(200 if res.get('success') else 403, res)
+                return
+            except Exception as e:
+                self._send_json(400, {"error": f"अमान्य अनुरोध: {e}"})
+                return
+
+        if path.startswith('/api/community/replies/') and path.endswith('/delete'):
+            if not user:
+                self._send_auth_required()
+                return
+            try:
+                parts = path.strip('/').split('/')
+                reply_id = int(parts[3])
+                res = db.delete_community_reply(reply_id, user['user_id'], is_admin=(user.get('role') == 'admin'))
+                self._send_json(200 if res.get('success') else 403, res)
+                return
+            except Exception as e:
+                self._send_json(400, {"error": f"अमान्य अनुरोध: {e}"})
+                return
+
+        if path.startswith('/api/admin/community/posts/') and path.endswith('/pin'):
+            if not user or user.get('role') != 'admin':
+                self._send_json(403, {"error": "एडमिन अधिकार आवश्यक है।"})
+                return
+            try:
+                parts = path.strip('/').split('/')
+                post_id = int(parts[4])
+                res = db.toggle_pin_community_post(post_id)
+                self._send_json(200, res)
+                return
+            except Exception as e:
+                self._send_json(400, {"error": f"अमान्य अनुरोध: {e}"})
+                return
 
         # Multi-Category Custom Purchase Endpoints
         if path == '/api/subscription/create-custom-category-order':
@@ -2084,6 +2224,52 @@ class StenoMasterHandler(http.server.SimpleHTTPRequestHandler):
             })
         else:
             self._send_json(400, {"error": "Please provide steno notes file in JSON base64 format"})
+
+    def _handle_community_image_upload(self, user):
+        content_type = self.headers.get('Content-Type', '')
+        if 'application/json' in content_type:
+            data = self._read_json_body()
+            import base64
+            orig_filename = data.get('filename', f"doubt_{int(datetime.now().timestamp())}.jpg")
+            clean_name = os.path.basename(orig_filename).replace(' ', '_')
+            ext = os.path.splitext(clean_name)[1].lower()
+            if ext not in ('.png', '.jpg', '.jpeg', '.webp'):
+                self._send_json(400, {"error": "अनुमति प्राप्त फ़ोटो प्रकार: .png, .jpg, .jpeg, .webp"})
+                return
+            b64_data = data.get('data', '')
+            if ',' in b64_data:
+                b64_data = b64_data.split(',')[1]
+            try:
+                raw_bytes = base64.b64decode(b64_data)
+            except Exception as e:
+                self._send_json(400, {"error": f"Base64 decode failed: {e}"})
+                return
+
+            if len(raw_bytes) > 8 * 1024 * 1024:
+                self._send_json(400, {"error": "फ़ोटो का आकार 8 MB से कम होना चाहिए।"})
+                return
+
+            timestamp_prefix = int(datetime.now().timestamp())
+            import random
+            rand_suffix = random.randint(100, 999)
+            final_filename = f"doubt_{timestamp_prefix}_{rand_suffix}_{clean_name}"
+            save_path = os.path.join(UPLOADS_DIR, final_filename)
+            try:
+                with open(save_path, 'wb') as f:
+                    f.write(raw_bytes)
+            except Exception:
+                pass
+
+            mime_type = 'image/png' if ext == '.png' else ('image/webp' if ext == '.webp' else 'image/jpeg')
+            db.save_uploaded_file(final_filename, mime_type, raw_bytes)
+            image_url = f"/uploads/{final_filename}"
+            self._send_json(200, {
+                "success": True,
+                "image_url": image_url,
+                "filename": final_filename
+            })
+        else:
+            self._send_json(400, {"error": "Please provide payload in JSON format"})
 
     def _handle_qr_upload(self):
         content_type = self.headers.get('Content-Type', '')

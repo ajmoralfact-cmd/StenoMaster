@@ -2622,6 +2622,7 @@ class StenoApp {
         { id: 'download-app', icon: '📲', label: 'Download App', sub: 'Install Mobile App', action: 'installPwa' },
         { id: 'home', icon: '🏠', label: 'Dashboard', sub: 'Home & Analytics' },
         { id: 'classes', icon: '🎧', label: 'Practice Classes', sub: 'Dictation Sessions' },
+        { id: 'community', icon: '💬', label: 'Student Community', sub: 'Chat & Doubt Forum' },
         { id: 'self-practice', icon: '🎙️', label: 'Self Practice', sub: 'Custom Dictation' },
         { id: 'subscription', icon: '💳', label: 'Subscription & Pro', sub: 'Unlock All Passages', url: '/plans' },
         { id: 'my-practice', icon: '📜', label: 'Practice History', sub: 'Attempt Records' },
@@ -2635,6 +2636,7 @@ class StenoApp {
         { id: 'download-app', icon: '📲', label: 'ऐप डाउनलोड करें (App)', sub: 'मोबाइल ऐप इंस्टॉल करें', action: 'installPwa' },
         { id: 'home', icon: '🏠', label: 'डैशबोर्ड (Dashboard)', sub: 'होम एवं आंकड़े' },
         { id: 'classes', icon: '🎧', label: 'अभ्यास कक्षाएं (Classes)', sub: 'दैनिक डिक्टेशन' },
+        { id: 'community', icon: '💬', label: 'छात्र कम्युनिटी (Chat)', sub: 'डाउट व आउटलाइन चर्चा' },
         { id: 'self-practice', icon: '🎙️', label: 'सेल्फ प्रैक्टिस (Self)', sub: 'कस्टम डिक्टेशन' },
         { id: 'subscription', icon: '💳', label: 'सब्सक्रिप्शन (Subscription)', sub: 'सदस्यता एवं प्रो', url: '/plans' },
         { id: 'my-practice', icon: '📜', label: 'अभ्यास इतिहास (History)', sub: 'पिछले टेस्ट परिणाम' },
@@ -2978,6 +2980,7 @@ class StenoApp {
       'progress': 'प्रगति विश्लेषण (Progress Analytics) — StenoMaster',
       'leaderboard': 'लीडरबोर्ड (Leaderboard) — StenoMaster',
       'bookmarks': 'सहेजे गए आलेख (Bookmarks) — StenoMaster',
+      'community': 'कम्युनिटी चैट व डाउट मंच (Community) — StenoMaster',
       'profile': 'मेरी प्रोफ़ाइल (My Profile) — StenoMaster',
       'refer': 'रेफरल एवं पुरस्कार (Refer & Earn) — StenoMaster',
       'notifications': 'सूचनाएं (Notifications) — StenoMaster',
@@ -2995,6 +2998,7 @@ class StenoApp {
       'category-detail': 'Category Classes',
       'self-practice': 'Self Practice',
       'classes': 'Practice Classes',
+      'community': 'Community & Doubts',
       'subscription': 'Subscription & Pro Access',
       'practice': 'Typing Test',
       'result': 'Result Report',
@@ -3045,6 +3049,9 @@ class StenoApp {
       case 'classes':
         this.renderClasses();
         this.updateFontSwitcherUI();
+        break;
+      case 'community':
+        this.loadCommunityPosts();
         break;
       case 'subscription':
         this.loadSubscription();
@@ -7387,6 +7394,599 @@ ${link}`;
       await this.fetchCurrentUser().catch(() => {});
       this.updateHeaderPlanBadge();
     }
+  }
+
+  // =========================================================================
+  // COMMUNITY CHAT & DOUBT FORUM METHODS (100% Free For All Students)
+  // =========================================================================
+
+  filterCommunityTag(tag) {
+    this.communityTag = tag;
+    document.querySelectorAll('#communityTagsFilter .comm-tag-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.getAttribute('data-tag') === tag);
+    });
+    this.loadCommunityPosts();
+  }
+
+  insertCommunityEmoji(emoji) {
+    const textarea = document.getElementById('commPostTextarea');
+    if (!textarea) return;
+    const start = textarea.selectionStart || textarea.value.length;
+    const end = textarea.selectionEnd || textarea.value.length;
+    const text = textarea.value;
+    textarea.value = text.substring(0, start) + emoji + text.substring(end);
+    textarea.focus();
+    const newPos = start + emoji.length;
+    textarea.setSelectionRange(newPos, newPos);
+  }
+
+  insertCommunityReplyEmoji(postId, emoji) {
+    const textarea = document.getElementById(`commReplyInput_${postId}`);
+    if (!textarea) return;
+    const start = textarea.selectionStart || textarea.value.length;
+    const end = textarea.selectionEnd || textarea.value.length;
+    const text = textarea.value;
+    textarea.value = text.substring(0, start) + emoji + text.substring(end);
+    textarea.focus();
+    const newPos = start + emoji.length;
+    textarea.setSelectionRange(newPos, newPos);
+  }
+
+  handleCommunityPhotoFileSelected(event) {
+    const file = event.target.files && event.target.files[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      this.showToast('कृपया केवल इमेज (.jpg, .png, .webp) फ़ाइल चुनें।', 'error');
+      return;
+    }
+
+    if (file.size > 8 * 1024 * 1024) {
+      this.showToast('फ़ोटो का आकार 8MB से अधिक नहीं होना चाहिए।', 'error');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const dataUrl = e.target.result;
+      this.selectedCommunityImage = {
+        filename: file.name,
+        data: dataUrl
+      };
+
+      const previewBox = document.getElementById('commImagePreviewContainer');
+      const previewImg = document.getElementById('commImagePreviewImg');
+      const previewName = document.getElementById('commImagePreviewName');
+      if (previewBox && previewImg && previewName) {
+        previewImg.src = dataUrl;
+        previewName.textContent = file.name;
+        previewBox.style.display = 'flex';
+      }
+    };
+    reader.readAsDataURL(file);
+  }
+
+  removeCommunitySelectedImage() {
+    this.selectedCommunityImage = null;
+    const previewBox = document.getElementById('commImagePreviewContainer');
+    const fileInput = document.getElementById('commPhotoFileInput');
+    if (previewBox) previewBox.style.display = 'none';
+    if (fileInput) fileInput.value = '';
+  }
+
+  async loadCommunityPosts(forceRefresh = false) {
+    if (!this.user) {
+      this.openModal('loginModal');
+      return;
+    }
+
+    // Update current user preview card
+    const name = this.user.display_name || this.user.username || 'विद्यार्थी';
+    const avatar = (name.charAt(0) || 'S').toUpperCase();
+    const avatarEl = document.getElementById('commCurrentUserAvatar');
+    const nameEl = document.getElementById('commCurrentUserName');
+    if (avatarEl) avatarEl.textContent = avatar;
+    if (nameEl) nameEl.textContent = name;
+
+    const feedEl = document.getElementById('communityPostsFeed');
+    const countEl = document.getElementById('commPostsTotalCount');
+
+    if (forceRefresh && feedEl) {
+      feedEl.innerHTML = `
+        <div class="comm-feed-loading">
+          <div class="comm-spinner"></div>
+          <span>ताजा चर्चाएं लोड हो रही हैं...</span>
+        </div>
+      `;
+    }
+
+    try {
+      let url = '/api/community/posts?limit=50';
+      if (this.communityTag && this.communityTag !== 'सभी') {
+        url += `&tag=${encodeURIComponent(this.communityTag)}`;
+      }
+
+      const res = await this.apiCall(url);
+      const posts = (res && res.posts) || [];
+      this.communityPosts = posts;
+
+      if (countEl) {
+        countEl.textContent = `${posts.length} चर्चाएं उपलब्ध`;
+      }
+
+      this.renderCommunityPosts(posts);
+      if (forceRefresh) {
+        this.showToast('चर्चाएं नवीनतम स्थिति में अपडेट की गईं! 🔄', 'success');
+      }
+    } catch (err) {
+      console.error('Failed to load community posts:', err);
+      if (feedEl) {
+        feedEl.innerHTML = `
+          <div class="comm-empty-state">
+            <div style="font-size:2.5rem; margin-bottom:8px;">⚠️</div>
+            <p>चर्चाएं लोड करने में समस्या आई: ${this.escapeHtml(err.message || 'नेटवर्क त्रुटि')}</p>
+            <button class="btn-primary btn-sm" onclick="stenoApp.loadCommunityPosts(true)">पुनः प्रयास करें</button>
+          </div>
+        `;
+      }
+    }
+  }
+
+  renderCommunityPosts(posts) {
+    const feedEl = document.getElementById('communityPostsFeed');
+    if (!feedEl) return;
+
+    if (!posts || posts.length === 0) {
+      feedEl.innerHTML = `
+        <div class="comm-empty-state">
+          <div style="font-size:3.5rem; margin-bottom:12px;">💬</div>
+          <h3 style="margin:0 0 6px 0; font-size:1.15rem; font-weight:800;">यहाँ अभी कोई चर्चा नहीं है!</h3>
+          <p style="color:var(--text-muted); margin:0 0 16px 0; font-size:0.88rem;">
+            पहला सवाल पूछकर या स्टेनो आउटलाइन शेयर कर बातचीत शुरू करें।
+          </p>
+          <button type="button" class="btn-primary" onclick="document.getElementById('commPostTextarea').focus()" style="padding:8px 20px;">
+            ✍️ पहला प्रश्न पूछें
+          </button>
+        </div>
+      `;
+      return;
+    }
+
+    const currentUserId = this.user ? this.user.user_id : null;
+    const isAdmin = Boolean(this.user && this.user.role === 'admin');
+
+    feedEl.innerHTML = posts.map(post => {
+      const isAuthor = Boolean(currentUserId && currentUserId === post.user_id);
+      const authorName = post.display_name || post.username || 'छात्र';
+      const initial = authorName.charAt(0).toUpperCase();
+      const isPostAdmin = post.role === 'admin';
+      const isProAuthor = post.role === 'admin' || post.subscription_status === 'active';
+      const timeAgo = this.formatRelativeTime(post.created_at);
+      const isLiked = Boolean(post.is_liked);
+      const isPinned = Boolean(post.is_pinned);
+      const isSolved = Boolean(post.is_solved);
+      const tag = post.category_tag || 'सामान्य';
+
+      return `
+        <div class="comm-post-card ${isPinned ? 'is-pinned' : ''} ${isSolved ? 'is-solved' : ''}" id="commPostCard_${post.id}">
+          ${isPinned ? `
+            <div class="comm-pinned-ribbon">
+              <span>📌 पिन किया गया संदेश (Pinned by Admin)</span>
+            </div>
+          ` : ''}
+
+          <div class="comm-post-header">
+            <div class="comm-post-author">
+              <div class="comm-post-avatar ${isPostAdmin ? 'avatar-admin' : (isProAuthor ? 'avatar-pro' : '')}">
+                ${initial}
+              </div>
+              <div class="comm-author-meta">
+                <div class="comm-author-row">
+                  <strong class="comm-author-name">${this.escapeHtml(authorName)}</strong>
+                  ${isPostAdmin ? '<span class="comm-role-badge admin-badge">🛡️ Admin</span>' : ''}
+                  ${!isPostAdmin && isProAuthor ? '<span class="comm-role-badge pro-badge">👑 Pro</span>' : ''}
+                  <span class="comm-tag-chip tag-${this.getCategoryClass(tag)}">${this.escapeHtml(tag)}</span>
+                </div>
+                <div class="comm-author-sub">
+                  ${post.student_code ? `<span class="comm-student-code">${this.escapeHtml(post.student_code)}</span> • ` : ''}
+                  <span class="comm-time-ago">${timeAgo}</span>
+                  ${isSolved ? '<span class="comm-solved-pill">✅ समाधान प्राप्त (Solved)</span>' : ''}
+                </div>
+              </div>
+            </div>
+
+            <!-- Post Top Action Menu -->
+            <div class="comm-post-top-actions">
+              ${(isAuthor || isAdmin) ? `
+                <button type="button" class="comm-action-icon-btn ${isSolved ? 'active-solve' : ''}" onclick="stenoApp.toggleCommunityPostSolve(${post.id})" title="${isSolved ? 'असमाधानित करें' : 'सुलझ गया मार्क करें'}">
+                  ${isSolved ? '✅' : '✔️ हल हुआ'}
+                </button>
+              ` : ''}
+              ${isAdmin ? `
+                <button type="button" class="comm-action-icon-btn ${isPinned ? 'active-pin' : ''}" onclick="stenoApp.adminTogglePinPost(${post.id})" title="${isPinned ? 'अनपिन करें' : 'शीर्ष पर पिन करें'}">
+                  📌
+                </button>
+              ` : ''}
+              ${(isAuthor || isAdmin) ? `
+                <button type="button" class="comm-action-icon-btn comm-delete-btn" onclick="stenoApp.deleteCommunityPost(${post.id})" title="पोस्ट हटाएं">
+                  🗑️
+                </button>
+              ` : ''}
+            </div>
+          </div>
+
+          <!-- Post Content -->
+          <div class="comm-post-body">
+            <div class="comm-post-text notranslate" translate="no" lang="hi">${this.formatCommunityContent(post.content)}</div>
+
+            ${post.image_url ? `
+              <div class="comm-post-image-wrap" onclick="stenoApp.openCommunityImageZoom('${this.escapeHtml(post.image_url)}')">
+                <img src="${this.escapeHtml(post.image_url)}" alt="Steno Outline Doubt" loading="lazy" class="comm-post-thumb">
+                <div class="comm-zoom-overlay">
+                  <span>🔍 बड़ा देखें (Zoom)</span>
+                </div>
+              </div>
+            ` : ''}
+          </div>
+
+          <!-- Post Bottom Interaction Bar -->
+          <div class="comm-post-footer">
+            <button type="button" class="comm-interact-btn ${isLiked ? 'liked' : ''}" onclick="stenoApp.toggleCommunityPostLike(${post.id})" id="likeBtn_${post.id}">
+              <span class="heart-icon">${isLiked ? '❤️' : '🤍'}</span>
+              <span class="like-count" id="likeCount_${post.id}">${post.likes_count || 0}</span>
+              <span class="interact-label">${isLiked ? 'पसंद आया' : 'लाइक'}</span>
+            </button>
+
+            <button type="button" class="comm-interact-btn reply-trigger-btn" onclick="stenoApp.togglePostReplies(${post.id})" id="repliesToggleBtn_${post.id}">
+              <span>💬</span>
+              <span id="replyCount_${post.id}">${post.replies_count || 0}</span>
+              <span class="interact-label">जवाब (Replies)</span>
+            </button>
+          </div>
+
+          <!-- Threaded Replies Container -->
+          <div class="comm-replies-drawer" id="commRepliesDrawer_${post.id}" style="display:none;">
+            <div class="comm-replies-list" id="commRepliesList_${post.id}">
+              <div class="comm-replies-loading">
+                <div class="comm-spinner-sm"></div>
+                <span>जवाब लोड हो रहे हैं...</span>
+              </div>
+            </div>
+
+            <!-- Reply Input Box -->
+            <div class="comm-reply-form">
+              <div class="comm-reply-input-wrap">
+                <input type="text" id="commReplyInput_${post.id}" class="comm-reply-input notranslate" translate="no" lang="hi"
+                  placeholder="अपना जवाब या मदद लिखें..."
+                  onkeydown="if(event.key==='Enter') stenoApp.submitCommunityReply(${post.id})">
+                <button type="button" class="comm-reply-emoji-trigger" onclick="stenoApp.toggleReplyEmojiToolbar(${post.id})" title="इमोजी जोड़ें">😊</button>
+              </div>
+
+              <!-- Quick reply emoji row -->
+              <div class="comm-reply-quick-emojis" id="commReplyEmojis_${post.id}" style="display:none;">
+                <button type="button" onclick="stenoApp.insertCommunityReplyEmoji(${post.id}, '👍')">👍</button>
+                <button type="button" onclick="stenoApp.insertCommunityReplyEmoji(${post.id}, '❤️')">❤️</button>
+                <button type="button" onclick="stenoApp.insertCommunityReplyEmoji(${post.id}, '👏')">👏</button>
+                <button type="button" onclick="stenoApp.insertCommunityReplyEmoji(${post.id}, '🔥')">🔥</button>
+                <button type="button" onclick="stenoApp.insertCommunityReplyEmoji(${post.id}, '💯')">💯</button>
+                <button type="button" onclick="stenoApp.insertCommunityReplyEmoji(${post.id}, '✍️')">✍️</button>
+                <button type="button" onclick="stenoApp.insertCommunityReplyEmoji(${post.id}, '🎯')">🎯</button>
+              </div>
+
+              <button type="button" class="btn-reply-send" onclick="stenoApp.submitCommunityReply(${post.id})" id="commReplySendBtn_${post.id}">
+                <span>उत्तर दें →</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  toggleReplyEmojiToolbar(postId) {
+    const el = document.getElementById(`commReplyEmojis_${postId}`);
+    if (el) {
+      el.style.display = el.style.display === 'none' ? 'flex' : 'none';
+    }
+  }
+
+  getCategoryClass(tag) {
+    if (!tag) return 'general';
+    if (tag.includes('डाउट') || tag.includes('प्रश्न')) return 'doubt';
+    if (tag.includes('आउटलाइन')) return 'outline';
+    if (tag.includes('टिप्स')) return 'tips';
+    if (tag.includes('परीक्षा')) return 'exam';
+    return 'general';
+  }
+
+  formatCommunityContent(text) {
+    if (!text) return '';
+    let escaped = this.escapeHtml(text);
+    escaped = escaped.replace(/(https?:\/\/[^\s]+)/g, '<a href="$1" target="_blank" rel="noopener noreferrer" style="color:#0284c7; text-decoration:underline;">$1</a>');
+    escaped = escaped.replace(/\n/g, '<br>');
+    return escaped;
+  }
+
+  formatRelativeTime(isoStr) {
+    if (!isoStr) return '';
+    try {
+      const d = new Date(isoStr);
+      const now = new Date();
+      const diffSec = Math.floor((now - d) / 1000);
+      if (diffSec < 45) return 'अभी-अभी';
+      const diffMin = Math.floor(diffSec / 60);
+      if (diffMin < 60) return `${diffMin} मिनट पहले`;
+      const diffHr = Math.floor(diffMin / 60);
+      if (diffHr < 24) return `${diffHr} घंटे पहले`;
+      const diffDays = Math.floor(diffHr / 24);
+      if (diffDays === 1) return 'कल';
+      if (diffDays < 30) return `${diffDays} दिन पहले`;
+      return d.toLocaleDateString('hi-IN', { day: 'numeric', month: 'short' });
+    } catch (e) {
+      return '';
+    }
+  }
+
+  async submitCommunityPost() {
+    if (!this.user) {
+      this.openModal('loginModal');
+      return;
+    }
+
+    const textarea = document.getElementById('commPostTextarea');
+    const tagSelect = document.getElementById('commPostTagSelect');
+    const submitBtn = document.getElementById('commPostSubmitBtn');
+    const content = (textarea ? textarea.value : '').trim();
+    const tag = tagSelect ? tagSelect.value : 'सामान्य';
+
+    if (!content && !this.selectedCommunityImage) {
+      this.showToast('कृपया प्रश्न/संदेश लिखें अथवा अपनी नोटबुक से आउटलाइन फ़ोटो जोड़ें।', 'warning');
+      if (textarea) textarea.focus();
+      return;
+    }
+
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<span>अपलोड हो रहा है... ⏳</span>';
+    }
+
+    try {
+      let imageUrl = null;
+      if (this.selectedCommunityImage) {
+        const uploadRes = await this.apiCall('/api/community/upload-image', 'POST', {
+          filename: this.selectedCommunityImage.filename,
+          data: this.selectedCommunityImage.data
+        });
+        if (uploadRes && uploadRes.success) {
+          imageUrl = uploadRes.image_url;
+        } else {
+          throw new Error(uploadRes?.error || 'फ़ोटो अपलोड विफल रहा।');
+        }
+      }
+
+      const postRes = await this.apiCall('/api/community/posts', 'POST', {
+        content: content || 'नोटबुक आउटलाइन फ़ोटो संलग्न',
+        image_url: imageUrl,
+        category_tag: tag
+      });
+
+      if (postRes && postRes.success) {
+        this.showToast('🎉 आपका प्रश्न / पोस्ट प्रकाशित हो गया!', 'success');
+        if (textarea) textarea.value = '';
+        this.removeCommunitySelectedImage();
+        await this.loadCommunityPosts(true);
+      } else {
+        throw new Error(postRes?.error || 'पोस्ट प्रकाशित नहीं हो सकी।');
+      }
+    } catch (err) {
+      console.error('Post creation failed:', err);
+      this.showToast(err.message || 'पोस्ट करने में त्रुटि हुई।', 'error');
+    } finally {
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<span>🚀 पोस्ट करें (Publish)</span>';
+      }
+    }
+  }
+
+  async toggleCommunityPostLike(postId) {
+    if (!this.user) {
+      this.openModal('loginModal');
+      return;
+    }
+
+    const btn = document.getElementById(`likeBtn_${postId}`);
+    const cnt = document.getElementById(`likeCount_${postId}`);
+
+    try {
+      const res = await this.apiCall(`/api/community/posts/${postId}/like`, 'POST');
+      if (res && res.success) {
+        if (btn) btn.classList.toggle('liked', res.is_liked);
+        if (cnt) cnt.textContent = res.likes_count;
+        const heart = btn ? btn.querySelector('.heart-icon') : null;
+        if (heart) heart.textContent = res.is_liked ? '❤️' : '🤍';
+        const label = btn ? btn.querySelector('.interact-label') : null;
+        if (label) label.textContent = res.is_liked ? 'पसंद आया' : 'लाइक';
+      }
+    } catch (err) {
+      console.error('Like toggle failed:', err);
+    }
+  }
+
+  async toggleCommunityPostSolve(postId) {
+    try {
+      const res = await this.apiCall(`/api/community/posts/${postId}/solve`, 'POST');
+      if (res && res.success) {
+        this.showToast(res.is_solved ? '✅ पोस्ट सुलझी हुई (Solved) मार्क की गई!' : 'स्थिति अपडेट की गई।', 'success');
+        this.loadCommunityPosts();
+      }
+    } catch (err) {
+      this.showToast(err.message || 'त्रुटि हुई', 'error');
+    }
+  }
+
+  async adminTogglePinPost(postId) {
+    try {
+      const res = await this.apiCall(`/api/admin/community/posts/${postId}/pin`, 'POST');
+      if (res && res.success) {
+        this.showToast(res.is_pinned ? '📌 पोस्ट शीर्ष पर पिन की गई!' : 'पिन हटा दिया गया।', 'info');
+        this.loadCommunityPosts();
+      }
+    } catch (err) {
+      this.showToast(err.message || 'त्रुटि हुई', 'error');
+    }
+  }
+
+  async deleteCommunityPost(postId) {
+    if (!confirm('क्या आप वाकई इस पोस्ट को हटाना चाहते हैं?')) return;
+    try {
+      const res = await this.apiCall(`/api/community/posts/${postId}/delete`, 'POST');
+      if (res && res.success) {
+        this.showToast('पोस्ट सफलतापूर्वक हटा दी गई।', 'info');
+        const card = document.getElementById(`commPostCard_${postId}`);
+        if (card) card.remove();
+      } else {
+        throw new Error(res?.error || 'हटाने में विफलता');
+      }
+    } catch (err) {
+      this.showToast(err.message || 'हटाने में त्रुटि', 'error');
+    }
+  }
+
+  async togglePostReplies(postId) {
+    const drawer = document.getElementById(`commRepliesDrawer_${postId}`);
+    if (!drawer) return;
+
+    if (drawer.style.display !== 'none') {
+      drawer.style.display = 'none';
+      return;
+    }
+
+    drawer.style.display = 'block';
+    await this.loadPostReplies(postId);
+  }
+
+  async loadPostReplies(postId) {
+    const listEl = document.getElementById(`commRepliesList_${postId}`);
+    if (!listEl) return;
+
+    try {
+      const res = await this.apiCall(`/api/community/posts/${postId}/replies`);
+      const replies = (res && res.replies) || [];
+      const currentUserId = this.user ? this.user.user_id : null;
+      const isAdmin = Boolean(this.user && this.user.role === 'admin');
+
+      if (replies.length === 0) {
+        listEl.innerHTML = `
+          <div class="comm-replies-empty">
+            <span>यहाँ अभी कोई जवाब नहीं है। सबसे पहले उत्तर दें! 👇</span>
+          </div>
+        `;
+        return;
+      }
+
+      listEl.innerHTML = replies.map(r => {
+        const authorName = r.display_name || r.username || 'छात्र';
+        const initial = authorName.charAt(0).toUpperCase();
+        const isReplyAdmin = r.role === 'admin';
+        const isAuthor = Boolean(currentUserId && currentUserId === r.user_id);
+        const timeAgo = this.formatRelativeTime(r.created_at);
+
+        return `
+          <div class="comm-reply-item" id="commReplyItem_${r.id}">
+            <div class="comm-reply-avatar ${isReplyAdmin ? 'avatar-admin' : ''}">
+              ${initial}
+            </div>
+            <div class="comm-reply-bubble">
+              <div class="comm-reply-header">
+                <strong>${this.escapeHtml(authorName)}</strong>
+                ${isReplyAdmin ? '<span class="comm-role-badge admin-badge">🛡️ Admin</span>' : ''}
+                <span class="comm-reply-time">${timeAgo}</span>
+                ${(isAuthor || isAdmin) ? `
+                  <button type="button" class="comm-reply-del-btn" onclick="stenoApp.deleteCommunityReply(${r.id}, ${postId})" title="जवाब हटाएं">✕</button>
+                ` : ''}
+              </div>
+              <div class="comm-reply-text notranslate" translate="no" lang="hi">${this.formatCommunityContent(r.content)}</div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    } catch (err) {
+      listEl.innerHTML = `<div class="comm-replies-empty">जवाब लोड करने में समस्या: ${this.escapeHtml(err.message || 'त्रुटि')}</div>`;
+    }
+  }
+
+  async submitCommunityReply(postId) {
+    if (!this.user) {
+      this.openModal('loginModal');
+      return;
+    }
+
+    const input = document.getElementById(`commReplyInput_${postId}`);
+    const sendBtn = document.getElementById(`commReplySendBtn_${postId}`);
+    const content = (input ? input.value : '').trim();
+
+    if (!content) {
+      this.showToast('कृपया उत्तर का संदेश लिखें।', 'warning');
+      if (input) input.focus();
+      return;
+    }
+
+    if (sendBtn) sendBtn.disabled = true;
+
+    try {
+      const res = await this.apiCall(`/api/community/posts/${postId}/replies`, 'POST', {
+        content: content
+      });
+
+      if (res && res.success) {
+        if (input) input.value = '';
+        const quickRow = document.getElementById(`commReplyEmojis_${postId}`);
+        if (quickRow) quickRow.style.display = 'none';
+
+        const cntEl = document.getElementById(`replyCount_${postId}`);
+        if (cntEl) {
+          cntEl.textContent = parseInt(cntEl.textContent || '0', 10) + 1;
+        }
+
+        await this.loadPostReplies(postId);
+        this.showToast('जवाब सफलतापूर्वक भेजा गया! 💬', 'success');
+      } else {
+        throw new Error(res?.error || 'जवाब भेजने में विफलता');
+      }
+    } catch (err) {
+      this.showToast(err.message || 'जवाब भेजने में त्रुटि', 'error');
+    } finally {
+      if (sendBtn) sendBtn.disabled = false;
+    }
+  }
+
+  async deleteCommunityReply(replyId, postId) {
+    if (!confirm('क्या आप वाकई इस जवाब को हटाना चाहते हैं?')) return;
+    try {
+      const res = await this.apiCall(`/api/community/replies/${replyId}/delete`, 'POST');
+      if (res && res.success) {
+        const item = document.getElementById(`commReplyItem_${replyId}`);
+        if (item) item.remove();
+        const cntEl = document.getElementById(`replyCount_${postId}`);
+        if (cntEl) {
+          const c = parseInt(cntEl.textContent || '1', 10);
+          cntEl.textContent = Math.max(0, c - 1);
+        }
+        this.showToast('जवाब हटा दिया गया।', 'info');
+      }
+    } catch (err) {
+      this.showToast(err.message || 'त्रुटि हुई', 'error');
+    }
+  }
+
+  openCommunityImageZoom(imgUrl) {
+    const modal = document.getElementById('communityImageZoomModal');
+    const img = document.getElementById('commZoomImg');
+    const dlBtn = document.getElementById('commZoomDownloadBtn');
+    if (img) img.src = imgUrl;
+    if (dlBtn) dlBtn.href = imgUrl;
+    if (modal) modal.style.display = 'flex';
   }
 
 }

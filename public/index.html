@@ -2099,6 +2099,142 @@
            VIEW: ADMIN DASHBOARD — Modern Left-Tabbed Workspace
            =================================================================== -->
       <!-- Admin Portal has moved to dedicated /admin.html -->
+      <!-- ===================================================================
+           VIEW: STUDENT COMMUNITY CHAT & DOUBT FORUM (100% Free For All)
+           =================================================================== -->
+      <main class="page-view" id="view-community" style="display:none;">
+        <div class="community-view-container">
+          <!-- Community Top Banner Header -->
+          <div class="community-header-banner">
+            <div class="community-header-info">
+              <div class="community-badge-pill">
+                <span>💬</span> <span>ऑल-स्टूडेंट्स कम्युनिटी चैट व डाउट मंच</span>
+                <span class="community-free-pill">100% FREE</span>
+              </div>
+              <h2 class="community-title">छात्र चर्चा एवं स्टेनो डाउट समाधान मंच</h2>
+              <p class="community-subtitle">
+                रामधारी गुप्ता व स्टेनो आउटलाइन्स पूछें, अपनी नोटबुक की फ़ोटो अपलोड कर डाउट क्लियर करें और साथी छात्रों से चर्चा करें!
+              </p>
+            </div>
+            <div class="community-header-actions">
+              <button type="button" class="btn-refresh-community" onclick="stenoApp.loadCommunityPosts(true)" title="पोस्ट्स रिफ्रेश करें">
+                <span class="refresh-icon">🔄</span> <span>रिफ्रेश</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Category Tags Filter Bar -->
+          <div class="community-tags-filter" id="communityTagsFilter">
+            <button type="button" class="comm-tag-btn active" data-tag="सभी" onclick="stenoApp.filterCommunityTag('सभी')">🌟 सभी चर्चाएं</button>
+            <button type="button" class="comm-tag-btn" data-tag="डाउट / प्रश्न" onclick="stenoApp.filterCommunityTag('डाउट / प्रश्न')">❓ डाउट / प्रश्न</button>
+            <button type="button" class="comm-tag-btn" data-tag="आउटलाइन सहायता" onclick="stenoApp.filterCommunityTag('आउटलाइन सहायता')">📝 आउटलाइन सहायता</button>
+            <button type="button" class="comm-tag-btn" data-tag="टिप्स व ट्रिक्स" onclick="stenoApp.filterCommunityTag('टिप्स व ट्रिक्स')">💡 टिप्स व ट्रिक्स</button>
+            <button type="button" class="comm-tag-btn" data-tag="परीक्षा चर्चा" onclick="stenoApp.filterCommunityTag('परीक्षा चर्चा')">🏛️ परीक्षा चर्चा</button>
+            <button type="button" class="comm-tag-btn" data-tag="सामान्य" onclick="stenoApp.filterCommunityTag('सामान्य')">💬 सामान्य</button>
+          </div>
+
+          <!-- Create Post Box (WhatsApp & Colorful Forum Style) -->
+          <div class="comm-create-card">
+            <div class="comm-create-header">
+              <div class="comm-user-info">
+                <div class="comm-avatar" id="commCurrentUserAvatar">S</div>
+                <div>
+                  <strong class="comm-user-name" id="commCurrentUserName">विद्यार्थी</strong>
+                  <div class="comm-subtext">अपनी समस्या या सवाल सभी विद्यार्थियों के साथ साझा करें</div>
+                </div>
+              </div>
+              <div class="comm-tag-selector-wrap">
+                <label for="commPostTagSelect">कैटेगरी:</label>
+                <select id="commPostTagSelect" class="comm-tag-dropdown">
+                  <option value="सामान्य">💬 सामान्य</option>
+                  <option value="डाउट / प्रश्न" selected>❓ डाउट / प्रश्न</option>
+                  <option value="आउटलाइन सहायता">📝 आउटलाइन सहायता</option>
+                  <option value="टिप्स व ट्रिक्स">💡 टिप्स व ट्रिक्स</option>
+                  <option value="परीक्षा चर्चा">🏛️ परीक्षा चर्चा</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Text Input Area -->
+            <div class="comm-input-wrap">
+              <textarea id="commPostTextarea" class="comm-textarea notranslate" translate="no" lang="hi"
+                placeholder="यहाँ अपना स्टेनो डाउट, सवाल या अनुभव लिखें... (उदा: 'अभ्यास 15 में 'आत्मनिर्भरता' की सबसे सरल आउटलाइन क्या होगी?')"></textarea>
+            </div>
+
+            <!-- WhatsApp Style Emoji Quick Toolbar -->
+            <div class="comm-emoji-toolbar">
+              <span class="emoji-bar-label">WhatsApp इमोजी:</span>
+              <div class="emoji-bar-scroll">
+                <button type="button" class="emoji-btn" onclick="stenoApp.insertCommunityEmoji('👍')">👍</button>
+                <button type="button" class="emoji-btn" onclick="stenoApp.insertCommunityEmoji('❤️')">❤️</button>
+                <button type="button" class="emoji-btn" onclick="stenoApp.insertCommunityEmoji('🔥')">🔥</button>
+                <button type="button" class="emoji-btn" onclick="stenoApp.insertCommunityEmoji('👏')">👏</button>
+                <button type="button" class="emoji-btn" onclick="stenoApp.insertCommunityEmoji('🙏')">🙏</button>
+                <button type="button" class="emoji-btn" onclick="stenoApp.insertCommunityEmoji('😊')">😊</button>
+                <button type="button" class="emoji-btn" onclick="stenoApp.insertCommunityEmoji('🎯')">🎯</button>
+                <button type="button" class="emoji-btn" onclick="stenoApp.insertCommunityEmoji('💡')">💡</button>
+                <button type="button" class="emoji-btn" onclick="stenoApp.insertCommunityEmoji('✍️')">✍️</button>
+                <button type="button" class="emoji-btn" onclick="stenoApp.insertCommunityEmoji('📝')">📝</button>
+                <button type="button" class="emoji-btn" onclick="stenoApp.insertCommunityEmoji('💯')">💯</button>
+                <button type="button" class="emoji-btn" onclick="stenoApp.insertCommunityEmoji('🚀')">🚀</button>
+                <button type="button" class="emoji-btn" onclick="stenoApp.insertCommunityEmoji('🤔')">🤔</button>
+                <button type="button" class="emoji-btn" onclick="stenoApp.insertCommunityEmoji('🙌')">🙌</button>
+                <button type="button" class="emoji-btn" onclick="stenoApp.insertCommunityEmoji('✨')">✨</button>
+                <button type="button" class="emoji-btn" onclick="stenoApp.insertCommunityEmoji('⭐')">⭐</button>
+                <button type="button" class="emoji-btn" onclick="stenoApp.insertCommunityEmoji('🎉')">🎉</button>
+                <button type="button" class="emoji-btn" onclick="stenoApp.insertCommunityEmoji('💪')">💪</button>
+              </div>
+            </div>
+
+            <!-- Image Attachment Preview Box (if selected) -->
+            <div id="commImagePreviewContainer" class="comm-image-preview-box" style="display:none;">
+              <div class="comm-preview-inner">
+                <img id="commImagePreviewImg" src="" alt="Doubt Preview">
+                <button type="button" class="comm-remove-preview-btn" onclick="stenoApp.removeCommunitySelectedImage()" title="हटाएं">✕</button>
+              </div>
+              <div class="comm-preview-meta">
+                <span id="commImagePreviewName">आउटलाइन फ़ोटो संलग्न</span>
+                <span class="comm-preview-hint">✓ फ़ोटो अपलोड हेतु तैयार</span>
+              </div>
+            </div>
+
+            <!-- Hidden File Input for Image Upload -->
+            <input type="file" id="commPhotoFileInput" accept="image/*" style="display:none;" onchange="stenoApp.handleCommunityPhotoFileSelected(event)">
+
+            <!-- Bottom Actions Row -->
+            <div class="comm-create-actions">
+              <div class="comm-attach-buttons">
+                <button type="button" class="btn-attach-photo" onclick="document.getElementById('commPhotoFileInput').click()" title="नोटबुक से आउटलाइन या प्रश्न की फ़ोटो संलग्न करें">
+                  <span class="cam-icon">📸</span>
+                  <span>आउटलाइन फ़ोटो जोड़ें (Photo)</span>
+                </button>
+              </div>
+              <button type="button" class="btn-post-submit" id="commPostSubmitBtn" onclick="stenoApp.submitCommunityPost()">
+                <span>🚀 पोस्ट करें (Publish)</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Feed Posts List Container -->
+          <div class="comm-feed-section">
+            <div class="comm-feed-header">
+              <h3 class="comm-feed-title">
+                <span>💬</span> <span>हाल की चर्चाएं एवं पूछे गए सवाल</span>
+              </h3>
+              <span class="comm-feed-count" id="commPostsTotalCount">लोड हो रहा है...</span>
+            </div>
+
+            <div id="communityPostsFeed" class="community-posts-list">
+              <!-- Dynamically populated via loadCommunityPosts() -->
+              <div class="comm-feed-loading">
+                <div class="comm-spinner"></div>
+                <span>चर्चाएं लोड हो रही हैं...</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+
       <main class="page-view" id="view-admin" style="text-align:center; padding:60px 20px;">
         <div style="font-size:3rem; margin-bottom:12px;">🛡️</div>
         <h2 style="font-size:1.5rem; font-weight:800; margin-bottom:8px;">प्रशासन पोर्टल (Admin Portal)</h2>
@@ -2186,11 +2322,11 @@
       <button class="mobile-nav-btn" data-nav="classes">
         <span>📚</span> <span data-i18n="bnav_classes">क्लासेस</span>
       </button>
+      <button class="mobile-nav-btn" data-nav="community">
+        <span>💬</span> <span>कम्युनिटी</span>
+      </button>
       <button class="mobile-nav-btn" data-nav="my-practice">
         <span>⏱️</span> <span data-i18n="bnav_history">इतिहास</span>
-      </button>
-      <button class="mobile-nav-btn" data-nav="rules">
-        <span>📜</span> <span data-i18n="bnav_rules">नियम</span>
       </button>
       <button class="mobile-nav-btn" data-nav="settings">
         <span>⚙️</span> <span data-i18n="bnav_settings">सेटिंग्स</span>
@@ -2425,6 +2561,24 @@
       </div>
       <div id="stenoLightboxContent" style="flex:1; overflow:auto; text-align:center; min-height:300px; max-height:calc(90vh - 120px); background:#f8fafc; border-radius:8px; display:flex; align-items:center; justify-content:center; padding:10px;">
         <!-- Dynamic Image or PDF iframe injected here -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Community Image Zoom Modal -->
+  <div class="modal-overlay" id="communityImageZoomModal" onclick="if(event.target===this) stenoApp.closeModal('communityImageZoomModal')" style="z-index:999999;">
+    <div class="modal-card comm-zoom-modal-card">
+      <div class="comm-zoom-modal-header">
+        <h4 style="margin:0; font-size:1.05rem; color:#fff; display:flex; align-items:center; gap:8px;">
+          <span>🔍</span> <span>स्टेनो आउटलाइन व नोट्स का विस्तृत दृश्य</span>
+        </h4>
+        <div style="display:flex; gap:10px; align-items:center;">
+          <a id="commZoomDownloadBtn" href="#" download target="_blank" class="btn-sm btn-secondary" style="color:#fff; text-decoration:none;">⬇️ डाउनलोड</a>
+          <button type="button" class="modal-close-btn" style="position:static; color:#fff;" onclick="stenoApp.closeModal('communityImageZoomModal')">✕</button>
+        </div>
+      </div>
+      <div class="comm-zoom-img-container">
+        <img id="commZoomImg" src="" alt="Enlarged Outline">
       </div>
     </div>
   </div>

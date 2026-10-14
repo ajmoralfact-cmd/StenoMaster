@@ -72,7 +72,7 @@ class PostgresCursorWrapper:
             if 'ON CONFLICT' not in pg_sql.upper():
                 pg_sql = pg_sql + ' ON CONFLICT DO NOTHING'
 
-        tables_with_id = ('USERS', 'PRACTICE_ATTEMPTS', 'PASSAGES', 'CATEGORIES', 'PAYMENT_REQUESTS', 'CASHFREE_ORDERS', 'NOTIFICATIONS', 'REFERRALS', 'REWARD_TRANSACTIONS')
+        tables_with_id = ('USERS', 'PRACTICE_ATTEMPTS', 'PASSAGES', 'CATEGORIES', 'PAYMENT_REQUESTS', 'CASHFREE_ORDERS', 'NOTIFICATIONS', 'REFERRALS', 'REWARD_TRANSACTIONS', 'COMMUNITY_POSTS', 'COMMUNITY_REPLIES')
         sql_upper = pg_sql.upper()
         if any(f"INSERT INTO {tbl}" in sql_upper for tbl in tables_with_id) and 'RETURNING' not in sql_upper:
             pg_sql = pg_sql + ' RETURNING id'
@@ -192,7 +192,10 @@ def run_postgres_migrations(conn):
     try:
         raw_conn = getattr(conn, '_conn', conn)
         prev_autocommit = getattr(raw_conn, 'autocommit', False)
-        raw_conn.autocommit = True
+        try:
+            raw_conn.autocommit = True
+        except Exception:
+            pass
         with raw_conn.cursor() as cur:
             pg_stmts = [
                 "ALTER TABLE passages ADD COLUMN IF NOT EXISTS steno_notes_url TEXT",
@@ -249,9 +252,49 @@ def run_postgres_migrations(conn):
                     UNIQUE(user_id, category_id)
                 );
                 CREATE INDEX IF NOT EXISTS idx_uuc_user ON user_unlocked_categories(user_id);
+
+                -- Community Chat & Doubt Forum Tables
+                CREATE TABLE IF NOT EXISTS community_posts (
+                    id SERIAL PRIMARY KEY,
+                    user_id INTEGER NOT NULL,
+                    content TEXT NOT NULL,
+                    image_url TEXT,
+                    category_tag TEXT DEFAULT 'सामान्य',
+                    likes_count INTEGER DEFAULT 0,
+                    replies_count INTEGER DEFAULT 0,
+                    is_pinned INTEGER DEFAULT 0,
+                    is_solved INTEGER DEFAULT 0,
+                    created_at TEXT NOT NULL
+                );
+                CREATE INDEX IF NOT EXISTS idx_comm_posts_created ON community_posts(created_at DESC);
+
+                CREATE TABLE IF NOT EXISTS community_replies (
+                    id SERIAL PRIMARY KEY,
+                    post_id INTEGER NOT NULL,
+                    user_id INTEGER NOT NULL,
+                    content TEXT NOT NULL,
+                    image_url TEXT,
+                    created_at TEXT NOT NULL
+                );
+                CREATE INDEX IF NOT EXISTS idx_comm_replies_post ON community_replies(post_id);
+
+                CREATE TABLE IF NOT EXISTS community_likes (
+                    user_id INTEGER NOT NULL,
+                    post_id INTEGER NOT NULL,
+                    created_at TEXT NOT NULL,
+                    PRIMARY KEY (user_id, post_id)
+                );
             """)
+            try:
+                raw_conn.commit()
+            except Exception:
+                pass
             ensure_postgres_default_data(cur)
-        raw_conn.autocommit = prev_autocommit
+        try:
+            raw_conn.commit()
+            raw_conn.autocommit = prev_autocommit
+        except Exception:
+            pass
     except Exception as e:
         print(f"Error in run_postgres_migrations: {e}")
 
@@ -792,6 +835,49 @@ def init_db():
         plan_days INTEGER NOT NULL DEFAULT 30,
         created_at TEXT NOT NULL,
         FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    )
+    """)
+
+    # 19. Community Chat & Doubt Forum
+    c.execute("""
+    CREATE TABLE IF NOT EXISTS community_posts (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL,
+        content TEXT NOT NULL,
+        image_url TEXT,
+        category_tag TEXT DEFAULT 'सामान्य',
+        likes_count INTEGER DEFAULT 0,
+        replies_count INTEGER DEFAULT 0,
+        is_pinned INTEGER DEFAULT 0,
+        is_solved INTEGER DEFAULT 0,
+        created_at TEXT NOT NULL,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    )
+    """)
+    c.execute("CREATE INDEX IF NOT EXISTS idx_comm_posts_created ON community_posts(created_at DESC)")
+
+    c.execute("""
+    CREATE TABLE IF NOT EXISTS community_replies (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        post_id INTEGER NOT NULL,
+        user_id INTEGER NOT NULL,
+        content TEXT NOT NULL,
+        image_url TEXT,
+        created_at TEXT NOT NULL,
+        FOREIGN KEY (post_id) REFERENCES community_posts(id) ON DELETE CASCADE,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    )
+    """)
+    c.execute("CREATE INDEX IF NOT EXISTS idx_comm_replies_post ON community_replies(post_id)")
+
+    c.execute("""
+    CREATE TABLE IF NOT EXISTS community_likes (
+        user_id INTEGER NOT NULL,
+        post_id INTEGER NOT NULL,
+        created_at TEXT NOT NULL,
+        PRIMARY KEY (user_id, post_id),
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+        FOREIGN KEY (post_id) REFERENCES community_posts(id) ON DELETE CASCADE
     )
     """)
 
@@ -5666,3 +5752,247 @@ def admin_review_withdrawal(req_id: int, action: str, admin_id: int, notes: str 
         conn.commit()
         conn.close()
         return {"success": True, "message": f"निकासी अनुरोध #{req_id} अस्वीकृत एवं ₹{amount:.2f} छात्र के वॉलेट में वापस जमा! 🔄"}
+
+
+# =====================================================================
+# COMMUNITY CHAT & DOUBT FORUM FUNCTIONS (Free For All Students)
+# =====================================================================
+
+def get_community_posts(limit: int = 50, offset: int = 0, current_user_id: Optional[int] = None, category_tag: Optional[str] = None, search: Optional[str] = None) -> List[Dict[str, Any]]:
+    conn = get_db()
+    c = conn.cursor()
+    params: List[Any] = []
+    where_clauses: List[str] = []
+
+    if category_tag and category_tag != 'सभी':
+        where_clauses.append("cp.category_tag = ?")
+        params.append(category_tag)
+
+    if search:
+        where_clauses.append("(cp.content LIKE ? OR p.display_name LIKE ?)")
+        params.extend([f"%{search}%", f"%{search}%"])
+
+    where_sql = ("WHERE " + " AND ".join(where_clauses)) if where_clauses else ""
+
+    if current_user_id:
+        like_subquery = "EXISTS (SELECT 1 FROM community_likes cl WHERE cl.post_id = cp.id AND cl.user_id = ?) AS is_liked"
+        query_params = [current_user_id] + params + [limit, offset]
+    else:
+        like_subquery = "0 AS is_liked"
+        query_params = params + [limit, offset]
+
+    sql = f"""
+        SELECT cp.id, cp.user_id, cp.content, cp.image_url, cp.category_tag,
+               cp.likes_count, cp.replies_count, cp.is_pinned, cp.is_solved, cp.created_at,
+               u.username, u.role, u.student_code,
+               p.display_name, p.avatar,
+               {like_subquery}
+        FROM community_posts cp
+        JOIN users u ON cp.user_id = u.id
+        LEFT JOIN profiles p ON u.id = p.user_id
+        {where_sql}
+        ORDER BY cp.is_pinned DESC, cp.created_at DESC
+        LIMIT ? OFFSET ?
+    """
+    c.execute(sql, query_params)
+    rows = c.fetchall()
+    conn.close()
+
+    posts = []
+    for r in rows:
+        d = dict(r) if hasattr(r, 'keys') else {
+            'id': r[0], 'user_id': r[1], 'content': r[2], 'image_url': r[3],
+            'category_tag': r[4], 'likes_count': r[5], 'replies_count': r[6],
+            'is_pinned': r[7], 'is_solved': r[8], 'created_at': r[9],
+            'username': r[10], 'role': r[11], 'student_code': r[12],
+            'display_name': r[13], 'avatar': r[14], 'is_liked': bool(r[15])
+        }
+        if not d.get('display_name'):
+            d['display_name'] = d.get('username') or 'छात्र'
+        posts.append(d)
+    return posts
+
+
+def create_community_post(user_id: int, content: str, image_url: Optional[str] = None, category_tag: str = 'सामान्य') -> Dict[str, Any]:
+    conn = get_db()
+    c = conn.cursor()
+    now_iso = datetime.now().isoformat()
+    c.execute("""
+        INSERT INTO community_posts (user_id, content, image_url, category_tag, created_at)
+        VALUES (?, ?, ?, ?, ?)
+    """, (user_id, content.strip(), image_url, category_tag, now_iso))
+    post_id = getattr(c, 'lastrowid', None)
+    conn.commit()
+    conn.close()
+    return {"success": True, "post_id": post_id, "created_at": now_iso}
+
+
+def add_community_reply(post_id: int, user_id: int, content: str, image_url: Optional[str] = None) -> Dict[str, Any]:
+    conn = get_db()
+    c = conn.cursor()
+    now_iso = datetime.now().isoformat()
+    c.execute("""
+        INSERT INTO community_replies (post_id, user_id, content, image_url, created_at)
+        VALUES (?, ?, ?, ?, ?)
+    """, (post_id, user_id, content.strip(), image_url, now_iso))
+    reply_id = getattr(c, 'lastrowid', None)
+
+    # Increment replies_count
+    c.execute("UPDATE community_posts SET replies_count = replies_count + 1 WHERE id = ?", (post_id,))
+
+    # Notify post author if not self
+    try:
+        c.execute("SELECT user_id, content FROM community_posts WHERE id = ?", (post_id,))
+        p_row = c.fetchone()
+        if p_row:
+            p_author_id = p_row['user_id'] if isinstance(p_row, dict) else p_row[0]
+            if p_author_id != user_id:
+                c.execute("SELECT p.display_name, u.username FROM users u LEFT JOIN profiles p ON u.id = p.user_id WHERE u.id = ?", (user_id,))
+                u_row = c.fetchone()
+                replier_name = (u_row['display_name'] or u_row['username']) if u_row else 'एक छात्र'
+                c.execute("""
+                    INSERT INTO notifications (user_id, title, message, type, is_read, created_at)
+                    VALUES (?, '💬 आपके प्रश्न पर नया जवाब!', ? || ' ने आपके प्रश्न पर उत्तर दिया है: "' || ? || '"', 'community', 0, ?)
+                """, (p_author_id, replier_name, content[:50], now_iso))
+    except Exception as e:
+        print(f"Notice sending reply notification: {e}")
+
+    conn.commit()
+    conn.close()
+    return {"success": True, "reply_id": reply_id, "created_at": now_iso}
+
+
+def get_community_replies(post_id: int) -> List[Dict[str, Any]]:
+    conn = get_db()
+    c = conn.cursor()
+    sql = """
+        SELECT cr.id, cr.post_id, cr.user_id, cr.content, cr.image_url, cr.created_at,
+               u.username, u.role, u.student_code,
+               p.display_name, p.avatar
+        FROM community_replies cr
+        JOIN users u ON cr.user_id = u.id
+        LEFT JOIN profiles p ON u.id = p.user_id
+        WHERE cr.post_id = ?
+        ORDER BY cr.created_at ASC
+    """
+    c.execute(sql, (post_id,))
+    rows = c.fetchall()
+    conn.close()
+
+    replies = []
+    for r in rows:
+        d = dict(r) if hasattr(r, 'keys') else {
+            'id': r[0], 'post_id': r[1], 'user_id': r[2], 'content': r[3],
+            'image_url': r[4], 'created_at': r[5],
+            'username': r[6], 'role': r[7], 'student_code': r[8],
+            'display_name': r[9], 'avatar': r[10]
+        }
+        if not d.get('display_name'):
+            d['display_name'] = d.get('username') or 'छात्र'
+        replies.append(d)
+    return replies
+
+
+def toggle_community_like(post_id: int, user_id: int) -> Dict[str, Any]:
+    conn = get_db()
+    c = conn.cursor()
+    now_iso = datetime.now().isoformat()
+
+    c.execute("SELECT 1 FROM community_likes WHERE post_id = ? AND user_id = ?", (post_id, user_id))
+    already_liked = c.fetchone() is not None
+
+    if already_liked:
+        c.execute("DELETE FROM community_likes WHERE post_id = ? AND user_id = ?", (post_id, user_id))
+        c.execute("UPDATE community_posts SET likes_count = MAX(0, likes_count - 1) WHERE id = ?", (post_id,))
+        is_liked = False
+    else:
+        c.execute("""
+            INSERT INTO community_likes (post_id, user_id, created_at)
+            VALUES (?, ?, ?)
+        """, (post_id, user_id, now_iso))
+        c.execute("UPDATE community_posts SET likes_count = likes_count + 1 WHERE id = ?", (post_id,))
+        is_liked = True
+
+    c.execute("SELECT likes_count FROM community_posts WHERE id = ?", (post_id,))
+    cnt_row = c.fetchone()
+    likes_count = (cnt_row['likes_count'] if isinstance(cnt_row, dict) else cnt_row[0]) if cnt_row else 0
+
+    conn.commit()
+    conn.close()
+    return {"success": True, "is_liked": is_liked, "likes_count": likes_count}
+
+
+def delete_community_post(post_id: int, user_id: int, is_admin: bool = False) -> Dict[str, Any]:
+    conn = get_db()
+    c = conn.cursor()
+    if is_admin:
+        c.execute("SELECT id FROM community_posts WHERE id = ?", (post_id,))
+    else:
+        c.execute("SELECT id FROM community_posts WHERE id = ? AND user_id = ?", (post_id, user_id))
+    post = c.fetchone()
+    if not post:
+        conn.close()
+        return {"success": False, "error": "पोस्ट नहीं मिली या हटाने की अनुमति नहीं है।"}
+
+    c.execute("DELETE FROM community_replies WHERE post_id = ?", (post_id,))
+    c.execute("DELETE FROM community_likes WHERE post_id = ?", (post_id,))
+    c.execute("DELETE FROM community_posts WHERE id = ?", (post_id,))
+    conn.commit()
+    conn.close()
+    return {"success": True, "message": "पोस्ट सफलतापूर्वक हटा दी गई।"}
+
+
+def delete_community_reply(reply_id: int, user_id: int, is_admin: bool = False) -> Dict[str, Any]:
+    conn = get_db()
+    c = conn.cursor()
+    if is_admin:
+        c.execute("SELECT post_id FROM community_replies WHERE id = ?", (reply_id,))
+    else:
+        c.execute("SELECT post_id FROM community_replies WHERE id = ? AND user_id = ?", (reply_id, user_id))
+    r = c.fetchone()
+    if not r:
+        conn.close()
+        return {"success": False, "error": "जवाब नहीं मिला या हटाने की अनुमति नहीं है।"}
+
+    post_id = r['post_id'] if isinstance(r, dict) else r[0]
+    c.execute("DELETE FROM community_replies WHERE id = ?", (reply_id,))
+    c.execute("UPDATE community_posts SET replies_count = MAX(0, replies_count - 1) WHERE id = ?", (post_id,))
+    conn.commit()
+    conn.close()
+    return {"success": True, "message": "जवाब हटा दिया गया।"}
+
+
+def toggle_pin_community_post(post_id: int) -> Dict[str, Any]:
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("SELECT is_pinned FROM community_posts WHERE id = ?", (post_id,))
+    row = c.fetchone()
+    if not row:
+        conn.close()
+        return {"success": False, "error": "पोस्ट नहीं मिली"}
+    curr = row['is_pinned'] if isinstance(row, dict) else row[0]
+    new_pinned = 0 if curr else 1
+    c.execute("UPDATE community_posts SET is_pinned = ? WHERE id = ?", (new_pinned, post_id))
+    conn.commit()
+    conn.close()
+    return {"success": True, "is_pinned": bool(new_pinned)}
+
+
+def toggle_solve_community_post(post_id: int, user_id: int, is_admin: bool = False) -> Dict[str, Any]:
+    conn = get_db()
+    c = conn.cursor()
+    if is_admin:
+        c.execute("SELECT is_solved FROM community_posts WHERE id = ?", (post_id,))
+    else:
+        c.execute("SELECT is_solved FROM community_posts WHERE id = ? AND user_id = ?", (post_id, user_id))
+    row = c.fetchone()
+    if not row:
+        conn.close()
+        return {"success": False, "error": "पोस्ट नहीं मिली या अनुमति नहीं है"}
+    curr = row['is_solved'] if isinstance(row, dict) else row[0]
+    new_solved = 0 if curr else 1
+    c.execute("UPDATE community_posts SET is_solved = ? WHERE id = ?", (new_solved, post_id))
+    conn.commit()
+    conn.close()
+    return {"success": True, "is_solved": bool(new_solved)}
+
