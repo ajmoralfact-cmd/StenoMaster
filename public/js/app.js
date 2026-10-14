@@ -7791,7 +7791,7 @@ ${link}`;
   formatCommunityContent(text) {
     if (!text) return '';
     let escaped = this.escapeHtml(text);
-    escaped = escaped.replace(/(https?:\\/\\/[^\s]+)/g, '<a href="$1" target="_blank" rel="noopener noreferrer" style="color:#0284c7; text-decoration:underline;">$1</a>');
+    escaped = escaped.replace(/(https?:\/\/[^\s]+)/g, '<a href="$1" target="_blank" rel="noopener noreferrer" style="color:#0284c7; text-decoration:underline;">$1</a>');
     escaped = escaped.replace(/\n/g, '<br>');
     return escaped;
   }
