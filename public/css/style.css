@@ -11507,6 +11507,7 @@ html.is-mobile-device.mobile-wide-viewport .mobile-nav-btn {
     margin: 0 !important;
   }
   .tg-chat-app-wrapper {
+    min-height: 0 !important;
     padding: 0 !important;
     height: calc(100vh - 185px);
     height: calc(100dvh - 185px);
