@@ -8965,7 +8965,55 @@ body.dark-mode .ww-tip-row {
   }
 }
 
-/* Compact Mobile Audio Player Strip */
+/* Compact Mobile Audio Player Strip & Speed Toggle Button */
+.btn-speed-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.78rem;
+  padding: 4px 10px;
+  font-weight: 700;
+  border-radius: 8px;
+  background: linear-gradient(135deg, rgba(2, 132, 199, 0.1), rgba(37, 99, 235, 0.08));
+  border: 1.5px solid rgba(2, 132, 199, 0.35);
+  color: #0284c7;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 1px 3px rgba(2, 132, 199, 0.08);
+  user-select: none;
+}
+
+.btn-speed-toggle:hover {
+  background: linear-gradient(135deg, #0284c7, #2563eb);
+  color: #fff;
+  border-color: #0284c7;
+  box-shadow: 0 2px 8px rgba(2, 132, 199, 0.3);
+  transform: translateY(-1px);
+}
+
+.btn-speed-toggle .speed-toggle-icon {
+  font-size: 0.88rem;
+  line-height: 1;
+}
+
+.btn-speed-toggle .speed-toggle-arrow {
+  font-size: 0.72rem;
+  transition: transform 0.2s ease;
+  opacity: 0.85;
+}
+
+.btn-speed-toggle.speed-open {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.12), rgba(5, 150, 105, 0.08));
+  border-color: rgba(16, 185, 129, 0.4);
+  color: #059669;
+}
+
+.btn-speed-toggle.speed-open:hover {
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: #fff;
+  border-color: #10b981;
+}
+
 .audio-player-card.audio-player-compact {
   padding: 10px 14px;
   margin-bottom: 10px;

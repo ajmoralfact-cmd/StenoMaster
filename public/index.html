@@ -1255,8 +1255,10 @@
                 <div style="font-size:0.8rem; color:var(--text-muted);" class="hide-mobile">
                   आदेश: <span id="practiceInstructions">ऑडियो सुनें और टाइप करें</span>
                 </div>
-                <button type="button" id="toggleMobilePlayerBtn" class="btn-sm" onclick="stenoTypingEngine.toggleMobilePlayer()" style="font-size:0.75rem; padding:4px 10px; font-weight:700; border-radius:6px; background:var(--bg-subtle); border:1px solid var(--border-subtle); color:var(--text-secondary); cursor:pointer;" title="ऑडियो प्लेयर को संक्षिप्त या विस्तृत करें">
-                  🔼 संक्षिप्त
+                <button type="button" id="toggleMobilePlayerBtn" class="btn-sm btn-speed-toggle" onclick="stenoTypingEngine.toggleMobilePlayer()" title="डिक्टेशन गति विकल्प दिखाएं या छिपाएं">
+                  <span class="speed-toggle-icon">⚡</span>
+                  <span class="speed-toggle-text">स्पीड</span>
+                  <span class="speed-toggle-arrow">▾</span>
                 </button>
               </div>
             </div>
