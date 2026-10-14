@@ -11484,14 +11484,30 @@ html.is-mobile-device.mobile-wide-viewport .mobile-nav-btn {
 
 /* Mobile Responsiveness */
 @media (max-width: 640px) {
+  /* In Community view, hide secondary toolbar & PWA popup so input dock is 100% accessible */
+  body:has(#view-community:not([style*="display: none"]):not([style*="display:none"])) #mobileSubToolbar,
+  body.view-active-community #mobileSubToolbar {
+    display: none !important;
+  }
+  body:has(#view-community:not([style*="display: none"]):not([style*="display:none"])) .mobile-pwa-popup,
+  body.view-active-community .mobile-pwa-popup {
+    display: none !important;
+  }
+  #view-community {
+    padding: 0 !important;
+    margin: 0 !important;
+  }
   .tg-chat-app-wrapper {
     padding: 0;
-    height: calc(100vh - 65px);
+    height: calc(100vh - 120px);
+    height: calc(100dvh - 120px);
     max-width: 100%;
+    margin-bottom: 60px;
   }
   .tg-chat-card {
     border-radius: 0;
     box-shadow: none;
+    height: 100%;
   }
   .tg-chat-header {
     padding: 8px 12px;
@@ -11517,6 +11533,7 @@ html.is-mobile-device.mobile-wide-viewport .mobile-nav-btn {
   .tg-bottom-dock {
     padding: 6px 8px;
     gap: 6px;
+    background: #f0f2f5;
   }
   .tg-dock-icon-btn {
     padding: 5px;
