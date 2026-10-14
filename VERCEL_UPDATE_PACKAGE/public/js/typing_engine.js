@@ -73,6 +73,12 @@ class StenoTypingEngine {
     this.isDirty = false;
     this.hasSubmitted = false;
 
+    // Keystroke Analytics & Live Pace Tracking (TypingBaba / Monkeytype Standard)
+    this.totalKeystrokes = 0;
+    this.backspaceCount = 0;
+    this.paceHistory = []; // Array of { minute: X, wpm: Y, keystrokes: Z }
+    this._lastPaceSampleMinute = 0;
+
     this.textarea = null;
     this.wordCountEl = null;
     this.charCountEl = null;
@@ -115,8 +121,15 @@ class StenoTypingEngine {
         this.onTextInput();
       });
 
-      // Exam Mode: Backspace lock enforcement (Optional Switch)
+      // Keystroke & Backspace Efficiency Tracking + Auto-Scroll
       this.textarea.addEventListener('keydown', (e) => {
+        if (!this.hasSubmitted) {
+          this.totalKeystrokes++;
+          if (e.key === 'Backspace') {
+            this.backspaceCount++;
+          }
+        }
+
         if (this.backspaceLocked && (e.key === 'Backspace' || e.key === 'Delete')) {
           e.preventDefault();
           this.showDraftNotice('🚫 परीक्षा नियम: बैकस्पेस लॉक है (Backspace Disabled)');
@@ -166,6 +179,10 @@ class StenoTypingEngine {
     this.elapsedSeconds = 0;
     this.tabSwitchCount = 0;
     this.oneMinuteAlertFired = false;
+    this.totalKeystrokes = 0;
+    this.backspaceCount = 0;
+    this.paceHistory = [];
+    this._lastPaceSampleMinute = 0;
     // Set target duration based on user-selected typing timer (40 Min, 30 Min, or OFF)
     if (this.typingTimerMinutes > 0) {
       this.targetDurationSeconds = this.typingTimerMinutes * 60;
@@ -221,6 +238,18 @@ class StenoTypingEngine {
       this.timerInterval = setInterval(() => {
         this.elapsedSeconds = Math.floor((Date.now() - this.startTime) / 1000);
         this.updateTimerDisplay();
+
+        // Sample Pace History every 15 seconds for WPM vs Time Consistency Graph
+        if (this.elapsedSeconds > 0 && this.elapsedSeconds % 15 === 0) {
+          const chars = this.textarea ? this.textarea.value.length : 0;
+          const currentWpm = Math.round((chars / 5.0) / (this.elapsedSeconds / 60.0));
+          this.paceHistory.push({
+            time_sec: this.elapsedSeconds,
+            minute: (this.elapsedSeconds / 60.0).toFixed(1),
+            wpm: Math.max(0, currentWpm),
+            chars: chars
+          });
+        }
 
         // 1-Minute Alert & Time's Up Auto-submit
         if (this.targetDurationSeconds > 0) {
@@ -501,7 +530,10 @@ class StenoTypingEngine {
     localStorage.setItem('stenomaster_mobile_player_compact', isCompact ? 'true' : 'false');
     const btn = document.getElementById('toggleMobilePlayerBtn');
     if (btn) {
-      btn.innerHTML = isCompact ? '🔽 विस्तृत' : '🔼 संक्षिप्त';
+      btn.innerHTML = isCompact 
+        ? `<span class="speed-toggle-icon">⚡</span><span class="speed-toggle-text">स्पीड</span><span class="speed-toggle-arrow">▾</span>` 
+        : `<span class="speed-toggle-icon">⚡</span><span class="speed-toggle-text">स्पीड</span><span class="speed-toggle-arrow">▴</span>`;
+      btn.classList.toggle('speed-open', !isCompact);
     }
   }
 
@@ -510,14 +542,20 @@ class StenoTypingEngine {
     const btn = document.getElementById('toggleMobilePlayerBtn');
     if (!card) return;
     const saved = localStorage.getItem('stenomaster_mobile_player_compact');
-    const isMobile = window.innerWidth <= 768;
-    const shouldCompact = saved === 'true' || (saved === null && isMobile);
+    // Default to open (expanded) so students see speed options right away on mobile
+    const shouldCompact = saved === 'true';
     if (shouldCompact) {
       card.classList.add('audio-player-compact');
-      if (btn) btn.innerHTML = '🔽 विस्तृत';
+      if (btn) {
+        btn.innerHTML = `<span class="speed-toggle-icon">⚡</span><span class="speed-toggle-text">स्पीड</span><span class="speed-toggle-arrow">▾</span>`;
+        btn.classList.remove('speed-open');
+      }
     } else {
       card.classList.remove('audio-player-compact');
-      if (btn) btn.innerHTML = '🔼 संक्षिप्त';
+      if (btn) {
+        btn.innerHTML = `<span class="speed-toggle-icon">⚡</span><span class="speed-toggle-text">स्पीड</span><span class="speed-toggle-arrow">▴</span>`;
+        btn.classList.add('speed-open');
+      }
     }
   }
 
@@ -604,9 +642,21 @@ class StenoTypingEngine {
     if (!this._statsRaf) {
       this._statsRaf = requestAnimationFrame(() => {
         this.updateLiveStats();
+        this.autoScrollToCursor();
         this._statsRaf = null;
       });
     }
+  }
+
+  autoScrollToCursor() {
+    if (!this.textarea) return;
+    try {
+      // Keep textarea automatically scrolled to the active bottom line
+      const scrollBuffer = 40;
+      if (this.textarea.scrollHeight - (this.textarea.scrollTop + this.textarea.clientHeight) < scrollBuffer + 100) {
+        this.textarea.scrollTop = this.textarea.scrollHeight;
+      }
+    } catch (e) {}
   }
 
   setTypingMode(mode) {
