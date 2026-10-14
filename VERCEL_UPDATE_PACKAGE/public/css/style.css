@@ -11493,16 +11493,25 @@ html.is-mobile-device.mobile-wide-viewport .mobile-nav-btn {
   body.view-active-community .mobile-pwa-popup {
     display: none !important;
   }
-  #view-community {
+  body.view-active-community .main-wrapper,
+  body:has(#view-community.active) .main-wrapper {
+    padding-bottom: 0 !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    padding-top: 0 !important;
+  }
+  body.view-active-community #view-community,
+  body:has(#view-community.active) #view-community,
+  #view-community.active {
     padding: 0 !important;
     margin: 0 !important;
   }
   .tg-chat-app-wrapper {
-    padding: 0;
-    height: calc(100vh - 120px);
-    height: calc(100dvh - 120px);
+    padding: 0 !important;
+    height: calc(100vh - 160px);
+    height: calc(100dvh - 160px);
     max-width: 100%;
-    margin-bottom: 60px;
+    margin: 0 !important;
   }
   .tg-chat-card {
     border-radius: 0;

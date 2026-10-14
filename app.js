@@ -3041,6 +3041,18 @@ class StenoApp {
       window.scrollTo({ top: 0, behavior: 'instant' });
     }
 
+    if (viewId === 'community') {
+      document.body.classList.add('view-active-community');
+      const pwaPopup = document.querySelector('.mobile-pwa-popup');
+      if (pwaPopup) pwaPopup.style.display = 'none';
+      const subToolbar = document.getElementById('mobileSubToolbar');
+      if (subToolbar) subToolbar.style.display = 'none';
+    } else {
+      document.body.classList.remove('view-active-community');
+      const subToolbar = document.getElementById('mobileSubToolbar');
+      if (subToolbar && window.innerWidth <= 640) subToolbar.style.display = 'flex';
+    }
+
     // Load view specific data
     switch (viewId) {
       case 'home':
