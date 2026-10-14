@@ -11056,22 +11056,23 @@ body:has(#view-community.active) .main-wrapper {
   margin: 4px 0 6px 0;
   border-radius: 12px;
   overflow: hidden;
-  max-width: 300px;
+  max-width: 320px;
   width: 100%;
   cursor: pointer;
-  background: #000000;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+  background: #f8fafc;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   display: block;
   border: 1px solid rgba(0, 0, 0, 0.08);
 }
 
 .tg-msg-photo-img {
   width: 100%;
-  max-height: 240px;
-  min-height: 120px;
+  max-height: 260px;
+  min-height: 140px;
   object-fit: cover;
   display: block;
   border-radius: 12px;
+  background: #f1f5f9;
   transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
