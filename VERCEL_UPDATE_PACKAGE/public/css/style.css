@@ -10268,6 +10268,55 @@ html.is-mobile-device.mobile-wide-viewport .mobile-nav-btn {
   animation: slideDownBanner 0.4s ease-out;
 }
 
+/* 7 Dynamic Festival Themes */
+.global-campaign-banner.campaign-theme-diwali {
+  background: linear-gradient(135deg, #b45309, #d97706, #92400e) !important;
+  box-shadow: 0 4px 20px rgba(180, 83, 9, 0.5) !important;
+  border-bottom: 2px solid #fde68a !important;
+}
+
+.global-campaign-banner.campaign-theme-tricolor {
+  background: linear-gradient(90deg, #ff9933 0%, #ffffff 48%, #ffffff 52%, #138808 100%) !important;
+  color: #0f172a !important;
+  box-shadow: 0 4px 20px rgba(19, 136, 8, 0.35) !important;
+  border-bottom: 2px solid #000080 !important;
+}
+.global-campaign-banner.campaign-theme-tricolor .campaign-banner-text strong {
+  color: #000080 !important;
+}
+.global-campaign-banner.campaign-theme-tricolor .campaign-sub-note {
+  color: #1e293b !important;
+}
+.global-campaign-banner.campaign-theme-tricolor .campaign-banner-close {
+  color: #0f172a !important;
+}
+
+.global-campaign-banner.campaign-theme-holi {
+  background: linear-gradient(135deg, #ec4899, #8b5cf6, #06b6d4) !important;
+  box-shadow: 0 4px 20px rgba(236, 72, 153, 0.45) !important;
+}
+
+.global-campaign-banner.campaign-theme-newyear {
+  background: linear-gradient(135deg, #1e1b4b, #4f46e5, #d97706) !important;
+  box-shadow: 0 4px 20px rgba(79, 70, 229, 0.5) !important;
+  border-bottom: 1.5px solid #fbbf24 !important;
+}
+
+.global-campaign-banner.campaign-theme-fire {
+  background: linear-gradient(135deg, #b91c1c, #dc2626, #f97316) !important;
+  box-shadow: 0 4px 20px rgba(220, 38, 38, 0.5) !important;
+}
+
+.global-campaign-banner.campaign-theme-emerald {
+  background: linear-gradient(135deg, #047857, #059669, #10b981) !important;
+  box-shadow: 0 4px 20px rgba(5, 150, 105, 0.45) !important;
+}
+
+.global-campaign-banner.campaign-theme-gold {
+  background: linear-gradient(135deg, #d97706, #f59e0b, #b45309) !important;
+  box-shadow: 0 4px 18px rgba(217, 119, 6, 0.45) !important;
+}
+
 @keyframes slideDownBanner {
   from { transform: translateY(-100%); opacity: 0; }
   to { transform: translateY(0); opacity: 1; }

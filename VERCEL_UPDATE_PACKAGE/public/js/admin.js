@@ -1760,6 +1760,7 @@ class StenoAdmin {
       const isEnabled = res && res.enabled;
       const endStr = res && res.campaign_end;
       const bannerMsg = (res && res.banner_message) || 'StenoMaster अभी सभी के लिए FREE है! 🎉';
+      const currentTheme = (res && res.theme) || 'gold';
 
       let timeRemainingText = '';
       if (isEnabled && endStr) {
@@ -1777,8 +1778,18 @@ class StenoAdmin {
         } catch (e) {}
       }
 
+      const themeOptions = [
+        { id: 'gold', name: '👑 क्लासिक रॉयल गोल्ड (Classic Gold)', icon: '👑' },
+        { id: 'diwali', name: '🪔 दीवाली स्पेशल (Diwali Fest & Lamps)', icon: '🪔' },
+        { id: 'tricolor', name: '🇮🇳 15 अगस्त / 26 जनवरी तिरंगा (Tricolor)', icon: '🇮🇳' },
+        { id: 'holi', name: '🎨 होली उत्सव धमाका (Holi Vibrant Colors)', icon: '🎨' },
+        { id: 'newyear', name: '🎆 नया साल स्पेशल (New Year Fireworks)', icon: '🎆' },
+        { id: 'fire', name: '🔥 सुपर सेवर महा-ऑफर (Electric Fire Red)', icon: '🔥' },
+        { id: 'emerald', name: '🌿 वसंत / विजयदशमी (Emerald Green)', icon: '🌿' }
+      ];
+
       container.innerHTML = `
-        <div class="global-campaign-card ${isEnabled ? 'campaign-active' : 'campaign-inactive'}" style="padding:22px 24px; border-radius:18px; border:2px solid ${isEnabled ? '#f59e0b' : 'var(--border)'}; background:${isEnabled ? 'linear-gradient(135deg, rgba(254,243,199,0.9), rgba(253,230,138,0.5))' : 'var(--card-bg)'}; box-shadow:${isEnabled ? '0 8px 30px rgba(245,158,11,0.22)' : '0 2px 10px rgba(0,0,0,0.04)'}; transition:all 0.3s ease;">
+        <div class="global-campaign-card ${isEnabled ? 'campaign-active' : 'campaign-inactive'}" style="padding:22px 24px; border-radius:18px; border:2px solid ${isEnabled ? '#f59e0b' : 'var(--border)'}; background:${isEnabled ? 'linear-gradient(135deg, rgba(254,243,199,0.95), rgba(253,230,138,0.6))' : 'var(--card-bg)'}; box-shadow:${isEnabled ? '0 8px 30px rgba(245,158,11,0.22)' : '0 2px 10px rgba(0,0,0,0.04)'}; transition:all 0.3s ease;">
           <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:16px;">
             <div style="flex:1; min-width:280px;">
               <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
@@ -1790,39 +1801,89 @@ class StenoAdmin {
                   ${isEnabled ? '🟢 लाइव सक्रिय (LIVE FREE)' : '⚪ बंद (INACTIVE)'}
                 </span>
               </div>
-              <p style="margin:0 0 10px 0; font-size:0.86rem; color:${isEnabled ? '#78350f' : 'var(--text-muted)'}; line-height:1.5;">
+              <p style="margin:0 0 12px 0; font-size:0.86rem; color:${isEnabled ? '#78350f' : 'var(--text-muted)'}; line-height:1.5;">
                 ${isEnabled
-                  ? `वर्तमान में <strong>पूरा ऐप सभी पुराने व नए छात्रों के लिए निःशुल्क खुला हुआ है</strong>। छात्र पोर्टल पर गोल्डन फ्री बैनर प्रदर्शित हो रहा है।`
-                  : `एक क्लिक में पूरे ऐप को सभी छात्रों (पुराने + नए) के लिए निर्धारित दिनों हेतु 100% निःशुल्क खोलें। बिना किसी छात्र का डेटा बदले, स्वतः समय पूरा होने पर पुनः लॉक हो जाएगा।`
+                  ? `वर्तमान में <strong>पूरा ऐप सभी पुराने व नए छात्रों के लिए निःशुल्क खुला हुआ है</strong>। छात्र पोर्टल पर नीचे सेट की गई थीम में रंगीन फेस्टिव बैनर प्रदर्शित हो रहा है।`
+                  : `एक क्लिक में पूरे ऐप को सभी छात्रों (पुराने + नए) के लिए निर्धारित दिनों हेतु 100% निःशुल्क खोलें।`
                 }
               </p>
-              ${isEnabled ? `
-                <div style="display:inline-flex; align-items:center; gap:8px; background:rgba(255,255,255,0.8); border:1px solid rgba(245,158,11,0.4); padding:6px 14px; border-radius:10px; font-size:0.82rem; color:#92400e; margin-bottom:12px;">
-                  <span>📢</span> <span>${this.escapeHtml(bannerMsg)}</span>
+
+              <!-- Campaign Controls Form: Message & Theme -->
+              <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:12px; margin-bottom:14px; background:rgba(255,255,255,0.7); padding:12px 14px; border-radius:12px; border:1px solid rgba(245,158,11,0.3);">
+                <div>
+                  <label style="display:block; font-size:0.78rem; font-weight:700; color:#92400e; margin-bottom:4px;">
+                    📢 छात्र बैनर मैसेज (Custom Offer Text):
+                  </label>
+                  <input type="text" id="globalCampaignBannerInput" class="form-input" 
+                         value="${this.escapeHtml(bannerMsg)}" 
+                         placeholder="उदा. 🪔 दीवाली महा-धमाका: सभी छात्रों के लिए StenoMaster 100% FREE!"
+                         style="background:#fff; font-size:0.86rem; padding:7px 10px; border-color:rgba(245,158,11,0.5);">
                 </div>
-                <div style="font-size:0.82rem; color:#b45309; font-weight:600;">
-                  ${timeRemainingText}
+
+                <div>
+                  <label style="display:block; font-size:0.78rem; font-weight:700; color:#92400e; margin-bottom:4px;">
+                    🎨 फेस्टिव बैनर थीम चुनें (Colourful Theme):
+                  </label>
+                  <select id="globalCampaignThemeSelect" class="form-select" style="background:#fff; font-size:0.86rem; padding:7px 10px; border-color:rgba(245,158,11,0.5); font-weight:600;">
+                    ${themeOptions.map(t => `
+                      <option value="${t.id}" ${t.id === currentTheme ? 'selected' : ''}>
+                        ${t.name}
+                      </option>
+                    `).join('')}
+                  </select>
+                </div>
+              </div>
+
+              ${isEnabled ? `
+                <!-- Live Duration Adjuster Toolbar -->
+                <div style="background:rgba(255,255,255,0.85); padding:12px 14px; border-radius:12px; border:1.5px solid rgba(245,158,11,0.4); margin-bottom:12px;">
+                  <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:8px;">
+                    <div style="font-size:0.85rem; color:#b45309; font-weight:700;">
+                      ${timeRemainingText}
+                    </div>
+                    <span style="font-size:0.75rem; color:#92400e; font-weight:600;">⏱️ दिन बढ़ाएं या घटाएं:</span>
+                  </div>
+                  <div style="display:flex; gap:6px; flex-wrap:wrap; align-items:center;">
+                    <button type="button" class="btn-sm btn-secondary" onclick="stenoAdmin.adjustGlobalCampaignDays(3)" style="padding:4px 10px; font-weight:700; background:#ecfdf5; color:#047857; border-color:#a7f3d0;" title="3 दिन और जोड़ें">+3 दिन</button>
+                    <button type="button" class="btn-sm btn-secondary" onclick="stenoAdmin.adjustGlobalCampaignDays(7)" style="padding:4px 10px; font-weight:700; background:#ecfdf5; color:#047857; border-color:#a7f3d0;" title="7 दिन और जोड़ें">+7 दिन</button>
+                    <button type="button" class="btn-sm btn-secondary" onclick="stenoAdmin.adjustGlobalCampaignDays(15)" style="padding:4px 10px; font-weight:700; background:#ecfdf5; color:#047857; border-color:#a7f3d0;" title="15 दिन और जोड़ें">+15 दिन</button>
+                    <button type="button" class="btn-sm btn-secondary" onclick="stenoAdmin.adjustGlobalCampaignDays(-3)" style="padding:4px 10px; font-weight:700; background:#fef2f2; color:#b91c1c; border-color:#fecaca;" title="3 दिन कम करें">-3 दिन</button>
+                    <button type="button" class="btn-sm btn-secondary" onclick="stenoAdmin.adjustGlobalCampaignDays(-7)" style="padding:4px 10px; font-weight:700; background:#fef2f2; color:#b91c1c; border-color:#fecaca;" title="7 दिन कम करें">-7 दिन</button>
+                    
+                    <div style="display:inline-flex; align-items:center; gap:4px; margin-left:auto;">
+                      <input type="number" id="customAdjustDaysInput" placeholder="दिन" min="-365" max="365" style="width:65px; padding:4px 8px; font-size:0.8rem; border:1px solid var(--border); border-radius:6px; text-align:center;">
+                      <button type="button" class="btn-sm btn-primary" onclick="stenoAdmin.submitCustomAdjustDays()" style="padding:4px 10px; font-size:0.8rem; background:#4f46e5; border:none; font-weight:700;">लागू करें</button>
+                    </div>
+                  </div>
                 </div>
               ` : ''}
             </div>
 
-            <!-- Action Controls -->
+            <!-- Action Controls Buttons -->
             <div style="display:flex; flex-direction:column; gap:10px; align-items:flex-end;">
               ${isEnabled ? `
-                <button type="button" class="btn-primary" onclick="stenoAdmin.stopGlobalCampaign()" style="background:#dc2626; border:none; padding:10px 22px; font-weight:800; font-size:0.92rem; border-radius:12px; box-shadow:0 4px 14px rgba(220,38,38,0.3); cursor:pointer;">
-                  🛑 अभी कैम्पेन बंद करें (Re-lock App)
-                </button>
-              ` : `
-                <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
-                  <select id="globalCampaignDaysSelect" class="form-select" style="padding:8px 12px; font-weight:700; font-size:0.88rem; border-radius:10px; border:1.5px solid var(--border);">
-                    <option value="3">⚡ 3 दिन फ्री</option>
-                    <option value="7" selected>🌟 7 दिन फ्री (1 सप्ताह)</option>
-                    <option value="15">🔥 15 दिन फ्री</option>
-                    <option value="30">👑 30 दिन फ्री (1 माह)</option>
-                  </select>
-                  <button type="button" class="btn-primary" onclick="stenoAdmin.startGlobalCampaign()" style="background:linear-gradient(135deg, #f59e0b, #d97706); border:none; padding:9px 20px; font-weight:800; font-size:0.9rem; border-radius:10px; box-shadow:0 4px 14px rgba(245,158,11,0.35); cursor:pointer;">
-                    🚀 1-क्लिक में पूरा ऐप फ्री करें
+                <div style="display:flex; flex-direction:column; gap:8px; align-items:flex-end;">
+                  <button type="button" class="btn-primary" onclick="stenoAdmin.saveActiveCampaignChanges()" style="background:linear-gradient(135deg, #10b981, #059669); border:none; padding:9px 18px; font-weight:800; font-size:0.88rem; border-radius:10px; box-shadow:0 3px 10px rgba(16,185,129,0.3); cursor:pointer;">
+                    💾 थीम व टेक्स्ट अपडेट करें
                   </button>
+                  <button type="button" class="btn-secondary" onclick="stenoAdmin.stopGlobalCampaign()" style="background:#fee2e2; color:#dc2626; border-color:#fca5a5; padding:8px 16px; font-weight:700; font-size:0.84rem; border-radius:10px; cursor:pointer;">
+                    🛑 कैम्पेन बंद करें (Re-lock App)
+                  </button>
+                </div>
+              ` : `
+                <div style="display:flex; flex-direction:column; gap:10px; align-items:flex-end;">
+                  <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                    <select id="globalCampaignDaysSelect" class="form-select" style="padding:8px 12px; font-weight:700; font-size:0.88rem; border-radius:10px; border:1.5px solid var(--border);">
+                      <option value="3">⚡ 3 दिन फ्री</option>
+                      <option value="7" selected>🌟 7 दिन फ्री (1 सप्ताह)</option>
+                      <option value="15">🔥 15 दिन फ्री</option>
+                      <option value="30">👑 30 दिन फ्री (1 माह)</option>
+                      <option value="60">💎 60 दिन फ्री (2 माह)</option>
+                    </select>
+                    <button type="button" class="btn-primary" onclick="stenoAdmin.startGlobalCampaign()" style="background:linear-gradient(135deg, #f59e0b, #d97706); border:none; padding:9px 20px; font-weight:800; font-size:0.9rem; border-radius:10px; box-shadow:0 4px 14px rgba(245,158,11,0.35); cursor:pointer;">
+                      🚀 1-क्लिक में पूरा ऐप फ्री करें
+                    </button>
+                  </div>
                 </div>
               `}
             </div>
@@ -1837,14 +1898,18 @@ class StenoAdmin {
   async startGlobalCampaign() {
     const select = document.getElementById('globalCampaignDaysSelect');
     const days = parseInt(select?.value || '7', 10);
-    const confirmed = confirm(`क्या आप सचमुच पूरा ऐप ${days} दिन के लिए सभी छात्रों के लिए FREE करना चाहते हैं?\n\n• सभी अभ्यास व डिक्टेशन्स तुरंत खुल जाएंगी।\n• छात्र पोर्टल पर गोल्डन ऑफर बैनर दिखेगा।\n• किसी भी छात्र का व्यक्तिगत डेटा प्रभावित नहीं होगा।`);
+    const bannerMsg = document.getElementById('globalCampaignBannerInput')?.value?.trim() || `StenoMaster ${days} दिन के लिए सभी छात्रों के लिए बिल्कुल FREE है! 🎉`;
+    const theme = document.getElementById('globalCampaignThemeSelect')?.value || 'gold';
+
+    const confirmed = confirm(`क्या आप सचमुच पूरा ऐप ${days} दिन के लिए सभी छात्रों के लिए FREE करना चाहते हैं?\n\n• थीम: ${theme}\n• मैसेज: "${bannerMsg}"\n• सभी अभ्यास व डिक्टेशन्स तुरंत खुल जाएंगी।`);
     if (!confirmed) return;
 
     try {
       const res = await stenoApp.apiCall('/api/admin/global-free-campaign', 'POST', {
         enabled: true,
         days: days,
-        banner_message: `StenoMaster ${days} दिन के लिए सभी छात्रों के लिए बिल्कुल FREE है! 🎉`
+        banner_message: bannerMsg,
+        theme: theme
       });
       if (res && res.success) {
         stenoApp.showToast(`🎉 ग्लोबल फ्री कैम्पेन सक्रिय! अगले ${days} दिन सब कुछ फ्री रहेगा।`, 'success');
@@ -1855,6 +1920,63 @@ class StenoAdmin {
     } catch (err) {
       stenoApp.showToast(`त्रुटि: ${err.message}`, 'error');
     }
+  }
+
+  async saveActiveCampaignChanges() {
+    const bannerMsg = document.getElementById('globalCampaignBannerInput')?.value?.trim();
+    const theme = document.getElementById('globalCampaignThemeSelect')?.value || 'gold';
+
+    try {
+      const res = await stenoApp.apiCall('/api/admin/global-free-campaign', 'POST', {
+        enabled: true,
+        banner_message: bannerMsg,
+        theme: theme
+      });
+      if (res && res.success) {
+        stenoApp.showToast('✅ कैम्पेन थीम और ऑफर टेक्स्ट तुरंत लाइव अपडेट हो गया!', 'success');
+        await this.renderGlobalCampaignCard();
+      } else {
+        stenoApp.showToast(res.error || 'अपडेट करने में विफल', 'error');
+      }
+    } catch (err) {
+      stenoApp.showToast(`त्रुटि: ${err.message}`, 'error');
+    }
+  }
+
+  async adjustGlobalCampaignDays(adjustDays) {
+    const sign = adjustDays > 0 ? `+${adjustDays}` : `${adjustDays}`;
+    const confirmed = confirm(`क्या आप कैम्पेन की वैधता में ${sign} दिन समायोजित करना चाहते हैं?`);
+    if (!confirmed) return;
+
+    try {
+      const bannerMsg = document.getElementById('globalCampaignBannerInput')?.value?.trim();
+      const theme = document.getElementById('globalCampaignThemeSelect')?.value;
+
+      const res = await stenoApp.apiCall('/api/admin/global-free-campaign', 'POST', {
+        enabled: true,
+        adjust_days: adjustDays,
+        banner_message: bannerMsg,
+        theme: theme
+      });
+      if (res && res.success) {
+        stenoApp.showToast(`✅ वैधता में ${sign} दिन सफलतापूर्वक समायोजित किए गए!`, 'success');
+        await this.renderGlobalCampaignCard();
+      } else {
+        stenoApp.showToast(res.error || 'दिन बदलने में विफल', 'error');
+      }
+    } catch (err) {
+      stenoApp.showToast(`त्रुटि: ${err.message}`, 'error');
+    }
+  }
+
+  async submitCustomAdjustDays() {
+    const input = document.getElementById('customAdjustDaysInput');
+    const val = parseInt(input?.value || '0', 10);
+    if (!val || isNaN(val)) {
+      stenoApp.showToast('कृपया मान्य दिन दर्ज करें (उदा. 5 या -2)', 'warning');
+      return;
+    }
+    await this.adjustGlobalCampaignDays(val);
   }
 
   async stopGlobalCampaign() {

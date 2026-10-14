@@ -1895,7 +1895,20 @@ class StenoMasterHandler(http.server.SimpleHTTPRequestHandler):
                 enabled = bool(data.get('enabled', False))
                 days = int(data.get('days', 7))
                 banner_msg = data.get('banner_message', '')
-                res = db.admin_set_global_free_campaign(enabled, days, banner_msg, user['user_id'])
+                theme = data.get('theme', 'gold')
+                adjust_days = data.get('adjust_days')
+                if adjust_days is not None:
+                    adjust_days = int(adjust_days)
+                new_end_iso = data.get('new_end_iso')
+                res = db.admin_set_global_free_campaign(
+                    enabled=enabled,
+                    days=days,
+                    banner_msg=banner_msg,
+                    theme=theme,
+                    adjust_days=adjust_days,
+                    new_end_iso=new_end_iso,
+                    admin_id=user['user_id']
+                )
                 self._send_json(200 if res.get('success') else 400, res)
                 return
 

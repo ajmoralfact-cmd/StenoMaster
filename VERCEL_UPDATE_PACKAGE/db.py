@@ -3467,6 +3467,7 @@ def admin_get_global_free_campaign() -> Dict[str, Any]:
         enabled = settings.get('global_free_campaign_enabled', '0') == '1'
         campaign_end = settings.get('global_free_campaign_end', '')
         banner_msg = settings.get('global_free_campaign_banner', 'StenoMaster अभी सभी के लिए FREE है! 🎉')
+        theme = settings.get('global_free_campaign_theme', 'gold')
         activated_by = settings.get('global_free_campaign_activated_by', '')
         activated_at = settings.get('global_free_campaign_activated_at', '')
 
@@ -3481,37 +3482,77 @@ def admin_get_global_free_campaign() -> Dict[str, Any]:
             "enabled": enabled,
             "campaign_end": campaign_end,
             "banner_message": banner_msg,
+            "theme": theme,
             "activated_by": activated_by,
             "activated_at": activated_at
         }
     except Exception as e:
         print(f"Error getting global free campaign: {e}")
-        return {"enabled": False}
+        return {"enabled": False, "theme": "gold"}
 
 
 def admin_set_global_free_campaign(
     enabled: bool,
     days: int = 7,
     banner_msg: str = "",
+    theme: str = "gold",
+    adjust_days: Optional[int] = None,
+    new_end_iso: Optional[str] = None,
     admin_id: int = 1
 ) -> Dict[str, Any]:
     """
-    Activates or deactivates the Global Free Campaign.
-    When enabled=True, all non-admin users get premium access until campaign_end.
-    No individual user DB records are changed.
+    Activates, deactivates, or modifies active Global Free Campaign.
+    Supports:
+    - Initial activation with days, banner_msg, theme
+    - Live adjustment of days (adjust_days: +3, -2 etc.)
+    - Live updating of banner message & theme without resetting timer
+    - Direct setting of new_end_iso datetime
     """
     try:
         now_dt = datetime.now()
         now_iso = now_dt.isoformat()
+        curr_settings = get_admin_settings()
+        curr_end_str = curr_settings.get('global_free_campaign_end', '')
+
         updates = {
             'global_free_campaign_enabled': '1' if enabled else '0',
             'global_free_campaign_activated_by': str(admin_id),
             'global_free_campaign_activated_at': now_iso,
         }
+
+        if theme:
+            updates['global_free_campaign_theme'] = str(theme).strip()
+
         if enabled:
-            campaign_end_dt = now_dt + timedelta(days=days)
-            updates['global_free_campaign_end'] = campaign_end_dt.isoformat()
-            updates['global_free_campaign_banner'] = banner_msg or f'StenoMaster {days} दिन के लिए सभी के लिए FREE है! 🎉'
+            if new_end_iso:
+                # Direct end datetime passed
+                updates['global_free_campaign_end'] = new_end_iso
+            elif adjust_days is not None:
+                # Adjust active campaign duration
+                base_dt = now_dt
+                if curr_end_str:
+                    parsed_curr = parse_db_datetime(curr_end_str)
+                    if parsed_curr and parsed_curr > now_dt:
+                        base_dt = parsed_curr
+                adjusted_dt = base_dt + timedelta(days=adjust_days)
+                if adjusted_dt <= now_dt:
+                    # If reduced past now, disable
+                    updates['global_free_campaign_enabled'] = '0'
+                    updates['global_free_campaign_end'] = ''
+                else:
+                    updates['global_free_campaign_end'] = adjusted_dt.isoformat()
+            elif not curr_end_str or curr_settings.get('global_free_campaign_enabled') != '1':
+                # New activation
+                campaign_end_dt = now_dt + timedelta(days=days)
+                updates['global_free_campaign_end'] = campaign_end_dt.isoformat()
+            else:
+                # Retain existing end time if only message/theme updated
+                updates['global_free_campaign_end'] = curr_end_str
+
+            if banner_msg is not None and banner_msg != "":
+                updates['global_free_campaign_banner'] = banner_msg
+            elif not curr_settings.get('global_free_campaign_banner'):
+                updates['global_free_campaign_banner'] = f'StenoMaster {days} दिन के लिए सभी के लिए FREE है! 🎉'
         else:
             updates['global_free_campaign_end'] = ''
             updates['global_free_campaign_banner'] = ''
@@ -3519,9 +3560,11 @@ def admin_set_global_free_campaign(
         update_admin_settings(updates)
         return {
             "success": True,
-            "enabled": enabled,
+            "enabled": updates.get('global_free_campaign_enabled') == '1',
             "campaign_end": updates.get('global_free_campaign_end', ''),
-            "message": f"ग्लोबल फ्री कैम्पेन {'सक्रिय' if enabled else 'निष्क्रिय'} कर दिया गया!"
+            "banner_message": updates.get('global_free_campaign_banner', ''),
+            "theme": updates.get('global_free_campaign_theme', 'gold'),
+            "message": f"ग्लोबल फ्री कैम्पेन {'सक्रिय/अपडेट' if enabled else 'निष्क्रिय'} कर दिया गया!"
         }
     except Exception as e:
         return {"success": False, "error": str(e)}

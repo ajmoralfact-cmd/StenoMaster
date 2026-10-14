@@ -1148,23 +1148,36 @@ class StenoApp {
         return;
       }
 
-      // If campaign active, show beautiful golden announcement banner
-      if (!document.getElementById('globalCampaignStudentBanner')) {
-        const banner = document.createElement('div');
+      const theme = data.theme || 'gold';
+      const themeIcons = {
+        diwali: '🪔',
+        tricolor: '🇮🇳',
+        holi: '🎨',
+        newyear: '🎆',
+        fire: '🔥',
+        emerald: '🌿',
+        gold: '✨'
+      };
+      const themeIcon = themeIcons[theme] || '✨';
+
+      let banner = document.getElementById('globalCampaignStudentBanner');
+      if (!banner) {
+        banner = document.createElement('div');
         banner.id = 'globalCampaignStudentBanner';
-        banner.className = 'global-campaign-banner';
-        banner.innerHTML = `
-          <div class="campaign-banner-inner">
-            <span class="campaign-sparkle">✨</span>
-            <div class="campaign-banner-text">
-              <strong>🎉 विशेष ऑफर:</strong> ${this.escapeHtml(data.banner_message || 'StenoMaster अभी सभी छात्रों के लिए 100% FREE है!')}
-              <span class="campaign-sub-note">सभी अभ्यास, श्रेणियां व AI डिक्टेशन्स अनलॉक हैं!</span>
-            </div>
-            <button type="button" class="campaign-banner-close" onclick="document.getElementById('globalCampaignStudentBanner').remove()" title="बंद करें">✕</button>
-          </div>
-        `;
         document.body.insertBefore(banner, document.body.firstChild);
       }
+
+      banner.className = `global-campaign-banner campaign-theme-${theme}`;
+      banner.innerHTML = `
+        <div class="campaign-banner-inner">
+          <span class="campaign-sparkle">${themeIcon}</span>
+          <div class="campaign-banner-text">
+            <strong>${this.escapeHtml(data.banner_message || 'StenoMaster अभी सभी छात्रों के लिए 100% FREE है!')}</strong>
+            <span class="campaign-sub-note">सभी अभ्यास, श्रेणियां व AI डिक्टेशन्स अनलॉक हैं!</span>
+          </div>
+          <button type="button" class="campaign-banner-close" onclick="document.getElementById('globalCampaignStudentBanner').remove()" title="बंद करें">✕</button>
+        </div>
+      `;
     } catch (err) {
       console.warn('Campaign status check notice:', err);
     }
