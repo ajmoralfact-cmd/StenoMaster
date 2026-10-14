@@ -2235,32 +2235,21 @@
       <div style="text-align:center; margin-bottom:18px;">
         <div style="font-size:2.8rem; margin-bottom:8px;">🛡️</div>
         <h2 style="margin:0 0 6px 0; font-size:1.4rem; color:var(--text-main);">प्रशासनिक नियंत्रण (Admin Login)</h2>
-        <p style="margin:0; font-size:0.85rem; color:var(--text-muted);">एडमिन क्रेडेंशियल्स के साथ लॉगिन करें या 1-क्लिक बटन दबाएं</p>
-      </div>
-
-      <!-- Quick 1-Click Admin Login Banner -->
-      <div style="background:rgba(239,68,68,0.08); border:1.5px solid #ef4444; border-radius:12px; padding:12px 14px; margin-bottom:16px; display:flex; justify-content:space-between; align-items:center; gap:8px;">
-        <div>
-          <div style="font-size:0.75rem; color:var(--text-muted);">डिफ़ॉल्ट एडमिन खाता:</div>
-          <strong style="color:#ef4444; font-size:0.9rem;">admin@stenomaster.com</strong>
-        </div>
-        <button type="button" class="btn-primary" onclick="window.handleStandaloneAdmin1Click()" style="padding:8px 14px; font-size:0.82rem; font-weight:700; background:#ef4444; border-color:#ef4444; white-space:nowrap;">
-          ⚡ 1-क्लिक लॉगिन →
-        </button>
+        <p style="margin:0; font-size:0.85rem; color:var(--text-muted);">कृपया अपने अधिकृत एडमिन क्रेडेंशियल्स दर्ज करें</p>
       </div>
 
       <form onsubmit="window.handleStandaloneAdminLogin(event)">
         <div class="form-group" style="margin-bottom:12px;">
-          <label class="form-label" style="font-size:0.82rem;">एडमिन ईमेल (Admin Email)</label>
-          <input type="text" id="standaloneAdminEmail" class="form-input" value="admin@stenomaster.com" required autocomplete="username">
+          <label class="form-label" style="font-size:0.82rem;">एडमिन ईमेल या यूज़रनेम (Admin Email / Username)</label>
+          <input type="text" id="standaloneAdminEmail" class="form-input" placeholder="एडमिन ईमेल या यूज़रनेम दर्ज करें..." value="" required autocomplete="username">
         </div>
         <div class="form-group" style="margin-bottom:16px;">
           <label class="form-label" style="font-size:0.82rem;">पासवर्ड (Password)</label>
-          <input type="password" id="standaloneAdminPass" class="form-input" value="admin123" required autocomplete="current-password">
+          <input type="password" id="standaloneAdminPass" class="form-input" placeholder="एडमिन पासवर्ड दर्ज करें..." value="" required autocomplete="current-password">
         </div>
         <div id="standaloneAdminErr" style="display:none; color:#ef4444; font-size:0.8rem; font-weight:600; margin-bottom:12px; padding:8px; border-radius:6px; background:#fef2f2;"></div>
         <button type="submit" id="standaloneAdminSubmitBtn" class="btn-primary" style="width:100%; padding:10px; font-size:0.95rem; font-weight:700; background:#ef4444; border-color:#ef4444;">
-          🛡️ एडमिन लॉगिन करें →
+          🛡️ सुरक्षित एडमिन लॉगिन करें →
         </button>
       </form>
 
@@ -2302,23 +2291,24 @@
       }
     };
 
-    window.handleStandaloneAdmin1Click = async function() {
-      var emailEl = document.getElementById('standaloneAdminEmail');
-      var passEl = document.getElementById('standaloneAdminPass');
-      if (emailEl) emailEl.value = 'admin@stenomaster.com';
-      if (passEl) passEl.value = 'admin123';
-      await window.handleStandaloneAdminLogin();
-    };
-
     window.handleStandaloneAdminLogin = async function(e) {
       if (e) e.preventDefault();
       var emailEl = document.getElementById('standaloneAdminEmail');
       var passEl = document.getElementById('standaloneAdminPass');
-      var email = emailEl ? emailEl.value.trim() : 'admin@stenomaster.com';
-      var pass = passEl ? passEl.value : 'admin123';
+      var email = emailEl ? emailEl.value.trim() : '';
+      var pass = passEl ? passEl.value : '';
       var errEl = document.getElementById('standaloneAdminErr');
       var btn = document.getElementById('standaloneAdminSubmitBtn');
       if (errEl) { errEl.style.display = 'none'; errEl.textContent = ''; }
+
+      if (!email || !pass) {
+        if (errEl) {
+          errEl.textContent = 'कृपया एडमिन ईमेल और पासवर्ड दर्ज करें।';
+          errEl.style.display = 'block';
+        }
+        return;
+      }
+
       if (btn) { btn.disabled = true; btn.textContent = 'सत्यापन हो रहा है...'; }
 
       try {

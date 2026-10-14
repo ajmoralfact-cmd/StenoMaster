@@ -884,11 +884,20 @@ class StenoApp {
       localStorage.removeItem('stenomaster_recent_results');
     } catch (e) {}
 
-    // 1. Purge legacy demo credentials from previous tests if corrupted
+    // 1. Purge plain-text passwords and legacy admin credentials from browser storage
     try {
+      localStorage.removeItem('stenomaster_saved_admin_creds');
       const stuRaw = localStorage.getItem('stenomaster_saved_student_creds');
-      if (stuRaw && (stuRaw.includes('student@stenomaster.com') || stuRaw.includes('student123'))) {
-        localStorage.removeItem('stenomaster_saved_student_creds');
+      if (stuRaw) {
+        const parsed = JSON.parse(stuRaw);
+        if (parsed.password || parsed.email_or_username === 'student@stenomaster.com') {
+          delete parsed.password;
+          if (parsed.email_or_username === 'student@stenomaster.com') {
+            localStorage.removeItem('stenomaster_saved_student_creds');
+          } else {
+            localStorage.setItem('stenomaster_saved_student_creds', JSON.stringify(parsed));
+          }
+        }
       }
     } catch (e) {}
 
@@ -1244,7 +1253,7 @@ class StenoApp {
   }
 
   loadSavedCredentials() {
-    // 1. Student Saved Credentials
+    // 1. Student Saved Credentials (Remember ID only - NEVER password)
     try {
       const stuRaw = localStorage.getItem('stenomaster_saved_student_creds');
       const emailInp = document.getElementById('stuAuthEmail');
@@ -1252,31 +1261,20 @@ class StenoApp {
 
       if (stuRaw) {
         const stuCreds = JSON.parse(stuRaw);
-        if (stuCreds && (stuCreds.email_or_username || stuCreds.password)) {
+        if (stuCreds && stuCreds.email_or_username) {
           if (emailInp && !emailInp.value) emailInp.value = stuCreds.email_or_username || '';
-          if (passInp && !passInp.value) passInp.value = stuCreds.password || '';
         }
       }
+      // Security: Never prefill password from localStorage
+      if (passInp) passInp.value = '';
     } catch (e) {
       console.warn('Failed to load saved student credentials', e);
     }
 
-    // 2. Admin Saved Credentials
+    // 2. Admin Credentials: Never remember or prefill in browser
     try {
-      const adminRaw = localStorage.getItem('stenomaster_saved_admin_creds');
-      const emailInp = document.getElementById('adminAuthEmail');
-      const passInp = document.getElementById('adminAuthPassword');
-
-      if (adminRaw) {
-        const adminCreds = JSON.parse(adminRaw);
-        if (adminCreds && (adminCreds.email_or_username || adminCreds.password)) {
-          if (emailInp && !emailInp.value) emailInp.value = adminCreds.email_or_username || '';
-          if (passInp && !passInp.value) passInp.value = adminCreds.password || '';
-        }
-      }
-    } catch (e) {
-      console.warn('Failed to load saved admin credentials', e);
-    }
+      localStorage.removeItem('stenomaster_saved_admin_creds');
+    } catch (e) {}
   }
 
   clearSavedStudentCreds() {
@@ -1302,10 +1300,10 @@ class StenoApp {
     if (passInp) passInp.value = '';
     if (card) card.style.display = 'none';
     if (clearBtn) clearBtn.style.display = 'none';
-    this.showToast('सहेजी गई एडमिन लॉगिन जानकारी हटा दी गई।', 'info');
   }
 
   oneClickStudentLogin() {
+    // Safe prompt for password
     const stuRaw = localStorage.getItem('stenomaster_saved_student_creds');
     if (!stuRaw) {
       this.showToast('कृपया मोबाइल/ईमेल एवं पासवर्ड दर्ज करके लॉगिन करें।', 'info');
@@ -1314,23 +1312,19 @@ class StenoApp {
     const stuCreds = JSON.parse(stuRaw);
     const emailInp = document.getElementById('stuAuthEmail');
     const passInp = document.getElementById('stuAuthPassword');
-    if (emailInp) emailInp.value = stuCreds.email_or_username || '';
-    if (passInp) passInp.value = stuCreds.password || '';
+    if (emailInp && stuCreds.email_or_username) emailInp.value = stuCreds.email_or_username;
+    if (passInp && !passInp.value) {
+      passInp.focus();
+      this.showToast('सुरक्षा के लिए कृपया अपना पासवर्ड दर्ज करें।', 'info');
+      return;
+    }
     this.handleStudentLogin();
   }
 
   oneClickAdminLogin() {
-    const adminRaw = localStorage.getItem('stenomaster_saved_admin_creds');
-    if (!adminRaw) {
-      this.showToast('कृपया एडमिन ईमेल व पासवर्ड दर्ज करें।', 'info');
-      return;
-    }
-    const adminCreds = JSON.parse(adminRaw);
+    this.showToast('कृपया अपना अधिकृत एडमिन ईमेल एवं पासवर्ड दर्ज करें।', 'info');
     const emailInp = document.getElementById('adminAuthEmail');
-    const passInp = document.getElementById('adminAuthPassword');
-    if (emailInp) emailInp.value = adminCreds.email_or_username || '';
-    if (passInp) passInp.value = adminCreds.password || '';
-    this.handleAdminLogin();
+    if (emailInp) emailInp.focus();
   }
 
   async initGoogleAuth() {
@@ -1605,10 +1599,9 @@ class StenoApp {
         password: password
       };
 
-      // Auto-save newly registered student credentials for instant 1-click login
+      // Save student username only (never password) for convenience
       localStorage.setItem('stenomaster_saved_student_creds', JSON.stringify({
         email_or_username: this._registeredCreds.username,
-        password: password,
         name: fullName
       }));
 
@@ -1679,12 +1672,11 @@ class StenoApp {
       localStorage.removeItem('stenomaster_pending_referral');
       localStorage.setItem('stenomaster_user', JSON.stringify(this.user));
 
-      // Save Student Credentials for 1-Click Login if Remember Me is checked
-      const rememberStudent = document.getElementById('stuRememberMe')?.checked ?? true;
+      // Save Student ID/Username only (NEVER password) if Remember Me is checked
+      const rememberStudent = document.getElementById('stuRememberMe')?.checked ?? false;
       if (rememberStudent) {
         localStorage.setItem('stenomaster_saved_student_creds', JSON.stringify({
           email_or_username: email,
-          password: password,
           name: this.user.display_name || this.user.username
         }));
       } else {
@@ -1815,17 +1807,8 @@ class StenoApp {
       localStorage.removeItem('stenomaster_pending_referral');
       localStorage.setItem('stenomaster_user', JSON.stringify(this.user));
 
-      // Save Admin Credentials for 1-Click Login if Remember Me is checked
-      const rememberAdmin = document.getElementById('adminRememberMe')?.checked ?? true;
-      if (rememberAdmin) {
-        localStorage.setItem('stenomaster_saved_admin_creds', JSON.stringify({
-          email_or_username: email,
-          password: password,
-          name: this.user.display_name || this.user.username || 'Administrator'
-        }));
-      } else {
-        localStorage.removeItem('stenomaster_saved_admin_creds');
-      }
+      // Security: Never save admin credentials in browser storage
+      localStorage.removeItem('stenomaster_saved_admin_creds');
 
       this.hideAuthGateway();
       this.updateUserUI();
@@ -2191,6 +2174,16 @@ class StenoApp {
     this.user = null;
     localStorage.removeItem('stenomaster_token');
     localStorage.removeItem('stenomaster_user');
+    localStorage.removeItem('stenomaster_saved_student_creds');
+    localStorage.removeItem('stenomaster_saved_admin_creds');
+    localStorage.removeItem('stenomaster_recent_results');
+    localStorage.removeItem('stenomaster_cached_summary');
+
+    // Wipe all login inputs so that next user on shared device sees clean empty fields
+    ['stuAuthEmail', 'stuAuthPassword', 'adminAuthEmail', 'adminAuthPassword', 'standaloneAdminEmail', 'standaloneAdminPass'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.value = '';
+    });
 
     // Admin page: show the in-page admin login modal (do NOT redirect or touch student UI)
     if (window.location.pathname.includes('admin')) {
@@ -2214,6 +2207,15 @@ class StenoApp {
     this.user = null;
     localStorage.removeItem('stenomaster_token');
     localStorage.removeItem('stenomaster_user');
+    localStorage.removeItem('stenomaster_saved_student_creds');
+    localStorage.removeItem('stenomaster_saved_admin_creds');
+    localStorage.removeItem('stenomaster_recent_results');
+    localStorage.removeItem('stenomaster_cached_summary');
+
+    ['stuAuthEmail', 'stuAuthPassword', 'adminAuthEmail', 'adminAuthPassword', 'standaloneAdminEmail', 'standaloneAdminPass'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.value = '';
+    });
 
     // 2. Halt audio playback immediately
     if (window.stenoAudioPlayer && typeof window.stenoAudioPlayer.stop === 'function') {
