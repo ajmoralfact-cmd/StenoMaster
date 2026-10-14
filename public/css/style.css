@@ -10251,4 +10251,211 @@ html.is-mobile-device.mobile-wide-viewport .mobile-nav-btn {
   padding-bottom: 12px;
 }
 
+/* ══════════════════════════════════════════════════════════════════════════
+   GLOBAL 1-CLICK FREE CAMPAIGN & BULK MULTI-SELECT STYLES
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* Student Golden Campaign Banner */
+.global-campaign-banner {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  color: #fff;
+  padding: 10px 18px;
+  box-shadow: 0 4px 14px rgba(245, 158, 11, 0.35);
+  position: relative;
+  z-index: 9999;
+  font-size: 0.88rem;
+  font-weight: 500;
+  animation: slideDownBanner 0.4s ease-out;
+}
+
+@keyframes slideDownBanner {
+  from { transform: translateY(-100%); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.campaign-banner-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.campaign-sparkle {
+  font-size: 1.3rem;
+  animation: pulseSparkle 1.8s infinite;
+}
+
+@keyframes pulseSparkle {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.25); }
+}
+
+.campaign-banner-text {
+  flex: 1;
+  line-height: 1.4;
+}
+
+.campaign-sub-note {
+  margin-left: 8px;
+  opacity: 0.92;
+  font-size: 0.82rem;
+  font-weight: 400;
+}
+
+.campaign-banner-close {
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 1.1rem;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: all 0.2s;
+}
+
+.campaign-banner-close:hover {
+  background: rgba(0, 0, 0, 0.15);
+  color: #fff;
+}
+
+/* Admin Floating Bulk Action Dock */
+.bulk-action-dock {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%) translateY(100px);
+  z-index: 9998;
+  transition: transform 0.28s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.25s ease;
+  opacity: 0;
+  pointer-events: none;
+  max-width: 90vw;
+}
+
+.bulk-action-dock.visible {
+  transform: translateX(-50%) translateY(0);
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.bulk-dock-content {
+  background: #0f172a;
+  color: #fff;
+  padding: 10px 18px;
+  border-radius: 50px;
+  box-shadow: 0 12px 36px rgba(15, 23, 42, 0.45), 0 0 0 1.5px rgba(255, 255, 255, 0.15);
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.bulk-dock-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.bulk-dock-badge {
+  background: linear-gradient(135deg, #4f46e5, #6366f1);
+  color: #fff;
+  font-weight: 800;
+  font-size: 0.82rem;
+  padding: 4px 12px;
+  border-radius: 20px;
+  box-shadow: 0 2px 8px rgba(79, 70, 229, 0.4);
+}
+
+.bulk-dock-sub {
+  font-size: 0.8rem;
+  color: #94a3b8;
+}
+
+.bulk-dock-buttons {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-bulk-pro {
+  background: linear-gradient(135deg, #4f46e5, #4338ca);
+  color: #fff;
+  border: none;
+  padding: 7px 16px;
+  border-radius: 20px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  box-shadow: 0 2px 8px rgba(79, 70, 229, 0.35);
+  transition: all 0.2s;
+}
+
+.btn-bulk-pro:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.5);
+}
+
+.btn-bulk-category {
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: #fff;
+  border: none;
+  padding: 7px 16px;
+  border-radius: 20px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.35);
+  transition: all 0.2s;
+}
+
+.btn-bulk-category:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.5);
+}
+
+.btn-bulk-clear {
+  background: rgba(255, 255, 255, 0.12);
+  color: #cbd5e1;
+  border: none;
+  padding: 7px 12px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-bulk-clear:hover {
+  background: rgba(239, 68, 68, 0.25);
+  color: #fca5a5;
+}
+
+/* Selected row highlight in subscribers table */
+#adminSubscribersTable tbody tr.row-selected {
+  background: rgba(79, 70, 229, 0.08) !important;
+}
+
+@media (max-width: 640px) {
+  .bulk-dock-content {
+    border-radius: 16px;
+    padding: 10px 14px;
+    gap: 10px;
+  }
+  .bulk-dock-sub {
+    display: none;
+  }
+  .btn-bulk-pro,
+  .btn-bulk-category {
+    padding: 6px 11px;
+    font-size: 0.76rem;
+  }
+}
+
+
 

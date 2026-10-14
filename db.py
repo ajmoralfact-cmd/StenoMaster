@@ -3404,7 +3404,7 @@ def admin_review_payment(request_id: int, action: str, admin_id: int, notes: str
 
 
 def is_user_premium(user_id: int) -> bool:
-    """Verifies whether a user has active premium access. Automatically expires in DB if period ended. Also checks is_free_access."""
+    """Verifies whether a user has active premium access. Automatically expires in DB if period ended. Also checks is_free_access and global free campaign."""
     if not user_id:
         return False
     conn = get_db()
@@ -3414,6 +3414,22 @@ def is_user_premium(user_id: int) -> bool:
     if not user:
         conn.close()
         return False
+
+    # Check global free campaign — if active, all non-admin users get premium access
+    if user["role"] != "admin":
+        try:
+            campaign = admin_get_global_free_campaign()
+            if campaign.get("enabled"):
+                from datetime import datetime
+                end_str = campaign.get("campaign_end")
+                if end_str:
+                    end_dt = parse_db_datetime(end_str)
+                    if end_dt and end_dt > datetime.now():
+                        conn.close()
+                        return True
+        except Exception:
+            pass
+
     if user["role"] == "admin" or bool(user.get("is_free_access")):
         conn.close()
         return True
@@ -3438,6 +3454,214 @@ def is_user_premium(user_id: int) -> bool:
 
     conn.close()
     return False
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Global Free Campaign Functions
+# ─────────────────────────────────────────────────────────────────────────────
+
+def admin_get_global_free_campaign() -> Dict[str, Any]:
+    """Returns current global free campaign status from admin_settings."""
+    try:
+        settings = get_admin_settings()
+        enabled = settings.get('global_free_campaign_enabled', '0') == '1'
+        campaign_end = settings.get('global_free_campaign_end', '')
+        banner_msg = settings.get('global_free_campaign_banner', 'StenoMaster अभी सभी के लिए FREE है! 🎉')
+        activated_by = settings.get('global_free_campaign_activated_by', '')
+        activated_at = settings.get('global_free_campaign_activated_at', '')
+
+        # Auto-disable if expired
+        if enabled and campaign_end:
+            end_dt = parse_db_datetime(campaign_end)
+            if end_dt and end_dt <= datetime.now():
+                enabled = False
+                update_admin_settings({'global_free_campaign_enabled': '0'})
+
+        return {
+            "enabled": enabled,
+            "campaign_end": campaign_end,
+            "banner_message": banner_msg,
+            "activated_by": activated_by,
+            "activated_at": activated_at
+        }
+    except Exception as e:
+        print(f"Error getting global free campaign: {e}")
+        return {"enabled": False}
+
+
+def admin_set_global_free_campaign(
+    enabled: bool,
+    days: int = 7,
+    banner_msg: str = "",
+    admin_id: int = 1
+) -> Dict[str, Any]:
+    """
+    Activates or deactivates the Global Free Campaign.
+    When enabled=True, all non-admin users get premium access until campaign_end.
+    No individual user DB records are changed.
+    """
+    try:
+        now_dt = datetime.now()
+        now_iso = now_dt.isoformat()
+        updates = {
+            'global_free_campaign_enabled': '1' if enabled else '0',
+            'global_free_campaign_activated_by': str(admin_id),
+            'global_free_campaign_activated_at': now_iso,
+        }
+        if enabled:
+            campaign_end_dt = now_dt + timedelta(days=days)
+            updates['global_free_campaign_end'] = campaign_end_dt.isoformat()
+            updates['global_free_campaign_banner'] = banner_msg or f'StenoMaster {days} दिन के लिए सभी के लिए FREE है! 🎉'
+        else:
+            updates['global_free_campaign_end'] = ''
+            updates['global_free_campaign_banner'] = ''
+
+        update_admin_settings(updates)
+        return {
+            "success": True,
+            "enabled": enabled,
+            "campaign_end": updates.get('global_free_campaign_end', ''),
+            "message": f"ग्लोबल फ्री कैम्पेन {'सक्रिय' if enabled else 'निष्क्रिय'} कर दिया गया!"
+        }
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Bulk Grant Functions
+# ─────────────────────────────────────────────────────────────────────────────
+
+def admin_grant_category_access(
+    user_id: int,
+    category_ids: List[int],
+    days: int = 30,
+    admin_id: int = 1,
+    notes: str = ""
+) -> Dict[str, Any]:
+    """
+    Grants access to specific categories for a user for `days` days.
+    Uses user_category_access table (upsert).
+    """
+    invalidate_categories_cache()
+    if not category_ids:
+        return {"success": False, "error": "कम से कम 1 श्रेणी चुनें"}
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("SELECT id, username FROM users WHERE id = ?", (user_id,))
+    user = c.fetchone()
+    if not user:
+        conn.close()
+        return {"success": False, "error": "छात्र नहीं मिला"}
+
+    now_dt = datetime.now()
+    now_iso = now_dt.isoformat()
+    if days >= 9999:
+        expire_iso = None
+        display_end = "असीमित (Lifetime)"
+    else:
+        expire_iso = (now_dt + timedelta(days=days)).isoformat()
+        display_end = (now_dt + timedelta(days=days)).strftime("%d %b %Y")
+
+    granted_count = 0
+    for cat_id in category_ids:
+        try:
+            c.execute("""
+                INSERT INTO user_category_access (user_id, category_id, granted_at, expires_at, granted_by)
+                VALUES (?, ?, ?, ?, ?)
+                ON CONFLICT(user_id, category_id) DO UPDATE SET
+                    expires_at = excluded.expires_at,
+                    granted_at = excluded.granted_at,
+                    granted_by = excluded.granted_by
+            """, (user_id, cat_id, now_iso, expire_iso, admin_id))
+            granted_count += 1
+        except Exception as e:
+            print(f"Error granting category {cat_id} to user {user_id}: {e}")
+
+    # Notification
+    c.execute("""
+        INSERT INTO notifications (user_id, title, message, type, created_at)
+        VALUES (?, '📁 श्रेणी एक्सेस प्रदान!', ?, 'success', ?)
+    """, (
+        user_id,
+        f"{granted_count} श्रेणियों तक {days} दिन की पहुँच मिली। वैधता: {display_end} तक।",
+        now_iso
+    ))
+    conn.commit()
+    conn.close()
+    return {
+        "success": True,
+        "user_id": user_id,
+        "granted_categories": granted_count,
+        "expires_at": expire_iso,
+        "message": f"छात्र #{user_id} को {granted_count} श्रेणियाँ {days} दिन के लिए प्रदान की गईं।"
+    }
+
+
+def admin_bulk_grant_subscription(
+    user_ids: List[int],
+    plan_name: str,
+    days: int,
+    admin_id: int = 1
+) -> Dict[str, Any]:
+    """
+    Bulk Pro grant: loops admin_grant_subscription for each user_id.
+    Returns summary of successes and failures.
+    """
+    success_count = 0
+    fail_count = 0
+    errors = []
+    for uid in user_ids:
+        try:
+            res = admin_grant_subscription(uid, plan_name, days, admin_id, f"बल्क प्रो पास (Admin #{admin_id})")
+            if res.get("success"):
+                success_count += 1
+            else:
+                fail_count += 1
+                errors.append(f"User {uid}: {res.get('error', 'अज्ञात त्रुटि')}")
+        except Exception as e:
+            fail_count += 1
+            errors.append(f"User {uid}: {str(e)}")
+    return {
+        "success": True,
+        "total": len(user_ids),
+        "succeeded": success_count,
+        "failed": fail_count,
+        "errors": errors,
+        "message": f"{success_count}/{len(user_ids)} छात्रों को {days} दिन प्रो पास सफलतापूर्वक दिया गया!"
+    }
+
+
+def admin_bulk_grant_category_access(
+    user_ids: List[int],
+    category_ids: List[int],
+    days: int,
+    admin_id: int = 1
+) -> Dict[str, Any]:
+    """
+    Bulk category grant: loops admin_grant_category_access for each user_id.
+    """
+    success_count = 0
+    fail_count = 0
+    errors = []
+    for uid in user_ids:
+        try:
+            res = admin_grant_category_access(uid, category_ids, days, admin_id, f"बल्क श्रेणी पास (Admin #{admin_id})")
+            if res.get("success"):
+                success_count += 1
+            else:
+                fail_count += 1
+                errors.append(f"User {uid}: {res.get('error', 'अज्ञात त्रुटि')}")
+        except Exception as e:
+            fail_count += 1
+            errors.append(f"User {uid}: {str(e)}")
+    return {
+        "success": True,
+        "total": len(user_ids),
+        "succeeded": success_count,
+        "failed": fail_count,
+        "errors": errors,
+        "message": f"{success_count}/{len(user_ids)} छात्रों को {len(category_ids)} श्रेणियाँ {days} दिन के लिए सफलतापूर्वक दी गईं!"
+    }
 
 
 def get_user_subscription_info(user_id: int) -> Dict[str, Any]:

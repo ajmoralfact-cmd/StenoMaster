@@ -746,8 +746,11 @@
                   <table class="data-table" id="adminSubscribersTable">
                     <thead>
                       <tr>
-                        <th style="width:26%;">छात्र (Student Info)</th>
-                        <th style="width:22%;">संपर्क (Contact)</th>
+                        <th style="width:40px; text-align:center;">
+                          <input type="checkbox" id="subscribersSelectAllMaster" onchange="stenoAdmin.toggleSelectAllSubscribers(this.checked)" style="width:16px; height:16px; cursor:pointer; accent-color:#4f46e5;" title="सभी छात्र चुनें / हटाएं">
+                        </th>
+                        <th style="width:25%;">छात्र (Student Info)</th>
+                        <th style="width:20%;">संपर्क (Contact)</th>
                         <th style="width:25%;">प्लान व वैधता (Plan & Status)</th>
                         <th style="width:13%;">एक्टिविटी (Activity)</th>
                         <th style="width:14%; text-align:right;">एक्शन (Actions)</th>
@@ -759,6 +762,28 @@
                   </table>
                 </div>
               </div>
+
+              <!-- Floating Bulk Action Dock (Appears when >= 1 student selected) -->
+              <div id="subscribersBulkActionDock" class="bulk-action-dock" style="display:none;">
+                <div class="bulk-dock-content">
+                  <div class="bulk-dock-info">
+                    <span class="bulk-dock-badge" id="bulkSelectedCount">0 छात्र चयनित</span>
+                    <span class="bulk-dock-sub">पर सामूहिक कार्रवाई करें:</span>
+                  </div>
+                  <div class="bulk-dock-buttons">
+                    <button type="button" class="btn-bulk-pro" onclick="stenoAdmin.openBulkProModal()">
+                      👑 बल्क प्रो पास दें
+                    </button>
+                    <button type="button" class="btn-bulk-category" onclick="stenoAdmin.openBulkCategoryModal()">
+                      📁 श्रेणी फ्री दें
+                    </button>
+                    <button type="button" class="btn-bulk-clear" onclick="stenoAdmin.clearSubscribersSelection()" title="चयन रद्द करें">
+                      ✕ हटाएं
+                    </button>
+                  </div>
+                </div>
+              </div>
+
             </div>
 
             <!-- TAB: REFERRALS & REWARDS AUDIT PANEL -->
@@ -1987,6 +2012,129 @@
       </form>
     </div>
   </div>
+
+  <!-- ══════════════════════════════════════════════════════════════════════════
+       MODAL: BULK PRO PASS GRANT
+  ══════════════════════════════════════════════════════════════════════════ -->
+  <div class="modal-overlay" id="adminBulkGrantProModal" onclick="if(event.target===this) stenoApp.closeModal('adminBulkGrantProModal')">
+    <div class="modal-card" style="max-width: 500px; max-height: 90vh; display: flex; flex-direction: column;">
+      <button class="modal-close-btn" onclick="stenoApp.closeModal('adminBulkGrantProModal')">✕</button>
+      <div style="display:flex; align-items:center; gap:10px; margin-bottom:6px;">
+        <span style="font-size:1.8rem;">👑</span>
+        <div>
+          <h3 class="modal-title" style="margin:0;">सामूहिक प्रो पास दें (Bulk Pro Grant)</h3>
+          <p class="modal-subtitle" style="margin:0;">Grant StenoMaster Pro to multiple students simultaneously</p>
+        </div>
+      </div>
+
+      <div id="bulkProStudentSummary" style="background:rgba(79,70,229,0.08); border:1px solid rgba(79,70,229,0.25); border-radius:10px; padding:12px 14px; margin:12px 0; font-size:0.86rem; color:var(--text-main);">
+        <!-- Summary populated dynamically -->
+      </div>
+
+      <form onsubmit="stenoAdmin.submitBulkGrantPro(event)" style="overflow-y:auto;">
+        <div class="form-group" style="margin-bottom:14px;">
+          <label class="form-label" style="font-weight:700;">वैधता अवधि चुनें (Duration):</label>
+          <select id="bulkProDaysSelect" class="form-select" onchange="stenoAdmin.onBulkProDaysChange(this.value)" style="font-size:0.9rem; font-weight:600;">
+            <option value="7">⚡ 7 दिन (1 सप्ताह ट्रायल)</option>
+            <option value="15">⚡ 15 दिन (अर्ध-माह)</option>
+            <option value="30" selected>🌟 30 दिन (1 माह)</option>
+            <option value="60">🌟 60 दिन (2 माह)</option>
+            <option value="90">👑 90 दिन (3 माह)</option>
+            <option value="180">👑 180 दिन (6 माह)</option>
+            <option value="365">💎 365 दिन (1 वर्ष)</option>
+            <option value="custom">✏️ कस्टम दिन (Custom Days)...</option>
+            <option value="9999">♾️ लाइफटाइम (Lifetime Pro)</option>
+          </select>
+        </div>
+
+        <div class="form-group" id="bulkProCustomDaysGroup" style="display:none; margin-bottom:14px;">
+          <label class="form-label" style="font-size:0.8rem;">कस्टम दिनों की संख्या:</label>
+          <input type="number" id="bulkProCustomDaysInput" class="form-input" min="1" max="3650" placeholder="उदा. 45">
+        </div>
+
+        <div class="form-group" style="margin-bottom:14px;">
+          <label class="form-label" style="font-size:0.82rem;">प्लान का शीर्षक (Plan Title):</label>
+          <input type="text" id="bulkProPlanNameInput" class="form-input" value="StenoMaster Pro (बल्क पास)" style="font-size:0.86rem;">
+        </div>
+
+        <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:16px; border-top:1px solid var(--border-subtle); padding-top:12px;">
+          <button type="button" class="btn-secondary" onclick="stenoApp.closeModal('adminBulkGrantProModal')">रद्द करें</button>
+          <button type="submit" class="btn-primary" id="btnSubmitBulkPro" style="background:linear-gradient(135deg, #4f46e5, #4338ca); border:none; font-weight:700; padding:8px 18px;">
+            ✓ सभी को प्रो पास दें
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════════════════
+       MODAL: BULK CATEGORY GRANT
+  ══════════════════════════════════════════════════════════════════════════ -->
+  <div class="modal-overlay" id="adminBulkGrantCategoryModal" onclick="if(event.target===this) stenoApp.closeModal('adminBulkGrantCategoryModal')">
+    <div class="modal-card" style="max-width: 540px; max-height: 90vh; display: flex; flex-direction: column;">
+      <button class="modal-close-btn" onclick="stenoApp.closeModal('adminBulkGrantCategoryModal')">✕</button>
+      <div style="display:flex; align-items:center; gap:10px; margin-bottom:6px;">
+        <span style="font-size:1.8rem;">📁</span>
+        <div>
+          <h3 class="modal-title" style="margin:0;">सामूहिक श्रेणी अनलॉक (Bulk Category Pass)</h3>
+          <p class="modal-subtitle" style="margin:0;">Unlock specific categories for multiple students at once</p>
+        </div>
+      </div>
+
+      <div id="bulkCatStudentSummary" style="background:rgba(16,185,129,0.08); border:1px solid rgba(16,185,129,0.25); border-radius:10px; padding:12px 14px; margin:12px 0; font-size:0.86rem; color:var(--text-main);">
+        <!-- Summary populated dynamically -->
+      </div>
+
+      <form onsubmit="stenoAdmin.submitBulkGrantCategory(event)" style="overflow-y:auto; padding-right:4px;">
+        <div style="background:var(--bg-subtle); border:1.5px solid var(--border); border-radius:10px; padding:12px; margin-bottom:14px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+            <label class="form-label" style="font-weight:700; margin:0; font-size:0.86rem;">
+              📁 फ्री श्रेणियां चुनें: <span id="bulkCatSelectedBadge" class="badge" style="background:#10b981; color:#fff; font-size:0.75rem; font-weight:700; margin-left:6px;">0 चुनी गईं</span>
+            </label>
+            <div style="display:flex; gap:6px;">
+              <button type="button" class="btn-secondary" style="padding:2px 8px; font-size:0.75rem;" onclick="stenoAdmin.selectAllBulkCategories(true)">☑️ सब चुनें</button>
+              <button type="button" class="btn-secondary" style="padding:2px 8px; font-size:0.75rem;" onclick="stenoAdmin.selectAllBulkCategories(false)">◻️ हटाएं</button>
+            </div>
+          </div>
+
+          <!-- Search filter -->
+          <div style="margin-bottom:8px;">
+            <input type="text" id="bulkCatSearchInput" class="form-input" placeholder="🔍 श्रेणी खोजें..." oninput="stenoAdmin.filterBulkCategories(this.value)" style="padding:6px 10px; font-size:0.82rem; background:#fff;">
+          </div>
+
+          <!-- Category checklist -->
+          <div id="bulkCatChecklist" style="max-height:160px; overflow-y:auto; border:1px solid var(--border-subtle); border-radius:8px; background:#fff; padding:6px;">
+            <!-- Populated dynamically -->
+          </div>
+        </div>
+
+        <div class="form-group" style="margin-bottom:14px;">
+          <label class="form-label" style="font-weight:700;">वैधता अवधि चुनें (Duration):</label>
+          <select id="bulkCatDaysSelect" class="form-select" onchange="stenoAdmin.onBulkCatDaysChange(this.value)" style="font-size:0.9rem; font-weight:600;">
+            <option value="15">⚡ 15 दिन</option>
+            <option value="30" selected>🌟 30 दिन (1 माह)</option>
+            <option value="60">🌟 60 दिन (2 माह)</option>
+            <option value="90">👑 90 दिन (3 माह)</option>
+            <option value="custom">✏️ कस्टम दिन...</option>
+            <option value="9999">♾️ लाइफटाइम (Lifetime Access)</option>
+          </select>
+        </div>
+
+        <div class="form-group" id="bulkCatCustomDaysGroup" style="display:none; margin-bottom:14px;">
+          <label class="form-label" style="font-size:0.8rem;">कस्टम दिनों की संख्या:</label>
+          <input type="number" id="bulkCatCustomDaysInput" class="form-input" min="1" max="3650" placeholder="उदा. 45">
+        </div>
+
+        <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:16px; border-top:1px solid var(--border-subtle); padding-top:12px;">
+          <button type="button" class="btn-secondary" onclick="stenoApp.closeModal('adminBulkGrantCategoryModal')">रद्द करें</button>
+          <button type="submit" class="btn-primary" id="btnSubmitBulkCat" style="background:linear-gradient(135deg, #10b981, #059669); border:none; font-weight:700; padding:8px 18px;">
+            ✓ सभी को श्रेणी एक्सेस दें
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
 
 
 

@@ -618,6 +618,12 @@ class StenoMasterHandler(http.server.SimpleHTTPRequestHandler):
             self._send_json(200, {"custom_classes": classes})
             return
 
+        # Public Global Free Campaign Status (for banner display in app)
+        if path == '/api/campaign-status':
+            status = db.admin_get_global_free_campaign()
+            self._send_json(200, status, cache_control='public, max-age=15, stale-while-revalidate=60')
+            return
+
         # ------------------ Admin Routes ------------------
         if path.startswith('/api/admin/'):
             if not user:
@@ -625,6 +631,11 @@ class StenoMasterHandler(http.server.SimpleHTTPRequestHandler):
                 return
             if user['role'] != 'admin':
                 self._send_json(403, {"error": "Admin access required"})
+                return
+
+            if path == '/api/admin/global-free-campaign':
+                data = db.admin_get_global_free_campaign()
+                self._send_json(200, data)
                 return
 
             if path == '/api/admin/overview':
@@ -1876,6 +1887,42 @@ class StenoMasterHandler(http.server.SimpleHTTPRequestHandler):
             # Phase 3: Admin Upload Payment QR Code
             if path == '/api/admin/subscription/upload-qr':
                 self._handle_qr_upload()
+                return
+
+            # ── Global Free Campaign ──────────────────────────────────────
+            if path == '/api/admin/global-free-campaign':
+                data = self._read_json_body()
+                enabled = bool(data.get('enabled', False))
+                days = int(data.get('days', 7))
+                banner_msg = data.get('banner_message', '')
+                res = db.admin_set_global_free_campaign(enabled, days, banner_msg, user['user_id'])
+                self._send_json(200 if res.get('success') else 400, res)
+                return
+
+            # ── Bulk Grant Pro Subscription ──────────────────────────────
+            if path == '/api/admin/bulk-grant-subscription':
+                data = self._read_json_body()
+                user_ids = data.get('user_ids', [])
+                plan_name = data.get('plan_name', 'StenoMaster Pro (बल्क पास)')
+                days = int(data.get('days', 30))
+                if not user_ids:
+                    self._send_json(400, {"error": "user_ids आवश्यक है"})
+                    return
+                res = db.admin_bulk_grant_subscription([int(u) for u in user_ids], plan_name, days, user['user_id'])
+                self._send_json(200, res)
+                return
+
+            # ── Bulk Grant Category Access ────────────────────────────────
+            if path == '/api/admin/bulk-grant-category':
+                data = self._read_json_body()
+                user_ids = data.get('user_ids', [])
+                category_ids = data.get('category_ids', [])
+                days = int(data.get('days', 30))
+                if not user_ids or not category_ids:
+                    self._send_json(400, {"error": "user_ids और category_ids दोनों आवश्यक हैं"})
+                    return
+                res = db.admin_bulk_grant_category_access([int(u) for u in user_ids], [int(c) for c in category_ids], days, user['user_id'])
+                self._send_json(200, res)
                 return
 
             self._send_json(404, {"error": "Admin endpoint not found"})
