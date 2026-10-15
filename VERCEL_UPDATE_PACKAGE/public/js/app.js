@@ -4237,10 +4237,12 @@ class StenoApp {
       const stored = JSON.parse(localStorage.getItem('stenomaster_recent_results') || '{}');
       const res = stored[Number(passageId)];
       if (!res || res.net_wpm === undefined) return null;
-      // Strictly ignore empty or dummy/fake test attempts
-      if (!res.total_words || res.total_words <= 0 || (res.time_taken_seconds && res.time_taken_seconds < 5)) {
-        return null;
-      }
+      const isReal = Boolean(
+        (res.total_words && res.total_words > 0) ||
+        (res.total_errors && res.total_errors > 0) ||
+        (res.time_taken_seconds && res.time_taken_seconds >= 5 && (res.net_wpm > 0 || res.accuracy > 0))
+      );
+      if (!isReal) return null;
       return res;
     } catch (e) {
       return null;
@@ -6356,6 +6358,15 @@ ${link}`;
 
     if (!this._categoryDetailCache) this._categoryDetailCache = new Map();
     let cached = this._categoryDetailCache.get(cIdInt);
+    if (!cached) {
+      try {
+        const stored = sessionStorage.getItem('stenomaster_cat_detail_' + cIdInt);
+        if (stored) {
+          cached = JSON.parse(stored);
+          this._categoryDetailCache.set(cIdInt, cached);
+        }
+      } catch (e) {}
+    }
 
     const isEn = this.currentLang === 'en';
     const fAll = document.getElementById('catFilterAll');
@@ -6380,7 +6391,7 @@ ${link}`;
       }
     }
 
-    // 0ms Instant Passages Hydration from allPassages in memory
+    // 0ms Instant Passages Hydration from allPassages in memory + recent test results
     if (!cached && catMeta) {
       const userUnlocked = (this.user && (this.user.unlocked_category_ids || this.user.unlocked_categories)) || [];
       const hasFullAccess = Boolean(this.user && (this.user.role === 'admin' || this.user.subscription_status === 'active' || this.user.is_free_access));
@@ -6396,7 +6407,8 @@ ${link}`;
           },
           passages: localPassages.map((p, idx) => ({
             ...p,
-            is_accessible: isUnlocked || (idx < 2)
+            is_accessible: isUnlocked || (idx < 2),
+            user_result: p.user_result || (this.getRecentPassageResult ? this.getRecentPassageResult(p.id) : null)
           }))
         };
         this._categoryDetailCache.set(cIdInt, cached);
@@ -6412,10 +6424,24 @@ ${link}`;
 
       cat.is_unlocked = isUnlocked;
       this.currentCategoryData = cat;
-      this.currentCategoryPassages = (res.passages || []).map((p, idx) => ({
-        ...p,
-        is_accessible: isUnlocked || (idx < 2)
-      }));
+      this.currentCategoryPassages = (res.passages || []).map((p, idx) => {
+        const uRes = p.user_result || (this.getRecentPassageResult ? this.getRecentPassageResult(p.id) : null);
+        if (p.user_result && this.saveRecentPassageResult) {
+          this.saveRecentPassageResult(p.id, p.user_result);
+        }
+        return {
+          ...p,
+          is_accessible: isUnlocked || (idx < 2),
+          user_result: uRes
+        };
+      });
+
+      try {
+        sessionStorage.setItem('stenomaster_cat_detail_' + cIdInt, JSON.stringify({
+          category: cat,
+          passages: this.currentCategoryPassages
+        }));
+      } catch (e) {}
 
       if (nameEl) {
         nameEl.innerHTML = '<hindi-root text="' + this.escapeHtml(cat.name || 'डिक्टेशन टेस्ट सीरीज') + '"></hindi-root>';

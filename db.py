@@ -2150,6 +2150,11 @@ def save_practice_attempt(
     conn.commit()
     conn.close()
 
+    try:
+        invalidate_user_attempts_cache(user_id)
+    except Exception:
+        pass
+
     # Run non-blocking background worker for errors, points, streaks, achievements
     def _bg_post_process():
         try:
@@ -4768,22 +4773,36 @@ def admin_reset_user_password(user_id: int, new_password: str) -> Dict[str, Any]
 # -----------------------------------------------------------------------------
 # Category-Wise Unlocking & Multi-Category Pricing Operations
 # -----------------------------------------------------------------------------
-def is_category_unlocked_for_user(user_id: Optional[int], category_id: int) -> bool:
+_USER_ATTEMPTS_CACHE = {}
+
+def invalidate_user_attempts_cache(user_id: Optional[int] = None):
+    global _USER_ATTEMPTS_CACHE
+    if user_id is not None:
+        _USER_ATTEMPTS_CACHE.pop(int(user_id), None)
+    else:
+        _USER_ATTEMPTS_CACHE.clear()
+
+def is_category_unlocked_for_user(user_id: Optional[int], category_id: int, conn=None) -> bool:
     if not user_id:
         return False
-    conn = get_db()
+    close_at_end = False
+    if conn is None:
+        conn = get_db()
+        close_at_end = True
     c = conn.cursor()
     c.execute("SELECT role, is_free_access, subscription_status, subscription_end FROM users WHERE id = ?", (user_id,))
     u_row = c.fetchone()
     if u_row:
         u_dict = dict(u_row)
         if u_dict.get('role') == 'admin' or bool(u_dict.get('is_free_access')):
-            conn.close()
+            if close_at_end:
+                conn.close()
             return True
         if u_dict.get('subscription_status') == 'active':
             sub_end = u_dict.get('subscription_end')
             if not sub_end or not is_expired_datetime(sub_end):
-                conn.close()
+                if close_at_end:
+                    conn.close()
                 return True
     c.execute("""
         SELECT id, expires_at 
@@ -4791,7 +4810,8 @@ def is_category_unlocked_for_user(user_id: Optional[int], category_id: int) -> b
         WHERE user_id = ? AND category_id = ?
     """, (user_id, category_id))
     row = c.fetchone()
-    conn.close()
+    if close_at_end:
+        conn.close()
     if not row:
         return False
     exp = row['expires_at'] if isinstance(row, dict) else row[1]
@@ -5079,55 +5099,47 @@ def get_passages_by_category(category_id: Any, user_id: Optional[int] = None) ->
     is_unlocked = False
     user_results = {}
     if user_id:
-        is_unlocked = is_category_unlocked_for_user(user_id, category_id)
-        try:
-            conn = get_db()
-            c = conn.cursor()
-            c.execute("""
-                SELECT passage_id, net_wpm, accuracy, error_rate, total_errors, time_taken_seconds, total_words, report_json, created_at
-                FROM practice_attempts
-                WHERE user_id = ? AND total_words > 0 AND time_taken_seconds >= 5
-                ORDER BY id DESC
-            """, (user_id,))
-            rows = c.fetchall()
-            conn.close()
-            for r in rows:
-                r_dict = dict(r)
-                pid = r_dict.get('passage_id')
-                if pid and pid not in user_results:
-                    is_passed = False
-                    try:
-                        rpt_str = r_dict.get('report_json') or ''
-                        rpt = json.loads(rpt_str or '{}')
-                        es = rpt.get('exam_summary') or {}
-                        ssc = es.get('ssc') or {}
-                        upsssc = es.get('upsssc') or {}
-                        if 'is_qualified' in es and es['is_qualified'] is not None:
-                            is_passed = bool(es['is_qualified'])
-                        elif 'is_qualified_any' in ssc and ssc['is_qualified_any'] is not None:
-                            is_passed = bool(ssc['is_qualified_any'])
-                        elif 'is_qualified' in upsssc and upsssc['is_qualified'] is not None:
-                            is_passed = bool(upsssc['is_qualified'])
-                        else:
-                            acc = float(r_dict.get('accuracy') or 0)
-                            wpm = float(r_dict.get('net_wpm') or 0)
-                            is_passed = bool(acc >= 90.0 and wpm >= 25.0)
-                    except Exception:
+        cache = _USER_ATTEMPTS_CACHE.get(user_id)
+        if cache and (now - cache.get("time", 0)) < 60:
+            user_results = cache.get("data", {})
+            is_unlocked = cache.get("unlocked", {}).get(category_id, False)
+        else:
+            try:
+                conn = get_db()
+                is_unlocked = is_category_unlocked_for_user(user_id, category_id, conn=conn)
+                c = conn.cursor()
+                c.execute("""
+                    SELECT passage_id, net_wpm, accuracy, error_rate, total_errors, time_taken_seconds, total_words, created_at
+                    FROM practice_attempts
+                    WHERE user_id = ? AND total_words > 0 AND time_taken_seconds >= 5
+                    ORDER BY id DESC
+                """, (user_id,))
+                rows = c.fetchall()
+                conn.close()
+                for r in rows:
+                    r_dict = dict(r)
+                    pid = r_dict.get('passage_id')
+                    if pid and pid not in user_results:
                         acc = float(r_dict.get('accuracy') or 0)
                         wpm = float(r_dict.get('net_wpm') or 0)
                         is_passed = bool(acc >= 90.0 and wpm >= 25.0)
-
-                    user_results[pid] = {
-                        'net_wpm': round(float(r_dict.get('net_wpm') or 0), 1),
-                        'accuracy': round(float(r_dict.get('accuracy') or 0), 1),
-                        'total_errors': int(r_dict.get('total_errors') or 0),
-                        'time_taken_seconds': int(r_dict.get('time_taken_seconds') or 0),
-                        'total_words': int(r_dict.get('total_words') or 0),
-                        'is_passed': is_passed,
-                        'created_at': r_dict.get('created_at')
-                    }
-        except Exception:
-            pass
+                        user_results[pid] = {
+                            'net_wpm': round(wpm, 1),
+                            'accuracy': round(acc, 1),
+                            'total_errors': int(r_dict.get('total_errors') or 0),
+                            'time_taken_seconds': int(r_dict.get('time_taken_seconds') or 0),
+                            'total_words': int(r_dict.get('total_words') or 0),
+                            'is_passed': is_passed,
+                            'created_at': r_dict.get('created_at')
+                        }
+                if cache is None:
+                    cache = {"time": now, "data": user_results, "unlocked": {}}
+                cache["time"] = now
+                cache["data"] = user_results
+                cache["unlocked"][category_id] = is_unlocked
+                _USER_ATTEMPTS_CACHE[user_id] = cache
+            except Exception:
+                pass
 
     cat_res = dict(cat_dict)
     cat_res['is_unlocked'] = is_unlocked

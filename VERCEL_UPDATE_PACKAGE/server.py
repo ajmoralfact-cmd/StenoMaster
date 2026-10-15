@@ -379,7 +379,7 @@ class StenoMasterHandler(http.server.SimpleHTTPRequestHandler):
                 self._send_json(400, {"error": "Category ID is required"})
                 return
             data = db.get_passages_by_category(cat_id, user_id)
-            cache_ctrl = 'private, no-cache, no-store, must-revalidate' if user_id else 'public, max-age=10, stale-while-revalidate=30'
+            cache_ctrl = 'private, max-age=10, stale-while-revalidate=60' if user_id else 'public, max-age=60, stale-while-revalidate=300'
             self._send_json(200, data, cache_control=cache_ctrl)
             return
 
