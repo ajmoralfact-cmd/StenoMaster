@@ -1046,6 +1046,7 @@ class StenoMasterHandler(http.server.SimpleHTTPRequestHandler):
             reply_to_id = data.get('reply_to_id')
             reply_to_author = data.get('reply_to_author')
             reply_to_snippet = data.get('reply_to_snippet')
+            created_at = data.get('created_at')
 
             if not content and not image_url:
                 self._send_json(400, {"error": "कृपया प्रश्न या संदेश लिखें अथवा फ़ोटो संलग्न करें।"})
@@ -1058,7 +1059,8 @@ class StenoMasterHandler(http.server.SimpleHTTPRequestHandler):
                 category_tag=category_tag,
                 reply_to_id=reply_to_id,
                 reply_to_author=reply_to_author,
-                reply_to_snippet=reply_to_snippet
+                reply_to_snippet=reply_to_snippet,
+                created_at=created_at
             )
             self._send_json(201, res)
             return

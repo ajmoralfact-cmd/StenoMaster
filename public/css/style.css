@@ -10694,6 +10694,25 @@ body:has(#view-community.active) .main-wrapper {
   overflow: hidden;
   text-overflow: ellipsis;
   margin-top: 1px;
+  display: flex;
+  align-items: center;
+}
+
+.tg-live-status-dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #22c55e;
+  box-shadow: 0 0 6px rgba(34, 197, 94, 0.85);
+  margin-right: 5px;
+  flex-shrink: 0;
+  animation: tgLivePulse 2s infinite ease-in-out;
+}
+
+@keyframes tgLivePulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.55; transform: scale(0.85); }
 }
 
 .tg-header-actions {

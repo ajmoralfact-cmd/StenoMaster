@@ -7721,7 +7721,18 @@ ${link}`;
           if (feedEl) {
             // Remove empty state placeholder if present
             const emptyState = feedEl.querySelector('.comm-empty-state');
-            if (emptyState) feedEl.innerHTML = '<div class="tg-date-pill">आज, 14 अक्टूबर 2026</div>';
+            if (emptyState) feedEl.innerHTML = '';
+
+            let s = String(post.created_at || '').trim();
+            if (s && !s.endsWith('Z') && !s.includes('+') && !s.match(/-\d{2}:\d{2}$/)) {
+              s += 'Z';
+            }
+            const d = new Date(s);
+            const postDateKey = !isNaN(d.getTime()) ? d.toDateString() : 'today';
+            if (!this._lastRenderedDateKey || this._lastRenderedDateKey !== postDateKey) {
+              feedEl.insertAdjacentHTML('beforeend', `<div class="tg-date-pill">${this.formatDatePill(post.created_at)}</div>`);
+              this._lastRenderedDateKey = postDateKey;
+            }
 
             const rowHtml = this.buildSingleCommunityPostHtml(post, currentUserId, isAdmin);
             feedEl.insertAdjacentHTML('beforeend', rowHtml);
@@ -7940,12 +7951,23 @@ ${link}`;
     const isAdmin = Boolean(this.user && this.user.role === 'admin');
 
     const htmlParts = [];
-    htmlParts.push('<div class="tg-date-pill">आज, 14 अक्टूबर 2026</div>');
+    let lastDateKey = null;
 
     posts.forEach(post => {
+      let s = String(post.created_at || '').trim();
+      if (s && !s.endsWith('Z') && !s.includes('+') && !s.match(/-\d{2}:\d{2}$/)) {
+        s += 'Z';
+      }
+      const d = new Date(s);
+      const dateKey = !isNaN(d.getTime()) ? d.toDateString() : 'today';
+      if (dateKey !== lastDateKey) {
+        htmlParts.push(`<div class="tg-date-pill">${this.formatDatePill(post.created_at)}</div>`);
+        lastDateKey = dateKey;
+      }
       htmlParts.push(this.buildSingleCommunityPostHtml(post, currentUserId, isAdmin));
     });
 
+    this._lastRenderedDateKey = lastDateKey;
     feedEl.innerHTML = htmlParts.join('');
 
     // Track highest post ID
@@ -7964,11 +7986,54 @@ ${link}`;
     }
   }
 
+  formatDatePill(isoStr) {
+    if (!isoStr) return 'आज';
+    try {
+      let s = String(isoStr).trim();
+      if (!s.endsWith('Z') && !s.includes('+') && !s.match(/-\d{2}:\d{2}$/)) {
+        s += 'Z';
+      }
+      const d = new Date(s);
+      if (isNaN(d.getTime())) return 'आज';
+
+      const today = new Date();
+      const yesterday = new Date();
+      yesterday.setDate(today.getDate() - 1);
+
+      const isToday = d.toDateString() === today.toDateString();
+      const isYesterday = d.toDateString() === yesterday.toDateString();
+
+      const months = ['जनवरी', 'फ़रवरी', 'मार्च', 'अप्रैल', 'मई', 'जून', 'जुलाई', 'अगस्त', 'सितंबर', 'अक्टूबर', 'नवंबर', 'दिसंबर'];
+      const dateText = `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`;
+
+      if (isToday) return `आज, ${dateText}`;
+      if (isYesterday) return `कल, ${dateText}`;
+      return dateText;
+    } catch (e) {
+      return 'आज';
+    }
+  }
+
   formatChatTime(isoStr) {
     if (!isoStr) return '';
     try {
-      const d = new Date(isoStr);
-      return d.toLocaleTimeString('hi-IN', { hour: '2-digit', minute: '2-digit', hour12: true });
+      let s = String(isoStr).trim();
+      // Ensure ISO string has timezone designator (if raw without timezone, treat as UTC from server)
+      if (!s.endsWith('Z') && !s.includes('+') && !s.match(/-\d{2}:\d{2}$/)) {
+        s += 'Z';
+      }
+      const d = new Date(s);
+      if (isNaN(d.getTime())) return '';
+
+      // Format in standard 12-hour Indian local time format (e.g. 08:21 pm)
+      let hours = d.getHours();
+      const minutes = d.getMinutes();
+      const ampm = hours >= 12 ? 'pm' : 'am';
+      hours = hours % 12;
+      hours = hours ? hours : 12;
+      const strHours = hours < 10 ? '0' + hours : hours;
+      const strMinutes = minutes < 10 ? '0' + minutes : minutes;
+      return `${strHours}:${strMinutes} ${ampm}`;
     } catch (e) {
       return '';
     }
@@ -8004,6 +8069,7 @@ ${link}`;
     const tempId = 'temp_' + Date.now();
     const currentUserId = this.user.user_id || this.user.id;
     const authorName = this.user.display_name || this.user.username || 'विद्यार्थी';
+    const nowIso = new Date().toISOString();
 
     // 1. INSTANT LOCAL OPTIMISTIC UI: Clear input immediately (0ms delay!)
     if (textarea) {
@@ -8029,7 +8095,7 @@ ${link}`;
       replies_count: 0,
       is_pinned: 0,
       is_solved: 0,
-      created_at: new Date().toISOString(),
+      created_at: nowIso,
       username: this.user.username,
       display_name: authorName,
       avatar: this.user.avatar || 'user-default',
@@ -8043,7 +8109,13 @@ ${link}`;
 
     if (feedEl) {
       const emptyState = feedEl.querySelector('.comm-empty-state');
-      if (emptyState) feedEl.innerHTML = '<div class="tg-date-pill">आज, 14 अक्टूबर 2026</div>';
+      if (emptyState) feedEl.innerHTML = '';
+
+      const postDateKey = new Date(nowIso).toDateString();
+      if (!this._lastRenderedDateKey || this._lastRenderedDateKey !== postDateKey) {
+        feedEl.insertAdjacentHTML('beforeend', `<div class="tg-date-pill">${this.formatDatePill(nowIso)}</div>`);
+        this._lastRenderedDateKey = postDateKey;
+      }
 
       const rowHtml = this.buildSingleCommunityPostHtml(optimisticPost, currentUserId, this.user.role === 'admin');
       feedEl.insertAdjacentHTML('beforeend', rowHtml);
@@ -8071,6 +8143,7 @@ ${link}`;
         content: content,
         category_tag: tag,
         image_url: imageUrl,
+        created_at: nowIso,
         reply_to_id: activeReply ? activeReply.postId : null,
         reply_to_author: activeReply ? activeReply.authorName : null,
         reply_to_snippet: activeReply ? activeReply.snippet : null

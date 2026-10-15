@@ -5825,10 +5825,11 @@ def get_community_posts(limit: int = 60, offset: int = 0, current_user_id: Optio
     return posts
 
 
-def create_community_post(user_id: int, content: str, image_url: Optional[str] = None, category_tag: str = 'सामान्य', reply_to_id: Optional[int] = None, reply_to_author: Optional[str] = None, reply_to_snippet: Optional[str] = None) -> Dict[str, Any]:
+def create_community_post(user_id: int, content: str, image_url: Optional[str] = None, category_tag: str = 'सामान्य', reply_to_id: Optional[int] = None, reply_to_author: Optional[str] = None, reply_to_snippet: Optional[str] = None, created_at: Optional[str] = None) -> Dict[str, Any]:
     conn = get_db()
     c = conn.cursor()
-    now_iso = datetime.now().isoformat()
+    from datetime import datetime, timezone
+    now_iso = created_at if created_at else (datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3] + 'Z')
     c.execute("""
         INSERT INTO community_posts (user_id, content, image_url, category_tag, created_at, reply_to_id, reply_to_author, reply_to_snippet)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?)
@@ -5839,10 +5840,11 @@ def create_community_post(user_id: int, content: str, image_url: Optional[str] =
     return {"success": True, "post_id": post_id, "created_at": now_iso}
 
 
-def add_community_reply(post_id: int, user_id: int, content: str, image_url: Optional[str] = None) -> Dict[str, Any]:
+def add_community_reply(post_id: int, user_id: int, content: str, image_url: Optional[str] = None, created_at: Optional[str] = None) -> Dict[str, Any]:
     conn = get_db()
     c = conn.cursor()
-    now_iso = datetime.now().isoformat()
+    from datetime import datetime, timezone
+    now_iso = created_at if created_at else (datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3] + 'Z')
     c.execute("""
         INSERT INTO community_replies (post_id, user_id, content, image_url, created_at)
         VALUES (?, ?, ?, ?, ?)
