@@ -1974,8 +1974,8 @@ def get_passages(
 
         cat_id = item.get('category_id')
         is_cat_unlocked = user_has_pro or (cat_id in unlocked_category_ids)
-        is_free_tier = (not bool(item.get('is_premium'))) or (item['id'] in free_ids) or is_cat_unlocked
-        is_locked = False if (is_cat_unlocked or not bool(item.get('is_premium'))) else (item['id'] not in free_ids)
+        is_free_tier = (item['id'] in free_ids)
+        is_locked = not (is_cat_unlocked or is_free_tier)
 
         if summary:
             clean_item = {
@@ -2068,8 +2068,8 @@ def get_passage_detail(passage_id: int, user_id: Optional[int] = None, include_o
             is_cat_unlocked = True
         elif user_id and p_cat_id:
             is_cat_unlocked = is_category_unlocked_for_user(user_id, p_cat_id)
-        res_dict['is_free_tier'] = is_free_passage or (res_dict['id'] in free_ids) or is_cat_unlocked
-        res_dict['is_locked'] = False if (is_free_passage or is_cat_unlocked) else (res_dict['id'] not in free_ids)
+        res_dict['is_free_tier'] = (res_dict['id'] in free_ids)
+        res_dict['is_locked'] = not (is_cat_unlocked or res_dict['is_free_tier'])
         conn.close()
         return res_dict
 
@@ -5065,9 +5065,8 @@ def get_passages_by_category(category_id: Any, user_id: Optional[int] = None) ->
         """, (category_id,))
         p_rows = [dict(r) for r in c.fetchall()]
 
-        # Query free passage ids in same connection
-        c.execute("SELECT id FROM passages WHERE status = 'published' ORDER BY id ASC LIMIT 2")
-        free_ids = set([r[0] if isinstance(r, (list, tuple)) else r["id"] for r in c.fetchall()])
+        # Query free passage ids in same connection: strictly top 2 of this category
+        free_ids = set([p['id'] for p in p_rows[:2]])
         conn.close()
 
         _CATEGORY_DETAIL_CACHE[category_id] = {
@@ -5134,10 +5133,11 @@ def get_passages_by_category(category_id: Any, user_id: Optional[int] = None) ->
     cat_res['is_unlocked'] = is_unlocked
 
     passages = []
-    for r in p_rows:
+    for idx, r in enumerate(p_rows):
         pd = dict(r)
-        pd['is_free_tier'] = bool(pd['id'] in free_ids or not pd.get('is_premium', 0))
-        pd['is_accessible'] = bool(pd['is_free_tier'] or is_unlocked)
+        is_top_two = (idx < 2)
+        pd['is_free_tier'] = is_top_two
+        pd['is_accessible'] = bool(is_unlocked or is_top_two)
         pd['user_result'] = user_results.get(pd['id'])
         passages.append(pd)
 

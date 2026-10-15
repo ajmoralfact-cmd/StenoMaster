@@ -3723,11 +3723,10 @@ class StenoApp {
     const durStr = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
     const wordCount = p.word_count || Math.max(1, Math.round((p.target_wpm || 80) * (p.duration_seconds || 180) / 60));
     const progressPercent = p.best_wpm ? Math.min(100, Math.round((p.best_wpm / p.target_wpm) * 100)) : 0;
-    const isCategoryUnlocked = Boolean(this.user && Array.isArray(this.user.unlocked_category_ids) && this.user.unlocked_category_ids.map(Number).includes(Number(p.category_id)));
-    const hasFullAccess = !!(this.user && (this.user.role === 'admin' || this.user.subscription_status === 'active' || this.user.is_free_access || isCategoryUnlocked));
-    const isPassageFree = this.isPassageFree(p);
-    const isLocked = !hasFullAccess && !isPassageFree && !!p.is_locked;
-    const isFree = isPassageFree || hasFullAccess;
+    const catId = Number(p.category_id);
+    const hasFullAccess = this.isUserProOrUnlocked(catId);
+    const isTopTwoDemo = !hasFullAccess && this.isTopTwoDemoPassage(p);
+    const isLocked = !hasFullAccess && !isTopTwoDemo;
 
     return `
       <div class="class-card ${isLocked ? 'locked-card' : ''}" onmouseenter="stenoApp.prefetchPassage(${p.id})" ontouchstart="stenoApp.prefetchPassage(${p.id})" onclick="${isLocked ? `stenoApp.handleLockedPassageClick(${p.id})` : `stenoApp.openPractice(${p.id})`}" style="cursor:pointer;">
@@ -3742,9 +3741,9 @@ class StenoApp {
               ${(p.target_wpm && p.target_wpm >= 120) ? '<span class="badge" style="background:#fce7f3; color:#9d174d; font-weight:700;">⚡ रिपोर्टर (140-160 WPM)</span>' : ''}
               <span class="badge" style="background:var(--bg-subtle); color:var(--text-secondary)">⏱ ${durStr}</span>
               <span class="badge" style="background:var(--bg-subtle); color:var(--text-secondary)" title="शब्द संख्या">📝 ${wordCount} शब्द</span>
-              ${isFree ? `<span class="badge badge-free-tier">${isCategoryUnlocked ? '🎯 अनलॉक्ड (Free)' : '🎁 फ्री क्लास (Free)'}</span>` : ''}
+              ${isTopTwoDemo ? '<span class="badge badge-free-tier">🎁 फ्री क्लास (Free)</span>' : ''}
               ${isLocked ? '<span class="badge badge-locked-tier">🔒 Pro Locked (₹100/माह)</span>' : ''}
-              ${!isLocked && !isFree && p.is_premium ? '<span class="badge" style="background:#fef3c7; color:#b45309; font-weight:700; border:1px solid #fde68a;">👑 PRO</span>' : ''}
+              ${!isLocked && !isTopTwoDemo && p.is_premium ? '<span class="badge" style="background:#fef3c7; color:#b45309; font-weight:700; border:1px solid #fde68a;">👑 PRO</span>' : ''}
             </div>
             <button class="bookmark-toggle-btn ${isBookmarked ? 'active' : ''}" onclick="event.stopPropagation(); stenoApp.toggleBookmark(${p.id}, this)" title="बुकमार्क करें">
               ${isBookmarked ? '★' : '☆'}
@@ -3789,7 +3788,7 @@ class StenoApp {
             </button>
           ` : `
             <button class="start-practice-btn" onmouseenter="stenoApp.prefetchPassage(${p.id})" onclick="event.stopPropagation(); stenoApp.openPractice(${p.id})">
-              <span>${isFree ? '🎁 फ्री अभ्यास शुरू करें →' : (p.is_premium ? '👑 Pro Practice →' : 'Start Practice →')}</span>
+              <span>${isTopTwoDemo ? '🎁 फ्री अभ्यास शुरू करें →' : '🎯 अभ्यास शुरू करें →'}</span>
             </button>
           `}
         </div>
@@ -3797,19 +3796,63 @@ class StenoApp {
     `;
   }
 
-  isPassageFree(passage) {
+  isUserProOrUnlocked(categoryId) {
+    if (!this.user) return false;
+    if (this.user.role === 'admin' || this.user.is_free_access || this.user.subscription_status === 'active') {
+      return true;
+    }
+    const catIdNum = Number(categoryId);
+    const userUnlocked = this.user.unlocked_category_ids || this.user.unlocked_categories || [];
+    if (Array.isArray(userUnlocked) && userUnlocked.map(Number).includes(catIdNum)) {
+      return true;
+    }
+    if (this.currentCategoryData && Number(this.currentCategoryData.id) === catIdNum && this.currentCategoryData.is_unlocked) {
+      return true;
+    }
+    return false;
+  }
+
+  isTopTwoDemoPassage(passage) {
     if (!passage) return false;
     const pId = Number(passage.id);
-    if (passage.is_free_tier) return true;
-    if (passage.is_premium === 0 || passage.is_premium === false) return true;
-    if ([47, 48, 147, 148, 34, 36].includes(pId)) return true;
-    return false;
+    const catId = Number(passage.category_id || (this.currentCategoryData && this.currentCategoryData.id));
+
+    // 1. Check inside currentCategoryPassages if loaded
+    if (this.currentCategoryPassages && this.currentCategoryPassages.length) {
+      const catList = this.currentCategoryPassages.filter(x => !catId || Number(x.category_id) === catId);
+      if (catList.length) {
+        const idx = catList.findIndex(x => Number(x.id) === pId);
+        if (idx !== -1) return idx < 2;
+      }
+    }
+
+    // 2. Check inside allPassages if present
+    if (this.allPassages && this.allPassages.length && catId) {
+      const catPassages = this.allPassages
+        .filter(x => Number(x.category_id) === catId)
+        .sort((a, b) => Number(a.id) - Number(b.id));
+      const idx = catPassages.findIndex(x => Number(x.id) === pId);
+      if (idx !== -1) return idx < 2;
+    }
+
+    // 3. Fallback: Parse class number from title e.g. "Class 01", "Class 1", "प्रतिलेखन संख्या 1"
+    const title = (passage.title || '').toLowerCase();
+    const match = title.match(/class\s*0*([1-9][0-9]*)/i) || title.match(/प्रतिलेखन\s*(?:संख्या)?\s*0*([1-9][0-9]*)/i);
+    if (match && Number(match[1]) <= 2) return true;
+
+    // 4. Default fallback: only IDs 1 and 2
+    return (pId === 1 || pId === 2);
+  }
+
+  isPassageFree(passage) {
+    if (!passage) return false;
+    return this.isTopTwoDemoPassage(passage);
   }
 
   handleLockedPassageClick(passageId) {
     const pId = Number(passageId);
-    const p = (this.allPassages || []).find(x => Number(x.id) === pId);
-    if (this.isPassageFree(p) || [47, 48, 147, 148, 34, 36].includes(pId)) {
+    const p = (this.allPassages || []).find(x => Number(x.id) === pId) || (this.currentCategoryPassages || []).find(x => Number(x.id) === pId);
+    if (this.isPassageFree(p)) {
       this.openPractice(passageId);
       return;
     }
@@ -3817,7 +3860,8 @@ class StenoApp {
       this.showAuthGateway('student', 'प्रीमियम डिक्टेशन अनलॉक करने के लिए कृपया पहले लॉगिन करें।');
       return;
     }
-    if (p && Array.isArray(this.user.unlocked_category_ids) && this.user.unlocked_category_ids.map(Number).includes(Number(p.category_id))) {
+    const catId = p ? Number(p.category_id) : 0;
+    if (this.isUserProOrUnlocked(catId)) {
       this.openPractice(passageId);
       return;
     }
@@ -3880,9 +3924,9 @@ class StenoApp {
         passage = { ...inMem };
       }
 
-      const isCatUnlocked = Boolean(this.user && Array.isArray(this.user.unlocked_category_ids) && passage && this.user.unlocked_category_ids.map(Number).includes(Number(passage.category_id)));
-      const isFreePassage = this.isPassageFree(passage) || [47, 48, 147, 148, 34, 36].includes(pId);
-      const hasFullAccess = !!(this.user && (this.user.role === 'admin' || this.user.subscription_status === 'active' || this.user.is_free_access || isCatUnlocked || isFreePassage));
+      const catId = passage ? Number(passage.category_id) : 0;
+      const hasFullAccess = this.isUserProOrUnlocked(catId);
+      const isFreePassage = !hasFullAccess && this.isPassageFree(passage);
 
       // Check lock status before entering
       if (passage && passage.is_locked && !hasFullAccess && !isFreePassage) {
@@ -3949,9 +3993,9 @@ class StenoApp {
         await this.loadPassages(true);
         return;
       }
-      const isCatUnlockedFallback = Boolean(this.user && Array.isArray(this.user.unlocked_category_ids) && passage && this.user.unlocked_category_ids.map(Number).includes(Number(passage.category_id)));
-      const isFreePassageFallback = this.isPassageFree(passage) || [47, 48, 147, 148, 34, 36].includes(pId);
-      const hasFullAccessFallback = !!(this.user && (this.user.role === 'admin' || this.user.subscription_status === 'active' || this.user.is_free_access || isCatUnlockedFallback || isFreePassageFallback));
+      const catIdFallback = passage ? Number(passage.category_id) : 0;
+      const hasFullAccessFallback = this.isUserProOrUnlocked(catIdFallback);
+      const isFreePassageFallback = !hasFullAccessFallback && this.isPassageFree(passage);
       if (passage.is_locked && !hasFullAccessFallback && !isFreePassageFallback) {
         this.handleLockedPassageClick(pId);
         return;
@@ -6350,9 +6394,9 @@ ${link}`;
             ...catMeta,
             is_unlocked: isUnlocked
           },
-          passages: localPassages.map(p => ({
+          passages: localPassages.map((p, idx) => ({
             ...p,
-            is_accessible: isUnlocked || Boolean(p.is_free_tier)
+            is_accessible: isUnlocked || (idx < 2)
           }))
         };
         this._categoryDetailCache.set(cIdInt, cached);
@@ -6368,7 +6412,10 @@ ${link}`;
 
       cat.is_unlocked = isUnlocked;
       this.currentCategoryData = cat;
-      this.currentCategoryPassages = res.passages || [];
+      this.currentCategoryPassages = (res.passages || []).map((p, idx) => ({
+        ...p,
+        is_accessible: isUnlocked || (idx < 2)
+      }));
 
       if (nameEl) {
         nameEl.innerHTML = '<hindi-root text="' + this.escapeHtml(cat.name || 'डिक्टेशन टेस्ट सीरीज') + '"></hindi-root>';
@@ -6474,7 +6521,7 @@ ${link}`;
     if (!this.currentCategoryPassages) return;
     let filtered = [...this.currentCategoryPassages];
     if (type === 'free') {
-      filtered = filtered.filter(p => p.is_free_tier);
+      filtered = filtered.filter(p => this.isTopTwoDemoPassage(p));
     } else if (type === '80') {
       filtered = filtered.filter(p => (p.target_wpm || 80) <= 85);
     } else if (type === '100') {
@@ -6547,13 +6594,14 @@ ${link}`;
     ];
 
     const isEn = this.currentLang === 'en';
+    const catId = Number(this.currentCategoryId || (this.currentCategoryData && this.currentCategoryData.id));
+    const userHasAccess = this.isUserProOrUnlocked(catId);
     const catPrice = (this.currentCategoryData && this.currentCategoryData.price) || 49;
+
     container.innerHTML = passages.map((p, idx) => {
-      const userUnlockedIds = (this.user && (this.user.unlocked_category_ids || this.user.unlocked_categories)) || [];
-      const hasFullAccess = Boolean(this.user && (this.user.role === 'admin' || this.user.subscription_status === 'active' || this.user.is_free_access));
-      const isCatUnlocked = hasFullAccess || userUnlockedIds.map(Number).includes(Number(p.category_id || this.currentCategoryId)) || (this.currentCategoryData && this.currentCategoryData.is_unlocked);
-      const isPassageFree = this.isPassageFree(p) || [147, 148, 47, 48].includes(Number(p.id));
-      const isAcc = Boolean(p.is_free_tier || isCatUnlocked || isPassageFree);
+      // Free demo is ONLY for top 2 tests (idx < 2) AND ONLY when the student does NOT have pro/pass/unlocked
+      const isTopTwoDemo = !userHasAccess && (idx < 2);
+      const isAcc = Boolean(userHasAccess || isTopTwoDemo);
       const durationMins = p.duration_seconds ? Math.round(p.duration_seconds / 60) : 10;
       const palette = colorPalettes[idx % colorPalettes.length];
 
@@ -6590,12 +6638,25 @@ ${link}`;
         `;
       }
 
+      const btnBg = isTopTwoDemo 
+        ? 'linear-gradient(135deg, #10b981, #059669)' 
+        : 'linear-gradient(135deg, #0284c7, #2563eb)';
+      const btnShadow = isTopTwoDemo 
+        ? '0 4px 12px rgba(16,185,129,0.35)' 
+        : '0 4px 12px rgba(2,132,199,0.35)';
+
+      const btnText = hasRealAttempt 
+        ? (isEn ? '🔄 Retake Test →' : '🔄 पुनः टेस्ट दें →') 
+        : (isTopTwoDemo 
+            ? (isEn ? '🎁 Free Demo Test →' : '🎁 फ्री टेस्ट शुरू करें →') 
+            : (isEn ? '🎯 Start Test →' : '🎯 टेस्ट शुरू करें →'));
+
       return `
         <div class="category-passage-card category-passage-card-3d" style="background:${palette.bg}; border:${palette.border}; border-bottom:${palette.borderBottom}; box-shadow:${palette.boxShadow};">
           <div style="min-width:0;">
             <div style="display:flex; align-items:center; gap:8px; margin-bottom:5px; flex-wrap:wrap;">
               <h4 class="class-title hindi-text notranslate skiptranslate" translate="no" lang="hi" style="margin:0; font-size:1rem; font-weight:700; color:var(--text-main);"><hindi-root text="${this.escapeHtml(p.title)}"></hindi-root></h4>
-              ${(p.is_free_tier || isPassageFree) ? `<span class="badge badge-success" style="font-size:0.65rem; padding:2px 7px; border-radius:6px; font-weight:800;">🎁 ${isEn ? 'FREE DEMO' : 'फ्री डेमो'}</span>` : ''}
+              ${isTopTwoDemo ? `<span class="badge badge-success" style="font-size:0.65rem; padding:2px 7px; border-radius:6px; font-weight:800;">🎁 ${isEn ? 'FREE DEMO' : 'फ्री डेमो'}</span>` : ''}
             </div>
             <div style="display:flex; gap:8px; font-size:0.75rem; color:var(--text-muted); flex-wrap:wrap; margin-bottom:5px;">
               <span style="background:var(--bg-subtle); padding:2px 8px; border-radius:6px; font-weight:700; color:${palette.accent}; border:1px solid rgba(0,0,0,0.04);">⚡ ${p.target_wpm || 80} WPM</span>
@@ -6609,13 +6670,10 @@ ${link}`;
           <div class="card-actions-wrapper" style="display:flex; align-items:center; gap:12px; flex-wrap:wrap; justify-content:flex-end; flex-shrink:0;">
             ${resultHTML}
             ${isAcc 
-              ? `<button type="button" class="btn-primary" style="padding:9px 20px; font-size:0.85rem; font-weight:800; border-radius:24px; white-space:nowrap; background:${(p.is_free_tier || isPassageFree) ? 'linear-gradient(135deg, #10b981, #059669)' : 'linear-gradient(135deg, #0284c7, #2563eb)'}; box-shadow:0 4px 12px ${(p.is_free_tier || isPassageFree) ? 'rgba(16,185,129,0.35)' : 'rgba(2,132,199,0.35)'}; transition:all 0.2s ease;" onclick="stenoApp.openPractice(${p.id})">
-                  ${hasRealAttempt 
-                    ? (isEn ? '🔄 Retake Test →' : '🔄 पुनः टेस्ट दें →') 
-                    : ((p.is_free_tier || isPassageFree) ? (isEn ? '🎁 Free Demo Test →' : '🎁 फ्री टेस्ट शुरू करें →') : (isEn ? '🎯 Start Test →' : '🎯 टेस्ट शुरू करें →'))
-                  }
+              ? `<button type="button" class="btn-primary" style="padding:9px 20px; font-size:0.85rem; font-weight:800; border-radius:24px; white-space:nowrap; background:${btnBg}; box-shadow:${btnShadow}; transition:all 0.2s ease;" onclick="stenoApp.openPractice(${p.id})">
+                  ${btnText}
                 </button>`
-              : `<button type="button" class="btn-secondary" style="padding:8px 16px; font-size:0.82rem; font-weight:800; border-radius:24px; color:#10b981; border-color:#10b981; white-space:nowrap; box-shadow:0 2px 8px rgba(16,185,129,0.15);" onclick="stenoApp.openMultiCategoryCheckout(${p.category_id})">🔒 ${isEn ? 'Unlock' : 'अनलॉक करें'} (₹${catPrice})</button>`
+              : `<button type="button" class="btn-secondary" style="padding:8px 16px; font-size:0.82rem; font-weight:800; border-radius:24px; color:#10b981; border-color:#10b981; white-space:nowrap; box-shadow:0 2px 8px rgba(16,185,129,0.15);" onclick="stenoApp.openMultiCategoryCheckout(${p.category_id || catId})">🔒 ${isEn ? 'Unlock' : 'अनलॉक करें'} (₹${catPrice})</button>`
             }
           </div>
         </div>
