@@ -11593,10 +11593,11 @@ body:has(#view-community.active) .main-wrapper {
     padding-left: 0 !important;
     padding-right: 0 !important;
     padding-top: 0 !important;
-    height: calc(100vh - 120px) !important;
-    height: calc(100dvh - 120px) !important;
-    max-height: calc(100vh - 120px) !important;
-    max-height: calc(100dvh - 120px) !important;
+    /* Main wrapper occupies full viewport minus bottom navigation bar (64px) */
+    height: calc(100vh - 64px) !important;
+    height: calc(100dvh - 64px) !important;
+    max-height: calc(100vh - 64px) !important;
+    max-height: calc(100dvh - 64px) !important;
     min-height: 0 !important;
     overflow: hidden !important;
   }
@@ -11605,8 +11606,9 @@ body:has(#view-community.active) .main-wrapper {
   #view-community.active {
     padding: 0 !important;
     margin: 0 !important;
-    height: 100% !important;
-    max-height: 100% !important;
+    /* View occupies full main-wrapper height minus the top-header (56px) */
+    height: calc(100% - 56px) !important;
+    max-height: calc(100% - 56px) !important;
     min-height: 0 !important;
     overflow: hidden !important;
   }
