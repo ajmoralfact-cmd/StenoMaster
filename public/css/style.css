@@ -11597,8 +11597,9 @@ body:has(#view-community.active) .main-wrapper {
   .tg-chat-app-wrapper {
     min-height: 0 !important;
     padding: 0 !important;
-    height: calc(100vh - 185px);
-    height: calc(100dvh - 185px);
+    /* Height accommodates top header (56px) AND bottom nav bar (64px) + safe area */
+    height: calc(100vh - 120px) !important;
+    height: calc(100dvh - 120px) !important;
     max-width: 100%;
     margin: 0 !important;
   }
@@ -11608,22 +11609,26 @@ body:has(#view-community.active) .main-wrapper {
     height: 100%;
   }
   .tg-chat-header {
-    padding: 8px 12px;
+    padding: 8px 10px;
+    gap: 8px;
+  }
+  .tg-back-btn {
+    display: inline-flex !important;
   }
   .tg-avatar-wrap {
-    width: 38px;
-    height: 38px;
+    width: 36px;
+    height: 36px;
   }
   .tg-group-avatar {
-    width: 38px;
-    height: 38px;
-    font-size: 18px;
+    width: 36px;
+    height: 36px;
+    font-size: 16px;
   }
   .tg-group-name {
-    font-size: 0.9rem;
+    font-size: 0.88rem;
   }
   .tg-group-subtitle {
-    font-size: 0.7rem;
+    font-size: 0.68rem;
   }
   .tg-msg-row {
     max-width: 92%;
@@ -11643,3 +11648,26 @@ body:has(#view-community.active) .main-wrapper {
     font-size: 14px;
   }
 }
+
+.tg-back-btn {
+  display: none;
+  background: rgba(255, 255, 255, 0.15);
+  border: none;
+  color: #ffffff;
+  font-size: 1.1rem;
+  font-weight: 700;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.15s;
+}
+
+.tg-back-btn:hover,
+.tg-back-btn:active {
+  background: rgba(255, 255, 255, 0.28);
+}
+

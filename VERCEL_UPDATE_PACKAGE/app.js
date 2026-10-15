@@ -7431,6 +7431,39 @@ ${link}`;
     }
   }
 
+  setupCommunityViewportKeyboard() {
+    if (this._commViewportKeyboardBound) return;
+    this._commViewportKeyboardBound = true;
+
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', () => {
+        if (this.activeView !== 'community') return;
+        const chatWrap = document.querySelector('.tg-chat-app-wrapper');
+        const bottomNav = document.querySelector('.mobile-bottom-nav');
+        if (!chatWrap) return;
+
+        // When virtual keyboard opens on mobile, visualViewport height shrinks significantly
+        const isKeyboardOpen = window.visualViewport.height < (window.innerHeight - 150);
+        if (isKeyboardOpen) {
+          const keyboardH = window.innerHeight - window.visualViewport.height;
+          chatWrap.style.height = `${window.visualViewport.height - 56}px`;
+          if (bottomNav) bottomNav.style.display = 'none';
+        } else {
+          chatWrap.style.height = '';
+          if (bottomNav && window.innerWidth <= 640) bottomNav.style.display = 'grid';
+        }
+        setTimeout(() => this.scrollChatToBottom(false), 80);
+      });
+    }
+
+    const textarea = document.getElementById('commPostTextarea');
+    if (textarea) {
+      textarea.addEventListener('focus', () => {
+        setTimeout(() => this.scrollChatToBottom(true), 250);
+      });
+    }
+  }
+
   insertCommunityEmoji(emoji) {
     const textarea = document.getElementById('commPostTextarea');
     if (!textarea) return;
@@ -7706,8 +7739,9 @@ ${link}`;
         const currentUserId = this.user ? (this.user.user_id || this.user.id) : null;
         const isAdmin = Boolean(this.user && this.user.role === 'admin');
 
-        // Check if user is scrolled near the bottom
-        const isNearBottom = feedEl ? (feedEl.scrollHeight - feedEl.scrollTop - feedEl.clientHeight < 250) : true;
+        // Check if user is scrolled near the bottom of chat viewport
+        const viewport = document.getElementById('communityChatViewport');
+        const isNearBottom = viewport ? (viewport.scrollHeight - viewport.scrollTop - viewport.clientHeight < 250) : true;
         let hasIncomingFromOthers = false;
 
         newPosts.forEach(post => {
@@ -7807,6 +7841,9 @@ ${link}`;
 
       // Automatically scroll to bottom on load / refresh
       setTimeout(() => this.scrollChatToBottom(false), 50);
+
+      // Setup mobile keyboard auto-resizing
+      this.setupCommunityViewportKeyboard();
 
       // Setup high-speed real-time polling
       this.startCommunityRealtimeSync();
