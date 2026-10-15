@@ -11587,26 +11587,39 @@ body:has(#view-community.active) .main-wrapper {
     padding-left: 0 !important;
     padding-right: 0 !important;
     padding-top: 0 !important;
+    height: calc(100vh - 120px) !important;
+    height: calc(100dvh - 120px) !important;
+    max-height: calc(100vh - 120px) !important;
+    max-height: calc(100dvh - 120px) !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
   }
   body.view-active-community #view-community,
   body:has(#view-community.active) #view-community,
   #view-community.active {
     padding: 0 !important;
     margin: 0 !important;
+    height: 100% !important;
+    max-height: 100% !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
   }
   .tg-chat-app-wrapper {
     min-height: 0 !important;
     padding: 0 !important;
-    /* Height accommodates top header (56px) AND bottom nav bar (64px) + safe area */
-    height: calc(100vh - 120px) !important;
-    height: calc(100dvh - 120px) !important;
+    height: 100% !important;
+    max-height: 100% !important;
     max-width: 100%;
     margin: 0 !important;
+    overflow: hidden !important;
   }
   .tg-chat-card {
     border-radius: 0;
     box-shadow: none;
-    height: 100%;
+    height: 100% !important;
+    max-height: 100% !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
   }
   .tg-chat-header {
     padding: 8px 10px;
