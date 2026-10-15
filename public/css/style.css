@@ -11572,7 +11572,13 @@ body:has(#view-community.active) .main-wrapper {
 
 /* Mobile Responsiveness */
 @media (max-width: 640px) {
-  /* In Community view, hide secondary toolbar & PWA popup so input dock is 100% accessible */
+  /* In Community view, hide secondary toolbar, campaign banner & PWA popup so chat gets 100% clean height */
+  body:has(#view-community:not([style*="display: none"]):not([style*="display:none"])) #globalCampaignStudentBanner,
+  body.view-active-community #globalCampaignStudentBanner,
+  body:has(#view-community:not([style*="display: none"]):not([style*="display:none"])) .global-campaign-banner,
+  body.view-active-community .global-campaign-banner {
+    display: none !important;
+  }
   body:has(#view-community:not([style*="display: none"]):not([style*="display:none"])) #mobileSubToolbar,
   body.view-active-community #mobileSubToolbar {
     display: none !important;
