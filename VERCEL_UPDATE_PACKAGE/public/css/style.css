@@ -11182,12 +11182,22 @@ body:has(#view-community.active) .main-wrapper {
   padding: 2px 4px;
   opacity: 0.65;
   border-radius: 4px;
-  transition: opacity 0.15s;
+  transition: opacity 0.15s, background-color 0.15s;
 }
 
 .tg-action-icon:hover {
   opacity: 1;
   background: rgba(0,0,0,0.06);
+}
+
+.tg-action-icon.tg-delete-btn:hover {
+  background: rgba(239, 68, 68, 0.15);
+  opacity: 1;
+}
+
+.tg-category-pills,
+#communityTagsFilter {
+  display: none !important;
 }
 
 /* Bubble Floating Reaction Badge */

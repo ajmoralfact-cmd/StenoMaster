@@ -7825,7 +7825,13 @@ ${link}`;
   }
 
   buildSingleCommunityPostHtml(post, currentUserId, isAdmin) {
-    const isMe = Boolean(currentUserId && currentUserId === post.user_id);
+    if (!currentUserId && this.user) {
+      currentUserId = this.user.user_id != null ? this.user.user_id : this.user.id;
+    }
+    const isMe = Boolean(currentUserId && String(currentUserId) === String(post.user_id));
+    if (isAdmin === undefined && this.user) {
+      isAdmin = Boolean(this.user.role === 'admin');
+    }
     const authorName = post.display_name || post.username || 'विद्यार्थी';
     const initial = authorName.charAt(0).toUpperCase();
     const isPostAdmin = post.role === 'admin';
@@ -8241,18 +8247,29 @@ ${link}`;
   }
 
   async deleteCommunityPost(postId) {
-    if (!confirm('क्या आप वाकई इस संदेश को हटाना चाहते हैं?')) return;
+    if (!postId) return;
+    if (!confirm('क्या आप वाकई अपना यह संदेश हटाना चाहते हैं?')) return;
+    const row = document.getElementById(`tgMsgRow_${postId}`);
+    if (row) {
+      row.style.transition = 'opacity 0.2s ease, transform 0.2s ease';
+      row.style.opacity = '0';
+      row.style.transform = 'scale(0.85)';
+      setTimeout(() => row.remove(), 220);
+    }
+    if (this.communityPosts) {
+      this.communityPosts = this.communityPosts.filter(p => p.id !== postId && String(p.id) !== String(postId));
+    }
+    if (String(postId).startsWith('temp_')) return;
     try {
       const res = await this.apiCall(`/api/community/posts/${postId}/delete`, 'POST');
       if (res && res.success) {
-        this.showToast('संदेश हटा दिया गया।', 'info');
-        const row = document.getElementById(`tgMsgRow_${postId}`);
-        if (row) row.remove();
+        this.showToast('संदेश सफलतापूर्वक हटा दिया गया।', 'info');
       } else {
         throw new Error(res?.error || 'हटाने में विफलता');
       }
     } catch (err) {
       this.showToast(err.message || 'हटाने में त्रुटि', 'error');
+      this.loadCommunityPosts(false);
     }
   }
 
