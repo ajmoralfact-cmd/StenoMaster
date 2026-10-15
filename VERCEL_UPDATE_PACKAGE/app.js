@@ -1131,12 +1131,32 @@ class StenoApp {
     this.triggerPwaInstall();
   }
 
+  dismissCampaignBanner() {
+    try {
+      sessionStorage.setItem('steno_campaign_banner_dismissed', '1');
+    } catch (e) {}
+    const banner = document.getElementById('globalCampaignStudentBanner');
+    if (banner) {
+      banner.style.display = 'none';
+      banner.remove();
+    }
+  }
+
   // -------------------------------------------------------------------------
   // Global Free Campaign Student Notification Banner
   // -------------------------------------------------------------------------
   async checkGlobalCampaignBanner() {
     // Avoid showing banner inside standalone admin portal
     if (window.location.pathname.includes('admin')) return;
+
+    // Check if user dismissed banner in this session
+    try {
+      if (sessionStorage.getItem('steno_campaign_banner_dismissed') === '1') {
+        const existing = document.getElementById('globalCampaignStudentBanner');
+        if (existing) existing.remove();
+        return;
+      }
+    } catch (e) {}
 
     try {
       const res = await fetch('/api/campaign-status');
@@ -1147,6 +1167,15 @@ class StenoApp {
         if (existing) existing.remove();
         return;
       }
+
+      // Re-verify in case user dismissed while fetch was pending
+      try {
+        if (sessionStorage.getItem('steno_campaign_banner_dismissed') === '1') {
+          const existing = document.getElementById('globalCampaignStudentBanner');
+          if (existing) existing.remove();
+          return;
+        }
+      } catch (e) {}
 
       const theme = data.theme || 'gold';
       const themeIcons = {
@@ -1179,7 +1208,7 @@ class StenoApp {
             <strong>${this.escapeHtml(data.banner_message || 'StenoMaster अभी सभी छात्रों के लिए 100% FREE है!')}</strong>
             <span class="campaign-sub-note">सभी अभ्यास, श्रेणियां व AI डिक्टेशन्स अनलॉक हैं!</span>
           </div>
-          <button type="button" class="campaign-banner-close" onclick="document.getElementById('globalCampaignStudentBanner').remove()" title="बंद करें">✕</button>
+          <button type="button" class="campaign-banner-close" onclick="stenoApp.dismissCampaignBanner()" title="बंद करें">✕</button>
         </div>
       `;
     } catch (err) {
@@ -3061,8 +3090,19 @@ class StenoApp {
       document.body.classList.remove('view-active-community');
       const subToolbar = document.getElementById('mobileSubToolbar');
       if (subToolbar && window.innerWidth <= 640) subToolbar.style.display = 'flex';
+      let isDismissed = false;
+      try {
+        isDismissed = sessionStorage.getItem('steno_campaign_banner_dismissed') === '1';
+      } catch (e) {}
       const campBanner = document.getElementById('globalCampaignStudentBanner');
-      if (campBanner) campBanner.style.display = '';
+      if (campBanner) {
+        if (isDismissed) {
+          campBanner.style.display = 'none';
+          campBanner.remove();
+        } else {
+          campBanner.style.display = '';
+        }
+      }
     }
 
     // Load view specific data
