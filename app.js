@@ -1167,6 +1167,10 @@ class StenoApp {
         document.body.insertBefore(banner, document.body.firstChild);
       }
 
+      if (this.activeView === 'community' || document.body.classList.contains('view-active-community')) {
+        banner.style.display = 'none';
+      }
+
       banner.className = `global-campaign-banner campaign-theme-${theme}`;
       banner.innerHTML = `
         <div class="campaign-banner-inner">
@@ -3051,10 +3055,14 @@ class StenoApp {
       if (pwaPopup) pwaPopup.style.display = 'none';
       const subToolbar = document.getElementById('mobileSubToolbar');
       if (subToolbar) subToolbar.style.display = 'none';
+      const campBanner = document.getElementById('globalCampaignStudentBanner');
+      if (campBanner) campBanner.style.display = 'none';
     } else {
       document.body.classList.remove('view-active-community');
       const subToolbar = document.getElementById('mobileSubToolbar');
       if (subToolbar && window.innerWidth <= 640) subToolbar.style.display = 'flex';
+      const campBanner = document.getElementById('globalCampaignStudentBanner');
+      if (campBanner) campBanner.style.display = '';
     }
 
     // Load view specific data
