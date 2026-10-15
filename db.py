@@ -5760,11 +5760,15 @@ def admin_review_withdrawal(req_id: int, action: str, admin_id: int, notes: str 
 # COMMUNITY CHAT & DOUBT FORUM FUNCTIONS (Free For All Students)
 # =====================================================================
 
-def get_community_posts(limit: int = 60, offset: int = 0, current_user_id: Optional[int] = None, category_tag: Optional[str] = None, search: Optional[str] = None, order: str = 'asc') -> List[Dict[str, Any]]:
+def get_community_posts(limit: int = 60, offset: int = 0, current_user_id: Optional[int] = None, category_tag: Optional[str] = None, search: Optional[str] = None, order: str = 'asc', since_id: Optional[int] = None) -> List[Dict[str, Any]]:
     conn = get_db()
     c = conn.cursor()
     params: List[Any] = []
     where_clauses: List[str] = []
+
+    if since_id is not None and since_id > 0:
+        where_clauses.append("cp.id > ?")
+        params.append(since_id)
 
     if category_tag and category_tag != 'सभी':
         where_clauses.append("cp.category_tag = ?")

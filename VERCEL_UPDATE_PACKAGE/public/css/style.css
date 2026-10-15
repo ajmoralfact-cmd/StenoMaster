@@ -11127,6 +11127,19 @@ body:has(#view-community.active) .main-wrapper {
   color: #53bdeb;
   font-size: 0.75rem;
   font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  transition: color 0.2s ease, opacity 0.2s ease;
+}
+
+.tg-ticks.pending {
+  color: #94a3b8;
+  font-size: 0.7rem;
+  opacity: 0.85;
+}
+
+.tg-ticks.delivered {
+  color: #53bdeb;
 }
 
 .tg-solved-badge {

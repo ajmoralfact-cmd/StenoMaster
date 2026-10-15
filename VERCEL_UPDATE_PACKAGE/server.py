@@ -631,7 +631,9 @@ class StenoMasterHandler(http.server.SimpleHTTPRequestHandler):
             tag = params.get('tag', [None])[0]
             search = params.get('search', [None])[0]
             order = params.get('order', ['asc'])[0]
-            posts = db.get_community_posts(limit=limit, offset=offset, current_user_id=user_id, category_tag=tag, search=search, order=order)
+            since_id_raw = params.get('since_id', [None])[0]
+            since_id = int(since_id_raw) if (since_id_raw and since_id_raw.isdigit()) else None
+            posts = db.get_community_posts(limit=limit, offset=offset, current_user_id=user_id, category_tag=tag, search=search, order=order, since_id=since_id)
             self._send_json(200, {"posts": posts}, cache_control='private, no-cache, no-store')
             return
 

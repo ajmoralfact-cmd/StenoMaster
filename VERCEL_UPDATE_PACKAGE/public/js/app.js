@@ -2938,6 +2938,10 @@ class StenoApp {
       window.stenoAudioPlayer.stop();
     }
 
+    if (viewId !== 'community') {
+      this.stopCommunityRealtimeSync();
+    }
+
     // Determine target route string
     let routeStr = viewId;
     if (viewId === 'admin') {
@@ -7614,6 +7618,139 @@ ${link}`;
     if (banner) banner.style.display = 'none';
   }
 
+  playChatSound(type = 'sent') {
+    try {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtx) return;
+      if (!this._commAudioCtx) {
+        this._commAudioCtx = new AudioCtx();
+      }
+      if (this._commAudioCtx.state === 'suspended') {
+        this._commAudioCtx.resume();
+      }
+      const ctx = this._commAudioCtx;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      const now = ctx.currentTime;
+      if (type === 'sent') {
+        // Subtle Telegram-style sent tick (880Hz -> 1200Hz, 35ms)
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(880, now);
+        osc.frequency.exponentialRampToValueAtTime(1200, now + 0.035);
+        gain.gain.setValueAtTime(0.05, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.035);
+        osc.start(now);
+        osc.stop(now + 0.035);
+      } else {
+        // Subtle incoming message chime (587Hz -> 880Hz, 70ms)
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(587.33, now);
+        osc.frequency.setValueAtTime(880, now + 0.035);
+        gain.gain.setValueAtTime(0.07, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+        osc.start(now);
+        osc.stop(now + 0.08);
+      }
+    } catch (e) {
+      // Audio context blocked or not permitted; fail silently
+    }
+  }
+
+  startCommunityRealtimeSync() {
+    this.stopCommunityRealtimeSync();
+
+    // High-speed real-time polling every 2.5 seconds (2500ms)
+    this._commChatPoller = setInterval(() => {
+      if (this.activeView === 'community' && !document.hidden) {
+        this.syncCommunityNewMessages();
+      }
+    }, 2500);
+
+    // Sync immediately when window/tab is focused
+    if (!this._commVisibilityBound) {
+      this._commVisibilityBound = true;
+      document.addEventListener('visibilitychange', () => {
+        if (!document.hidden && this.activeView === 'community') {
+          this.syncCommunityNewMessages();
+        }
+      });
+    }
+  }
+
+  stopCommunityRealtimeSync() {
+    if (this._commChatPoller) {
+      clearInterval(this._commChatPoller);
+      this._commChatPoller = null;
+    }
+  }
+
+  async syncCommunityNewMessages() {
+    if (this._isCommPolling || this.activeView !== 'community') return;
+    // When filtered by specific category or search query, skip incremental sync
+    if ((this.communityTag && this.communityTag !== 'सभी') || this.communitySearchQuery) {
+      return;
+    }
+    if (!this.lastCommunityPostId) {
+      return this.loadCommunityPosts(false);
+    }
+
+    this._isCommPolling = true;
+    try {
+      const res = await this.apiCall(`/api/community/posts?since_id=${this.lastCommunityPostId}&order=asc`);
+      const newPosts = (res && res.posts) || [];
+      if (newPosts.length > 0) {
+        const feedEl = document.getElementById('communityPostsFeed');
+        const currentUserId = this.user ? (this.user.user_id || this.user.id) : null;
+        const isAdmin = Boolean(this.user && this.user.role === 'admin');
+
+        // Check if user is scrolled near the bottom
+        const isNearBottom = feedEl ? (feedEl.scrollHeight - feedEl.scrollTop - feedEl.clientHeight < 250) : true;
+        let hasIncomingFromOthers = false;
+
+        newPosts.forEach(post => {
+          // If already in DOM (e.g. from optimistic instant send)
+          const existingRow = document.getElementById(`tgMsgRow_${post.id}`);
+          if (existingRow) {
+            this.lastCommunityPostId = Math.max(this.lastCommunityPostId, post.id);
+            return;
+          }
+
+          if (feedEl) {
+            // Remove empty state placeholder if present
+            const emptyState = feedEl.querySelector('.comm-empty-state');
+            if (emptyState) feedEl.innerHTML = '<div class="tg-date-pill">आज, 14 अक्टूबर 2026</div>';
+
+            const rowHtml = this.buildSingleCommunityPostHtml(post, currentUserId, isAdmin);
+            feedEl.insertAdjacentHTML('beforeend', rowHtml);
+          }
+
+          if (!this.communityPosts) this.communityPosts = [];
+          this.communityPosts.push(post);
+          this.lastCommunityPostId = Math.max(this.lastCommunityPostId, post.id);
+
+          if (post.user_id !== currentUserId) {
+            hasIncomingFromOthers = true;
+          }
+        });
+
+        if (hasIncomingFromOthers) {
+          this.playChatSound('received');
+        }
+
+        if (isNearBottom) {
+          this.scrollChatToBottom(true);
+        }
+      }
+    } catch (err) {
+      console.warn('Realtime chat sync warning:', err);
+    } finally {
+      this._isCommPolling = false;
+    }
+  }
+
   async loadCommunityPosts(forceRefresh = false) {
     if (!this.user) {
       this.openModal('loginModal');
@@ -7660,14 +7797,8 @@ ${link}`;
       // Automatically scroll to bottom on load / refresh
       setTimeout(() => this.scrollChatToBottom(false), 50);
 
-      // Setup lightweight periodic auto-refresh for live group chat experience
-      if (!this._commChatPoller) {
-        this._commChatPoller = setInterval(() => {
-          if (this.activeView === 'community' && !document.hidden) {
-            this.loadCommunityPosts(false);
-          }
-        }, 12000);
-      }
+      // Setup high-speed real-time polling
+      this.startCommunityRealtimeSync();
     } catch (err) {
       console.error('Failed to load community chat:', err);
       if (feedEl && (!this.communityPosts || this.communityPosts.length === 0)) {
@@ -7682,13 +7813,112 @@ ${link}`;
     }
   }
 
+  buildSingleCommunityPostHtml(post, currentUserId, isAdmin) {
+    const isMe = Boolean(currentUserId && currentUserId === post.user_id);
+    const authorName = post.display_name || post.username || 'विद्यार्थी';
+    const initial = authorName.charAt(0).toUpperCase();
+    const isPostAdmin = post.role === 'admin';
+    const isProAuthor = post.role === 'admin' || post.subscription_status === 'active';
+    const timeStr = this.formatChatTime(post.created_at);
+    const isLiked = Boolean(post.is_liked);
+    const isPinned = Boolean(post.is_pinned);
+    const isSolved = Boolean(post.is_solved);
+    const isPending = Boolean(post.is_pending);
+    const tag = post.category_tag || 'सामान्य';
+    const colorIndex = Math.abs((post.user_id || 1) * 31) % 7;
+
+    return `
+      <div class="tg-msg-row ${isMe ? 'outgoing' : 'incoming'}" id="tgMsgRow_${post.id}">
+        ${!isMe ? `
+          <div class="tg-sender-avatar" title="${this.escapeHtml(authorName)}">
+            ${initial}
+          </div>
+        ` : ''}
+
+        <div class="tg-msg-bubble ${isPinned ? 'is-pinned-post' : ''}">
+          <!-- Bubble Header -->
+          <div class="tg-bubble-header">
+            <span class="tg-sender-name ${isMe ? '' : 'sender-color-' + colorIndex}">
+              ~ ${this.escapeHtml(authorName)}
+            </span>
+            <div class="tg-meta-chips">
+              ${isPostAdmin ? '<span class="tg-role-chip admin">🛡️ Admin</span>' : ''}
+              ${!isPostAdmin && isProAuthor ? '<span class="tg-role-chip pro">👑 Pro</span>' : ''}
+              ${tag !== 'सामान्य' ? `<span class="tg-tag-chip">${this.escapeHtml(tag)}</span>` : ''}
+            </div>
+          </div>
+
+          <!-- Telegram / WhatsApp Quote Banner (if replying to another message) -->
+          ${post.reply_to_author ? `
+            <div class="tg-msg-quote" onclick="stenoApp.scrollToMessage(${post.reply_to_id})">
+              <div class="tg-quote-author">~ ${this.escapeHtml(post.reply_to_author)}</div>
+              <div class="tg-quote-text">${this.escapeHtml(post.reply_to_snippet || '')}</div>
+            </div>
+          ` : ''}
+
+          <!-- Telegram Style Photo Message Bubble -->
+          ${post.image_url ? `
+            <div class="tg-photo-bubble-wrap" onclick="stenoApp.openCommunityImageZoom('${this.escapeHtml(post.image_url)}')">
+              <img src="${this.escapeHtml(post.image_url)}" alt="Steno Outline Photo" class="tg-msg-photo-img" loading="lazy" onerror="this.onerror=null; this.closest('.tg-photo-bubble-wrap').style.display='none';">
+              <div class="tg-photo-overlay-badge">
+                <span>🔍 बड़ा देखें</span>
+              </div>
+            </div>
+          ` : ''}
+
+          <!-- Message Text -->
+          ${post.content ? `
+            <div class="tg-msg-text notranslate" translate="no" lang="hi">
+              ${this.formatCommunityContent(post.content)}
+            </div>
+          ` : ''}
+
+          <!-- Bubble Footer -->
+          <div class="tg-bubble-footer">
+            <div class="tg-bubble-actions">
+              <button type="button" class="tg-action-icon" onclick="stenoApp.replyToCommunityMessage(${post.id}, '${this.escapeHtml(authorName)}', '${this.escapeHtml(post.content || 'फ़ोटो')}')" title="उत्तर दें (Reply)">
+                ↩️
+              </button>
+              <button type="button" class="tg-action-icon" onclick="stenoApp.toggleCommunityPostLike(${post.id})" title="लाइक करें">
+                ${isLiked ? '❤️' : '🤍'}
+              </button>
+              ${(isMe || isAdmin) ? `
+                <button type="button" class="tg-action-icon" onclick="stenoApp.deleteCommunityPost(${post.id})" title="मैसेज हटाएं">
+                  🗑️
+                </button>
+              ` : ''}
+              ${isAdmin ? `
+                <button type="button" class="tg-action-icon" onclick="stenoApp.adminTogglePinPost(${post.id})" title="${isPinned ? 'अनपिन करें' : 'पिन करें'}">
+                  📌
+                </button>
+              ` : ''}
+            </div>
+
+            ${isSolved ? '<span class="tg-solved-badge" title="समाधान प्राप्त">✓ हल हुआ</span>' : ''}
+            <span>${timeStr}</span>
+            ${isMe ? `
+              <span class="tg-ticks ${isPending ? 'pending' : 'delivered'}" title="${isPending ? 'भेजा जा रहा है...' : 'वितरित'}">
+                ${isPending ? '⏱️' : '✓✓'}
+              </span>
+            ` : ''}
+          </div>
+
+          <!-- Floating Reaction Badge -->
+          <div class="tg-msg-reaction ${isLiked ? 'liked' : ''}" style="${post.likes_count > 0 ? '' : 'display:none;'}" onclick="stenoApp.toggleCommunityPostLike(${post.id})" title="${post.likes_count || 0} छात्रों को पसंद आया">
+            <span>❤️</span> <span>${post.likes_count || 0}</span>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
   renderCommunityPosts(posts) {
     const feedEl = document.getElementById('communityPostsFeed');
     if (!feedEl) return;
 
     if (!posts || posts.length === 0) {
       feedEl.innerHTML = `
-        <div class="tg-date-pill">आज</div>
+        <div class="tg-date-pill">आज, 14 अक्टूबर 2026</div>
         <div class="tg-msg-row incoming" style="max-width: 90%; align-self: center;">
           <div class="tg-msg-bubble" style="text-align: center; background:#ffffff; border-radius:12px; padding:18px;">
             <div style="font-size: 2.2rem; margin-bottom: 6px;">✍️</div>
@@ -7702,6 +7932,7 @@ ${link}`;
           </div>
         </div>
       `;
+      this.lastCommunityPostId = 0;
       return;
     }
 
@@ -7712,102 +7943,14 @@ ${link}`;
     htmlParts.push('<div class="tg-date-pill">आज, 14 अक्टूबर 2026</div>');
 
     posts.forEach(post => {
-      const isMe = Boolean(currentUserId && currentUserId === post.user_id);
-      const authorName = post.display_name || post.username || 'विद्यार्थी';
-      const initial = authorName.charAt(0).toUpperCase();
-      const isPostAdmin = post.role === 'admin';
-      const isProAuthor = post.role === 'admin' || post.subscription_status === 'active';
-      const timeStr = this.formatChatTime(post.created_at);
-      const isLiked = Boolean(post.is_liked);
-      const isPinned = Boolean(post.is_pinned);
-      const isSolved = Boolean(post.is_solved);
-      const tag = post.category_tag || 'सामान्य';
-      const colorIndex = Math.abs((post.user_id || 1) * 31) % 7;
-
-      htmlParts.push(`
-        <div class="tg-msg-row ${isMe ? 'outgoing' : 'incoming'}" id="tgMsgRow_${post.id}">
-          ${!isMe ? `
-            <div class="tg-sender-avatar" title="${this.escapeHtml(authorName)}">
-              ${initial}
-            </div>
-          ` : ''}
-
-          <div class="tg-msg-bubble ${isPinned ? 'is-pinned-post' : ''}">
-            <!-- Bubble Header -->
-            <div class="tg-bubble-header">
-              <span class="tg-sender-name ${isMe ? '' : 'sender-color-' + colorIndex}">
-                ~ ${this.escapeHtml(authorName)}
-              </span>
-              <div class="tg-meta-chips">
-                ${isPostAdmin ? '<span class="tg-role-chip admin">🛡️ Admin</span>' : ''}
-                ${!isPostAdmin && isProAuthor ? '<span class="tg-role-chip pro">👑 Pro</span>' : ''}
-                ${tag !== 'सामान्य' ? `<span class="tg-tag-chip">${this.escapeHtml(tag)}</span>` : ''}
-              </div>
-            </div>
-
-            <!-- Telegram / WhatsApp Quote Banner (if replying to another message) -->
-            ${post.reply_to_author ? `
-              <div class="tg-msg-quote" onclick="stenoApp.scrollToMessage(${post.reply_to_id})">
-                <div class="tg-quote-author">~ ${this.escapeHtml(post.reply_to_author)}</div>
-                <div class="tg-quote-text">${this.escapeHtml(post.reply_to_snippet || '')}</div>
-              </div>
-            ` : ''}
-
-            <!-- Telegram Style Photo Message Bubble -->
-            ${post.image_url ? `
-              <div class="tg-photo-bubble-wrap" onclick="stenoApp.openCommunityImageZoom('${this.escapeHtml(post.image_url)}')">
-                <img src="${this.escapeHtml(post.image_url)}" alt="Steno Outline Photo" class="tg-msg-photo-img" loading="lazy" onerror="this.onerror=null; this.closest('.tg-photo-bubble-wrap').style.display='none';">
-                <div class="tg-photo-overlay-badge">
-                  <span>🔍 बड़ा देखें</span>
-                </div>
-              </div>
-            ` : ''}
-
-            <!-- Message Text -->
-            ${post.content ? `
-              <div class="tg-msg-text notranslate" translate="no" lang="hi">
-                ${this.formatCommunityContent(post.content)}
-              </div>
-            ` : ''}
-
-            <!-- Bubble Footer -->
-            <div class="tg-bubble-footer">
-              <div class="tg-bubble-actions">
-                <button type="button" class="tg-action-icon" onclick="stenoApp.replyToCommunityMessage(${post.id}, '${this.escapeHtml(authorName)}', '${this.escapeHtml(post.content || 'फ़ोटो')}')" title="उत्तर दें (Reply)">
-                  ↩️
-                </button>
-                <button type="button" class="tg-action-icon" onclick="stenoApp.toggleCommunityPostLike(${post.id})" title="लाइक करें">
-                  ${isLiked ? '❤️' : '🤍'}
-                </button>
-                ${(isMe || isAdmin) ? `
-                  <button type="button" class="tg-action-icon" onclick="stenoApp.deleteCommunityPost(${post.id})" title="मैसेज हटाएं">
-                    🗑️
-                  </button>
-                ` : ''}
-                ${isAdmin ? `
-                  <button type="button" class="tg-action-icon" onclick="stenoApp.adminTogglePinPost(${post.id})" title="${isPinned ? 'अनपिन करें' : 'पिन करें'}">
-                    📌
-                  </button>
-                ` : ''}
-              </div>
-
-              ${isSolved ? '<span class="tg-solved-badge" title="समाधान प्राप्त">✓ हल हुआ</span>' : ''}
-              <span>${timeStr}</span>
-              ${isMe ? '<span class="tg-ticks">✓✓</span>' : ''}
-            </div>
-
-            <!-- Floating Reaction Badge -->
-            ${(post.likes_count > 0) ? `
-              <div class="tg-msg-reaction ${isLiked ? 'liked' : ''}" onclick="stenoApp.toggleCommunityPostLike(${post.id})" title="${post.likes_count} छात्रों को पसंद आया">
-                <span>❤️</span> <span>${post.likes_count}</span>
-              </div>
-            ` : ''}
-          </div>
-        </div>
-      `);
+      htmlParts.push(this.buildSingleCommunityPostHtml(post, currentUserId, isAdmin));
     });
 
     feedEl.innerHTML = htmlParts.join('');
+
+    // Track highest post ID
+    const validIds = posts.map(p => (typeof p.id === 'number' ? p.id : parseInt(p.id, 10))).filter(id => !isNaN(id) && id > 0);
+    this.lastCommunityPostId = validIds.length > 0 ? Math.max(...validIds) : 0;
   }
 
   scrollToMessage(msgId) {
@@ -7846,7 +7989,6 @@ ${link}`;
     }
 
     const textarea = document.getElementById('commPostTextarea');
-    const submitBtn = document.getElementById('commPostSubmitBtn');
     const content = (textarea ? textarea.value : '').trim();
     const tag = this.communityTag && this.communityTag !== 'सभी' ? this.communityTag : 'सामान्य';
 
@@ -7856,69 +7998,146 @@ ${link}`;
       return;
     }
 
-    if (submitBtn) {
-      submitBtn.disabled = true;
-      submitBtn.innerHTML = '<span>⏳</span>';
+    // Capture pending inputs before clearing
+    const attachedImage = this.selectedCommunityImage;
+    const activeReply = this.activeReply;
+    const tempId = 'temp_' + Date.now();
+    const currentUserId = this.user.user_id || this.user.id;
+    const authorName = this.user.display_name || this.user.username || 'विद्यार्थी';
+
+    // 1. INSTANT LOCAL OPTIMISTIC UI: Clear input immediately (0ms delay!)
+    if (textarea) {
+      textarea.value = '';
+      textarea.style.height = 'auto';
+      textarea.focus();
+    }
+    this.removeCommunitySelectedImage();
+    this.cancelCommunityReply();
+
+    // 2. Play subtle sent tick sound
+    this.playChatSound('sent');
+
+    // 3. Construct optimistic message object & immediately inject into the feed
+    const feedEl = document.getElementById('communityPostsFeed');
+    const optimisticPost = {
+      id: tempId,
+      user_id: currentUserId,
+      content: content,
+      image_url: attachedImage ? (attachedImage.data || null) : null,
+      category_tag: tag,
+      likes_count: 0,
+      replies_count: 0,
+      is_pinned: 0,
+      is_solved: 0,
+      created_at: new Date().toISOString(),
+      username: this.user.username,
+      display_name: authorName,
+      avatar: this.user.avatar || 'user-default',
+      role: this.user.role || 'student',
+      is_liked: false,
+      is_pending: true,
+      reply_to_id: activeReply ? activeReply.postId : null,
+      reply_to_author: activeReply ? activeReply.authorName : null,
+      reply_to_snippet: activeReply ? activeReply.snippet : null
+    };
+
+    if (feedEl) {
+      const emptyState = feedEl.querySelector('.comm-empty-state');
+      if (emptyState) feedEl.innerHTML = '<div class="tg-date-pill">आज, 14 अक्टूबर 2026</div>';
+
+      const rowHtml = this.buildSingleCommunityPostHtml(optimisticPost, currentUserId, this.user.role === 'admin');
+      feedEl.insertAdjacentHTML('beforeend', rowHtml);
+      this.scrollChatToBottom(true);
     }
 
+    if (!this.communityPosts) this.communityPosts = [];
+    this.communityPosts.push(optimisticPost);
+
+    // 4. Background network upload & post creation
     try {
       let imageUrl = null;
-
-      // 1. Upload photo if selected
-      if (this.selectedCommunityImage) {
+      if (attachedImage) {
         const upRes = await this.apiCall('/api/community/upload-image', 'POST', {
-          data: this.selectedCommunityImage.data,
-          image: this.selectedCommunityImage.data,
-          filename: this.selectedCommunityImage.filename
+          data: attachedImage.data,
+          image: attachedImage.data,
+          filename: attachedImage.filename
         });
         if (upRes && upRes.image_url) {
           imageUrl = upRes.image_url;
-        } else {
-          throw new Error(upRes?.error || 'फ़ोटो अपलोड में विफलता');
         }
       }
 
-      // 2. Prepare payload with optional reply reference
       const payload = {
         content: content,
         category_tag: tag,
         image_url: imageUrl,
-        reply_to_id: this.activeReply ? this.activeReply.postId : null,
-        reply_to_author: this.activeReply ? this.activeReply.authorName : null,
-        reply_to_snippet: this.activeReply ? this.activeReply.snippet : null
+        reply_to_id: activeReply ? activeReply.postId : null,
+        reply_to_author: activeReply ? activeReply.authorName : null,
+        reply_to_snippet: activeReply ? activeReply.snippet : null
       };
 
       const res = await this.apiCall('/api/community/posts', 'POST', payload);
-      if (res && res.success) {
-        if (textarea) {
-          textarea.value = '';
-          textarea.style.height = 'auto';
+      if (res && res.success && res.post_id) {
+        const realId = res.post_id;
+        const tempRow = document.getElementById(`tgMsgRow_${tempId}`);
+        if (tempRow) {
+          tempRow.id = `tgMsgRow_${realId}`;
+          const ticksEl = tempRow.querySelector('.tg-ticks');
+          if (ticksEl) {
+            ticksEl.classList.remove('pending');
+            ticksEl.classList.add('delivered');
+            ticksEl.textContent = '✓✓';
+            ticksEl.title = 'वितरित';
+          }
+          if (imageUrl) {
+            const imgEl = tempRow.querySelector('.tg-msg-photo-img');
+            if (imgEl) imgEl.src = imageUrl;
+          }
         }
-        this.removeCommunitySelectedImage();
-        this.cancelCommunityReply();
-
-        await this.loadCommunityPosts(true);
-        setTimeout(() => this.scrollChatToBottom(true), 100);
+        optimisticPost.id = realId;
+        optimisticPost.is_pending = false;
+        if (imageUrl) optimisticPost.image_url = imageUrl;
+        this.lastCommunityPostId = Math.max(this.lastCommunityPostId || 0, realId);
       } else {
-        throw new Error(res?.error || 'संदेश भेजने में त्रुटि');
+        throw new Error(res?.error || 'सर्वर से पुष्टि नहीं मिली');
       }
     } catch (err) {
       console.error('Post submit error:', err);
-      this.showToast(err.message || 'संदेश भेजने में त्रुटि हुई', 'error');
-    } finally {
-      if (submitBtn) {
-        submitBtn.disabled = false;
-        submitBtn.innerHTML = '<span>➤</span>';
+      const tempRow = document.getElementById(`tgMsgRow_${tempId}`);
+      if (tempRow) {
+        const ticksEl = tempRow.querySelector('.tg-ticks');
+        if (ticksEl) {
+          ticksEl.innerHTML = '<span style="color:#ef4444; font-size:0.75rem;" title="भेजने में विफल">⚠️ विफल</span>';
+        }
       }
+      this.showToast('संदेश भेजने में समस्या: ' + (err.message || 'नेटवर्क त्रुटि'), 'error');
     }
   }
 
   async toggleCommunityPostLike(postId) {
-    try {
-      const res = await this.apiCall(`/api/community/posts/${postId}/like`, 'POST');
-      if (res && res.success) {
-        this.loadCommunityPosts(false);
+    if (!postId || String(postId).startsWith('temp_')) return;
+    const rowEl = document.getElementById(`tgMsgRow_${postId}`);
+    const heartBtn = rowEl ? rowEl.querySelector('.tg-action-icon[title="लाइक करें"]') : null;
+    const reactionEl = rowEl ? rowEl.querySelector('.tg-msg-reaction') : null;
+
+    const post = this.communityPosts ? this.communityPosts.find(p => p.id === postId) : null;
+    if (post) {
+      post.is_liked = !post.is_liked;
+      post.likes_count = Math.max(0, (post.likes_count || 0) + (post.is_liked ? 1 : -1));
+      if (heartBtn) heartBtn.textContent = post.is_liked ? '❤️' : '🤍';
+      if (reactionEl) {
+        if (post.likes_count > 0) {
+          reactionEl.className = `tg-msg-reaction ${post.is_liked ? 'liked' : ''}`;
+          reactionEl.innerHTML = `<span>❤️</span> <span>${post.likes_count}</span>`;
+          reactionEl.style.display = 'inline-flex';
+        } else {
+          reactionEl.style.display = 'none';
+        }
       }
+    }
+
+    try {
+      await this.apiCall(`/api/community/posts/${postId}/like`, 'POST');
     } catch (err) {
       console.error('Like toggle failed:', err);
     }
