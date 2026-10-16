@@ -310,6 +310,8 @@ class StenoComparisonView {
         </div>
       </div>
     `;
+  }
+
   renderKeystrokeEfficiencyCard(report) {
     const totalKeys = report.total_keystrokes || (report.student_text ? report.student_text.length : 0);
     const backspaces = report.backspace_count || 0;
