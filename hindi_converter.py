@@ -26,7 +26,7 @@ KD_MULTI: List[Tuple[str, str]] = [
     ("ksa", "ों"),
     ('"kksZa', 'वर्षों'),
     ('FkksZa', 'अर्थों'),
-    ('/kksZa', 'ध्र्ाों'),
+    ('/kksZa', 'र्धों'),
     ("'kksZa", 'स्पर्शों'),
     ('"kkZ', 'र्षा'),
     ('FkkZ', 'र्था'),
@@ -64,7 +64,6 @@ KD_MULTI: List[Tuple[str, str]] = [
     ('TkZ', 'र्झ'),
     ('f=k', 'त्रि'),
     ('f=', 'त्रि'),
-    ("kZ", "र्ा"),
     (":#", "रू"),
     ("Vª", "ट्र"),
     ("Mª", "ड्र"),
@@ -357,8 +356,23 @@ def normalize_devanagari_canonical(text: str) -> str:
     for old, new in nukta_map:
         t = t.replace(old, new)
 
-    # 4. Strip zero-width joiners / non-joiners / byte order marks
+    # 4. Strip zero-width joiners / non-joiners / byte order marks / dotted circles
     t = t.replace('\u200B', '').replace('\u200C', '').replace('\u200D', '').replace('\uFEFF', '')
+    t = t.replace('\u25CC', '')  # Dotted circle placeholder
+    t = t.replace('\u00A0', ' ') # Non-breaking space
+    t = t.replace('\u00AD', '')  # Soft hyphen
+
+    # 5. Composite matras
+    t = t.replace('\u093e\u0947', '\u094b').replace('\u093e\u0948', '\u094c')
+
+    # 6. Devanagari Reph Order Normalization (Fix for words like चर्चा, गर्मी, शर्मा, खर्चा, दर्जा, वर्गों)
+    # Case A: Inverted matra after reph: consonant + र् + matra (e.g. चचर्ा -> चर्चा, गमर्ी -> गर्मी, खचर्ा -> खर्चा)
+    pat_inverted_matra = re.compile(r'((?:[क-ह]्)*[क-ह])र्([ा-ौ])([ँं])?')
+    t = pat_inverted_matra.sub(lambda m: 'र्' + m.group(1) + m.group(2) + (m.group(3) or ''), t)
+
+    # Case B: Trailing halanted र (र्) after a consonant or consonant+matra (e.g. चचार् -> चर्चा, धमर् -> धर्म, कायर् -> कार्य, पाटीर् -> पार्टी)
+    pat_trailing_reph = re.compile(r'((?:[क-ह]्)*[क-ह](?:[ा-ौ])?(?:[ँं])?)र्(?=[^क-ह]|$)')
+    t = pat_trailing_reph.sub(lambda m: 'र्' + m.group(1), t)
 
     # 5. Punctuation standardization
     t = t.replace('“', '"').replace('”', '"').replace('‘', "'").replace('’', "'")
@@ -410,8 +424,22 @@ def kruti_dev_to_unicode(text: str) -> str:
     modified = modified.replace("f", "ि")
 
     # Phase 4: Reorder reph (Z)
-    # In Kruti Dev, 'Z' is typed after consonant/matra, but in Unicode it goes before
+    # In Kruti Dev, 'Z' is typed after consonant/matra, but in Unicode Devanagari it goes before
+    reph_pat = re.compile(
+        r'((?:[\u0915-\u0939]\u094D)*[\u0915-\u0939]'
+        r'(?:[\u093E-\u094C])?'
+        r'(?:[\u0901\u0902])?)'
+        r'Z'
+        r'([\u0901\u0902])?'
+    )
+    def repl_reph_correct(m):
+        base_with_marks = m.group(1)
+        trailing_anusvara = m.group(2) or ''
+        return 'र्' + base_with_marks + trailing_anusvara
+
+    modified = reph_pat.sub(repl_reph_correct, modified)
     modified = re.sub(r'([क-ह](?:[\u093E-\u094C])?)Z', r'र्\1', modified)
+    modified = modified.replace('Z', 'र्')
 
     # Phase 5: Canonical Devanagari normalization
     # Post-fix accidental comma typed on vocatives (e.g. महोदयए -> महोदय,)

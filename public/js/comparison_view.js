@@ -877,6 +877,16 @@ class StenoComparisonView {
         tooltipText = tooltipText.replace(/&/g, '-');
       }
 
+      // Sanitize display: clean dotted circle artifacts & inverted rephs
+      if (displayText && typeof displayText === 'string') {
+        displayText = displayText.replace(/\u25CC/g, '');
+        if (/[\u0900-\u097F]/.test(displayText)) {
+          displayText = displayText
+            .replace(/((?:[\u0915-\u0939][\u094D])*[\u0915-\u0939])\u0930\u094D([\u093E-\u094C])([\u0901\u0902])?/g, '\u0930\u094D')
+            .replace(/((?:[\u0915-\u0939][\u094D])*[\u0915-\u0939](?:[\u093E-\u094C])?(?:[\u0901\u0902])?)\u0930\u094D(?=[^\u0915-\u0939]|$)/g, '\u0930\u094D');
+        }
+      }
+
       // If token is in Kruti Dev ASCII, apply font-krutidev; if Hindi Devanagari, apply font-mangal
       const isTokenKruti = !/[\u0900-\u097F]/.test(displayText) && /[a-zA-Z]/.test(displayText);
       const fontClass = isTokenKruti ? ' font-krutidev' : ' font-mangal';

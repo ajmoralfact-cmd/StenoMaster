@@ -14,7 +14,7 @@
 const KD_MAP = [
   ["\"kksZa", "\u0935\u0930\u094d\u0937\u094b\u0902"],
   ["FkksZa", "\u0905\u0930\u094d\u0925\u094b\u0902"],
-  ["/kksZa", "\u0927\u094d\u0930\u094d\u093e\u094b\u0902"],
+  ["/kksZa", "र्धों"],
   ["'kksZa", "\u0938\u094d\u092a\u0930\u094d\u0936\u094b\u0902"],
   ["\"kkZ", "\u0930\u094d\u0937\u093e"],
   ["FkkZ", "\u0930\u094d\u0925\u093e"],
@@ -52,10 +52,10 @@ const KD_MAP = [
   ["TkZ", "\u0930\u094d\u091d"],
   ["f=k", "\u0924\u094d\u0930\u093f"],
   ["f=", "\u0924\u094d\u0930\u093f"],
-  ["kZ", "र्ा"], ["र्f", "िर्"], ["vks", "ओ"], ["vkS", "औ"], ["vk", "आ"], ["bZ", "ई"],
+  ["र्f", "िर्"], ["vks", "ओ"], ["vkS", "औ"], ["vk", "आ"], ["bZ", "ई"],
   ["?k", "घ"], ["Tk", "झ"], ["Fk", "थ"], ["/k", "ध"], ["Hk", "भ"], ["'k", "श"],
   ['"k', "ष"], [".k", "ण"], ["[k", "ख"],
-  ["Z", "र्"], ["a", "ं"], ["¡", "ँ"], ["%", "ः"],
+  ["a", "ं"], ["¡", "ँ"], ["%", "ः"],
   ["1", "१"], ["2", "२"], ["3", "३"], ["4", "४"], ["5", "५"],
   ["6", "६"], ["7", "७"], ["8", "८"], ["9", "९"], ["0", "०"],
   ["A", "।"], ["d", "क"], ["D", "क्"], ["[", "ख्"], ["x", "ग"], ["X", "ग्"],
@@ -81,9 +81,26 @@ function krutiDevToUnicodeJS(text) {
   for (const [k, v] of KD_MAP) {
     res = res.split(k).join(v);
   }
+  // Chhoti 'i' reordering
   res = res.replace(/f([\u0915-\u0939]([\u094D][\u0915-\u0939])*)/g, '$1ि');
   res = res.replace(/f/g, 'ि');
+
+  // Normalize composite matras
+  res = res.replace(/\u093e\u0947/g, 'ो').replace(/\u093e\u0948/g, 'ौ');
+
+  // Reorder Reph (Z)
+  res = res.replace(/((?:[\u0915-\u0939]\u094D)*[\u0915-\u0939](?:[\u093E-\u094C])?(?:[\u0901\u0902])?)Z([\u0901\u0902])?/g, 'र्$1$2');
   res = res.replace(/([क-ह](?:[\u093E-\u094C])?)Z/g, 'र्$1');
+  res = res.replace(/Z/g, 'र्');
+
+  // Fix Unicode typing order mismatch: consonant + र् + matra -> र् + consonant + matra (e.g. चचर्ा -> चर्चा)
+  res = res.replace(/((?:[\u0915-\u0939]\u094D)*[\u0915-\u0939])\u0930\u094D([\u093E-\u094C])([\u0901\u0902])?/g, '\u0930\u094D$1$2$3');
+
+  // Trailing reph: consonant + matra + र् -> र् + consonant + matra (e.g. चचार् -> चर्चा, धमर् -> धर्म)
+  res = res.replace(/((?:[\u0915-\u0939]\u094D)*[\u0915-\u0939](?:[\u093E-\u094C])?(?:[\u0901\u0902])?)\u0930\u094D(?=[^\u0915-\u0939]|$)/g, '\u0930\u094D$1');
+
+  // Clean dotted circle artifact (U+25CC)
+  res = res.replace(/\u25CC/g, '');
   res = res.replace(/&/g, '-');
   res = res.replace(/[\u2013\u2014]/g, '-');
   return res;
