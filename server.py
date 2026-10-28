@@ -390,7 +390,10 @@ class StenoMasterHandler(http.server.SimpleHTTPRequestHandler):
             user = self._get_auth_user()
             user_id = user['user_id'] if user else None
             cats = db.get_categories_with_user_status(user_id)
-            cache_ctrl = 'no-cache, no-store, must-revalidate'
+            if not user_id:
+                cache_ctrl = 'public, max-age=60, s-maxage=300, stale-while-revalidate=600'
+            else:
+                cache_ctrl = 'private, no-cache, no-store, must-revalidate'
             self._send_json(200, {"categories": cats}, cache_control=cache_ctrl)
             return
 

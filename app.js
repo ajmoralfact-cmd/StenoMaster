@@ -290,7 +290,21 @@ class StenoApp {
     this.user = null;
     this.activeView = 'home';
     this.currentPassage = null;
-    this.categories = [];
+    this.categories = [
+      { id: 126, name: "रामधारी गुप्ता (खंड 1)", slug: "ramdhari-gupta-khand-1", passage_count: 100, free_count: 2, price: 49, icon: "📘" },
+      { id: 129, name: "रामधारी गुप्ता (खंड 2)", slug: "ramdhari-gupta-khand-2", passage_count: 150, free_count: 2, price: 49, icon: "📙" },
+      { id: 130, name: "आनंद पत्रिका अंक 01", slug: "anand-patrika-ank-01", passage_count: 17, free_count: 2, price: 49, icon: "📰" },
+      { id: 131, name: "आनंद पत्रिका अंक 02", slug: "anand-patrika-ank-02", passage_count: 17, free_count: 2, price: 49, icon: "📰" }
+    ];
+    try {
+      const cachedCats = localStorage.getItem('stenomaster_cached_categories');
+      if (cachedCats) {
+        const parsed = JSON.parse(cachedCats);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          this.categories = parsed;
+        }
+      }
+    } catch(e) {}
     this.passages = [];
     this.bookmarks = new Set();
     this.selectedCategory = 'all';
@@ -746,7 +760,7 @@ class StenoApp {
         this.updateUserUI();
       }
       this.restoreRouteOnLoad();
-      this.initStatsCarousel(); this.initHeroPosterCarousel();
+      this.initStatsCarousel(); this.initHeroPosterCarousel(); this.renderHorizontalCategories();
 
       // Parallel background refresh without blocking page render
       Promise.all([
@@ -772,7 +786,7 @@ class StenoApp {
       this.hideAuthGateway();
       this.updateUserUI();
       this.restoreRouteOnLoad();
-      this.initStatsCarousel(); this.initHeroPosterCarousel();
+      this.initStatsCarousel(); this.initHeroPosterCarousel(); this.renderHorizontalCategories();
 
       // Parallel background load of categories & dictations for guest browsing
       Promise.all([
