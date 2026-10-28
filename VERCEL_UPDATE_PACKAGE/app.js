@@ -2371,14 +2371,15 @@ class StenoApp {
       if (el) el.value = '';
     });
 
-    // Admin page: show the in-page admin login modal (do NOT redirect or touch student UI)
+    // Admin page: When logging out from admin, immediately redirect to Student Portal / Home page
     if (window.location.pathname.includes('admin')) {
-      if (showToast) this.showToast('लॉगआउट सफल। पुनः लॉगिन करें। (Logged out)', 'info');
-      if (typeof window.checkAdminStandaloneAuth === 'function') {
-        window.checkAdminStandaloneAuth(true); // forceShow = true
-      } else {
-        window.location.href = '/admin.html';
+      var modal = document.getElementById('adminStandaloneAuthModal');
+      if (modal) {
+        modal.style.display = 'none';
+        modal.style.pointerEvents = 'none';
+        modal.classList.remove('active');
       }
+      window.location.replace('/');
       return;
     }
 

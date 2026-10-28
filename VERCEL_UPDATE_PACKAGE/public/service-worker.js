@@ -5,7 +5,7 @@
  * API calls and admin portal pages are NEVER intercepted — native browser networking handles them.
  */
 
-const CACHE_NAME = 'stenomaster-v17.1-shell';
+const CACHE_NAME = 'stenomaster-v17.3-shell';
 const ALWAYS_NETWORK = ['/api/', '/uploads/', '/admin', 'admin.html', 'admin.js'];
 
 self.addEventListener('install', (event) => {

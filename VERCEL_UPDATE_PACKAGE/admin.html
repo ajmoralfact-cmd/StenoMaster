@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Devanagari:wght@400;500;600;700;800&family=Rozha+One&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/css/style.css?v=17.1">
+  <link rel="stylesheet" href="/css/style.css?v=17.2">
 
   <!-- Smooth Admin Auth Guard (Shows In-Page Modal without broken redirect) -->
   <script>
@@ -567,6 +567,15 @@
                     <tbody id="adminCustomTbody"></tbody>
                   </table>
                 </div>
+                <!-- Passages Pagination Bar -->
+                <div id="adminPassagesPaginationBar" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-top:16px; padding-top:14px; border-top:1px solid var(--border-subtle);">
+                  <div id="adminPassagesPageInfo" style="font-size:0.84rem; color:var(--text-muted);">
+                    प्रदर्शित: 1-25 / कुल 250 आलेख
+                  </div>
+                  <div id="adminPassagesPageButtons" style="display:flex; align-items:center; gap:6px;">
+                    <!-- Populated dynamically via stenoAdmin.renderPassagesPagination() -->
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -639,8 +648,26 @@
               </div>
 
               <div class="chart-card" id="adminPassagesSection" style="margin-bottom: 28px;">
-                <div class="section-header" style="margin-bottom: 16px;">
-                  <h3 style="font-size:1.1rem; font-weight:700;">आलेख सूची (Active Passages)</h3>
+                <div class="section-header" style="margin-bottom: 16px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+                  <div>
+                    <h3 style="font-size:1.1rem; font-weight:700; margin:0; display:flex; align-items:center; gap:8px;">
+                      <span>आलेख सूची (Active Passages)</span>
+                      <span id="adminPassagesCountBadge" class="badge badge-primary" style="font-size:0.8rem; background:rgba(37,99,235,0.1); color:#2563eb; border:1px solid rgba(37,99,235,0.25);">250 आलेख</span>
+                    </h3>
+                  </div>
+                  <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+                    <select id="adminPassagesCategoryFilter" class="form-input" onchange="stenoAdmin.filterPassagesCategory(this.value)" style="font-size:0.82rem; padding:6px 10px; min-width:180px;">
+                      <option value="">📂 सभी श्रेणियां</option>
+                    </select>
+                    <div style="position:relative; width:220px;">
+                      <input type="text" id="adminPassagesSearchInput" class="form-input" placeholder="🔍 आलेख खोजें..." oninput="stenoAdmin.searchPassages(this.value)" style="font-size:0.82rem; padding:6px 10px; width:100%;">
+                    </div>
+                    <select id="adminPassagesLimitSelect" class="form-input" onchange="stenoAdmin.changePassagesLimit(this.value)" style="font-size:0.82rem; padding:6px 8px;">
+                      <option value="25" selected>25 प्रति पृष्ठ</option>
+                      <option value="50">50 प्रति पृष्ठ</option>
+                      <option value="100">100 प्रति पृष्ठ</option>
+                    </select>
+                  </div>
                 </div>
                 <div class="table-responsive">
                   <table class="data-table" id="adminPassagesTable">
@@ -2347,13 +2374,16 @@
       logout() {
         localStorage.removeItem('stenomaster_token');
         localStorage.removeItem('stenomaster_user');
+        localStorage.removeItem('stenomaster_saved_admin_creds');
         this.token = '';
         this.user = null;
-        if (typeof window.checkAdminStandaloneAuth === 'function') {
-          window.checkAdminStandaloneAuth(true);
-        } else {
-          window.location.reload();
+        var modal = document.getElementById('adminStandaloneAuthModal');
+        if (modal) {
+          modal.style.display = 'none';
+          modal.style.pointerEvents = 'none';
+          modal.classList.remove('active');
         }
+        window.location.replace('/');
       }
 
             escapeHtml(str) {
@@ -2373,9 +2403,9 @@
 
   <!-- Required Admin Scripts -->
   <script src="/js/charts.js?v=8.1"></script>
-  <script src="/js/comparison_view.js?v=17.1"></script>
+  <script src="/js/comparison_view.js?v=17.2"></script>
   <script src="/js/ocr_service.js?v=1.1"></script>
-  <script src="/js/admin.js?v=12.6"></script>
+  <script src="/js/admin.js?v=12.7"></script>
 
   <!-- Standalone In-Page Admin Login Modal (Never redirects away) -->
   <div id="adminStandaloneAuthModal" class="modal-overlay" style="display:none; pointer-events:none; z-index:999999; background:rgba(15, 23, 42, 0.85); backdrop-filter:blur(8px);" onclick="if(event.target === this) window.closeAdminStandaloneAuthModal()">
