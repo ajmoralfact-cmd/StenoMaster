@@ -24,7 +24,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Mukta:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/css/style.css?v=19.4">
+  <link rel="stylesheet" href="/css/style.css?v=19.5">
 
   <!-- Font Preloads for Instant Hindi Typography -->
   <link rel="preload" href="/assets/fonts/Mangal.ttf" as="font" type="font/ttf" crossorigin>
@@ -206,18 +206,333 @@
               </div>
             </div>
 
-            <!-- The 4 Core Pricing Cards -->
+                        <!-- Trust Bar (Stenoshala Style) -->
+            <div style="text-align:center; margin-bottom:14px;">
+              <div class="plans-trust-pills">
+                <span class="trust-pill-item"><span class="check-circle">✓</span> 250+ संपूर्ण हिंदी डिक्टेशन्स</span>
+                <span class="trust-pill-item"><span class="check-circle">✓</span> AI-सक्षम पूर्ण व अर्ध त्रुटि मूल्यांकन</span>
+                <span class="trust-pill-item"><span class="check-circle">✓</span> 60 से 160 WPM तक रियल-टाइम गति नियंत्रण</span>
+                <span class="trust-pill-item"><span class="check-circle">✓</span> मंगल (Inscript/GAIL/CBI) व कृतिदेव 010</span>
+              </div>
+            </div>
+
+            <!-- The 4 Core Pricing Cards (Stenoshala Point-by-Point Style) -->
             <div id="subPlansGrid" class="subscription-plans-grid">
-              <div class="sub-plan-card" data-plan-id="1m" onclick="stenoApp.initiateCashfreePayment('1m')">
+              
+              <!-- PLAN 1: 1 Month (₹100) -->
+              <div class="sub-plan-card stenoshala-card" data-plan-id="1m" onclick="stenoApp.initiateCashfreePayment('1m')">
+                <div class="plan-top-badge badge-starter">⚡ स्टार्टर पास (STARTER)</div>
                 <div>
-                  <div class="sub-plan-title">1 माह (30 दिन)</div>
-                  <div class="sub-plan-subtitle">बेसिक मासिक अभ्यास</div>
-                  <div class="sub-plan-price-row">
-                    <span class="sub-plan-amount">₹100</span>
-                    <span class="sub-plan-period">/ 30 दिन</span>
+                  <div class="plan-card-header">
+                    <div class="plan-icon-title">
+                      <div class="plan-icon-box" style="background:#eff6ff; color:#2563eb;">📘</div>
+                      <div>
+                        <div class="plan-name-text">बेसिक स्टेनो पास</div>
+                        <div style="font-size:0.75rem; color:#64748b; font-weight:600;">1 माह (30 दिन)</div>
+                      </div>
+                    </div>
+                    <div class="plan-desc-text">30 दिन के लिए सम्पूर्ण सुविधाओं का असीमित अभ्यास</div>
                   </div>
-                  <div class="sub-plan-savings-pill" style="visibility:hidden;">—</div>
+
+                  <div>
+                    <span class="plan-discount-pill">⚡ 33% की छूट</span>
+                    <div class="plan-price-block">
+                      <span class="plan-price-strike">₹150</span>
+                      <span class="plan-price-amount">₹100</span>
+                      <span class="plan-price-period">/ 30 दिन</span>
+                    </div>
+                    <div class="plan-rate-meta">
+                      <span class="plan-validity-pill">⏱️ 30 दिन वैधता</span>
+                      <span class="plan-monthly-pill">मात्र ₹100/माह</span>
+                    </div>
+                  </div>
+
+                  <div class="plan-card-divider"></div>
+
+                  <!-- Point-by-Point Feature Details -->
+                  <ul class="plan-features-list">
+                    <li class="plan-feature-item">
+                      <span class="feature-check-icon">✓</span>
+                      <span><strong>सभी 250+ डिक्टेशन्स</strong> का सम्पूर्ण ऑडियो एक्सेस</span>
+                    </li>
+                    <li class="plan-feature-item">
+                      <span class="feature-check-icon">✓</span>
+                      <span><strong>रामधारी गुप्ता</strong> खंड 1 (100) व खंड 2 (150) सभी अभ्यास</span>
+                    </li>
+                    <li class="plan-feature-item">
+                      <span class="feature-check-icon">✓</span>
+                      <span><strong>आनंद पत्रिका</strong> अंक 01 व अंक 02 स्पेशल डिक्टेशन्स</span>
+                    </li>
+                    <li class="plan-feature-item">
+                      <span class="feature-check-icon">✓</span>
+                      <span><strong>60 से 160 WPM</strong> तक ऑडियो स्पीड चेंजर (0.5x - 2.0x)</span>
+                    </li>
+                    <li class="plan-feature-item">
+                      <span class="feature-check-icon">✓</span>
+                      <span><strong>स्मार्ट AI इंजन:</strong> Full Mistake व Half Mistake सटीक जांच</span>
+                    </li>
+                    <li class="plan-feature-item">
+                      <span class="feature-check-icon">✓</span>
+                      <span><strong>सभी फॉन्ट:</strong> मंगल इनस्क्रिप्ट, रेमिंगटन गेल, CBI, कृतिदेव</span>
+                    </li>
+                    <li class="plan-feature-item">
+                      <span class="feature-check-icon">✓</span>
+                      <span><strong>असली परीक्षा इंटरफ़ेस:</strong> SSC, High Court, UPSSSC मोड</span>
+                    </li>
+                    <li class="plan-feature-item">
+                      <span class="feature-check-icon">✓</span>
+                      <span><strong>OTG कीबोर्ड टाइपिंग:</strong> मोबाइल, टैबलेट व कंप्यूटर पर</span>
+                    </li>
+                    <li class="plan-feature-item">
+                      <span class="feature-check-icon">✓</span>
+                      <span><strong>विस्तृत स्कोरकार्ड:</strong> बैकस्पेस काउंट, शुद्ध गति व प्रतिशत</span>
+                    </li>
+                  </ul>
                 </div>
+
+                <button type="button" class="plan-buy-btn" onclick="event.stopPropagation(); stenoApp.initiateCashfreePayment('1m')">
+                  <span>⚡ अभी खरीदें (Buy Now)</span> <span>→</span>
+                </button>
+              </div>
+
+              <!-- PLAN 2: 3 Months (₹250 - MOST POPULAR) -->
+              <div class="sub-plan-card stenoshala-card card-popular" data-plan-id="3m" onclick="stenoApp.initiateCashfreePayment('3m')">
+                <div class="plan-top-badge badge-popular">⭐ सर्वाधिक लोकप्रिय (POPULAR)</div>
+                <div>
+                  <div class="plan-card-header">
+                    <div class="plan-icon-title">
+                      <div class="plan-icon-box" style="background:#eff6ff; color:#1d4ed8;">🛡️</div>
+                      <div>
+                        <div class="plan-name-text">सिल्वर स्टेनो पास</div>
+                        <div style="font-size:0.75rem; color:#2563eb; font-weight:700;">3 माह (90 दिन)</div>
+                      </div>
+                    </div>
+                    <div class="plan-desc-text">पूरे 90 दिन के लिए परीक्षा की सटीक व ठोस तैयारी</div>
+                  </div>
+
+                  <div>
+                    <span class="plan-discount-pill" style="background:#eff6ff; color:#1d4ed8; border-color:#bfdbfe;">⚡ 44% की भारी छूट</span>
+                    <div class="plan-price-block">
+                      <span class="plan-price-strike">₹450</span>
+                      <span class="plan-price-amount" style="color:#1d4ed8;">₹250</span>
+                      <span class="plan-price-period">/ 90 दिन</span>
+                    </div>
+                    <div class="plan-rate-meta">
+                      <span class="plan-validity-pill">⏱️ 90 दिन वैधता</span>
+                      <span class="plan-monthly-pill">मात्र ₹83/माह • ₹50 बचत</span>
+                    </div>
+                  </div>
+
+                  <div class="plan-card-divider"></div>
+
+                  <!-- Point-by-Point Feature Details -->
+                  <ul class="plan-features-list">
+                    <li class="plan-feature-item">
+                      <span class="feature-check-icon">✓</span>
+                      <span><strong>सभी 250+ डिक्टेशन्स</strong> का असीमित ऑडियो एक्सेस</span>
+                    </li>
+                    <li class="plan-feature-item">
+                      <span class="feature-check-icon">✓</span>
+                      <span><strong>रामधारी गुप्ता</strong> खंड 1 व खंड 2 की सभी कक्षाएं अनलॉक</span>
+                    </li>
+                    <li class="plan-feature-item">
+                      <span class="feature-check-icon">✓</span>
+                      <span><strong>आनंद मासिक पत्रिका</strong> (अंक 01 व 02) सम्पूर्ण सीरीज</span>
+                    </li>
+                    <li class="plan-feature-item">
+                      <span class="feature-check-icon">✓</span>
+                      <span><strong>रियल-टाइम स्पीड बूस्टर</strong> (0.5x से 2.0x तक मनचाही गति)</span>
+                    </li>
+                    <li class="plan-feature-item">
+                      <span class="feature-check-icon">✓</span>
+                      <span><strong>स्मार्ट AI एरर एनालिसिस:</strong> शब्द-दर-शब्द प्रामाणिक जांच</span>
+                    </li>
+                    <li class="plan-feature-item">
+                      <span class="feature-check-icon">✓</span>
+                      <span><strong>मंगल</strong> (Inscript/GAIL/CBI) व कृतिदेव 010 टाइपिंग</span>
+                    </li>
+                    <li class="plan-feature-item">
+                      <span class="feature-check-icon">✓</span>
+                      <span><strong>परीक्षा हॉल सिम्युलेटर</strong> (SSC, High Court, UPSSSC मानक)</span>
+                    </li>
+                    <li class="plan-feature-item">
+                      <span class="feature-check-icon">✓</span>
+                      <span><strong>गलतियों की डायरी</strong> (Mistakes Notebook Drill) से रिवीजन</span>
+                    </li>
+                    <li class="plan-feature-item">
+                      <span class="feature-check-icon">✓</span>
+                      <span><strong>ऑल-इंडिया लाइव रैंकिंग</strong> एवं दैनिक स्ट्रीक रिवॉर्ड्स</span>
+                    </li>
+                    <li class="plan-feature-item">
+                      <span class="feature-check-icon">✓</span>
+                      <span><strong>OTG कीबोर्ड टाइपिंग:</strong> मोबाइल, टैबलेट व कंप्यूटर पर</span>
+                    </li>
+                  </ul>
+                </div>
+
+                <button type="button" class="plan-buy-btn" onclick="event.stopPropagation(); stenoApp.initiateCashfreePayment('3m')">
+                  <span>⚡ अभी खरीदें (Buy Now)</span> <span>→</span>
+                </button>
+              </div>
+
+              <!-- PLAN 3: 6 Months (₹450 - SUPER SAVER) -->
+              <div class="sub-plan-card stenoshala-card" data-plan-id="6m" onclick="stenoApp.initiateCashfreePayment('6m')">
+                <div class="plan-top-badge badge-saver">💰 सुपर सेवर (SUPER SAVER)</div>
+                <div>
+                  <div class="plan-card-header">
+                    <div class="plan-icon-title">
+                      <div class="plan-icon-box" style="background:#ecfdf5; color:#059669;">💎</div>
+                      <div>
+                        <div class="plan-name-text">सुपर सेवर पास</div>
+                        <div style="font-size:0.75rem; color:#059669; font-weight:700;">6 माह (180 दिन)</div>
+                      </div>
+                    </div>
+                    <div class="plan-desc-text">180 दिन का लॉन्ग-टर्म एक्सेस • आगामी सभी परीक्षाओं हेतु</div>
+                  </div>
+
+                  <div>
+                    <span class="plan-discount-pill">⚡ 50% की फ्लैट छूट</span>
+                    <div class="plan-price-block">
+                      <span class="plan-price-strike">₹900</span>
+                      <span class="plan-price-amount">₹450</span>
+                      <span class="plan-price-period">/ 180 दिन</span>
+                    </div>
+                    <div class="plan-rate-meta">
+                      <span class="plan-validity-pill">⏱️ 180 दिन वैधता</span>
+                      <span class="plan-monthly-pill">मात्र ₹75/माह • ₹150 बचत</span>
+                    </div>
+                  </div>
+
+                  <div class="plan-card-divider"></div>
+
+                  <!-- Point-by-Point Feature Details -->
+                  <ul class="plan-features-list">
+                    <li class="plan-feature-item">
+                      <span class="feature-check-icon">✓</span>
+                      <span><strong>6 माह तक</strong> संपूर्ण प्लेटफॉर्म का 100% अनरिफ्रेश्ड एक्सेस</span>
+                    </li>
+                    <li class="plan-feature-item">
+                      <span class="feature-check-icon">✓</span>
+                      <span><strong>रामधारी खंड 1 व 2</strong> (250 अभ्यास) + आनंद पत्रिका 1 व 2</span>
+                    </li>
+                    <li class="plan-feature-item">
+                      <span class="feature-check-icon">✓</span>
+                      <span><strong>आगामी नई कक्षाओं</strong> व संपादकीय का स्वतः फ्री एक्सेस</span>
+                    </li>
+                    <li class="plan-feature-item">
+                      <span class="feature-check-icon">✓</span>
+                      <span><strong>60 से 160 WPM</strong> तक ऑडियो को असीमित बार चलाएं</span>
+                    </li>
+                    <li class="plan-feature-item">
+                      <span class="feature-check-icon">✓</span>
+                      <span><strong>AI द्वारा फुल व हाफ मिस्टेक</strong> का मानक विश्लेषण</span>
+                    </li>
+                    <li class="plan-feature-item">
+                      <span class="feature-check-icon">✓</span>
+                      <span><strong>मंगल</strong> (Inscript/GAIL/CBI) व कृतिदेव 010 में टंकण</span>
+                    </li>
+                    <li class="plan-feature-item">
+                      <span class="feature-check-icon">✓</span>
+                      <span><strong>SSC Grade C & D, हाई कोर्ट</strong>, विधानसभा/सचिवालय टेस्ट मोड</span>
+                    </li>
+                    <li class="plan-feature-item">
+                      <span class="feature-check-icon">✓</span>
+                      <span><strong>प्रोग्रेस एनालिटिक्स:</strong> स्पीड ग्राफ व एक्यूरेसी ट्रेंड्स</span>
+                    </li>
+                    <li class="plan-feature-item">
+                      <span class="feature-check-icon">✓</span>
+                      <span><strong>ऑल-इंडिया रैंकिंग</strong> व टॉपर्स के साथ लाइव तुलना</span>
+                    </li>
+                  </ul>
+                </div>
+
+                <button type="button" class="plan-buy-btn" style="background:linear-gradient(135deg, #059669 0%, #047857 100%); box-shadow:0 4px 12px rgba(5,150,105,0.25);" onclick="event.stopPropagation(); stenoApp.initiateCashfreePayment('6m')">
+                  <span>⚡ अभी खरीदें (Buy Now)</span> <span>→</span>
+                </button>
+              </div>
+
+              <!-- PLAN 4: 1 Year (₹800 - BEST VALUE) -->
+              <div class="sub-plan-card stenoshala-card card-best" data-plan-id="1y" onclick="stenoApp.initiateCashfreePayment('1y')">
+                <div class="plan-top-badge badge-best">👑 सर्वश्रेष्ठ मूल्य (BEST VALUE)</div>
+                <div>
+                  <div class="plan-card-header">
+                    <div class="plan-icon-title">
+                      <div class="plan-icon-box" style="background:#fffbeb; color:#d97706;">👑</div>
+                      <div>
+                        <div class="plan-name-text">गोल्ड प्रो पास</div>
+                        <div style="font-size:0.75rem; color:#d97706; font-weight:700;">1 वर्ष (365 दिन)</div>
+                      </div>
+                    </div>
+                    <div class="plan-desc-text">पूरे 1 वर्ष (365 दिन) के लिए संपूर्ण प्लेटफॉर्म अनलॉक</div>
+                  </div>
+
+                  <div>
+                    <span class="plan-discount-pill" style="background:#fffbeb; color:#d97706; border-color:#fde68a;">⚡ 56% की सबसे बड़ी छूट</span>
+                    <div class="plan-price-block">
+                      <span class="plan-price-strike">₹1,800</span>
+                      <span class="plan-price-amount" style="color:#d97706;">₹800</span>
+                      <span class="plan-price-period">/ 365 दिन</span>
+                    </div>
+                    <div class="plan-rate-meta">
+                      <span class="plan-validity-pill">⏱️ 365 दिन वैधता</span>
+                      <span class="plan-monthly-pill" style="background:#fffbeb; color:#b45309;">👑 मात्र ₹66/माह • ₹400 बचत</span>
+                    </div>
+                  </div>
+
+                  <div class="plan-card-divider"></div>
+
+                  <!-- Point-by-Point Feature Details -->
+                  <ul class="plan-features-list">
+                    <li class="plan-feature-item">
+                      <span class="feature-check-icon" style="background:#fffbeb; color:#d97706; border-color:#fde68a;">✓</span>
+                      <span><strong>पूरे 1 वर्ष</strong> तक 100% सभी डिक्टेशन्स व फीचर्स अनलॉक</span>
+                    </li>
+                    <li class="plan-feature-item">
+                      <span class="feature-check-icon" style="background:#fffbeb; color:#d97706; border-color:#fde68a;">✓</span>
+                      <span><strong>रामधारी गुप्ता</strong> खंड 1 व खंड 2 की सभी 250 कक्षाएं</span>
+                    </li>
+                    <li class="plan-feature-item">
+                      <span class="feature-check-icon" style="background:#fffbeb; color:#d97706; border-color:#fde68a;">✓</span>
+                      <span><strong>आनंद मासिक पत्रिका</strong> (अंक 01 व 02) की सभी 34 कक्षाएं</span>
+                    </li>
+                    <li class="plan-feature-item">
+                      <span class="feature-check-icon" style="background:#fffbeb; color:#d97706; border-color:#fde68a;">✓</span>
+                      <span><strong>साल भर जुड़ने वाली</strong> सभी नई पत्रिकाओं का फ्री एक्सेस</span>
+                    </li>
+                    <li class="plan-feature-item">
+                      <span class="feature-check-icon" style="background:#fffbeb; color:#d97706; border-color:#fde68a;">✓</span>
+                      <span><strong>60 से 160 WPM</strong> स्पीड पर असीमित बार ऑडियो अभ्यास</span>
+                    </li>
+                    <li class="plan-feature-item">
+                      <span class="feature-check-icon" style="background:#fffbeb; color:#d97706; border-color:#fde68a;">✓</span>
+                      <span><strong>AI एरर डिटेक्शन:</strong> पूर्ण व अर्ध गलतियों का मानक मूल्यांकन</span>
+                    </li>
+                    <li class="plan-feature-item">
+                      <span class="feature-check-icon" style="background:#fffbeb; color:#d97706; border-color:#fde68a;">✓</span>
+                      <span><strong>सभी फॉन्ट:</strong> मंगल इनस्क्रिप्ट, GAIL, CBI व कृतिदेव 010</span>
+                    </li>
+                    <li class="plan-feature-item">
+                      <span class="feature-check-icon" style="background:#fffbeb; color:#d97706; border-color:#fde68a;">✓</span>
+                      <span><strong>असली परीक्षा इंटरफ़ेस:</strong> SSC, High Court, UPSSSC, RSSB</span>
+                    </li>
+                    <li class="plan-feature-item">
+                      <span class="feature-check-icon" style="background:#fffbeb; color:#d97706; border-color:#fde68a;">✓</span>
+                      <span><strong>विस्तृत परिणाम रिपोर्ट:</strong> बैकस्पेस, नेट स्पीड व प्रतिशत</span>
+                    </li>
+                    <li class="plan-feature-item">
+                      <span class="feature-check-icon" style="background:#fffbeb; color:#d97706; border-color:#fde68a;">✓</span>
+                      <span><strong>1 वर्ष की लाइव रैंकिंग</strong>, लीडरबोर्ड एवं VIP प्रोफाइल बैज</span>
+                    </li>
+                  </ul>
+                </div>
+
+                <button type="button" class="plan-buy-btn btn-gold" onclick="event.stopPropagation(); stenoApp.initiateCashfreePayment('1y')">
+                  <span>👑 अभी खरीदें (Buy Now)</span> <span>→</span>
+                </button>
+              </div>
+
+            </div>
+            </div>
                 <button type="button" class="sub-buy-now-btn" onclick="event.stopPropagation(); stenoApp.initiateCashfreePayment('1m')">
                   <span>⚡ ₹100 में खरीदें</span> <span>→</span>
                 </button>
@@ -712,11 +1027,11 @@
   <script defer src="https://sdk.cashfree.com/js/v3/cashfree.js"></script>
 
   <!-- Core Lightweight Scripts -->
-  <script src="/js/audio_player.js?v=19.4"></script>
+  <script src="/js/audio_player.js?v=19.5"></script>
   <script src="/js/keyboard_map.js?v=8.1"></script>
-  <script src="/js/typing_engine.js?v=17.1"></script>
+  <script src="/js/typing_engine.js?v=17.3"></script>
   <script src="/js/ocr_service.js?v=1.1"></script>
-  <script src="/js/app.js?v=19.4"></script>
+  <script src="/js/app.js?v=19.5"></script>
 
   <!-- Plans Page Bootstrap Script -->
   <script>

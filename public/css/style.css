@@ -13354,3 +13354,337 @@ eft: 12px;
     font-size: 1.15rem;
   }
 }
+
+
+
+/* ==========================================================================
+   Stenoshala-Inspired Clean & Modern Pricing Plans Grid
+   ========================================================================== */
+.clean-sub-container {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 24px 18px 40px 18px;
+}
+
+.stenoshala-plans-header {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.plans-trust-pills {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  flex-wrap: wrap;
+  padding: 8px 22px;
+  background: rgba(239, 246, 255, 0.85);
+  border: 1px solid #bfdbfe;
+  border-radius: 30px;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.05);
+  margin-bottom: 16px;
+}
+
+.trust-pill-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #1e40af;
+}
+
+.trust-pill-item .check-circle {
+  width: 17px;
+  height: 17px;
+  border-radius: 50%;
+  background: #10b981;
+  color: #ffffff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.68rem;
+  font-weight: 900;
+}
+
+/* 4-Column Grid */
+.subscription-plans-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr) !important;
+  gap: 20px !important;
+  margin-top: 14px !important;
+  margin-bottom: 28px !important;
+  align-items: stretch !important;
+}
+
+@media (max-width: 1200px) {
+  .subscription-plans-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+}
+
+@media (max-width: 680px) {
+  .subscription-plans-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* Individual Card */
+.sub-plan-card.stenoshala-card {
+  position: relative;
+  background: #ffffff;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 20px;
+  padding: 26px 20px 22px 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-shadow: 0 4px 18px rgba(15, 23, 42, 0.04);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow: visible;
+}
+
+.sub-plan-card.stenoshala-card:hover {
+  transform: translateY(-4px);
+  border-color: #3b82f6;
+  box-shadow: 0 16px 36px -4px rgba(37, 99, 235, 0.14);
+}
+
+/* Highlighted Popular & Best Value Cards */
+.sub-plan-card.stenoshala-card.card-popular {
+  border: 2px solid #3b82f6 !important;
+  background: linear-gradient(180deg, #f8faff 0%, #ffffff 100%) !important;
+  box-shadow: 0 10px 30px -4px rgba(37, 99, 235, 0.14) !important;
+}
+
+.sub-plan-card.stenoshala-card.card-best {
+  border: 2px solid #f59e0b !important;
+  background: linear-gradient(180deg, #fffdfa 0%, #ffffff 100%) !important;
+  box-shadow: 0 10px 30px -4px rgba(245, 158, 11, 0.16) !important;
+}
+
+/* Floating Top Badge */
+.plan-top-badge {
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 4px 14px;
+  border-radius: 20px;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  white-space: nowrap;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.12);
+  z-index: 2;
+}
+
+.badge-popular {
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  color: #ffffff;
+}
+
+.badge-best {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  color: #ffffff;
+}
+
+.badge-starter {
+  background: linear-gradient(135deg, #0284c7, #0369a1);
+  color: #ffffff;
+}
+
+.badge-saver {
+  background: linear-gradient(135deg, #059669, #047857);
+  color: #ffffff;
+}
+
+/* Card Header */
+.plan-card-header {
+  margin-bottom: 12px;
+}
+
+.plan-icon-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+
+.plan-icon-box {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  flex-shrink: 0;
+}
+
+.plan-name-text {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #0f172a;
+  line-height: 1.25;
+}
+
+.plan-desc-text {
+  font-size: 0.78rem;
+  color: #64748b;
+  line-height: 1.35;
+  margin-bottom: 10px;
+}
+
+/* Discount & Price Block */
+.plan-discount-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #ecfdf5;
+  color: #059669;
+  border: 1px solid #a7f3d0;
+  font-size: 0.70rem;
+  font-weight: 800;
+  padding: 2px 8px;
+  border-radius: 12px;
+  margin-bottom: 8px;
+}
+
+.plan-price-block {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.plan-price-strike {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: #94a3b8;
+  text-decoration: line-through;
+}
+
+.plan-price-amount {
+  font-size: 2.2rem;
+  font-weight: 900;
+  color: #0f172a;
+  line-height: 1;
+  letter-spacing: -1px;
+}
+
+.plan-price-period {
+  font-size: 0.8rem;
+  color: #64748b;
+  font-weight: 600;
+}
+
+.plan-rate-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.plan-validity-pill {
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: #475569;
+  background: #f1f5f9;
+  padding: 3px 8px;
+  border-radius: 6px;
+}
+
+.plan-monthly-pill {
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: #065f46;
+  background: #ecfdf5;
+  padding: 3px 8px;
+  border-radius: 6px;
+}
+
+/* Divider */
+.plan-card-divider {
+  height: 1px;
+  background: #f1f5f9;
+  margin-bottom: 14px;
+}
+
+/* Feature List */
+.plan-features-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 20px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  flex-grow: 1;
+}
+
+.plan-feature-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 0.79rem;
+  color: #334155;
+  line-height: 1.35;
+}
+
+.plan-feature-item strong {
+  color: #0f172a;
+  font-weight: 700;
+}
+
+.feature-check-icon {
+  width: 17px;
+  height: 17px;
+  min-width: 17px;
+  border-radius: 50%;
+  background: #ecfdf5;
+  color: #059669;
+  border: 1px solid #a7f3d0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.68rem;
+  font-weight: 900;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+/* Action Button */
+.plan-buy-btn {
+  width: 100%;
+  padding: 12px 18px;
+  border-radius: 12px;
+  font-size: 0.92rem;
+  font-weight: 800;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
+  color: #ffffff;
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+}
+
+.plan-buy-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(37, 99, 235, 0.32);
+}
+
+.plan-buy-btn.btn-gold {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.25);
+  color: #ffffff;
+}
+
+.plan-buy-btn.btn-gold:hover {
+  box-shadow: 0 6px 18px rgba(245, 158, 11, 0.4);
+}
