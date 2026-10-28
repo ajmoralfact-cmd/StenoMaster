@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Theme Demo 3: Stenoshala Dual-Tone Executive — StenoMaster</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Noto+Sans+Devanagari:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    /* ==========================================================================
+       THEME 3: STENOSHALA DUAL-TONE EXECUTIVE
+       Deep navy command header + pristine white cards + high-contrast clarity
+       ========================================================================== */
+    :root {
+      --bg-page: #f1f5f9;
+      --bg-white: #ffffff;
+      --navy-header: #0f172a;
+      --navy-header-sub: #1e293b;
+      --border-light: #e2e8f0;
+      --text-dark: #090d16;
+      --text-body: #334155;
+      --text-muted: #64748b;
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --emerald: #059669;
+      --amber: #d97706;
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 14px;
+      --shadow-subtle: 0 1px 3px rgba(15, 23, 42, 0.08);
+      --shadow-elevated: 0 4px 14px -1px rgba(15, 23, 42, 0.06);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Plus Jakarta Sans', 'Noto Sans Devanagari', -apple-system, sans-serif;
+      background-color: var(--bg-page);
+      color: var(--text-body);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Top Switcher Bar */
+    .demo-top-bar {
+      background: #020617;
+      color: #ffffff;
+      padding: 10px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.85rem;
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      border-bottom: 1px solid #1e293b;
+    }
+    .demo-tabs { display: flex; gap: 8px; }
+    .demo-tab-btn {
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.18);
+      color: #cbd5e1;
+      padding: 5px 14px;
+      border-radius: 20px;
+      text-decoration: none;
+      font-weight: 600;
+      transition: all 0.2s;
+    }
+    .demo-tab-btn.active, .demo-tab-btn:hover {
+      background: #2563eb;
+      color: #ffffff;
+      border-color: #2563eb;
+    }
+
+    /* Executive Navy Header */
+    .exec-header {
+      height: 70px;
+      background: var(--navy-header);
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 32px;
+      position: sticky;
+      top: 41px;
+      z-index: 99;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+    }
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .btn-exec-drawer {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      background: var(--navy-header-sub);
+      border: 1px solid #334155;
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+      cursor: pointer;
+    }
+    .brand-link {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      color: #ffffff;
+    }
+    .brand-badge-mic {
+      width: 38px;
+      height: 38px;
+      border-radius: 10px;
+      background: #2563eb;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.3rem;
+      box-shadow: 0 2px 8px rgba(37,99,235,0.4);
+    }
+    .brand-title-exec {
+      font-size: 1.2rem;
+      font-weight: 800;
+      letter-spacing: -0.3px;
+    }
+    .brand-sub-exec {
+      font-size: 0.68rem;
+      color: #94a3b8;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .exec-plan-tag {
+      background: rgba(254, 243, 199, 0.15);
+      border: 1px solid rgba(254, 243, 199, 0.3);
+      color: #fde68a;
+      padding: 5px 12px;
+      border-radius: 20px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .exec-streak-tag {
+      background: rgba(255, 237, 213, 0.15);
+      border: 1px solid rgba(255, 237, 213, 0.3);
+      color: #fed7aa;
+      padding: 5px 12px;
+      border-radius: 20px;
+      font-size: 0.78rem;
+      font-weight: 700;
+    }
+    .btn-exec-tool {
+      background: var(--navy-header-sub);
+      border: 1px solid #334155;
+      color: #e2e8f0;
+      padding: 6px 10px;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .user-pill-exec {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 4px 12px 4px 4px;
+      background: var(--navy-header-sub);
+      border: 1px solid #334155;
+      border-radius: 20px;
+      cursor: pointer;
+    }
+    .user-av-exec {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: #2563eb;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 0.8rem;
+    }
+    .btn-exec-logout {
+      background: #ef4444;
+      color: #ffffff;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    /* Container */
+    .exec-container {
+      max-width: 1360px;
+      margin: 24px auto;
+      padding: 0 24px 60px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    /* Section Header */
+    .dashboard-header-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .dash-title-wrap h2 {
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: var(--text-dark);
+      letter-spacing: -0.4px;
+    }
+    .dash-title-wrap p {
+      font-size: 0.84rem;
+      color: var(--text-muted);
+      margin-top: 3px;
+    }
+    .btn-refresh-exec {
+      background: #ffffff;
+      border: 1px solid var(--border-light);
+      color: var(--text-dark);
+      padding: 6px 14px;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* Active Plan Banner */
+    .plan-banner-exec {
+      background: #ffffff;
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-md);
+      padding: 16px 22px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: var(--shadow-subtle);
+    }
+    .btn-upgrade-exec {
+      background: var(--navy-header);
+      color: #ffffff;
+      border: none;
+      padding: 9px 18px;
+      border-radius: 6px;
+      font-size: 0.84rem;
+      font-weight: 700;
+      cursor: pointer;
+      text-decoration: none;
+    }
+
+    /* Continue Practice Card */
+    .continue-card-exec {
+      background: #ffffff;
+      border: 2px solid #2563eb;
+      border-radius: var(--radius-md);
+      padding: 16px 22px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: var(--shadow-elevated);
+      cursor: pointer;
+    }
+    .btn-start-exec {
+      background: #2563eb;
+      color: #ffffff;
+      border: none;
+      padding: 9px 20px;
+      border-radius: 6px;
+      font-weight: 800;
+      font-size: 0.84rem;
+      cursor: pointer;
+    }
+
+    /* 8 Stats Grid */
+    .stats-grid-exec {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+    }
+    .stat-card-exec {
+      background: #ffffff;
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-md);
+      padding: 16px;
+      box-shadow: var(--shadow-subtle);
+      transition: all 0.15s ease;
+    }
+    .stat-card-exec:hover {
+      border-color: #0f172a;
+      transform: translateY(-2px);
+    }
+
+    /* Practice Classes */
+    .categories-list-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .category-card-exec {
+      background: #ffffff;
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-md);
+      padding: 18px 22px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      box-shadow: var(--shadow-subtle);
+      transition: all 0.15s ease;
+      cursor: pointer;
+    }
+    .category-card-exec:hover {
+      border-color: #2563eb;
+      box-shadow: 0 4px 16px rgba(37,99,235,0.1);
+    }
+    .btn-open-exec {
+      background: #0f172a;
+      color: #ffffff;
+      border: none;
+      padding: 9px 18px;
+      border-radius: 6px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .btn-open-exec:hover {
+      background: #2563eb;
+    }
+
+    @media (max-width: 1100px) {
+      .stats-grid-exec { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 768px) {
+      .stats-grid-exec { grid-template-columns: 1fr; }
+      .category-card-exec { flex-direction: column; align-items: flex-start; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Demo Switcher -->
+  <div class="demo-top-bar">
+    <div><strong>StenoMaster Theme Showcase:</strong> स्टेनेशाला कलर पैलेट + मौजूदा बटन और फ़ंक्शन</div>
+    <div class="demo-tabs">
+      <a href="theme1_stenoshala_airy.html" class="demo-tab-btn">Theme 1: Stenoshala Pure Airy</a>
+      <a href="theme2_stenoshala_sapphire.html" class="demo-tab-btn">Theme 2: Stenoshala Sapphire Luxe</a>
+      <a href="theme3_stenoshala_executive.html" class="demo-tab-btn active">Theme 3: Stenoshala Dual-Tone</a>
+      <a href="/" class="demo-tab-btn" style="background:#ef4444; color:#fff; border-color:#ef4444;">← Back to App</a>
+    </div>
+  </div>
+
+  <!-- Executive Header -->
+  <header class="exec-header">
+    <div class="header-left">
+      <button class="btn-exec-drawer" title="नेविगेशन मेनू">⋮</button>
+      <a href="#" class="brand-link">
+        <div class="brand-badge-mic">🎙️</div>
+        <div>
+          <div class="brand-title-exec">StenoMaster</div>
+          <div class="brand-sub-exec">LISTEN • TYPE • IMPROVE</div>
+        </div>
+      </a>
+    </div>
+
+    <div class="header-right">
+      <div class="exec-plan-tag" title="सक्रिय सदस्यता">
+        👑 <span>StenoMaster Pro</span>
+      </div>
+      <div class="exec-streak-tag" title="दैनिक अभ्यास स्ट्रीक">
+        🔥 <span>7 Days Streak</span>
+      </div>
+      <button class="btn-exec-tool">🌐 EN</button>
+      <button class="btn-exec-tool">🌙</button>
+      <button class="btn-exec-tool">🔔</button>
+
+      <div class="user-pill-exec">
+        <div class="user-av-exec">H</div>
+        <span style="font-size:0.82rem; font-weight:700;">Harsh Khare</span>
+      </div>
+
+      <button class="btn-exec-logout">🚪 लॉगआउट</button>
+    </div>
+  </header>
+
+  <!-- Container -->
+  <main class="exec-container">
+
+    <!-- Section Header Bar -->
+    <div class="dashboard-header-bar">
+      <div class="dash-title-wrap">
+        <h2>डैशबोर्ड (Dashboard)</h2>
+        <p>आपकी दैनिक स्टेनो अभ्यास प्रगति, गति एवं सटीकता का संपूर्ण विवरण</p>
+      </div>
+
+      <div style="display:flex; align-items:center; gap:8px;">
+        <span style="font-size:0.78rem; font-weight:700; color:#059669;">● लाइव सिंक सक्रिय</span>
+        <button class="btn-refresh-exec">🔄 रिफ्रेश</button>
+      </div>
+    </div>
+
+    <!-- Active Plan Banner -->
+    <div class="plan-banner-exec">
+      <div style="display:flex; align-items:center; gap:14px;">
+        <div style="width:42px; height:42px; border-radius:10px; background:#eff6ff; display:flex; align-items:center; justify-content:center; font-size:1.3rem;">
+          🟢
+        </div>
+        <div>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <span style="background:#0f172a; color:#fff; font-size:0.65rem; font-weight:800; padding:2px 7px; border-radius:4px;">सक्रिय प्लान</span>
+            <strong style="font-size:1.05rem; font-weight:800; color:#090d16;">StenoMaster Pro (वार्षिक सदस्यता)</strong>
+          </div>
+          <div style="font-size:0.78rem; color:#64748b; margin-top:2px;">वैधता: 342 दिन शेष • सभी 150+ रामधारी व आनंद पत्रिका डिक्टेशन्स अनलॉक</div>
+        </div>
+      </div>
+      <a href="/plans" class="btn-upgrade-exec">👑 प्लान अपग्रेड / रिन्यू करें →</a>
+    </div>
+
+    <!-- Continue Practice Card -->
+    <div class="continue-card-exec" onclick="window.location.href='/practice.html?class=1&type=ramdhari_khand_1'">
+      <div style="display:flex; align-items:center; gap:14px;">
+        <div style="width:42px; height:42px; border-radius:50%; background:#eff6ff; color:#2563eb; display:flex; align-items:center; justify-content:center; font-size:1.3rem;">
+          ▶
+        </div>
+        <div>
+          <div style="font-size:0.72rem; font-weight:700; text-transform:uppercase; color:#2563eb; letter-spacing:0.5px;">
+            ⚡ अगला अभ्यास जारी रखें (Continue Practice)
+          </div>
+          <div style="font-size:1.05rem; font-weight:800; color:#090d16; margin-top:2px;">
+            रामधारी गुप्ता खंड 1 - अभ्यास 1 (80 WPM)
+          </div>
+        </div>
+      </div>
+      <button class="btn-start-exec">प्रारंभ करें →</button>
+    </div>
+
+    <!-- 8 Stats Grid -->
+    <div class="stats-grid-exec">
+      <!-- 1 -->
+      <div class="stat-card-exec">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+          <span style="font-size:0.75rem; font-weight:700; color:#64748b;">स्ट्रीक (Streak)</span>
+          <span style="font-size:0.65rem; font-weight:800; background:#ffedd5; color:#9a3412; padding:2px 6px; border-radius:4px;">नियमितता</span>
+        </div>
+        <div style="font-size:1.45rem; font-weight:800; color:#090d16;">7 <span style="font-size:0.85rem; color:#64748b;">दिन</span></div>
+        <div style="font-size:0.72rem; color:#64748b; margin-top:4px;">अधिकतम रिकॉर्ड: 14 दिन</div>
+      </div>
+
+      <!-- 2 -->
+      <div class="stat-card-exec">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+          <span style="font-size:0.75rem; font-weight:700; color:#64748b;">दैनिक लक्ष्य</span>
+          <span style="font-size:0.65rem; font-weight:800; background:#d1fae5; color:#065f46; padding:2px 6px; border-radius:4px;">66% पूर्ण</span>
+        </div>
+        <div style="font-size:1.45rem; font-weight:800; color:#090d16;">2 / 3 <span style="font-size:0.85rem; color:#64748b;">डिक्टेशन</span></div>
+        <div style="font-size:0.72rem; color:#64748b; margin-top:4px;">आज 1 डिक्टेशन शेष है</div>
+      </div>
+
+      <!-- 3 -->
+      <div class="stat-card-exec">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+          <span style="font-size:0.75rem; font-weight:700; color:#64748b;">औसत गति</span>
+          <span style="font-size:0.65rem; font-weight:800; background:#dbeafe; color:#1e40af; padding:2px 6px; border-radius:4px;">नेट स्पीड</span>
+        </div>
+        <div style="font-size:1.45rem; font-weight:800; color:#090d16;">82.4 <span style="font-size:0.85rem; color:#64748b;">WPM</span></div>
+        <div style="font-size:0.72rem; color:#64748b; margin-top:4px;">नेट शुद्ध टंकण गति</div>
+      </div>
+
+      <!-- 4 -->
+      <div class="stat-card-exec">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+          <span style="font-size:0.75rem; font-weight:700; color:#64748b;">सटीकता (Acc)</span>
+          <span style="font-size:0.65rem; font-weight:800; background:#f3e8ff; color:#6b21a8; padding:2px 6px; border-radius:4px;">शुद्धता</span>
+        </div>
+        <div style="font-size:1.45rem; font-weight:800; color:#090d16;">97.8%</div>
+        <div style="font-size:0.72rem; color:#64748b; margin-top:4px;">लक्ष्य: 95%+ SSC Grade C</div>
+      </div>
+
+      <!-- 5 -->
+      <div class="stat-card-exec">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+          <span style="font-size:0.75rem; font-weight:700; color:#64748b;">कुल अभ्यास</span>
+          <span style="font-size:0.65rem; font-weight:800; background:#e2e8f0; color:#334155; padding:2px 6px; border-radius:4px;">सत्र पूर्ण</span>
+        </div>
+        <div style="font-size:1.45rem; font-weight:800; color:#090d16;">48 <span style="font-size:0.85rem; color:#64748b;">सत्र</span></div>
+        <div style="font-size:0.72rem; color:#64748b; margin-top:4px;">कुल 24,500 शब्द टाइप</div>
+      </div>
+
+      <!-- 6 -->
+      <div class="stat-card-exec">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+          <span style="font-size:0.75rem; font-weight:700; color:#64748b;">रिवॉर्ड्स</span>
+          <span style="font-size:0.65rem; font-weight:800; background:#fde68a; color:#92400e; padding:2px 6px; border-radius:4px;">सत्यापित ℹ️</span>
+        </div>
+        <div style="font-size:1.45rem; font-weight:800; color:#d97706;">420 <span style="font-size:0.85rem;">Pts</span></div>
+        <div style="font-size:0.72rem; color:#64748b; margin-top:4px;">🎮 अनलॉक बैज देखें →</div>
+      </div>
+
+      <!-- 7 -->
+      <div class="stat-card-exec">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+          <span style="font-size:0.75rem; font-weight:700; color:#64748b;">सर्वश्रेष्ठ गति</span>
+          <span style="font-size:0.65rem; font-weight:800; background:#e0f2fe; color:#0369a1; padding:2px 6px; border-radius:4px;">ऑल-टाइम</span>
+        </div>
+        <div style="font-size:1.45rem; font-weight:800; color:#090d16;">94.0 <span style="font-size:0.85rem; color:#64748b;">WPM</span></div>
+        <div style="font-size:0.72rem; color:#64748b; margin-top:4px;">व्यक्तिगत सर्वश्रेष्ठ</div>
+      </div>
+
+      <!-- 8 -->
+      <div class="stat-card-exec">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+          <span style="font-size:0.75rem; font-weight:700; color:#64748b;">कुल समय</span>
+          <span style="font-size:0.65rem; font-weight:800; background:#e2e8f0; color:#475569; padding:2px 6px; border-radius:4px;">निवेश</span>
+        </div>
+        <div style="font-size:1.45rem; font-weight:800; color:#090d16;">340 <span style="font-size:0.85rem; color:#64748b;">mins</span></div>
+        <div style="font-size:0.72rem; color:#64748b; margin-top:4px;">सक्रिय टाइपिंग अभ्यास</div>
+      </div>
+    </div>
+
+    <!-- Practice Classes Section -->
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-top:10px;">
+      <div>
+        <h3 style="font-size:1.3rem; font-weight:800; color:#090d16;">अभ्यास कक्षाएं (Practice Classes)</h3>
+        <p style="font-size:0.8rem; color:#64748b; margin-top:2px;">रामधारी गुप्ता खंड 1, खंड 2, आनंद पत्रिका एवं कोर्ट स्पेशल</p>
+      </div>
+      <a href="#" style="background:#ffffff; border:1px solid #cbd5e1; color:#0f172a; padding:7px 14px; border-radius:6px; font-size:0.82rem; font-weight:700; text-decoration:none;">सभी देखें (View All) →</a>
+    </div>
+
+    <!-- Category Series Cards -->
+    <div class="categories-list-wrap">
+
+      <!-- Cat 1 -->
+      <div class="category-card-exec" onclick="window.location.href='/practice.html?class=1&type=ramdhari_khand_1'">
+        <div style="display:flex; align-items:center; gap:16px; flex:1;">
+          <div style="width:52px; height:52px; border-radius:12px; background:#eff6ff; border:1px solid #bfdbfe; display:flex; align-items:center; justify-content:center; font-size:1.8rem; color:#2563eb;">📖</div>
+          <div>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <h4 style="font-size:1.15rem; font-weight:800; color:#090d16;">रामधारी गुप्ता खंड - 1</h4>
+              <span style="background:#059669; color:#fff; font-size:0.68rem; font-weight:800; padding:2px 7px; border-radius:4px;">✓ UNLOCKED</span>
+            </div>
+            <div style="font-size:0.8rem; color:#64748b; margin-top:3px;">
+              <span>📊 <strong>100</strong> कुल टेस्ट</span> • 
+              <span style="color:#059669; font-weight:700;">🎁 <strong>2</strong> फ्री डेमो टेस्ट</span>
+            </div>
+          </div>
+        </div>
+
+        <div style="display:flex; gap:8px; align-items:center;">
+          <span style="background:#f1f5f9; border:1px solid #cbd5e1; font-weight:700; font-size:0.75rem; padding:4px 10px; border-radius:4px;">⚡ 80 - 100 WPM</span>
+          <span style="background:#f1f5f9; border:1px solid #cbd5e1; font-weight:700; font-size:0.75rem; padding:4px 10px; border-radius:4px;">📝 400 शब्द</span>
+          <span style="background:#f1f5f9; border:1px solid #cbd5e1; font-weight:700; font-size:0.75rem; padding:4px 10px; border-radius:4px;">🎙️ ऑडियो + आउटलाइन</span>
+        </div>
+
+        <a href="/practice.html?class=1&type=ramdhari_khand_1" class="btn-open-exec">अभ्यास खोलें ➔</a>
+      </div>
+
+      <!-- Cat 2 -->
+      <div class="category-card-exec" onclick="window.location.href='/practice.html?class=1&type=ramdhari_khand_2'">
+        <div style="display:flex; align-items:center; gap:16px; flex:1;">
+          <div style="width:52px; height:52px; border-radius:12px; background:#ecfdf5; border:1px solid #a7f3d0; display:flex; align-items:center; justify-content:center; font-size:1.8rem; color:#059669;">🎯</div>
+          <div>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <h4 style="font-size:1.15rem; font-weight:800; color:#090d16;">रामधारी गुप्ता खंड - 2</h4>
+              <span style="background:#059669; color:#fff; font-size:0.68rem; font-weight:800; padding:2px 7px; border-radius:4px;">✓ UNLOCKED</span>
+            </div>
+            <div style="font-size:0.8rem; color:#64748b; margin-top:3px;">
+              <span>📊 <strong>150</strong> कुल टेस्ट</span> • 
+              <span style="color:#059669; font-weight:700;">🎁 <strong>2</strong> फ्री डेमो टेस्ट</span>
+            </div>
+          </div>
+        </div>
+
+        <div style="display:flex; gap:8px; align-items:center;">
+          <span style="background:#f1f5f9; border:1px solid #cbd5e1; font-weight:700; font-size:0.75rem; padding:4px 10px; border-radius:4px;">⚡ 80 - 100 WPM</span>
+          <span style="background:#f1f5f9; border:1px solid #cbd5e1; font-weight:700; font-size:0.75rem; padding:4px 10px; border-radius:4px;">📝 800 शब्द</span>
+          <span style="background:#f1f5f9; border:1px solid #cbd5e1; font-weight:700; font-size:0.75rem; padding:4px 10px; border-radius:4px;">🎙️ ऑडियो + आउटलाइन</span>
+        </div>
+
+        <a href="/practice.html?class=1&type=ramdhari_khand_2" class="btn-open-exec">अभ्यास खोलें ➔</a>
+      </div>
+
+      <!-- Cat 3 -->
+      <div class="category-card-exec" onclick="window.location.href='/practice.html?class=1&type=anand_patrika'">
+        <div style="display:flex; align-items:center; gap:16px; flex:1;">
+          <div style="width:52px; height:52px; border-radius:12px; background:#fffbeb; border:1px solid #fde68a; display:flex; align-items:center; justify-content:center; font-size:1.8rem; color:#d97706;">📰</div>
+          <div>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <h4 style="font-size:1.15rem; font-weight:800; color:#090d16;">आनंद मासिक पत्रिका</h4>
+              <span style="background:#059669; color:#fff; font-size:0.68rem; font-weight:800; padding:2px 7px; border-radius:4px;">✓ UNLOCKED</span>
+            </div>
+            <div style="font-size:0.8rem; color:#64748b; margin-top:3px;">
+              <span>📊 <strong>51</strong> कुल टेस्ट</span> • 
+              <span style="color:#059669; font-weight:700;">🎁 <strong>2</strong> फ्री डेमो टेस्ट</span>
+            </div>
+          </div>
+        </div>
+
+        <div style="display:flex; gap:8px; align-items:center;">
+          <span style="background:#f1f5f9; border:1px solid #cbd5e1; font-weight:700; font-size:0.75rem; padding:4px 10px; border-radius:4px;">⚡ 90 WPM (मानक ऑडियो)</span>
+          <span style="background:#f1f5f9; border:1px solid #cbd5e1; font-weight:700; font-size:0.75rem; padding:4px 10px; border-radius:4px;">📝 800-1000 शब्द</span>
+          <span style="background:#f1f5f9; border:1px solid #cbd5e1; font-weight:700; font-size:0.75rem; padding:4px 10px; border-radius:4px;">🎙️ ऑडियो + आउटलाइन</span>
+        </div>
+
+        <a href="/practice.html?class=1&type=anand_patrika" class="btn-open-exec">अभ्यास खोलें ➔</a>
+      </div>
+
+      <!-- Cat 4 -->
+      <div class="category-card-exec" onclick="window.location.href='/practice.html?class=1&type=court_special'">
+        <div style="display:flex; align-items:center; gap:16px; flex:1;">
+          <div style="width:52px; height:52px; border-radius:12px; background:#faf5ff; border:1px solid #e9d5ff; display:flex; align-items:center; justify-content:center; font-size:1.8rem; color:#7c3aed;">⚖️</div>
+          <div>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <h4 style="font-size:1.15rem; font-weight:800; color:#090d16;">कोर्ट एवं विधिक डिक्टेशन</h4>
+              <span style="background:#059669; color:#fff; font-size:0.68rem; font-weight:800; padding:2px 7px; border-radius:4px;">✓ UNLOCKED</span>
+            </div>
+            <div style="font-size:0.8rem; color:#64748b; margin-top:3px;">
+              <span>📊 <strong>40+</strong> विधिक निर्णय</span> • 
+              <span style="color:#059669; font-weight:700;">🎁 <strong>1</strong> फ्री डेमो टेस्ट</span>
+            </div>
+          </div>
+        </div>
+
+        <div style="display:flex; gap:8px; align-items:center;">
+          <span style="background:#f1f5f9; border:1px solid #cbd5e1; font-weight:700; font-size:0.75rem; padding:4px 10px; border-radius:4px;">⚡ 80 WPM (कोर्ट मानक)</span>
+          <span style="background:#f1f5f9; border:1px solid #cbd5e1; font-weight:700; font-size:0.75rem; padding:4px 10px; border-radius:4px;">📝 विधिक धाराएं</span>
+          <span style="background:#f1f5f9; border:1px solid #cbd5e1; font-weight:700; font-size:0.75rem; padding:4px 10px; border-radius:4px;">🎙️ न्यायिक शब्दावली</span>
+        </div>
+
+        <a href="/practice.html?class=1&type=court_special" class="btn-open-exec">अभ्यास खोलें ➔</a>
+      </div>
+
+    </div>
+
+  </main>
+
+</body>
+</html>
