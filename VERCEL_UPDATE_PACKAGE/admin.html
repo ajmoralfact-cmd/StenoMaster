@@ -2378,8 +2378,12 @@
   <script src="/js/admin.js?v=12.6"></script>
 
   <!-- Standalone In-Page Admin Login Modal (Never redirects away) -->
-  <div id="adminStandaloneAuthModal" class="modal-overlay" style="display:none; pointer-events:none; z-index:999999; background:rgba(15, 23, 42, 0.85); backdrop-filter:blur(8px);">
-    <div class="modal-card" style="max-width:440px; border:2px solid #ef4444; box-shadow:0 20px 50px rgba(0,0,0,0.5); border-radius:16px; padding:28px;">
+  <div id="adminStandaloneAuthModal" class="modal-overlay" style="display:none; pointer-events:none; z-index:999999; background:rgba(15, 23, 42, 0.85); backdrop-filter:blur(8px);" onclick="if(event.target === this) window.closeAdminStandaloneAuthModal()">
+    <div class="modal-card" style="position:relative; max-width:440px; border:2px solid #ef4444; box-shadow:0 20px 50px rgba(0,0,0,0.5); border-radius:16px; padding:28px;">
+      
+      <!-- Prominent Close Button (X) -->
+      <button type="button" class="admin-modal-close-btn" onclick="window.closeAdminStandaloneAuthModal()" style="position:absolute; top:14px; right:14px; width:36px; height:36px; border-radius:50%; background:#f1f5f9; border:1px solid #cbd5e1; font-size:1.25rem; font-weight:700; line-height:1; cursor:pointer; display:flex; align-items:center; justify-content:center; color:#64748b; transition:all 0.2s cubic-bezier(0.4, 0, 0.2, 1); box-shadow:0 2px 6px rgba(0,0,0,0.08); z-index:10;" onmouseover="this.style.background='#fee2e2'; this.style.color='#ef4444'; this.style.borderColor='#fca5a5'; this.style.transform='scale(1.08)'" onmouseout="this.style.background='#f1f5f9'; this.style.color='#64748b'; this.style.borderColor='#cbd5e1'; this.style.transform='scale(1)'" title="बंद करें (Close)" aria-label="बंद करें (Close)">✕</button>
+
       <div style="text-align:center; margin-bottom:18px;">
         <div style="font-size:2.8rem; margin-bottom:8px;">🛡️</div>
         <h2 style="margin:0 0 6px 0; font-size:1.4rem; color:var(--text-main);">प्रशासनिक नियंत्रण (Admin Login)</h2>
@@ -2402,12 +2406,39 @@
       </form>
 
       <div style="text-align:center; margin-top:16px;">
-        <a href="/" style="font-size:0.82rem; color:var(--primary); text-decoration:none; font-weight:600;">👨‍🎓 मुख्य छात्र पोर्टल पर वापस जाएं</a>
+        <a href="javascript:void(0)" onclick="window.closeAdminStandaloneAuthModal()" style="font-size:0.85rem; color:var(--primary); text-decoration:none; font-weight:600; display:inline-flex; align-items:center; gap:6px;">👨‍🎓 मुख्य छात्र पोर्टल पर वापस जाएं</a>
       </div>
     </div>
   </div>
 
   <script>
+    window.closeAdminStandaloneAuthModal = function() {
+      var modal = document.getElementById('adminStandaloneAuthModal');
+      if (modal) {
+        modal.style.display = 'none';
+        modal.style.pointerEvents = 'none';
+        modal.classList.remove('active');
+      }
+      // Redirect to student portal / home page
+      if (document.referrer && document.referrer.indexOf(window.location.host) !== -1 && document.referrer !== window.location.href) {
+        window.location.href = document.referrer;
+      } else if (window.history.length > 1) {
+        window.history.back();
+      } else {
+        window.location.href = '/';
+      }
+    };
+
+    // Listen for Escape key to close modal
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape' || e.keyCode === 27) {
+        var modal = document.getElementById('adminStandaloneAuthModal');
+        if (modal && (modal.style.display === 'flex' || modal.classList.contains('active'))) {
+          window.closeAdminStandaloneAuthModal();
+        }
+      }
+    });
+
     window.checkAdminStandaloneAuth = function(forceShow) {
       try {
         var token = localStorage.getItem('stenomaster_token');
