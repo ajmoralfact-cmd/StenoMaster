@@ -358,6 +358,10 @@ class StenoApp {
       ];
     }
     this._categoryDetailCache = new Map();
+
+    this.init();
+  }
+
   getCanonicalWordCount(p) {
     if (!p) return 400;
     const catId = Number(p.category_id);
@@ -379,10 +383,6 @@ class StenoApp {
     if (raw >= 680 && raw <= 870) return 800;
     if (raw >= 880 && raw <= 1100) return 1000;
     return raw > 0 ? raw : 400;
-  }
-
-
-    this.init();
   }
 
   setExamRule(rule, showNotification = true) {
@@ -1008,7 +1008,7 @@ class StenoApp {
     }
 
     if ('serviceWorker' in navigator) {
-      const CURRENT_SW_VERSION = 'v17.0';
+      const CURRENT_SW_VERSION = 'v17.1';
 
       // Step 1: Unregister ALL stale/old service workers first
       navigator.serviceWorker.getRegistrations().then((registrations) => {
@@ -1025,7 +1025,7 @@ class StenoApp {
               if ('caches' in window) {
                 caches.keys().then((keys) => {
                   keys.forEach((key) => {
-                    if (!key.includes('v17.0')) {
+                    if (!key.includes('v17.1')) {
                       caches.delete(key);
                       console.log('[SW] Cleared stale cache:', key);
                     }
