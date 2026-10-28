@@ -6254,54 +6254,36 @@ ${link}`;
   }
 
   getCategoryTheme(cat, isUnlocked) {
-    if (isUnlocked) {
-      return {
-        accentColor: '#10b981',
-        borderColor: 'rgba(16, 185, 129, 0.45)',
-        bgGradient: 'linear-gradient(90deg, rgba(16, 185, 129, 0.08) 0%, rgba(255, 255, 255, 0.98) 35%, rgba(16, 185, 129, 0.04) 100%)',
-        boxShadow: '0 6px 20px -2px rgba(16, 185, 129, 0.14), 0 2px 6px rgba(0, 0, 0, 0.04)',
-        emblemBg: 'linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(52, 211, 153, 0.25))',
-        emblemBorder: 'rgba(16, 185, 129, 0.35)'
-      };
-    }
-
     const str = `${cat.slug || ''} ${cat.name || ''}`.toLowerCase();
-    if (str.includes('ramdhari') || str.includes('dinkar')) {
-      return {
-        accentColor: '#6366f1',
-        borderColor: 'rgba(99, 102, 241, 0.4)',
-        bgGradient: 'linear-gradient(90deg, rgba(99, 102, 241, 0.08) 0%, rgba(255, 255, 255, 0.98) 35%, rgba(99, 102, 241, 0.04) 100%)',
-        boxShadow: '0 6px 20px -2px rgba(99, 102, 241, 0.14), 0 2px 6px rgba(0, 0, 0, 0.04)',
-        emblemBg: 'linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(129, 140, 248, 0.25))',
-        emblemBorder: 'rgba(99, 102, 241, 0.35)'
-      };
-    } else if (str.includes('court') || str.includes('vidhik') || str.includes('legal')) {
-      return {
-        accentColor: '#d97706',
-        borderColor: 'rgba(217, 119, 6, 0.4)',
-        bgGradient: 'linear-gradient(90deg, rgba(217, 119, 6, 0.08) 0%, rgba(255, 255, 255, 0.98) 35%, rgba(217, 119, 6, 0.04) 100%)',
-        boxShadow: '0 6px 20px -2px rgba(217, 119, 6, 0.14), 0 2px 6px rgba(0, 0, 0, 0.04)',
-        emblemBg: 'linear-gradient(135deg, rgba(217, 119, 6, 0.15), rgba(245, 158, 11, 0.25))',
-        emblemBorder: 'rgba(217, 119, 6, 0.35)'
-      };
-    } else if (str.includes('editorial') || str.includes('sampadkiya')) {
-      return {
-        accentColor: '#0284c7',
-        borderColor: 'rgba(2, 132, 199, 0.4)',
-        bgGradient: 'linear-gradient(90deg, rgba(2, 132, 199, 0.08) 0%, rgba(255, 255, 255, 0.98) 35%, rgba(2, 132, 199, 0.04) 100%)',
-        boxShadow: '0 6px 20px -2px rgba(2, 132, 199, 0.14), 0 2px 6px rgba(0, 0, 0, 0.04)',
-        emblemBg: 'linear-gradient(135deg, rgba(2, 132, 199, 0.15), rgba(56, 189, 248, 0.25))',
-        emblemBorder: 'rgba(2, 132, 199, 0.35)'
-      };
+    let accent = '#2563eb';
+    let emblemBg = '#eff6ff';
+    let emblemBorder = '#bfdbfe';
+
+    if (str.includes('khand_2') || str.includes('खंड - 2') || str.includes('खंड 2')) {
+      accent = '#059669';
+      emblemBg = '#ecfdf5';
+      emblemBorder = '#a7f3d0';
+    } else if (str.includes('anand') || str.includes('आनंद') || str.includes('editorial') || str.includes('sampadkiya')) {
+      accent = '#d97706';
+      emblemBg = '#fffbeb';
+      emblemBorder = '#fde68a';
+    } else if (str.includes('court') || str.includes('vidhik') || str.includes('legal') || str.includes('न्यायालय')) {
+      accent = '#7c3aed';
+      emblemBg = '#faf5ff';
+      emblemBorder = '#e9d5ff';
+    } else {
+      accent = '#2563eb';
+      emblemBg = '#eff6ff';
+      emblemBorder = '#bfdbfe';
     }
 
     return {
-      accentColor: '#8b5cf6',
-      borderColor: 'rgba(139, 92, 246, 0.4)',
-      bgGradient: 'linear-gradient(90deg, rgba(139, 92, 246, 0.08) 0%, rgba(255, 255, 255, 0.98) 35%, rgba(139, 92, 246, 0.04) 100%)',
-      boxShadow: '0 6px 20px -2px rgba(139, 92, 246, 0.14), 0 2px 6px rgba(0, 0, 0, 0.04)',
-      emblemBg: 'linear-gradient(135deg, rgba(139, 92, 246, 0.15), rgba(167, 139, 250, 0.25))',
-      emblemBorder: 'rgba(139, 92, 246, 0.35)'
+      accentColor: accent,
+      borderColor: '#dbe4ef',
+      bgGradient: '#ffffff',
+      boxShadow: '0 8px 24px -4px rgba(30, 64, 175, 0.08), 0 2px 6px -1px rgba(0, 0, 0, 0.03)',
+      emblemBg: emblemBg,
+      emblemBorder: emblemBorder
     };
   }
 

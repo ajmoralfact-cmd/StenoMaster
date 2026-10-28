@@ -12457,3 +12457,292 @@ body:has(#view-community.active) .main-wrapper {
   color: #fcd34d !important;
   border: 1.5px solid #f59e0b !important;
 }
+
+
+/* ==========================================================================
+   Stenoshala Sapphire Luxe Theme (Demo 2 Selection - Modern EdTech Polish)
+   ========================================================================== */
+:root {
+  --bg-primary: #f0f4f9;
+  --bg-surface: #ffffff;
+  --bg-elevated: #ffffff;
+  --bg-subtle: #ebf3ff;
+  --border-subtle: #dbe4ef;
+  --border-strong: #cbd5e1;
+  --text-main: #0a1128;
+  --text-secondary: #334155;
+  --text-muted: #5a6e85;
+  --primary: #1d4ed8;
+  --primary-hover: #1e40af;
+  --primary-subtle: #ebf3ff;
+  --primary-border: #bfdbfe;
+  --primary-gradient: linear-gradient(135deg, #1e40af 0%, #2563eb 100%);
+  --shadow-card: 0 8px 24px -4px rgba(30, 64, 175, 0.08), 0 2px 6px -1px rgba(0,0,0,0.03);
+  --shadow-hover: 0 14px 30px -6px rgba(37, 99, 235, 0.18);
+}
+
+body {
+  background-color: #f0f4f9 !important;
+  color: #0a1128 !important;
+}
+
+/* Primary Button - Sapphire Gradient */
+.btn-primary {
+  background: linear-gradient(135deg, #1e40af 0%, #2563eb 100%) !important;
+  color: #ffffff !important;
+  border: none !important;
+  border-radius: 10px !important;
+  font-weight: 800 !important;
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.28) !important;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+.btn-primary:hover {
+  background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%) !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 6px 18px rgba(37, 99, 235, 0.35) !important;
+}
+
+/* Top Header */
+.top-header {
+  height: 68px !important;
+  background: rgba(255, 255, 255, 0.96) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  border-bottom: 1px solid #dbe4ef !important;
+  box-shadow: 0 2px 10px rgba(15, 23, 42, 0.04) !important;
+}
+.top-header .header-brand-logo {
+  border-radius: 10px !important;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.25) !important;
+}
+.top-header .header-brand-name {
+  font-size: 1.18rem !important;
+  font-weight: 800 !important;
+  color: #0a1128 !important;
+  letter-spacing: -0.3px !important;
+}
+.top-header .three-dot-btn {
+  background: #f1f5f9 !important;
+  border: 1px solid #cbd5e1 !important;
+  border-radius: 10px !important;
+  color: #0a1128 !important;
+}
+.top-header .three-dot-btn:hover {
+  background: #e2e8f0 !important;
+  border-color: #94a3b8 !important;
+}
+.plan-validity-pill {
+  background: #eff6ff !important;
+  border: 1px solid #bfdbfe !important;
+  color: #1e40af !important;
+  padding: 6px 14px !important;
+  border-radius: 20px !important;
+  font-weight: 800 !important;
+  font-size: 0.80rem !important;
+  box-shadow: 0 1px 3px rgba(37, 99, 235, 0.08) !important;
+}
+.plan-validity-pill:hover {
+  background: #dbeafe !important;
+  border-color: #93c5fd !important;
+}
+.streak-badge {
+  background: #fff7ed !important;
+  border: 1px solid #fed7aa !important;
+  color: #c2410c !important;
+  padding: 6px 14px !important;
+  border-radius: 20px !important;
+  font-weight: 800 !important;
+  font-size: 0.80rem !important;
+}
+.top-header #langToggleBtn,
+.top-header #themeToggleBtn,
+.top-header .notif-btn {
+  background: #ffffff !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #334155 !important;
+  padding: 7px 12px !important;
+  border-radius: 8px !important;
+  font-size: 0.82rem !important;
+  font-weight: 700 !important;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.03) !important;
+  transition: all 0.2s !important;
+}
+.top-header #langToggleBtn:hover,
+.top-header #themeToggleBtn:hover,
+.top-header .notif-btn:hover {
+  background: #f1f5f9 !important;
+  border-color: #94a3b8 !important;
+}
+.top-header .user-profile-btn {
+  background: #f8fafc !important;
+  border: 1px solid #cbd5e1 !important;
+  border-radius: 24px !important;
+  padding: 4px 14px 4px 4px !important;
+}
+.top-header .user-avatar {
+  background: linear-gradient(135deg, #1e40af 0%, #2563eb 100%) !important;
+  color: #ffffff !important;
+  font-weight: 800 !important;
+}
+.top-header .header-logout-btn {
+  background: #fee2e2 !important;
+  border: 1px solid #fca5a5 !important;
+  color: #b91c1c !important;
+  font-weight: 800 !important;
+  font-size: 0.82rem !important;
+  padding: 7px 14px !important;
+  border-radius: 8px !important;
+  transition: all 0.2s !important;
+}
+.top-header .header-logout-btn:hover {
+  background: #fecaca !important;
+  border-color: #f87171 !important;
+}
+
+/* Active Plan Banner */
+#dashboardActivePlanBanner {
+  background: linear-gradient(135deg, #ffffff 0%, #f0f7ff 100%) !important;
+  border: 1.5px solid #bfdbfe !important;
+  border-radius: 16px !important;
+  padding: 16px 24px !important;
+  margin-bottom: 20px !important;
+  box-shadow: 0 8px 24px -4px rgba(30, 64, 175, 0.08), 0 2px 6px -1px rgba(0,0,0,0.03) !important;
+}
+#dashboardActivePlanBanner #planBannerTitle {
+  font-size: 1.10rem !important;
+  color: #0a1128 !important;
+  font-weight: 800 !important;
+}
+#dashboardActivePlanBanner #planBannerTag {
+  background: #10b981 !important;
+  color: #ffffff !important;
+  font-size: 0.70rem !important;
+  font-weight: 800 !important;
+  padding: 3px 8px !important;
+  border-radius: 6px !important;
+  letter-spacing: 0.5px !important;
+}
+#dashboardActivePlanBanner #planBannerSubtitle {
+  font-size: 0.82rem !important;
+  color: #5a6e85 !important;
+  margin-top: 2px !important;
+}
+#dashboardActivePlanBanner #planBannerActionBtn {
+  background: linear-gradient(135deg, #1e40af 0%, #2563eb 100%) !important;
+  color: #ffffff !important;
+  border: none !important;
+  padding: 10px 20px !important;
+  font-size: 0.86rem !important;
+  font-weight: 800 !important;
+  border-radius: 10px !important;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3) !important;
+  transition: all 0.2s !important;
+}
+#dashboardActivePlanBanner #planBannerActionBtn:hover {
+  background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%) !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 6px 16px rgba(37, 99, 235, 0.38) !important;
+}
+
+/* Continue Practice Card */
+.continue-practice-card {
+  background: linear-gradient(125deg, #0f172a 0%, #1e3a8a 60%, #1d4ed8 100%) !important;
+  color: #ffffff !important;
+  border: none !important;
+  border-radius: 18px !important;
+  padding: 18px 24px !important;
+  margin-bottom: 20px !important;
+  box-shadow: 0 12px 28px -6px rgba(30, 58, 138, 0.35) !important;
+  transition: transform 0.2s ease, box-shadow 0.2s ease !important;
+}
+.continue-practice-card:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 16px 32px -6px rgba(30, 58, 138, 0.42) !important;
+}
+.continue-practice-card .btn-continue-go {
+  background: #ffffff !important;
+  color: #1e3a8a !important;
+  border: none !important;
+  padding: 10px 22px !important;
+  border-radius: 10px !important;
+  font-weight: 800 !important;
+  font-size: 0.86rem !important;
+  cursor: pointer !important;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15) !important;
+  transition: all 0.2s !important;
+}
+.continue-practice-card .btn-continue-go:hover {
+  background: #f1f5f9 !important;
+  transform: translateY(-1px) !important;
+}
+
+/* 8 Stats Cards */
+.h-stat-card {
+  background: #ffffff !important;
+  border: 1px solid #dbe4ef !important;
+  border-radius: 14px !important;
+  padding: 18px !important;
+  box-shadow: 0 8px 24px -4px rgba(30, 64, 175, 0.08), 0 2px 6px -1px rgba(0,0,0,0.03) !important;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+.h-stat-card:hover {
+  border-color: #93c5fd !important;
+  transform: translateY(-3px) !important;
+  box-shadow: 0 14px 30px -6px rgba(37, 99, 235, 0.18) !important;
+}
+.h-stat-card .h-stat-val {
+  color: #0a1128 !important;
+  font-weight: 800 !important;
+}
+.h-stat-card .h-stat-label {
+  color: #5a6e85 !important;
+  font-weight: 700 !important;
+}
+
+/* Category Series Cards */
+.category-series-card {
+  background: #ffffff !important;
+  border: 1.5px solid #dbe4ef !important;
+  border-radius: 18px !important;
+  padding: 20px 24px !important;
+  box-shadow: 0 8px 24px -4px rgba(30, 64, 175, 0.08), 0 2px 6px -1px rgba(0,0,0,0.03) !important;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+.category-series-card:hover {
+  border-color: #3b82f6 !important;
+  transform: translateY(-3px) !important;
+  box-shadow: 0 14px 30px -6px rgba(37, 99, 235, 0.18) !important;
+}
+.category-series-card .cat-left-section h4 {
+  color: #0a1128 !important;
+  font-weight: 800 !important;
+}
+.category-series-card .cat-middle-specs span {
+  background: #f1f5f9 !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #334155 !important;
+  font-weight: 700 !important;
+}
+.category-series-card button.btn-primary,
+.category-series-card .cat-action-section button {
+  background: linear-gradient(135deg, #1e40af 0%, #2563eb 100%) !important;
+  border-radius: 10px !important;
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.28) !important;
+}
+
+/* Mobile Category Series Cards */
+html.is-mobile-device .category-series-card {
+  border: 1.5px solid #dbe4ef !important;
+  box-shadow: 0 6px 18px rgba(30, 64, 175, 0.07) !important;
+}
+html.is-mobile-device #dashboardActivePlanBanner {
+  background: linear-gradient(135deg, #ffffff 0%, #f0f7ff 100%) !important;
+  border: 1.5px solid #bfdbfe !important;
+  box-shadow: 0 6px 18px rgba(30, 64, 175, 0.07) !important;
+}
+html.is-mobile-device #dashboardActivePlanBanner #planBannerTitle {
+  color: #0a1128 !important;
+}
+html.is-mobile-device #dashboardActivePlanBanner #planBannerActionBtn {
+  background: linear-gradient(135deg, #1e40af 0%, #2563eb 100%) !important;
+}
