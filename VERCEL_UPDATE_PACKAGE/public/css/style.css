@@ -13023,24 +13023,43 @@ html.is-mobile-device #dashboardActivePlanBanner #planBannerActionBtn {
   box-shadow: 0 6px 16px rgba(37, 99, 235, 0.45);
 }
 
+eft: 12px;
+  }
+}
+
+
 /* ==========================================================================
-   StenoMaster Dashboard Hero Poster Carousel (Dashboard Exclusive)
+   Stenoshala-Style Slim & Compact Hero Poster Carousel
    ========================================================================== */
+#dashboardActivePlanBanner,
+#planBannerAction,
+#planBannerActionBtn {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+  height: 0 !important;
+  width: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+}
+
 .dashboard-poster-carousel {
   position: relative;
   width: 100%;
-  border-radius: 22px;
+  border-radius: 16px;
   overflow: hidden;
-  margin-bottom: 22px;
+  margin-bottom: 14px;
   border: 1px solid rgba(226, 232, 240, 0.9);
-  box-shadow: 0 12px 32px -4px rgba(37, 99, 235, 0.08), 0 3px 10px rgba(0, 0, 0, 0.02);
+  box-shadow: 0 6px 20px -3px rgba(37, 99, 235, 0.07), 0 2px 5px rgba(0, 0, 0, 0.02);
   background: #ffffff;
 }
 
 .poster-slides-container {
   position: relative;
   width: 100%;
-  min-height: 350px;
+  height: 250px;
+  min-height: 250px;
 }
 
 .poster-slide {
@@ -13051,12 +13070,12 @@ html.is-mobile-device #dashboardActivePlanBanner #planBannerActionBtn {
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
-  transition: opacity 0.45s ease, visibility 0.45s ease;
+  transition: opacity 0.35s ease, visibility 0.35s ease;
   z-index: 1;
 }
 
 .poster-slide.active {
-  position: relative;
+  position: absolute;
   opacity: 1;
   visibility: visible;
   pointer-events: auto;
@@ -13067,34 +13086,34 @@ html.is-mobile-device #dashboardActivePlanBanner #planBannerActionBtn {
 .poster-offer-pill {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   background: rgba(254, 242, 242, 0.96);
   border: 1px solid rgba(254, 202, 202, 0.9);
-  padding: 5px 13px;
-  border-radius: 20px;
-  font-size: 0.82rem;
+  padding: 3px 10px;
+  border-radius: 16px;
+  font-size: 0.74rem;
   color: #991b1b;
   cursor: pointer;
-  margin-bottom: 12px;
+  margin-bottom: 6px;
   align-self: flex-start;
   backdrop-filter: blur(8px);
   transition: all 0.2s ease;
-  box-shadow: 0 2px 6px rgba(239, 68, 68, 0.08);
+  box-shadow: 0 1px 4px rgba(239, 68, 68, 0.06);
 }
 
 .poster-offer-pill:hover {
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.16);
+  box-shadow: 0 3px 8px rgba(239, 68, 68, 0.12);
   background: #ffffff;
 }
 
 .offer-pill-badge {
   background: #ef4444;
   color: #ffffff;
-  font-size: 0.68rem;
+  font-size: 0.64rem;
   font-weight: 800;
-  padding: 2px 7px;
-  border-radius: 10px;
+  padding: 1px 6px;
+  border-radius: 8px;
   text-transform: uppercase;
   letter-spacing: 0.3px;
 }
@@ -13106,7 +13125,7 @@ html.is-mobile-device #dashboardActivePlanBanner #planBannerActionBtn {
 .offer-pill-arrow {
   color: #dc2626;
   font-weight: 800;
-  font-size: 0.9rem;
+  font-size: 0.78rem;
   transition: transform 0.2s ease;
 }
 
@@ -13114,10 +13133,10 @@ html.is-mobile-device #dashboardActivePlanBanner #planBannerActionBtn {
   transform: translateX(3px);
 }
 
-/* Left Content */
+/* Left Content - Slim & Compact */
 .poster-content-left {
-  flex: 1.15;
-  padding: 32px 38px;
+  flex: 1.25;
+  padding: 14px 24px 10px 24px;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -13125,65 +13144,64 @@ html.is-mobile-device #dashboardActivePlanBanner #planBannerActionBtn {
 }
 
 .poster-headline {
-  font-size: 2.15rem;
+  font-size: 1.35rem;
   font-weight: 900;
   line-height: 1.22;
   color: #0f172a;
-  letter-spacing: -0.6px;
-  margin-bottom: 8px;
+  letter-spacing: -0.4px;
+  margin-bottom: 5px;
 }
 
 .poster-gold-line {
-  width: 48px;
-  height: 4px;
+  width: 30px;
+  height: 3px;
   background: #f59e0b;
-  border-radius: 4px;
-  margin-bottom: 18px;
+  border-radius: 3px;
+  margin-bottom: 7px;
 }
 
 .poster-feature-list {
   display: flex;
   flex-direction: column;
-  gap: 11px;
-  margin-bottom: 20px;
-  max-width: 520px;
+  gap: 5px;
+  margin-bottom: 8px;
+  max-width: 480px;
 }
 
 .poster-feature-pill {
   display: flex;
   align-items: center;
-  gap: 13px;
+  gap: 9px;
   background: rgba(255, 255, 255, 0.92);
   border: 1px solid rgba(219, 234, 254, 0.85);
-  border-radius: 14px;
-  padding: 9px 15px;
+  border-radius: 10px;
+  padding: 4px 10px;
   backdrop-filter: blur(8px);
-  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.04);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 1px 4px rgba(37, 99, 235, 0.04);
+  transition: transform 0.15s ease;
 }
 
 .poster-feature-pill:hover {
-  transform: translateX(3px);
-  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.08);
+  transform: translateX(2px);
 }
 
 .poster-feature-icon {
-  width: 38px;
-  height: 38px;
-  min-width: 38px;
-  border-radius: 11px;
+  width: 24px;
+  height: 24px;
+  min-width: 24px;
+  border-radius: 6px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.15rem;
+  font-size: 0.80rem;
   flex-shrink: 0;
-  box-shadow: 0 3px 8px rgba(37, 99, 235, 0.2);
+  box-shadow: 0 2px 5px rgba(37, 99, 235, 0.15);
 }
 
 .poster-feature-text {
-  font-size: 0.93rem;
+  font-size: 0.76rem;
   color: #334155;
-  line-height: 1.4;
+  line-height: 1.3;
   font-weight: 500;
 }
 
@@ -13195,31 +13213,31 @@ html.is-mobile-device #dashboardActivePlanBanner #planBannerActionBtn {
 .poster-laurel-badge {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
+  gap: 7px;
   background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
-  border: 1.5px solid #fde68a;
-  border-radius: 12px;
-  padding: 8px 16px;
-  box-shadow: 0 4px 14px rgba(245, 158, 11, 0.12);
+  border: 1.2px solid #fde68a;
+  border-radius: 8px;
+  padding: 3px 10px;
+  box-shadow: 0 2px 6px rgba(245, 158, 11, 0.10);
   align-self: flex-start;
 }
 
 .laurel-shield {
-  width: 32px;
-  height: 32px;
+  width: 20px;
+  height: 20px;
   background: #f59e0b;
   color: #ffffff;
-  border-radius: 8px;
+  border-radius: 5px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.95rem;
+  font-size: 0.70rem;
   font-weight: 900;
-  box-shadow: 0 2px 6px rgba(245, 158, 11, 0.3);
+  box-shadow: 0 1px 4px rgba(245, 158, 11, 0.25);
 }
 
 .laurel-text {
-  font-size: 0.94rem;
+  font-size: 0.76rem;
   font-weight: 800;
   color: #0f172a;
   letter-spacing: -0.2px;
@@ -13227,7 +13245,7 @@ html.is-mobile-device #dashboardActivePlanBanner #planBannerActionBtn {
 
 /* Right Visual Side */
 .poster-visual-right {
-  flex: 1.05;
+  flex: 0.95;
   position: relative;
   overflow: hidden;
   display: flex;
@@ -13243,57 +13261,57 @@ html.is-mobile-device #dashboardActivePlanBanner #planBannerActionBtn {
   height: 100%;
   object-fit: cover;
   object-position: center right;
-  mask-image: linear-gradient(to right, transparent 0%, rgba(0,0,0,0.4) 15%, black 40%);
-  -webkit-mask-image: linear-gradient(to right, transparent 0%, rgba(0,0,0,0.4) 15%, black 40%);
+  mask-image: linear-gradient(to right, transparent 0%, rgba(0,0,0,0.3) 15%, black 45%);
+  -webkit-mask-image: linear-gradient(to right, transparent 0%, rgba(0,0,0,0.3) 15%, black 45%);
   z-index: 1;
 }
 
 .floating-card-top {
   position: absolute;
-  top: 24px;
-  left: 28px;
+  top: 10px;
+  left: 14px;
   background: rgba(255, 255, 255, 0.96);
-  border-radius: 14px;
-  padding: 10px 15px;
-  box-shadow: 0 12px 28px -4px rgba(15, 23, 42, 0.14), 0 2px 8px rgba(0,0,0,0.04);
+  border-radius: 8px;
+  padding: 4px 8px;
+  box-shadow: 0 4px 14px -2px rgba(15, 23, 42, 0.12);
   border: 1px solid rgba(226, 232, 240, 0.9);
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 7px;
   z-index: 4;
   backdrop-filter: blur(8px);
 }
 
 .floating-card-bottom {
   position: absolute;
-  bottom: 24px;
-  left: 10px;
+  bottom: 8px;
+  left: 8px;
   background: rgba(255, 255, 255, 0.96);
-  border-radius: 14px;
-  padding: 10px 16px;
-  box-shadow: 0 12px 28px -4px rgba(15, 23, 42, 0.14), 0 2px 8px rgba(0,0,0,0.04);
+  border-radius: 8px;
+  padding: 4px 8px;
+  box-shadow: 0 4px 14px -2px rgba(15, 23, 42, 0.12);
   border: 1px solid rgba(226, 232, 240, 0.9);
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 6px;
   z-index: 4;
   backdrop-filter: blur(8px);
 }
 
-/* Dots */
+/* Dots inside poster at the bottom */
 .poster-carousel-dots {
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 8px;
-  padding: 10px 0 12px 0;
+  gap: 6px;
+  padding: 4px 0 5px 0;
   background: #ffffff;
-  border-top: 1px solid #f1f5f9;
+  border-top: 1px solid #f8fafc;
 }
 
 .carousel-dot {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
   background: #cbd5e1;
   cursor: pointer;
@@ -13301,36 +13319,38 @@ html.is-mobile-device #dashboardActivePlanBanner #planBannerActionBtn {
 }
 
 .carousel-dot.active {
-  width: 28px;
-  height: 8px;
-  border-radius: 10px;
+  width: 22px;
+  height: 6px;
+  border-radius: 3px;
   background: #2563eb;
 }
 
+/* Mobile responsive */
 @media (max-width: 992px) {
+  .poster-slides-container {
+    height: auto;
+    min-height: 240px;
+  }
   .poster-slide {
-    flex-direction: column;
+    flex-direction: column-reverse;
   }
-  .poster-content-left {
-    padding: 24px 20px 16px 20px;
-  }
-  .poster-headline {
-    font-size: 1.55rem;
+  .poster-slide.active {
+    position: relative;
   }
   .poster-visual-right {
-    min-height: 270px;
+    height: 130px;
+    flex: none;
     width: 100%;
   }
   .poster-bg-photo {
-    mask-image: none;
-    -webkit-mask-image: none;
+    mask-image: linear-gradient(to bottom, black 50%, transparent 100%);
+    -webkit-mask-image: linear-gradient(to bottom, black 50%, transparent 100%);
   }
-  .floating-card-top {
-    top: 12px;
-    left: 12px;
+  .poster-content-left {
+    padding: 12px 14px;
+    flex: none;
   }
-  .floating-card-bottom {
-    bottom: 12px;
-    left: 12px;
+  .poster-headline {
+    font-size: 1.15rem;
   }
 }

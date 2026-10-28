@@ -67,7 +67,7 @@
   <!-- Performance Preconnects for Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="/css/style.css?v=19.2">
+  <link rel="stylesheet" href="/css/style.css?v=19.3">
 
   <!-- Shield Root Hindi Shorthand Content from Chrome / Browser Auto-Translation -->
   <script>
@@ -715,8 +715,7 @@
                 </div>
 
                 <h2 class="poster-headline">
-                  1250+ Selections in <br>
-                  <span style="color: #1d4ed8;">SSC Steno & High Court Exams</span>
+                  1250+ Selections in <span style="color: #1d4ed8;">SSC Steno & High Court Exams</span>
                 </h2>
                 <div class="poster-gold-line"></div>
 
@@ -775,8 +774,7 @@
                 </div>
 
                 <h2 class="poster-headline">
-                  Complete Shorthand Mastery <br>
-                  <span style="color: #059669;">60 से 160 WPM तक स्पीड बूस्टर</span>
+                  Complete Shorthand Mastery <span style="color: #059669;">• 60 से 160 WPM स्पीड बूस्टर</span>
                 </h2>
                 <div class="poster-gold-line" style="background:#10b981;"></div>
 
@@ -835,8 +833,7 @@
                 </div>
 
                 <h2 class="poster-headline">
-                  Smart AI Shorthand Engine <br>
-                  <span style="color: #7c3aed;">सरकारी मानकों पर सटीक त्रुटि मूल्यांकन</span>
+                  Smart AI Shorthand Engine <span style="color: #7c3aed;">• सटीक सरकारी त्रुटि मूल्यांकन</span>
                 </h2>
                 <div class="poster-gold-line" style="background:#a855f7;"></div>
 
@@ -893,13 +890,14 @@
             <span class="carousel-dot" onclick="stenoApp.goToPosterSlide(2)" title="Slide 3"></span>
           </div>
         </div>
-        <!-- Hidden legacy container for backward compatibility -->
-        <div id="dashboardActivePlanBanner" style="display:none !important;"></div>
-          </div>
-          <div id="planBannerAction" style="display:flex; align-items:center; gap:10px;">
-            <button type="button" id="planBannerActionBtn" class="btn-primary" onclick="window.location.href='/plans'" style="padding:8px 16px; font-size:0.84rem; font-weight:700; border-radius:8px; white-space:nowrap;">
-              👑 प्लान अपग्रेड / रिन्यू करें →
-            </button>
+        <!-- Hidden legacy container for backward compatibility (strictly hidden) -->
+        <div id="dashboardActivePlanBanner" style="display:none !important;" hidden>
+          <span id="planBannerIcon" style="display:none !important;"></span>
+          <span id="planBannerTag" style="display:none !important;"></span>
+          <span id="planBannerTitle" style="display:none !important;"></span>
+          <span id="planBannerSubtitle" style="display:none !important;"></span>
+          <div id="planBannerAction" style="display:none !important;" hidden>
+            <button type="button" id="planBannerActionBtn" style="display:none !important;" hidden></button>
           </div>
         </div>
 
@@ -3301,13 +3299,13 @@
   <script defer src="https://sdk.cashfree.com/js/v3/cashfree.js"></script>
 
   <!-- Core Lightweight Scripts (charts.js & comparison_view.js?v=17.3 are lazy-loaded on demand for 50% faster startup) -->
-  <script src="/js/audio_player.js?v=19.2"></script>
+  <script src="/js/audio_player.js?v=19.3"></script>
   <script src="/js/keyboard_map.js?v=8.1"></script>
   <script src="/js/typing_engine.js?v=17.3"></script>
   <script src="/js/ocr_service.js?v=1.1"></script>
   <script src="/js/steno_dictionary.js?v=1.0"></script>
   <script src="/js/comparison_view.js?v=17.3"></script>
-  <script src="/js/app.js?v=19.2"></script>
+  <script src="/js/app.js?v=19.3"></script>
   <!-- Strict Exam Hall Anti-Cheat Warning Modal -->
   <div class="modal-overlay" id="examHallWarningModal" style="z-index:99999;" onclick="if(event.target === this) stenoTypingEngine.exitExamModeFromModal()">
     <div class="modal-card" style="max-width: 480px; text-align:center; border:2px solid #ef4444; box-shadow:0 10px 40px rgba(239,68,68,0.3); position:relative; padding:28px 24px;">

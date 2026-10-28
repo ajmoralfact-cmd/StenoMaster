@@ -2546,7 +2546,20 @@ class StenoApp {
 
   renderActivePlanBanner() {
     const banner = document.getElementById('dashboardActivePlanBanner');
-    if (banner) banner.style.display = 'none !important';
+    if (banner) {
+      banner.style.display = 'none';
+      banner.hidden = true;
+    }
+    const actionBtn = document.getElementById('planBannerActionBtn');
+    if (actionBtn) {
+      actionBtn.style.display = 'none';
+      actionBtn.hidden = true;
+    }
+    const actionDiv = document.getElementById('planBannerAction');
+    if (actionDiv) {
+      actionDiv.style.display = 'none';
+      actionDiv.hidden = true;
+    }
 
     const posterBadge = document.getElementById('posterOfferBadge');
     const posterText = document.getElementById('posterOfferText');
@@ -2569,256 +2582,6 @@ class StenoApp {
           : `स्टेनो प्रो पास पर <strong>56% की भारी छूट</strong> • मात्र ₹100 से शुरू`;
       }
     }
-
-    const icon = document.getElementById('planBannerIcon');
-    const tag = document.getElementById('planBannerTag');
-    const title = document.getElementById('planBannerTitle');
-    const subtitle = document.getElementById('planBannerSubtitle');
-    const actionBtn = document.getElementById('planBannerActionBtn');
-
-    // isEn already defined above
-    // isPremium already declared above
-    let planName = (this.user && this.user.subscription_plan) || 'StenoMaster Pro';
-    if (planName === 'System Administrator' || planName.toLowerCase().includes('admin')) {
-      planName = 'StenoMaster Pro (₹100/माह)';
-    }
-    // daysLeft already declared above
-
-    // Pricing mapping
-    const planPriceMapHi = {
-      'StenoMaster Basic (30 Days)': '₹100 (1 माह / 30 दिन)',
-      'StenoMaster Standard (90 Days)': '₹250 (3 माह / 90 दिन)',
-      'StenoMaster Extended (180 Days)': '₹450 (6 माह / 180 दिन)',
-      'StenoMaster Annual Pro (365 Days)': '₹800 (1 वर्ष / 365 दिन)',
-      'StenoMaster Pro': '₹100 प्रति माह',
-      'StenoMaster Pro (₹100/माह)': '₹100 प्रति माह',
-      'StenoMaster Pro — 30 दिन (₹100)': '₹100 (1 माह / 30 दिन)',
-      'StenoMaster Pro (30 दिन फ्री)': '30 दिन फ्री एक्सेस'
-    };
-    const planPriceMapEn = {
-      'StenoMaster Basic (30 Days)': '₹100 (1 Month / 30 Days)',
-      'StenoMaster Standard (90 Days)': '₹250 (3 Months / 90 Days)',
-      'StenoMaster Extended (180 Days)': '₹450 (6 Months / 180 Days)',
-      'StenoMaster Annual Pro (365 Days)': '₹800 (1 Year / 365 Days)',
-      'StenoMaster Pro': '₹100 per Month',
-      'StenoMaster Pro (₹100/माह)': '₹100 per Month',
-      'StenoMaster Pro — 30 दिन (₹100)': '₹100 (1 Month / 30 Days)',
-      'StenoMaster Pro (30 दिन फ्री)': '30 Days Free Access'
-    };
-    const priceText = isEn ? (planPriceMapEn[planName] || '₹100 Monthly Plan') : (planPriceMapHi[planName] || '₹100 मासिक प्लान');
-
-    if (isPremium && daysLeft > 0) {
-      // GREEN STYLISH HORIZONTAL BOX (ACTIVE PLAN)
-      banner.style.background = 'linear-gradient(90deg, rgba(16, 185, 129, 0.12), rgba(5, 150, 105, 0.06))';
-      banner.style.border = '1.5px solid rgba(16, 185, 129, 0.45)';
-      banner.style.color = '#065f46';
-
-      if (icon) icon.textContent = '🟢';
-      if (tag) {
-        tag.textContent = isEn ? 'ACTIVE PLAN' : 'सक्रिय प्लान (ACTIVE PLAN)';
-        tag.style.background = '#10b981';
-        tag.style.color = '#ffffff';
-      }
-      if (title) {
-        title.innerHTML = isEn
-          ? `StenoMaster Pro • <span style="color:#059669; font-weight:700;">${priceText}</span> is Active`
-          : `StenoMaster Pro • <span style="color:#059669; font-weight:700;">${priceText}</span> सक्रिय है`;
-        title.style.color = '#065f46';
-      }
-      if (subtitle) {
-        if (daysLeft >= 1000) {
-          subtitle.innerHTML = isEn
-            ? `♾️ <strong>Lifetime Pro Access</strong> • Unlimited dictations, Exam Hall mode & Detailed evaluation active.`
-            : `♾️ <strong>लाइफटाइम प्रो एक्सेस</strong> • असीमित डिक्टेशन, परीक्षा हॉल मोड एवं विस्तृत मूल्यांकन सक्रिय है।`;
-        } else {
-          subtitle.innerHTML = isEn
-            ? `⏳ <strong>${daysLeft} Days Remaining</strong> • Unlimited dictations, Exam Hall mode & Detailed evaluation active.`
-            : `⏳ <strong>${daysLeft} दिन शेष बचे हैं</strong> • असीमित डिक्टेशन, परीक्षा हॉल मोड एवं विस्तृत मूल्यांकन सक्रिय है।`;
-        }
-        subtitle.style.color = '#047857';
-      }
-      if (actionBtn) {
-        actionBtn.textContent = isEn ? '👑 Upgrade / Renew Plan →' : '👑 प्लान अपग्रेड / रिन्यू करें →';
-        actionBtn.style.background = '#10b981';
-        actionBtn.style.borderColor = '#10b981';
-      }
-    } else {
-      // RED STYLISH HORIZONTAL BOX (NO ACTIVE PLAN / EXPIRED)
-      banner.style.background = 'linear-gradient(90deg, rgba(239, 68, 68, 0.12), rgba(220, 38, 38, 0.06))';
-      banner.style.border = '1.5px solid rgba(239, 68, 68, 0.45)';
-      banner.style.color = '#991b1b';
-
-      if (icon) icon.textContent = '🔴';
-      if (tag) {
-        tag.textContent = isEn ? 'NO ACTIVE PLAN' : 'कोई प्लान सक्रिय नहीं (NO ACTIVE PLAN)';
-        tag.style.background = '#ef4444';
-        tag.style.color = '#ffffff';
-      }
-      if (title) {
-        title.textContent = isEn ? 'No active subscription plan found' : 'वर्तमान में आपका कोई सशुल्क प्लान सक्रिय नहीं है';
-        title.style.color = '#b91c1c';
-      }
-      if (subtitle) {
-        subtitle.innerHTML = isEn
-          ? '⚠️ Your current plan has expired or you are on limited free mode. Activate a plan to unlock unlimited dictations and live ranking.'
-          : '⚠️ आपकी वर्तमान योजना समाप्त है या आप सीमित फ्री मोड में हैं। असीमित डिक्टेशन अभ्यास एवं लाइव रैंकिंग के लिए तुरंत प्लान सक्रिय करें।';
-        subtitle.style.color = '#b91c1c';
-      }
-      if (actionBtn) {
-        actionBtn.textContent = isEn ? '⚡ Choose Plan (Starting @ ₹100) →' : '⚡ अभी प्लान चुनें (मात्र ₹100 से शुरू) →';
-        actionBtn.style.background = '#ef4444';
-        actionBtn.style.borderColor = '#ef4444';
-      }
-    }
-  }
-
-  updateUserUI() {
-    const greetingEl = document.getElementById('userGreetingText');
-    const avatarEl = document.getElementById('headerUserAvatar');
-    const nameEl = document.getElementById('headerUserName');
-    const roleEl = document.getElementById('headerUserRole');
-    const streakEl = document.getElementById('userStreakCount');
-    const adminNav = document.getElementById('adminNavItem');
-    const areaBadge = document.getElementById('areaIndicatorBadge');
-    const validityPill = document.getElementById('headerPlanValidityBadge');
-    const guestLoginBtn = document.getElementById('headerGuestLoginBtn');
-    const profileBtn = document.getElementById('headerUserProfileBtn');
-    const logoutBtn = document.getElementById('headerLogoutBtn');
-    const isEn = this.currentLang === 'en';
-
-    if (this.user) {
-      if (guestLoginBtn) guestLoginBtn.style.display = 'none';
-      if (profileBtn) profileBtn.style.display = 'inline-flex';
-      if (logoutBtn) logoutBtn.style.display = 'inline-flex';
-      const name = this.user.display_name || this.user.username || 'Student';
-      if (greetingEl) greetingEl.textContent = `Good Day, ${name} 👋`;
-      if (avatarEl) avatarEl.textContent = name.charAt(0).toUpperCase();
-      if (nameEl) nameEl.textContent = name;
-      if (streakEl) streakEl.textContent = `${this.user.streak_days || 0} Day Streak`;
-
-      // Update Mockup Style Mobile Greeting Card
-      const mobGreetingCard = document.getElementById('mobileStudentGreetingCard');
-      const msgUserName = document.getElementById('msgUserName');
-      const msgAvatar = document.getElementById('msgAvatarInitial');
-      const msgUserId = document.getElementById('msgUserIdBadge');
-      if (mobGreetingCard) mobGreetingCard.style.display = 'flex';
-      if (msgUserName) msgUserName.textContent = `Hello, ${name}`;
-      if (msgAvatar) msgAvatar.textContent = name.charAt(0).toUpperCase();
-      if (msgUserId) msgUserId.textContent = this.user.student_id || ('SM' + String(this.user.id || '20250981').padStart(6, '0'));
-
-      if (roleEl) {
-        roleEl.textContent = (this.user.role === 'admin' || this.user.is_premium) ? 'Pro Member' : 'Student';
-        roleEl.className = 'header-user-role role-student';
-      }
-
-      const headerAdminPortalLink = document.getElementById('headerAdminPortalLink');
-      if (headerAdminPortalLink) headerAdminPortalLink.style.display = 'none';
-      if (adminNav) adminNav.style.display = 'none';
-
-      if (areaBadge) {
-        areaBadge.className = 'area-indicator-badge';
-        areaBadge.innerHTML = '👨‍🎓 Student Area';
-      }
-
-      if (this.user.role === 'admin') {
-        if (validityPill) {
-          validityPill.style.display = 'inline-flex';
-          validityPill.className = 'plan-validity-pill is-pro';
-          validityPill.innerHTML = isEn ? '👑 All Access (Pro Active)' : '👑 ऑल एक्सेस (Pro Active)';
-          validityPill.title = isEn ? 'Pro plan is active' : 'प्रो प्लान सक्रिय है';
-          validityPill.onclick = () => { window.location.href = '/plans'; };
-        }
-        if (avatarEl) {
-          avatarEl.classList.add('pro-rainbow-ring');
-        }
-      } else {
-        const headerAdminPortalLink = document.getElementById('headerAdminPortalLink');
-        if (headerAdminPortalLink) headerAdminPortalLink.style.display = 'none';
-        if (adminNav) adminNav.style.display = 'none';
-        if (areaBadge) {
-          areaBadge.className = 'area-indicator-badge';
-          areaBadge.innerHTML = '👨‍🎓 Student Area';
-        }
-
-        const isFreeAccess = Boolean(this.user.is_free_access);
-        const isPro = Boolean(this.user.is_premium || this.user.subscription_status === 'active' || isFreeAccess);
-        const daysLeft = this.user.subscription_days_left !== undefined ? this.user.subscription_days_left : 0;
-        const unlockedCats = Array.isArray(this.user.unlocked_category_ids) ? this.user.unlocked_category_ids : [];
-
-        if (isPro && (daysLeft > 0 || isFreeAccess)) {
-          if (validityPill) {
-            validityPill.style.display = 'inline-flex';
-            validityPill.className = 'plan-validity-pill is-pro';
-            validityPill.style.background = isFreeAccess ? 'linear-gradient(135deg, #059669, #10b981)' : '';
-            validityPill.innerHTML = isFreeAccess 
-              ? (isEn ? '🎁 30D Free Pro (Active)' : '🎁 30D फ्री प्रो (Active)') 
-              : ((daysLeft >= 1000) ? '👑 Pro: Active' : (isEn ? `👑 Pro: ${daysLeft} Days Left` : `👑 Pro: ${daysLeft} दिन शेष`));
-            validityPill.title = isEn ? 'Pro plan is active' : 'प्रो प्लान सक्रिय है';
-            validityPill.onclick = () => { window.location.href = '/plans'; };
-          }
-          if (avatarEl) {
-            avatarEl.classList.add('pro-rainbow-ring');
-          }
-        } else if (unlockedCats.length > 0) {
-          if (validityPill) {
-            validityPill.style.display = 'inline-flex';
-            validityPill.className = 'plan-validity-pill is-pro';
-            validityPill.style.background = 'linear-gradient(135deg, #4f46e5, #4338ca)';
-            validityPill.innerHTML = isEn 
-              ? `🎯 ${unlockedCats.length} Categories Unlocked (Free)` 
-              : `🎯 ${unlockedCats.length} कैटेगरीज अनलॉक्ड (Free)`;
-            validityPill.title = isEn ? 'Specific categories unlocked free' : 'विशिष्ट कैटेगरीज निःशुल्क सक्रिय हैं';
-            validityPill.onclick = () => { this.navigate('classes'); };
-          }
-          if (avatarEl) {
-            avatarEl.classList.add('pro-rainbow-ring');
-          }
-        } else {
-          if (validityPill) {
-            validityPill.style.display = 'inline-flex';
-            validityPill.className = 'plan-validity-pill is-free';
-            validityPill.style.background = '';
-            validityPill.innerHTML = isEn ? '🔒 2 Free Classes • Get Pro for ₹100' : '🔒 2 फ्री कक्षाएं • ₹100 में Pro लें';
-            validityPill.title = isEn ? 'Click to upgrade to premium' : 'प्रीमियम अनलॉक करने के लिए क्लिक करें';
-            validityPill.onclick = () => { window.location.href = '/plans'; };
-          }
-          if (avatarEl) {
-            avatarEl.classList.remove('pro-rainbow-ring');
-          }
-        }
-      }
-    } else {
-      if (guestLoginBtn) guestLoginBtn.style.display = 'inline-flex';
-      if (profileBtn) profileBtn.style.display = 'none';
-      if (logoutBtn) logoutBtn.style.display = 'none';
-      if (greetingEl) greetingEl.textContent = isEn ? 'Welcome, Student 👋' : 'स्वागतम्, विद्यार्थी 👋';
-      if (avatarEl) {
-        avatarEl.textContent = '👤';
-        avatarEl.classList.remove('pro-rainbow-ring');
-      }
-      if (nameEl) nameEl.textContent = isEn ? 'Guest Student' : 'अतिथि छात्र';
-      if (roleEl) {
-        roleEl.textContent = isEn ? 'Guest' : 'अतिथि';
-        roleEl.className = 'header-user-role role-student';
-      }
-      if (streakEl) streakEl.textContent = '0 Day Streak';
-      if (adminNav) adminNav.style.display = 'none';
-      if (areaBadge) {
-        areaBadge.className = 'area-indicator-badge';
-        areaBadge.innerHTML = '👨‍🎓 Student Area';
-      }
-      if (validityPill) {
-        validityPill.style.display = 'inline-flex';
-        validityPill.className = 'plan-validity-pill is-free';
-        validityPill.style.background = '';
-        validityPill.innerHTML = isEn ? '🎁 2 Free Demo Classes' : '🎁 2 फ्री डेमो कक्षाएं';
-        validityPill.title = isEn ? 'Click to view subscription plans' : 'सदस्यता प्लान देखें';
-        validityPill.onclick = () => { window.location.href = '/plans'; };
-      }
-    }
-
-    this.renderSidebarNav();
-    this.renderActivePlanBanner();
   }
 
   // -------------------------------------------------------------------------
