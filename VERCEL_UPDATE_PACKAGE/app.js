@@ -761,11 +761,35 @@ class StenoApp {
       return;
     }
 
-    // If no active session token, show Auth Gateway directly
+    // Guest Mode: Allow unrestricted browsing of homepage, categories, and classes
     const hash = window.location.hash || '';
     const search = window.location.search || '';
     const isTryingAdmin = hash.toLowerCase().includes('admin') || search.toLowerCase().includes('admin');
-    this.showAuthGateway(isTryingAdmin ? 'admin' : 'student');
+
+    if (isTryingAdmin) {
+      this.showAuthGateway('admin');
+    } else {
+      this.hideAuthGateway();
+      this.updateUserUI();
+      this.restoreRouteOnLoad();
+      this.initStatsCarousel();
+
+      // Parallel background load of categories & dictations for guest browsing
+      Promise.all([
+        this.loadCategories().catch(() => {}),
+        this.loadPassages().catch(() => {})
+      ]);
+
+      // Check if URL specifically requested login (e.g. redirected from practice studio)
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get('auth') === 'login') {
+        const retPractice = urlParams.get('return_practice');
+        if (retPractice) {
+          sessionStorage.setItem('pending_practice_id', retPractice);
+        }
+        this.showAuthGateway('student', 'डिक्टेशन एवं टाइपिंग अभ्यास शुरू करने के लिए कृपया लॉगिन करें।');
+      }
+    }
   }
 
 
@@ -1389,11 +1413,9 @@ class StenoApp {
       return;
     }
 
-    document.documentElement.classList.add('no-auth-session');
     const gateway = document.getElementById('authGatewayView');
-    const appContainer = document.getElementById('appContainer');
     if (gateway) gateway.style.display = 'flex';
-    if (appContainer) appContainer.style.display = 'none';
+    document.body.style.overflow = 'hidden';
 
     const hash = window.location.hash || '';
     const search = window.location.search || '';
@@ -1433,9 +1455,8 @@ class StenoApp {
   hideAuthGateway() {
     document.documentElement.classList.remove('no-auth-session');
     const gateway = document.getElementById('authGatewayView');
-    const appContainer = document.getElementById('appContainer');
     if (gateway) gateway.style.display = 'none';
-    if (appContainer) appContainer.style.display = 'flex';
+    document.body.style.overflow = '';
   }
 
   loadSavedCredentials() {
@@ -1618,6 +1639,14 @@ class StenoApp {
         ? `स्वागतम्, ${this.user.display_name || this.user.username}! आपका नया छात्र खाता (ID: ${this.user.student_code || ''}) बन गया है 🎉` 
         : `स्वागतम्, ${this.user.display_name || this.user.username}! Google से लॉगिन सफल! 👋`;
       this.showToast(welcomeMsg, 'success');
+
+      // Check if student clicked a practice class before logging in
+      const pendingPracticeId = sessionStorage.getItem('pending_practice_id') || (new URLSearchParams(window.location.search)).get('return_practice');
+      if (pendingPracticeId) {
+        sessionStorage.removeItem('pending_practice_id');
+        window.location.href = `/practice?id=${pendingPracticeId}`;
+        return;
+      }
 
       // Clear any leftover hash containing 'admin'
       if (window.location.hash && window.location.hash.toLowerCase().includes('admin')) {
@@ -1881,6 +1910,14 @@ class StenoApp {
 
       this.showToast(`स्वागतम्, ${this.user.display_name || this.user.username}! 👋`, 'success');
 
+      // Check if student clicked a practice class before logging in
+      const pendingPracticeId = sessionStorage.getItem('pending_practice_id') || (new URLSearchParams(window.location.search)).get('return_practice');
+      if (pendingPracticeId) {
+        sessionStorage.removeItem('pending_practice_id');
+        window.location.href = `/practice?id=${pendingPracticeId}`;
+        return;
+      }
+
       const redirectRoute = sessionStorage.getItem('stenomaster_redirect_after_login') || localStorage.getItem('stenomaster_last_route');
       sessionStorage.removeItem('stenomaster_redirect_after_login');
 
@@ -2056,6 +2093,12 @@ class StenoApp {
 
   proceedToPracticeAfterSignup() {
     this.closeModal('studentCredentialsModal');
+    const pendingId = sessionStorage.getItem('pending_practice_id') || (new URLSearchParams(window.location.search)).get('return_practice');
+    if (pendingId) {
+      sessionStorage.removeItem('pending_practice_id');
+      window.location.href = `/practice?id=${pendingId}`;
+      return;
+    }
     this.showToast(`स्वागतम्, ${this.user.display_name}! 🎓`, 'success');
     this.navigate('home');
   }
@@ -2575,9 +2618,15 @@ class StenoApp {
     const adminNav = document.getElementById('adminNavItem');
     const areaBadge = document.getElementById('areaIndicatorBadge');
     const validityPill = document.getElementById('headerPlanValidityBadge');
+    const guestLoginBtn = document.getElementById('headerGuestLoginBtn');
+    const profileBtn = document.getElementById('headerUserProfileBtn');
+    const logoutBtn = document.getElementById('headerLogoutBtn');
     const isEn = this.currentLang === 'en';
 
     if (this.user) {
+      if (guestLoginBtn) guestLoginBtn.style.display = 'none';
+      if (profileBtn) profileBtn.style.display = 'inline-flex';
+      if (logoutBtn) logoutBtn.style.display = 'inline-flex';
       const name = this.user.display_name || this.user.username || 'Student';
       if (greetingEl) greetingEl.textContent = `Good Day, ${name} 👋`;
       if (avatarEl) avatarEl.textContent = name.charAt(0).toUpperCase();
@@ -2676,14 +2725,17 @@ class StenoApp {
         }
       }
     } else {
-      if (greetingEl) greetingEl.textContent = 'Good Day, Student 👋';
+      if (guestLoginBtn) guestLoginBtn.style.display = 'inline-flex';
+      if (profileBtn) profileBtn.style.display = 'none';
+      if (logoutBtn) logoutBtn.style.display = 'none';
+      if (greetingEl) greetingEl.textContent = isEn ? 'Welcome, Student 👋' : 'स्वागतम्, विद्यार्थी 👋';
       if (avatarEl) {
-        avatarEl.textContent = 'S';
+        avatarEl.textContent = '👤';
         avatarEl.classList.remove('pro-rainbow-ring');
       }
-      if (nameEl) nameEl.textContent = 'Student';
+      if (nameEl) nameEl.textContent = isEn ? 'Guest Student' : 'अतिथि छात्र';
       if (roleEl) {
-        roleEl.textContent = 'Student';
+        roleEl.textContent = isEn ? 'Guest' : 'अतिथि';
         roleEl.className = 'header-user-role role-student';
       }
       if (streakEl) streakEl.textContent = '0 Day Streak';
@@ -2693,7 +2745,12 @@ class StenoApp {
         areaBadge.innerHTML = '👨‍🎓 Student Area';
       }
       if (validityPill) {
-        validityPill.style.display = 'none';
+        validityPill.style.display = 'inline-flex';
+        validityPill.className = 'plan-validity-pill is-free';
+        validityPill.style.background = '';
+        validityPill.innerHTML = isEn ? '🎁 2 Free Demo Classes' : '🎁 2 फ्री डेमो कक्षाएं';
+        validityPill.title = isEn ? 'Click to view subscription plans' : 'सदस्यता प्लान देखें';
+        validityPill.onclick = () => { window.location.href = '/plans'; };
       }
     }
 
@@ -2810,21 +2867,36 @@ class StenoApp {
     });
 
     if (footerContainer) {
-      const studentName = (this.user && (this.user.display_name || this.user.username)) || 'Student';
-      const initial = studentName.charAt(0).toUpperCase();
-      footerContainer.innerHTML = `
-        <div class="sidebar-user-preview">
-          <div class="sidebar-avatar">${initial}</div>
-          <div class="sidebar-user-details">
-            <div class="sidebar-user-name">${this.escapeHtml(studentName)}</div>
-            <div class="sidebar-user-role">👨‍🎓 Student Account</div>
+      if (this.user) {
+        const studentName = (this.user.display_name || this.user.username) || 'Student';
+        const initial = studentName.charAt(0).toUpperCase();
+        footerContainer.innerHTML = `
+          <div class="sidebar-user-preview">
+            <div class="sidebar-avatar">${initial}</div>
+            <div class="sidebar-user-details">
+              <div class="sidebar-user-name">${this.escapeHtml(studentName)}</div>
+              <div class="sidebar-user-role">👨‍🎓 Student Account</div>
+            </div>
           </div>
-        </div>
-        <button class="nav-item sidebar-logout-btn-item" onclick="stenoApp.closeSidebar(); stenoApp.logout();">
-          <div class="nav-item-icon-bubble" style="background:#fee2e2; color:#ef4444; width:30px; height:30px; min-width:30px; font-size:0.95rem;">🚪</div>
-          <span style="color:#dc2626; font-weight:700;">${isEn ? 'Logout' : 'लॉगआउट (Logout)'}</span>
-        </button>
-      `;
+          <button class="nav-item sidebar-logout-btn-item" onclick="stenoApp.closeSidebar(); stenoApp.logout();">
+            <div class="nav-item-icon-bubble" style="background:#fee2e2; color:#ef4444; width:30px; height:30px; min-width:30px; font-size:0.95rem;">🚪</div>
+            <span style="color:#dc2626; font-weight:700;">${isEn ? 'Logout' : 'लॉगआउट (Logout)'}</span>
+          </button>
+        `;
+      } else {
+        footerContainer.innerHTML = `
+          <div class="sidebar-user-preview" style="background: rgba(37, 99, 235, 0.05); border: 1px dashed rgba(37, 99, 235, 0.25); border-radius: 12px; padding: 10px 12px;">
+            <div class="sidebar-avatar" style="background: #2563eb; color: #fff;">👤</div>
+            <div class="sidebar-user-details">
+              <div class="sidebar-user-name" style="font-size:0.92rem;">अतिथि पाठक (Guest)</div>
+              <div class="sidebar-user-role" style="color:#2563eb; font-weight:600;">2 फ्री कक्षाएं उपलब्ध</div>
+            </div>
+          </div>
+          <button class="nav-item" style="background: linear-gradient(135deg, #1e40af 0%, #2563eb 100%); color: #fff; border-radius: 12px; margin-top: 8px; justify-content: center; font-weight: 700; box-shadow: 0 4px 12px rgba(37,99,235,0.25);" onclick="stenoApp.closeSidebar(); stenoApp.openModal('loginModal');">
+            <span>👤 लॉगिन / साइन-अप करें →</span>
+          </button>
+        `;
+      }
     }
   }
 
@@ -3935,12 +4007,13 @@ class StenoApp {
   handleLockedPassageClick(passageId) {
     const pId = Number(passageId);
     const p = (this.allPassages || []).find(x => Number(x.id) === pId) || (this.currentCategoryPassages || []).find(x => Number(x.id) === pId);
-    if (this.isPassageFree(p)) {
-      this.openPractice(passageId);
+    if (!this.user && !this.token) {
+      sessionStorage.setItem('pending_practice_id', String(passageId));
+      this.showAuthGateway('student', 'डिक्टेशन अनलॉक करने एवं अभ्यास के लिए कृपया पहले लॉगिन करें।');
       return;
     }
-    if (!this.user) {
-      this.showAuthGateway('student', 'प्रीमियम डिक्टेशन अनलॉक करने के लिए कृपया पहले लॉगिन करें।');
+    if (this.isPassageFree(p)) {
+      this.openPractice(passageId);
       return;
     }
     const catId = p ? Number(p.category_id) : 0;
@@ -3994,6 +4067,13 @@ class StenoApp {
     try {
       const pId = parseInt(passageId, 10);
       const cardEl = document.querySelector(`.class-card[onclick*="openPractice(${passageId})"]`);
+
+      // Guest Gating: If not logged in, remember requested class and trigger sleek login modal
+      if (!this.user && !this.token) {
+        sessionStorage.setItem('pending_practice_id', String(pId));
+        this.showAuthGateway('student', 'डिक्टेशन एवं टाइपिंग अभ्यास शुरू करने के लिए कृपया लॉगिन करें।');
+        return;
+      }
       if (cardEl) {
         cardEl.style.transition = 'opacity 0.15s ease, transform 0.15s ease';
         cardEl.style.opacity = '0.75';

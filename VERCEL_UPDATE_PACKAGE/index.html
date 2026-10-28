@@ -67,7 +67,7 @@
   <!-- Performance Preconnects for Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="/css/style.css?v=18.5">
+  <link rel="stylesheet" href="/css/style.css?v=19.0">
 
   <!-- Shield Root Hindi Shorthand Content from Chrome / Browser Auto-Translation -->
   <script>
@@ -264,15 +264,7 @@
   </script>
   <!-- Google Identity Services SDK -->
   <script src="https://accounts.google.com/gsi/client" async defer></script>
-  <script>
-    if (!localStorage.getItem('stenomaster_token')) {
-      document.documentElement.classList.add('no-auth-session');
-    }
-  </script>
-  <style>
-    html.no-auth-session #appContainer { display: none !important; }
-    html.no-auth-session #authGatewayView { display: flex !important; }
-  </style>
+
   <!-- Font Preloads for Instant Hindi Typography -->
   <link rel="preload" href="/assets/fonts/Mangal.ttf" as="font" type="font/ttf" crossorigin>
   <link rel="preload" href="/assets/fonts/Kruti_Dev_010.ttf" as="font" type="font/ttf" crossorigin>
@@ -284,7 +276,7 @@
   <!-- =====================================================================
        Phase 2: Authentication Gateway Screen (Role Selection Login Experience)
        ===================================================================== -->
-  <div class="auth-gateway-overlay" id="authGatewayView" style="display:none;" data-auth-theme="yellow">
+  <div class="auth-gateway-overlay" id="authGatewayView" style="display:none;" onclick="if(event.target === this) stenoApp.closeModal('loginModal')" data-auth-theme="yellow">
     <!-- Close Button (if modal opened over app) -->
     <button type="button" class="auth-close-icon-btn" onclick="stenoApp.closeModal('loginModal')" title="Close" aria-label="Close">✕</button>
 
@@ -635,8 +627,13 @@
             <span class="notif-badge-dot"></span>
           </button>
 
+          <!-- Guest Header Login Button -->
+          <button class="btn-primary header-guest-login-btn" id="headerGuestLoginBtn" onclick="stenoApp.openModal('loginModal')" style="display:none;" title="लॉगिन करें (Login)">
+            <span>👤</span> <span data-i18n="header_login_btn">लॉगिन / साइन-अप</span>
+          </button>
+
           <!-- User Profile Chip with Name & Student Role shifted below name on the right -->
-          <button class="user-profile-btn" onclick="window.location.href='/profile'" title="सेटिंग्स (Settings)">
+          <button class="user-profile-btn" id="headerUserProfileBtn" onclick="window.location.href='/profile'" title="सेटिंग्स (Settings)">
             <div class="user-avatar" id="headerUserAvatar">S</div>
             <div class="header-user-meta hide-mobile">
               <span class="header-user-name" id="headerUserName">Student</span>
@@ -644,10 +641,8 @@
             </div>
           </button>
 
-          
-
           <!-- Logout Button -->
-          <button class="btn-secondary header-logout-btn" onclick="stenoApp.logout()" title="लॉगआउट करें">
+          <button class="btn-secondary header-logout-btn" id="headerLogoutBtn" onclick="stenoApp.logout()" title="लॉगआउट करें">
             <span>🚪</span> <span class="hide-mobile" data-i18n="header_logout">लॉगआउट</span>
           </button>
         </div>
@@ -3119,13 +3114,14 @@
   <!-- Cashfree Payment Gateway SDK (v3) - Defer to prevent blocking page render -->
   <script defer src="https://sdk.cashfree.com/js/v3/cashfree.js"></script>
 
-  <!-- Core Lightweight Scripts (charts.js & comparison_view.js?v=17.1 are lazy-loaded on demand for 50% faster startup) -->
-  <script src="/js/audio_player.js?v=8.1"></script>
+  <!-- Core Lightweight Scripts (charts.js & comparison_view.js?v=17.3 are lazy-loaded on demand for 50% faster startup) -->
+  <script src="/js/audio_player.js?v=8.2"></script>
   <script src="/js/keyboard_map.js?v=8.1"></script>
-  <script src="/js/typing_engine.js?v=17.1"></script>
+  <script src="/js/typing_engine.js?v=17.3"></script>
   <script src="/js/ocr_service.js?v=1.1"></script>
-  <script src="/js/comparison_view.js?v=17.1"></script>
-  <script src="/js/app.js?v=18.5"></script>
+  <script src="/js/steno_dictionary.js?v=1.0"></script>
+  <script src="/js/comparison_view.js?v=17.3"></script>
+  <script src="/js/app.js?v=19.0"></script>
   <!-- Strict Exam Hall Anti-Cheat Warning Modal -->
   <div class="modal-overlay" id="examHallWarningModal" style="z-index:99999;" onclick="if(event.target === this) stenoTypingEngine.exitExamModeFromModal()">
     <div class="modal-card" style="max-width: 480px; text-align:center; border:2px solid #ef4444; box-shadow:0 10px 40px rgba(239,68,68,0.3); position:relative; padding:28px 24px;">
@@ -3293,14 +3289,8 @@
           }
           var gateway = document.getElementById('authGatewayView');
           var appCont = document.getElementById('appContainer');
-          var token = localStorage.getItem('stenomaster_token');
-          if (!token) {
-            if (gateway) gateway.style.display = 'flex';
-            if (appCont) appCont.style.display = 'none';
-          } else {
-            if (appCont && appCont.style.display === 'none' && (!gateway || gateway.style.display === 'none')) {
-              appCont.style.display = 'flex';
-            }
+          if (appCont && appCont.style.display === 'none' && (!gateway || gateway.style.display === 'none')) {
+            appCont.style.display = 'flex';
           }
         } catch(e) {}
       }, 1000);
