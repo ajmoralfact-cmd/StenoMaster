@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="hi" data-theme="light">
 <head>
   <meta charset="UTF-8">
@@ -15,7 +15,7 @@
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="/css/style.css?v=16.0">
+  <link rel="stylesheet" href="/css/style.css?v=17.0">
 
   <!-- Shield Root Hindi Shorthand Content from Chrome / Browser Auto-Translation -->
   <script>
@@ -209,7 +209,7 @@
           </div>
 
           <!-- Audio Player Card -->
-          <div class="audio-player-card">
+          <div class="audio-player-card sm-audio-ribbon">
             <div class="audio-title-bar">
               <div class="audio-passage-info">
                 <h3 id="practicePassageTitle" class="hindi-text notranslate skiptranslate" translate="no" lang="hi"><hindi-root text="आलेख शीर्षक"></hindi-root></h3>
@@ -292,6 +292,16 @@
                   <div style="display:flex; gap:4px;">
                     <button type="button" id="examRuleSscBtn" class="btn-sm" onclick="stenoApp.setExamRule('ssc_steno')" style="font-size:0.75rem; padding:4px 10px; font-weight:700; border-radius:6px; background:#0284c7; color:#fff; border:1px solid #0284c7; cursor:pointer;">🎯 SSC Steno (5%/7%)</button>
                     <button type="button" id="examRuleUpssscBtn" class="btn-sm" onclick="stenoApp.setExamRule('upsssc')" style="font-size:0.75rem; padding:4px 10px; font-weight:700; border-radius:6px; background:transparent; color:var(--text-secondary); border:1px solid var(--border); cursor:pointer;">🏛️ UPSSSC (25 WPM + 5%)</button>
+                  </div>
+                </div>
+
+                <!-- Punctuation Mistake Rule Toggle (OFF / Half 0.5 / Full 1.0) -->
+                <div class="punct-rule-group" style="display:flex; align-items:center; gap:8px; background:var(--bg-subtle); padding:4px 10px; border-radius:var(--radius-md); border:1px solid var(--border-subtle);" title="विराम चिह्न (कॉमा, पूर्णविराम) मूल्यांकन नियम">
+                  <label class="mode-label" style="margin:0; font-weight:700; font-size:0.82rem; white-space:nowrap;">विराम चिह्न:</label>
+                  <div class="punct-toggle-chips" id="punctToggleChips" style="display:flex; gap:4px;">
+                    <button type="button" id="punctModeOffBtn" class="punct-chip-btn" onclick="stenoApp.setPunctuationMode('off')" title="विराम चिह्न (कॉमा, पूर्णविराम) छूटने पर कोई गलती नहीं कटेगी">🚫 OFF (छूट)</button>
+                    <button type="button" id="punctModeHalfBtn" class="punct-chip-btn active" onclick="stenoApp.setPunctuationMode('half')" title="SSC मानक: विराम चिह्न त्रुटि पर 0.5 अंक (आधी गलती)">🟡 0.5 (आधा)</button>
+                    <button type="button" id="punctModeFullBtn" class="punct-chip-btn" onclick="stenoApp.setPunctuationMode('full')" title="विराम चिह्न त्रुटि पर 1.0 अंक (पूर्ण गलती)">🔴 1.0 (पूर्ण)</button>
                   </div>
                 </div>
 
@@ -558,12 +568,13 @@
   <!-- Scripts (same as index.html) -->
   <script defer src="https://sdk.cashfree.com/js/v3/cashfree.js"></script>
   <script src="/js/charts.js?v=13.5"></script>
-  <script src="/js/comparison_view.js?v=16.0"></script>
-  <script src="/js/audio_player.js?v=8.1"></script>
+  <script src="/js/steno_dictionary.js?v=1.0"></script>
+  <script src="/js/comparison_view.js?v=17.0"></script>
+  <script src="/js/audio_player.js?v=8.2"></script>
   <script src="/js/keyboard_map.js?v=8.1"></script>
-  <script src="/js/typing_engine.js?v=15.0"></script>
+  <script src="/js/typing_engine.js?v=17.0"></script>
   <script src="/js/ocr_service.js?v=1.1"></script>
-  <script src="/js/app.js?v=15.5"></script>
+  <script src="/js/app.js?v=17.0"></script>
 
   <!-- Practice Page Bootstrap -->
   <script>

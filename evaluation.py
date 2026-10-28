@@ -68,6 +68,10 @@ def tokenize_text(text: str, language: str = 'hindi') -> List[str]:
     if not text:
         return []
 
+    if language == 'hindi':
+        from hindi_converter import normalize_devanagari_canonical
+        text = normalize_devanagari_canonical(text)
+
     # Whitespace-based word splitting across all typing modes
     return [t.strip() for t in text.split() if t.strip()]
 
@@ -90,10 +94,13 @@ def clean_word_for_similarity(w: str, language: str = 'hindi') -> str:
         cleaned = normalize_devanagari_canonical(cleaned)
         # Chandrabindu / Anusvara equivalence in Hindi typing exams (e.g. जहाँ vs जहां)
         cleaned = cleaned.replace('\u0901', '\u0902')
+        # Digits equivalence in Hindi typing exams (e.g. 1994 vs १९९४)
+        hindi_to_eng = str.maketrans('०१२३४५६७८९', '0123456789')
+        cleaned = cleaned.translate(hindi_to_eng)
     return cleaned
 
 
-def analyze_hindi_word_difference(official_word: str, student_word: str) -> Tuple[str, str]:
+def analyze_hindi_word_difference(official_word: str, student_word: str, punctuation_mode: str = 'half') -> Tuple[str, str]:
     """
     Analyzes specific phonetic, matra, or character differences between
     official Hindi word and student typed word.
@@ -117,6 +124,8 @@ def analyze_hindi_word_difference(official_word: str, student_word: str) -> Tupl
     base_off = re.sub(r'[^\w\u0900-\u097F]', '', norm_off)
     base_stu = re.sub(r'[^\w\u0900-\u097F]', '', norm_stu)
     if base_off and base_off == base_stu:
+        if punctuation_mode == 'off':
+            return ("correct", "बिलकुल सही (विराम चिह्न छूट मान्य)")
         return ("punctuation", f"विराम चिह्न त्रुटि (अपेक्षित: '{official_word}', आपने टाइप किया: '{student_word}')")
 
     clean_off = clean_word_for_similarity(official_word, 'hindi')
@@ -124,7 +133,14 @@ def analyze_hindi_word_difference(official_word: str, student_word: str) -> Tupl
 
     # If normalized words are equal only after chandrabindu/anusvara equivalence
     if clean_off == clean_stu:
-        return ("matra", f"अनुस्वार / चंद्रबिंदु अंतर (अपेक्षित: '{official_word}')")
+        hindi_to_eng = str.maketrans('०१२३४५६७८९', '0123456789')
+        # Digits equivalence (e.g. 1994 vs १९९४)
+        if norm_off.translate(hindi_to_eng) == norm_stu.translate(hindi_to_eng):
+            return ("correct", "\u092c\u093f\u0932\u094d\u0915\u0941\u0932 \u0938\u0939\u0940 (\u0905\u0902\u0915 \u092e\u093e\u0928\u094d\u092f)")
+        # Chandrabindu vs Anusvara equivalence (SSC Steno / Court rule)
+        if norm_off.replace('\u0901', '\u0902') == norm_stu.replace('\u0901', '\u0902'):
+            return ("correct", "\u092c\u093f\u0932\u094d\u0915\u0941\u0932 \u0938\u0939\u0940 (\u091a\u0902\u0926\u094d\u0930\u092c\u093f\u0902\u0926\u0941 / \u0905\u0928\u0941\u0938\u094d\u0935\u093e\u0930 \u092e\u093e\u0928\u094d\u092f)")
+        return ("correct", "\u092c\u093f\u0932\u094d\u0915\u0941\u0932 \u0938\u0939\u0940")
 
     # 3. Check for Matra / Confusable pairs
     diff_chars = (set(clean_off) - set(clean_stu)) | (set(clean_stu) - set(clean_off))
@@ -200,6 +216,13 @@ def _is_token_match(t1: str, t2: str, language: str = 'hindi') -> bool:
         n2 = normalize_devanagari_canonical(t2)
         if n1 == n2:
             return True
+        # Chandrabindu vs Anusvara equivalence
+        if n1.replace('\u0901', '\u0902') == n2.replace('\u0901', '\u0902'):
+            return True
+        # Digits equivalence (०-९ vs 0-9)
+        hindi_to_eng = str.maketrans('०१२३४५६७८९', '0123456789')
+        if n1.translate(hindi_to_eng) == n2.translate(hindi_to_eng):
+            return True
 
     c1 = clean_word_for_similarity(t1, language)
     c2 = clean_word_for_similarity(t2, language)
@@ -236,16 +259,16 @@ def _is_stopword(token: str, language: str = 'hindi') -> bool:
         return c in ENGLISH_STOPWORDS
 
 
-def align_tokens_dp(official_tokens: List[str], student_tokens: List[str], language: str = 'hindi') -> List[Dict[str, Any]]:
+def align_tokens_dp(official_tokens: List[str], student_tokens: List[str], language: str = 'hindi', punctuation_mode: str = 'half') -> List[Dict[str, Any]]:
     """
     Sequential Word-by-Word Sequence Alignment with Local Resynchronization.
     Matches student typing against official passage tokens strictly in sequence.
     Prevents jumping across distant parts of the passage when common words match.
     """
-    return align_tokens_sequential(official_tokens, student_tokens, language)
+    return align_tokens_sequential(official_tokens, student_tokens, language, punctuation_mode)
 
 
-def align_tokens_sequential(official_tokens: List[str], student_tokens: List[str], language: str = 'hindi') -> List[Dict[str, Any]]:
+def align_tokens_sequential(official_tokens: List[str], student_tokens: List[str], language: str = 'hindi', punctuation_mode: str = 'half') -> List[Dict[str, Any]]:
     """
     Sequential Word-by-Word Alignment Algorithm:
     - Compares student words sequentially word-by-word against official words.
@@ -283,7 +306,7 @@ def align_tokens_sequential(official_tokens: List[str], student_tokens: List[str
                     "detail": "बिल्कुल सही"
                 }
 
-            err_type, detail = analyze_hindi_word_difference(off_t, stu_t)
+            err_type, detail = analyze_hindi_word_difference(off_t, stu_t, punctuation_mode)
             status = "correct" if err_type in ("none", "correct") else "wrong"
             return {
                 "status": status,
@@ -344,6 +367,14 @@ def align_tokens_sequential(official_tokens: List[str], student_tokens: List[str
             c1 = clean_word_for_similarity(off_t, language).lower()
             c2 = clean_word_for_similarity(stu_t, language).lower()
             if c1 == c2:
+                if punctuation_mode == 'off':
+                    return {
+                        "status": "correct",
+                        "official": off_t,
+                        "student": stu_t,
+                        "error_type": "none",
+                        "detail": "Exact match (Punctuation ignored)"
+                    }
                 return {
                     "status": "wrong",
                     "official": off_t,
@@ -378,6 +409,37 @@ def align_tokens_sequential(official_tokens: List[str], student_tokens: List[str
             i += 1
             j += 1
             continue
+
+        # 1b. Check Compound Word Variation (Hyphen vs Space)
+        # Case A: official is hyphenated (e.g. 'मध्य-प्रदेश'), student typed 2 tokens ('मध्य', 'प्रदेश')
+        if language == 'hindi' and '-' in off and j + 1 < m:
+            combined_stu = stu + student_tokens[j + 1]
+            if _is_token_match(off.replace('-', ''), combined_stu, language):
+                aligned.append({
+                    "status": "correct",
+                    "official": off,
+                    "student": f"{stu} {student_tokens[j + 1]}",
+                    "error_type": "none",
+                    "detail": "योजक चिन्ह / स्पेस भेद (Compound word match)"
+                })
+                i += 1
+                j += 2
+                continue
+
+        # Case B: official is 2 words ('मध्य', 'प्रदेश'), student typed hyphenated ('मध्य-प्रदेश')
+        if language == 'hindi' and i + 1 < n and '-' in stu:
+            combined_off = off + official_tokens[i + 1]
+            if _is_token_match(combined_off, stu.replace('-', ''), language):
+                aligned.append({
+                    "status": "correct",
+                    "official": f"{off} {official_tokens[i + 1]}",
+                    "student": stu,
+                    "error_type": "none",
+                    "detail": "योजक चिन्ह / स्पेस भेद (Compound word match)"
+                })
+                i += 2
+                j += 1
+                continue
 
         # 2. Check Transposition (Adjacent Words Inverted / Swapped)
         if i + 1 < n and j + 1 < m:
@@ -717,7 +779,8 @@ def evaluate_practice_attempt(
     language: str = 'hindi',
     scoring_mode: str = 'standard',
     scoring_config: Dict[str, Any] = None,
-    exam_rule: str = 'ssc_steno'
+    exam_rule: str = 'ssc_steno',
+    punctuation_mode: str = 'half'
 ) -> Dict[str, Any]:
     """
     Main evaluation pipeline:
@@ -738,7 +801,10 @@ def evaluate_practice_attempt(
     student_tokens = tokenize_text(norm_student, language)
 
     # 3. Dynamic Programming token sequence alignment
-    aligned_tokens = align_tokens_dp(official_tokens, student_tokens, language)
+    punctuation_mode = (punctuation_mode or 'half').strip().lower()
+    if punctuation_mode not in ('off', 'half', 'full'):
+        punctuation_mode = 'half'
+    aligned_tokens = align_tokens_dp(official_tokens, student_tokens, language, punctuation_mode)
 
     # 4. Count error categories
     total_official_tokens = len(official_tokens)
@@ -851,27 +917,34 @@ def evaluate_practice_attempt(
     #   Half Mistake (0.5): Matra, Spelling, Character, Punctuation, Spacing errors
     # -----------------------------------------------------------------------
 
+    # Dynamic Punctuation Penalty mapping
+    if punctuation_mode == 'off':
+        effective_punct_full = 0
+        effective_punct_half = 0
+    elif punctuation_mode == 'full':
+        effective_punct_full = punct_count
+        effective_punct_half = 0
+    else:  # 'half' (standard)
+        effective_punct_full = 0
+        effective_punct_half = punct_count
+
     if exam_key == 'upsssc':
-        # UPSSSC 2026: Transposition is a Half Mistake; Matra/Character errors are Full Mistakes (spelling errors)
         transposition_count = sum(1 for t in aligned_tokens if t.get('error_type') == 'transposition')
-        # Spacing errors not separately tracked in token alignment — treated in total half mistakes
-        # Full mistakes: omission + substitution (wrong/spelling/matra/char) + extra (additions)
-        upsssc_full = missing_count + wrong_count + extra_count + matra_count + char_count + spelling_count
-        # Half mistakes: transposition + punctuation spacing errors
-        upsssc_half = transposition_count + punct_count
+        upsssc_full = missing_count + wrong_count + extra_count + matra_count + char_count + spelling_count + effective_punct_full
+        upsssc_half = transposition_count + effective_punct_half
         full_mistakes = upsssc_full
         half_mistakes = upsssc_half
         weighted_errors = (upsssc_full * 1.0) + (upsssc_half * 0.5)
         error_penalty_factor = float(config.get("upsssc_error_factor", 1.0))
     elif exam_key == 'court':
-        full_mistakes = missing_count + extra_count + wrong_count
-        half_mistakes = matra_count + char_count + spelling_count + punct_count
-        weighted_errors = float(total_errors)
+        full_mistakes = missing_count + extra_count + wrong_count + effective_punct_full
+        half_mistakes = matra_count + char_count + spelling_count + effective_punct_half
+        weighted_errors = (full_mistakes * 1.0) + (half_mistakes * 0.5)
         error_penalty_factor = float(config.get("court_error_factor", 1.2))
     else:
         # SSC Stenographer (Default) & Standard:
-        full_mistakes = missing_count + extra_count + wrong_count
-        half_mistakes = matra_count + char_count + spelling_count + punct_count
+        full_mistakes = missing_count + extra_count + wrong_count + effective_punct_full
+        half_mistakes = matra_count + char_count + spelling_count + effective_punct_half
         weighted_errors = (full_mistakes * 1.0) + (half_mistakes * 0.5)
         error_penalty_factor = float(config.get("ssc_error_factor", 1.0))
 
@@ -974,7 +1047,8 @@ def evaluate_practice_attempt(
         "total_equivalent_mistakes": round(weighted_errors, 2),
         "mistake_percent": mistake_percent,
         "ssc": ssc_eval,
-        "upsssc": upsssc_eval
+        "upsssc": upsssc_eval,
+        "punctuation_mode": punctuation_mode
     }
 
     # Error breakdown counts dictionary

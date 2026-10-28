@@ -24,6 +24,46 @@ KD_MULTI: List[Tuple[str, str]] = [
     ("kas", "ों"),
     ("kSa", "ौं"),
     ("ksa", "ों"),
+    ('"kksZa', 'वर्षों'),
+    ('FkksZa', 'अर्थों'),
+    ('/kksZa', 'ध्र्ाों'),
+    ("'kksZa", 'स्पर्शों'),
+    ('"kkZ', 'र्षा'),
+    ('FkkZ', 'र्था'),
+    ('/kkZ', 'र्धा'),
+    ('?kkZ', 'र्घा'),
+    ("'kkZ", 'र्शा'),
+    ('[kkZ', 'र्खा'),
+    ('HkkZ', 'र्भा'),
+    ('.kkZ', 'र्णा'),
+    ('TkkZ', 'र्झा'),
+    ('"ksZ', 'र्षे'),
+    ('FksZ', 'र्थे'),
+    ('/ksZ', 'र्धे'),
+    ('?ksZ', 'र्घे'),
+    ("'ksZ", 'र्शे'),
+    ('[ksZ', 'र्खे'),
+    ('HksZ', 'र्भे'),
+    ('.ksZ', 'र्णे'),
+    ('"khZ', 'र्षी'),
+    ('FkhZ', 'र्थी'),
+    ('/khZ', 'र्धी'),
+    ('?khZ', 'र्घी'),
+    ("'khZ", 'र्शी'),
+    ('[khZ', 'र्खी'),
+    ('HkhZ', 'र्भी'),
+    ('.khZ', 'र्णी'),
+    ('"kZ', 'र्ष'),
+    ('FkZ', 'र्थ'),
+    ('/kZ', 'र्ध'),
+    ('?kZ', 'र्घ'),
+    ("'kZ", 'र्श'),
+    ('[kZ', 'र्ख'),
+    ('HkZ', 'र्भ'),
+    ('.kZ', 'र्ण'),
+    ('TkZ', 'र्झ'),
+    ('f=k', 'त्रि'),
+    ('f=', 'त्रि'),
     ("kZ", "र्ा"),
     (":#", "रू"),
     ("Vª", "ट्र"),
@@ -227,6 +267,11 @@ KD_SINGLE: List[Tuple[str, str]] = [
     ("@", "/"),
     ("^", "‘"),
     ("*", "’"),
+    ("&", "-"),
+    ("-", "-"),
+    ("", "-"),
+    ("", "-"),
+    ("­", "-"),
     ("Þ", "“"),
     ("ß", "”"),
     ("¼", "("),
@@ -318,6 +363,7 @@ def normalize_devanagari_canonical(text: str) -> str:
     # 5. Punctuation standardization
     t = t.replace('“', '"').replace('”', '"').replace('‘', "'").replace('’', "'")
     t = t.replace('–', '-').replace('—', '-')
+    t = t.replace('&', '-')
     t = t.replace('|', '।')
 
     # Normalize whitespace
@@ -340,7 +386,7 @@ def kruti_dev_to_unicode(text: str) -> str:
     # But when ',' follows a character or precedes space/period/end-of-line (e.g. 'egksn;,' or 'dks,'),
     # it is a punctuation comma, NOT the vowel 'ए'.
     # In Kruti Dev, ']' is the mapping for comma. We convert trailing commas to ']' so they map to ','.
-    modified = re.sub(r'([a-zA-Z0-9;+~#`_])\,(?=[\s\.,।\n\r]|$)', r'\1]', text)
+    modified = text
 
     # Phase 1: Multi-character sequences (longest first)
     for kd, uni in KD_MULTI:
@@ -368,6 +414,8 @@ def kruti_dev_to_unicode(text: str) -> str:
     modified = re.sub(r'([क-ह](?:[\u093E-\u094C])?)Z', r'र्\1', modified)
 
     # Phase 5: Canonical Devanagari normalization
+    # Post-fix accidental comma typed on vocatives (e.g. महोदयए -> महोदय,)
+    modified = re.sub(r'(\bमहोदय|\bअध्यक्ष|\bसभापति|\bउपसभापति|\bमंत्री)ए\b', r'\1,', modified)
     return normalize_devanagari_canonical(modified)
 
 
@@ -380,6 +428,9 @@ def unicode_to_kruti_dev(text: str) -> str:
 
     t = unicodedata.normalize('NFC', text)
     t = t.replace('।', 'A')
+    t = t.replace('–', '&').replace('—', '&').replace('-', '&')
+    t = t.replace('“', 'Þ').replace('”', 'ß')
+    t = t.replace('‘', '^').replace('’', '*')
 
     # Reorder Chhoti i matra (\u093F)
     def repl_i(m):

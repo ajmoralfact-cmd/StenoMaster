@@ -1,4 +1,4 @@
-"""
+﻿"""
 Production HTTP Server & REST API for StenoMaster
 Built with Python standard library (http.server, socketserver).
 Provides:
@@ -267,6 +267,29 @@ class StenoMasterHandler(http.server.SimpleHTTPRequestHandler):
                 self.end_headers()
                 return
 
+            # 2b. High-speed global CDN redirect for shorthand notes images
+            rel_subpath = path[len('/uploads/'):].strip('/')
+            clean_subpath = urllib.parse.unquote(rel_subpath)
+            if 'anand_patrika_ank_01' in clean_subpath or clean_subpath.startswith('page_'):
+                base_page = os.path.basename(clean_subpath)
+                asset_name = f"anand_patrika_ank_01_{base_page}"
+                cdn_url = f"https://github.com/ajmoralfact-cmd/StenoMaster/releases/download/notes-v1/{asset_name}"
+                self.send_response(302)
+                self.send_header('Location', cdn_url)
+                self.send_header('Cache-Control', 'public, max-age=604800, immutable')
+                self.end_headers()
+                return
+
+            if 'anand_patrika_ank_02' in clean_subpath or clean_subpath.startswith('class_'):
+                base_page = os.path.basename(clean_subpath)
+                asset_name = f"anand_patrika_ank_02_{base_page}"
+                cdn_url = f"https://github.com/ajmoralfact-cmd/StenoMaster/releases/download/notes-v1/{asset_name}"
+                self.send_response(302)
+                self.send_header('Location', cdn_url)
+                self.send_header('Cache-Control', 'public, max-age=604800, immutable')
+                self.end_headers()
+                return
+
             # 3. Fallback: retrieve from persistent database (Supabase / SQLite) for other assets (images, PDFs)
             file_rec = db.get_uploaded_file(filename)
             if file_rec:
@@ -367,7 +390,7 @@ class StenoMasterHandler(http.server.SimpleHTTPRequestHandler):
             user = self._get_auth_user()
             user_id = user['user_id'] if user else None
             cats = db.get_categories_with_user_status(user_id)
-            cache_ctrl = 'private, no-cache, no-store, must-revalidate' if user_id else 'public, max-age=10, stale-while-revalidate=30'
+            cache_ctrl = 'no-cache, no-store, must-revalidate'
             self._send_json(200, {"categories": cats}, cache_control=cache_ctrl)
             return
 
@@ -379,7 +402,7 @@ class StenoMasterHandler(http.server.SimpleHTTPRequestHandler):
                 self._send_json(400, {"error": "Category ID is required"})
                 return
             data = db.get_passages_by_category(cat_id, user_id)
-            cache_ctrl = 'private, max-age=10, stale-while-revalidate=60' if user_id else 'public, max-age=60, stale-while-revalidate=300'
+            cache_ctrl = 'no-cache, no-store, must-revalidate'
             self._send_json(200, data, cache_control=cache_ctrl)
             return
 
@@ -411,7 +434,7 @@ class StenoMasterHandler(http.server.SimpleHTTPRequestHandler):
                 summary=True  # Ultra-lightweight summary payload (10x faster homepage)
             )
             # Vercel Edge CDN Caching: private for logged-in users, public for guests
-            cache_ctrl = 'private, no-cache, no-store' if user_id else 'public, s-maxage=60, stale-while-revalidate=300'
+            cache_ctrl = 'no-cache, no-store, must-revalidate'
             self._send_json(200, {"passages": passages}, cache_control=cache_ctrl)
             return
 
@@ -668,8 +691,16 @@ class StenoMasterHandler(http.server.SimpleHTTPRequestHandler):
                 return
 
             if path == '/api/admin/passages':
-                passages = db.get_passages(include_official_text=True)
-                self._send_json(200, {"passages": passages})
+                page_str = params.get('page', [None])[0]
+                limit_str = params.get('limit', [None])[0]
+                search = params.get('search', [None])[0]
+                cat_id_str = params.get('category_id', [None])[0]
+
+                page = int(page_str) if page_str and page_str.isdigit() else 1
+                limit = int(limit_str) if limit_str and limit_str.isdigit() else 25
+                cat_id = int(cat_id_str) if cat_id_str and cat_id_str.isdigit() else None
+                result = db.get_admin_passages_paginated(page=page, limit=limit, search=search, category_id=cat_id)
+                self._send_json(200, result)
                 return
 
             if path == '/api/admin/custom-classes':
@@ -1468,6 +1499,7 @@ class StenoMasterHandler(http.server.SimpleHTTPRequestHandler):
             # Retrieve configured scoring rule & target exam mode
             admin_settings = db.get_admin_settings()
             requested_exam_rule = data.get('exam_rule')
+            punctuation_mode = (data.get('punctuation_mode') or 'half').strip().lower()
             if not requested_exam_rule:
                 user_target = (user.get('target_exam') if user else '').lower()
                 if 'upsssc' in user_target:
@@ -1483,7 +1515,8 @@ class StenoMasterHandler(http.server.SimpleHTTPRequestHandler):
                 language=eval_language,
                 scoring_mode=requested_exam_rule,
                 scoring_config=admin_settings,
-                exam_rule=requested_exam_rule
+                exam_rule=requested_exam_rule,
+                punctuation_mode=punctuation_mode
             )
 
             # Save historical attempt in DB (for logged-in students)

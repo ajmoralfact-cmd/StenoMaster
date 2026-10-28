@@ -1,4 +1,4 @@
-/**
+﻿/**
  * StenoMaster Main Client Application
  * Master Controller for State, Routing, Views, Authentication, and Interactions
  */
@@ -323,11 +323,28 @@ class StenoApp {
         this.passages = [...this.allPassages];
       }
     } catch(e) {}
+    // Automated Cache Versioning & Stale Data Busting
+    const CURRENT_DATA_VERSION = 'v16.6_word_counts';
+    try {
+      if (localStorage.getItem('stenomaster_data_ver') !== CURRENT_DATA_VERSION) {
+        localStorage.removeItem('stenomaster_cached_categories');
+        localStorage.removeItem('stenomaster_cached_passages');
+        localStorage.removeItem('stenomaster_cached_summary');
+        try {
+          for (let i = 0; i < sessionStorage.length; i++) {
+            const k = sessionStorage.key(i);
+            if (k && k.startsWith('stenomaster_cat_detail_')) sessionStorage.removeItem(k);
+          }
+        } catch(e) {}
+        localStorage.setItem('stenomaster_data_ver', CURRENT_DATA_VERSION);
+      }
+    } catch(e) {}
+
     try {
       const cachedCats = localStorage.getItem('stenomaster_cached_categories');
       if (cachedCats) {
         const parsed = JSON.parse(cachedCats);
-        this.categories = (parsed || []).filter(c => c.id === 126 || c.id === 128 || c.id === 129);
+        this.categories = Array.isArray(parsed) ? parsed : [];
       }
     } catch(e) {}
     if (!this.categories || this.categories.length === 0) {
@@ -335,10 +352,35 @@ class StenoApp {
       this.categories = [
         { id: 126, slug: 'ramdhari-gupta-khand-1', name: 'रामधारी गुप्ता (खंड 1)', passage_count: 100, free_count: 2, price: 49, icon_emoji: '📘' },
         { id: 129, slug: 'ramdhari-gupta-khand-2', name: 'रामधारी गुप्ता (खंड 2)', passage_count: 150, free_count: 2, price: 49, icon_emoji: '📙' },
+        { id: 130, slug: 'anand-patrika-ank-01', name: 'आनंद पत्रिका अंक 01', passage_count: 17, free_count: 2, price: 49, icon_emoji: '📰' },
+        { id: 131, slug: 'anand-patrika-ank-02', name: 'आनंद पत्रिका अंक 02', passage_count: 17, free_count: 2, price: 49, icon_emoji: '📰' },
         { id: 128, slug: 'cat-1789642826908', name: 'Harsh', passage_count: 4, free_count: 4, price: 0, icon_emoji: '⚡' }
       ];
     }
     this._categoryDetailCache = new Map();
+  getCanonicalWordCount(p) {
+    if (!p) return 400;
+    const catId = Number(p.category_id);
+    const title = String(p.title || '');
+    if (catId === 126 || catId === 129 || title.includes('खंड 1') || title.includes('खंड 2') || title.includes('खंड-1') || title.includes('खंड-2')) {
+      return 400;
+    }
+    if (catId === 130 || title.includes('अंक 01') || title.includes('ank-01')) {
+      return 800;
+    }
+    if (catId === 131 || title.includes('अंक 02') || title.includes('ank-02')) {
+      const m = title.match(/Class\s*(\d+)/i);
+      if (m && Number(m[1]) >= 13) return 1000;
+      if (p.word_count && Number(p.word_count) >= 880) return 1000;
+      return 800;
+    }
+    const raw = Number(p.word_count || 0);
+    if (raw >= 340 && raw <= 540) return 400;
+    if (raw >= 680 && raw <= 870) return 800;
+    if (raw >= 880 && raw <= 1100) return 1000;
+    return raw > 0 ? raw : 400;
+  }
+
 
     this.init();
   }
@@ -375,6 +417,34 @@ class StenoApp {
       }
       if (showNotification) {
         this.showToast('🎯 SSC स्टेनोग्राफर नियम सक्रिय (Grade C & D: 5%/7% कटऑफ)', 'info');
+      }
+    }
+  }
+
+  setPunctuationMode(mode, showNotification = true) {
+    if (!['off', 'half', 'full'].includes(mode)) mode = 'half';
+    this.currentPunctuationMode = mode;
+    localStorage.setItem('stenomaster_punct_mode', mode);
+
+    const offBtn = document.getElementById('punctModeOffBtn');
+    const halfBtn = document.getElementById('punctModeHalfBtn');
+    const fullBtn = document.getElementById('punctModeFullBtn');
+
+    [offBtn, halfBtn, fullBtn].forEach(btn => {
+      if (btn) btn.classList.remove('active');
+    });
+
+    if (mode === 'off' && offBtn) offBtn.classList.add('active');
+    else if (mode === 'full' && fullBtn) fullBtn.classList.add('active');
+    else if (halfBtn) halfBtn.classList.add('active');
+
+    if (showNotification) {
+      if (mode === 'off') {
+        this.showToast('🚫 विराम चिह्न छूट सक्रिय: कॉमा / पूर्णविराम छूटने पर गलती नहीं कटेगी!', 'info');
+      } else if (mode === 'full') {
+        this.showToast('🔴 सख्त नियम सक्रिय: विराम चिह्न त्रुटि पर 1.0 पूर्ण गलती कटेगी!', 'warning');
+      } else {
+        this.showToast('🟡 SSC मानक सक्रिय: विराम चिह्न त्रुटि पर 0.5 आधी गलती कटेगी!', 'info');
       }
     }
   }
@@ -629,6 +699,28 @@ class StenoApp {
           this.verifyCashfreeOrder(returnOrderId);
         }, 400);
       }
+
+      // Check for Mistakes Drill (My Mistakes Notebook Test)
+      const isCustomDrill = urlParams.get('custom_drill');
+      const drillText = sessionStorage.getItem('stenomaster_custom_drill_text');
+      if (isCustomDrill && drillText) {
+        const drillTitle = sessionStorage.getItem('stenomaster_custom_drill_title') || '🎯 मेरी गलतियों का रिवीजन टेस्ट';
+        this.currentPassage = {
+          id: 999999,
+          title: drillTitle,
+          official_text: drillText,
+          official_mangal_text: drillText,
+          language: 'hindi',
+          difficulty: 'hard',
+          target_wpm: 60,
+          duration_seconds: 180,
+          instructions: 'गलतियों की डायरी से कठिन शब्दों का अभ्यास। प्रत्येक शब्द को शुद्धता से टाइप करें।',
+          typing_system: 'mangal_unicode'
+        };
+        setTimeout(() => {
+          this.startPracticeWithSystem('mangal_unicode');
+        }, 600);
+      }
     } catch(e) {}
 
     // Cross-tab real-time sync when Admin grants access, edits passages, or changes language
@@ -842,9 +934,14 @@ class StenoApp {
       this.renderCategoryPassagesList(this.currentCategoryPassages);
       const subEl = document.getElementById('catDetailSub');
       if (subEl) {
+        const isAnand1 = (cIdInt === 130);
+        const isAnand2 = (cIdInt === 131);
+        const isRamdhari = (cIdInt === 126 || cIdInt === 129);
+        const wordsTag = isAnand1 ? '800 शब्द प्रति डिक्टेशन' : (isAnand2 ? '800-1000 शब्द प्रति डिक्टेशन' : (isRamdhari ? '400 शब्द प्रति डिक्टेशन' : '400 शब्द प्रति डिक्टेशन'));
+        const speedTag = (isAnand1 || isAnand2) ? '90 WPM (मानक ऑडियो)' : '80-100 WPM • ऑडियो सहित';
         subEl.textContent = isEn 
-          ? `Total ${this.currentCategoryPassages.length} Dictations • 80-100 WPM • With Audio`
-          : `कुल ${this.currentCategoryPassages.length} डिक्टेशन्स • 80-100 WPM • ऑडियो सहित`;
+          ? `Total ${this.currentCategoryPassages.length} Dictations • ${wordsTag} • ${speedTag}`
+          : `कुल ${this.currentCategoryPassages.length} डिक्टेशन्स • ${wordsTag} • ${speedTag}`;
       }
       const fAll = document.getElementById('catFilterAll');
       if (fAll) fAll.textContent = isEn ? 'All Classes' : 'सभी कक्षाएं (All)';
@@ -911,7 +1008,7 @@ class StenoApp {
     }
 
     if ('serviceWorker' in navigator) {
-      const CURRENT_SW_VERSION = 'v15.5';
+      const CURRENT_SW_VERSION = 'v17.0';
 
       // Step 1: Unregister ALL stale/old service workers first
       navigator.serviceWorker.getRegistrations().then((registrations) => {
@@ -928,7 +1025,7 @@ class StenoApp {
               if ('caches' in window) {
                 caches.keys().then((keys) => {
                   keys.forEach((key) => {
-                    if (!key.includes('v15.5')) {
+                    if (!key.includes('v17.0')) {
                       caches.delete(key);
                       console.log('[SW] Cleared stale cache:', key);
                     }
@@ -940,7 +1037,7 @@ class StenoApp {
       }).catch(() => {});
 
       // Step 2: Register the current SW
-      navigator.serviceWorker.register('/service-worker.js?v=15.5')
+      navigator.serviceWorker.register('/service-worker.js?v=17.0')
         .then((reg) => {
           reg.update().catch(() => {});
           reg.addEventListener('updatefound', () => {
@@ -3721,7 +3818,7 @@ class StenoApp {
     const mins = Math.floor((p.duration_seconds || 180) / 60);
     const secs = (p.duration_seconds || 180) % 60;
     const durStr = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-    const wordCount = p.word_count || Math.max(1, Math.round((p.target_wpm || 80) * (p.duration_seconds || 180) / 60));
+    const wordCount = this.getCanonicalWordCount(p);
     const progressPercent = p.best_wpm ? Math.min(100, Math.round((p.best_wpm / p.target_wpm) * 100)) : 0;
     const catId = Number(p.category_id);
     const hasFullAccess = this.isUserProOrUnlocked(catId);
@@ -4111,6 +4208,8 @@ class StenoApp {
     const userTarget = (this.user && this.user.target_exam || '').toLowerCase();
     const defaultRule = userTarget.includes('upsssc') ? 'upsssc' : 'ssc_steno';
     this.setExamRule(this.currentExamRule || defaultRule, false);
+    const savedPunctMode = localStorage.getItem('stenomaster_punct_mode') || 'half';
+    this.setPunctuationMode(this.currentPunctuationMode || savedPunctMode, false);
 
     this.navigate('practice');
     if (window.stenoAudioPlayer) {
@@ -4283,6 +4382,7 @@ class StenoApp {
         typing_mode: typingMode,
         selected_typing_system: this.selectedTypingSystem || (typingMode === 'krutidev' ? 'kruti_dev_010' : 'mangal_unicode'),
         exam_rule: this.currentExamRule || 'ssc_steno',
+        punctuation_mode: this.currentPunctuationMode || 'half',
         time_taken_seconds: timeTaken,
         tab_switches: (eng && eng.tabSwitchCount) || 0,
         total_keystrokes: (eng && eng.totalKeystrokes) || (text ? text.length : 0),
@@ -6287,10 +6387,10 @@ ${link}`;
             <div class="cat-middle-specs" style="display:flex; flex-direction:column; gap:6px;">
               <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
                 <span style="background:rgba(2,132,199,0.1); color:#0284c7; border:1px solid rgba(2,132,199,0.25); font-weight:800; font-size:0.8rem; padding:4px 10px; border-radius:8px; display:inline-flex; align-items:center; gap:4px;">
-                  ⚡ 80 - 100 WPM
+                  ⚡ ${(Number(cat.id) === 130 || Number(cat.id) === 131) ? '90 WPM (मानक ऑडियो)' : '80 - 100 WPM'}
                 </span>
                 <span style="background:rgba(99,102,241,0.1); color:#4f46e5; border:1px solid rgba(99,102,241,0.25); font-weight:800; font-size:0.8rem; padding:4px 10px; border-radius:8px; display:inline-flex; align-items:center; gap:4px;">
-                  ⏱️ ${isEn ? '5-10 Mins Dictation' : '5-10 मिनट डिक्टेशन'}
+                  📝 ${Number(cat.id) === 126 || Number(cat.id) === 129 ? '400 शब्द' : (Number(cat.id) === 130 ? '800 शब्द' : (Number(cat.id) === 131 ? '800-1000 शब्द' : '400 शब्द'))}
                 </span>
                 <span style="background:rgba(16,185,129,0.1); color:#059669; border:1px solid rgba(16,185,129,0.25); font-weight:800; font-size:0.8rem; padding:4px 10px; border-radius:8px; display:inline-flex; align-items:center; gap:4px;">
                   🎙️ ${isEn ? 'Audio + Steno Notes' : 'ऑडियो + आउटलाइन'}
@@ -6362,8 +6462,14 @@ ${link}`;
       try {
         const stored = sessionStorage.getItem('stenomaster_cat_detail_' + cIdInt);
         if (stored) {
-          cached = JSON.parse(stored);
-          this._categoryDetailCache.set(cIdInt, cached);
+          const parsed = JSON.parse(stored);
+          // Only use cache if it actually contains passages
+          if (parsed && Array.isArray(parsed.passages) && parsed.passages.length > 0) {
+            cached = parsed;
+            this._categoryDetailCache.set(cIdInt, cached);
+          } else {
+            sessionStorage.removeItem('stenomaster_cat_detail_' + cIdInt);
+          }
         }
       } catch (e) {}
     }
@@ -6385,9 +6491,14 @@ ${link}`;
       }
       if (iconEl) iconEl.textContent = catMeta.icon_emoji || '📘';
       if (subEl) {
+        const isAnand1 = (cIdInt === 130);
+        const isAnand2 = (cIdInt === 131);
+        const isRamdhari = (cIdInt === 126 || cIdInt === 129);
+        const wordsTag = isAnand1 ? '800 शब्द प्रति डिक्टेशन' : (isAnand2 ? '800-1000 शब्द प्रति डिक्टेशन' : (isRamdhari ? '400 शब्द प्रति डिक्टेशन' : '400 शब्द प्रति डिक्टेशन'));
+        const speedTag = (isAnand1 || isAnand2) ? '90 WPM (मानक ऑडियो)' : '80-100 WPM • ऑडियो सहित';
         subEl.textContent = isEn 
-          ? `Total ${catMeta.passage_count || 0} Dictations • 80-100 WPM • With Audio`
-          : `कुल ${catMeta.passage_count || 0} डिक्टेशन्स • 80-100 WPM • ऑडियो सहित`;
+          ? `Total ${catMeta.passage_count || 17} Dictations • ${wordsTag} • ${speedTag}`
+          : `कुल ${catMeta.passage_count || 17} डिक्टेशन्स • ${wordsTag} • ${speedTag}`;
       }
     }
 
@@ -6451,9 +6562,14 @@ ${link}`;
       }
       if (iconEl) iconEl.textContent = cat.icon_emoji || '📘';
       if (subEl) {
+        const isAnand1 = (cIdInt === 130);
+        const isAnand2 = (cIdInt === 131);
+        const isRamdhari = (cIdInt === 126 || cIdInt === 129);
+        const wordsTag = isAnand1 ? '800 शब्द प्रति डिक्टेशन' : (isAnand2 ? '800-1000 शब्द प्रति डिक्टेशन' : (isRamdhari ? '400 शब्द प्रति डिक्टेशन' : '400 शब्द प्रति डिक्टेशन'));
+        const speedTag = (isAnand1 || isAnand2) ? '90 WPM (मानक ऑडियो)' : '80-100 WPM • ऑडियो सहित';
         subEl.textContent = isEn 
-          ? `Total ${this.currentCategoryPassages.length} Dictations • 80-100 WPM • With Audio`
-          : `कुल ${this.currentCategoryPassages.length} डिक्टेशन्स • 80-100 WPM • ऑडियो सहित`;
+          ? `Total ${this.currentCategoryPassages.length} Dictations • ${wordsTag} • ${speedTag}`
+          : `कुल ${this.currentCategoryPassages.length} डिक्टेशन्स • ${wordsTag} • ${speedTag}`;
       }
 
       if (badgeEl) {
@@ -6686,11 +6802,11 @@ ${link}`;
             </div>
             <div style="display:flex; gap:8px; font-size:0.75rem; color:var(--text-muted); flex-wrap:wrap; margin-bottom:5px;">
               <span style="background:var(--bg-subtle); padding:2px 8px; border-radius:6px; font-weight:700; color:${palette.accent}; border:1px solid rgba(0,0,0,0.04);">⚡ ${p.target_wpm || 80} WPM</span>
-              <span style="background:var(--bg-subtle); padding:2px 8px; border-radius:6px; border:1px solid rgba(0,0,0,0.04);">📝 ${p.word_count || 400} ${isEn ? 'words' : 'शब्द'}</span>
+              <span style="background:var(--bg-subtle); padding:2px 8px; border-radius:6px; border:1px solid rgba(0,0,0,0.04);">📝 ${this.getCanonicalWordCount(p)} ${isEn ? 'words' : 'शब्द'}</span>
               <span style="background:var(--bg-subtle); padding:2px 8px; border-radius:6px; border:1px solid rgba(0,0,0,0.04);">⏱️ ${durationMins} ${isEn ? 'mins' : 'मिनट'}</span>
             </div>
             <div style="font-size:0.72rem; color:var(--text-muted);">
-              🔤 ${isEn ? 'Mangal & Kruti Dev 010 • With Official Audio' : 'मंगल एवं कृति देव 010 • आधिकारिक ऑडियो सहित'}
+              🔤 ${isEn ? `Mangal & Kruti Dev 010 • Official ${p.target_wpm || 80} WPM Audio` : `मंगल एवं कृति देव 010 • आधिकारिक ${p.target_wpm || 80} WPM ऑडियो`}
             </div>
           </div>
           <div class="card-actions-wrapper" style="display:flex; align-items:center; gap:12px; flex-wrap:wrap; justify-content:flex-end; flex-shrink:0;">
@@ -7314,7 +7430,7 @@ ${link}`;
 
                 <div style="display:flex; gap:6px; flex-wrap:wrap; font-size:0.76rem; margin-bottom:14px;">
                   <span style="background:rgba(99, 102, 241, 0.12); color:#4f46e5; border:1px solid rgba(99, 102, 241, 0.25); padding:3px 10px; border-radius:8px; font-weight:800;">⚡ ${item.target_wpm || 80} WPM</span>
-                  <span style="background:var(--bg-subtle, #f1f5f9); color:var(--text-secondary); border:1px solid var(--border-subtle); padding:3px 10px; border-radius:8px; font-weight:600;">📝 ${item.word_count || 0} शब्द</span>
+                  <span style="background:var(--bg-subtle, #f1f5f9); color:var(--text-secondary); border:1px solid var(--border-subtle); padding:3px 10px; border-radius:8px; font-weight:600;">📝 ${this.getCanonicalWordCount(item)} शब्द</span>
                   <span style="background:var(--bg-subtle, #f1f5f9); color:var(--text-secondary); border:1px solid var(--border-subtle); padding:3px 10px; border-radius:8px; font-weight:600;">🔤 ${fontTitle}</span>
                   ${dateStr ? `<span style="background:var(--bg-subtle, #f1f5f9); color:var(--text-muted); border:1px solid var(--border-subtle); padding:3px 10px; border-radius:8px;">📅 ${dateStr}</span>` : ''}
                 </div>

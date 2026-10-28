@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Comparison View & Error Diagnostics Renderer for StenoMaster
  * Renders:
  * - Dynamic aligned token sequence with color coding
@@ -259,8 +259,16 @@ class StenoComparisonView {
       <div class="mistake-formula-card">
         <div class="formula-header">
           <div>
-            <h3 class="formula-title">⚖️ आधिकारिक त्रुटि फॉर्मूला (SSC / UPSSSC Official Marking Scheme)</h3>
-            <p class="formula-subtitle">आयोग के आधिकारिक नियमों के अनुसार पूर्ण एवं आधी गलतियों का पारदर्शी पृथक्करण:</p>
+            <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+              <h3 class="formula-title" style="margin:0;">⚖️ आधिकारिक त्रुटि फॉर्मूला (SSC / UPSSSC Official Marking Scheme)</h3>
+              ${(() => {
+                const pm = ((es.punctuation_mode || report.punctuation_mode || 'half')).toLowerCase();
+                if (pm === 'off') return '<span style="background:#d1fae5; color:#065f46; font-size:0.72rem; font-weight:800; padding:3px 10px; border-radius:20px; border:1px solid #a7f3d0;">विराम चिह्न: 🚫 छूट मान्य (0 कटौती)</span>';
+                if (pm === 'full') return '<span style="background:#fee2e2; color:#991b1b; font-size:0.72rem; font-weight:800; padding:3px 10px; border-radius:20px; border:1px solid #fecaca;">विराम चिह्न: 🔴 पूर्ण गलती (1.0 कटौती)</span>';
+                return '<span style="background:#fef3c7; color:#92400e; font-size:0.72rem; font-weight:800; padding:3px 10px; border-radius:20px; border:1px solid #fde68a;">विराम चिह्न: 🟡 आधी गलती (0.5 कटौती - SSC मानक)</span>';
+              })()}
+            </div>
+            <p class="formula-subtitle" style="margin-top:6px;">आयोग के आधिकारिक नियमों के अनुसार पूर्ण एवं आधी गलतियों का पारदर्शी पृथक्करण:</p>
           </div>
           <div class="formula-final-badge">
             कुल समतुल्य गलतियां: <strong style="color:var(--accent-red); font-size:1.15rem;">${totalEq}</strong> (${mistakePct}%)
@@ -279,6 +287,7 @@ class StenoComparisonView {
               <div class="f-item"><span>⚠ छूटे हुए शब्द (Omissions):</span> <strong>${missingCount}</strong></div>
               <div class="f-item"><span>➕ अतिरिक्त शब्द (Additions):</span> <strong>${extraCount}</strong></div>
               <div class="f-item"><span>❌ गलत/बदले हुए शब्द (Substitutions):</span> <strong>${wrongCount}</strong></div>
+              ${((es.punctuation_mode || report.punctuation_mode) === 'full') ? `<div class="f-item" style="color:var(--accent-red); font-weight:700;"><span>। विराम चिह्न (Full Penalty):</span> <strong>${punctCount}</strong> (× 1.0)</div>` : ''}
             </div>
           </div>
 
@@ -292,7 +301,12 @@ class StenoComparisonView {
             <div class="f-breakdown-list">
               <div class="f-item"><span>✎ मात्रा अशुद्धि (Matra Errors):</span> <strong>${matraCount}</strong></div>
               <div class="f-item"><span>🔤 वर्तनी, वर्ण व हलन्त दोष (Spelling/Halant):</span> <strong>${spellingCount}</strong></div>
-              <div class="f-item"><span>। विराम चिह्न अशुद्धि (Punctuation):</span> <strong>${punctCount}</strong></div>
+              ${(() => {
+                const pm = ((es.punctuation_mode || report.punctuation_mode || 'half')).toLowerCase();
+                if (pm === 'off') return `<div class="f-item" style="opacity:0.75;"><span>। विराम चिह्न अशुद्धि (Punctuation):</span> <strong>${punctCount}</strong> (छूट मान्य • 0 अंक)</div>`;
+                if (pm === 'full') return `<div class="f-item" style="opacity:0.6;"><span>। विराम चिह्न अशुद्धि (Punctuation):</span> <strong>0</strong> (पूर्ण गलती में दर्ज)</div>`;
+                return `<div class="f-item"><span>। विराम चिह्न अशुद्धि (Punctuation):</span> <strong>${punctCount}</strong></div>`;
+              })()}
             </div>
           </div>
         </div>
@@ -460,12 +474,18 @@ class StenoComparisonView {
         <div class="ww-header">
           <div>
             <span class="ww-tag">🎯 स्टेनो अभ्यास फोकस</span>
-            <h3 class="ww-title">📝 कमजोर शब्दों की स्टेनो आउटलाइन (Focus Words for Shorthand Practice)</h3>
-            <p class="ww-subtitle">इस अभ्यास में इन मुख्य शब्दों में त्रुटि हुई—अपनी नोटबुक में इनकी स्टेनो आउटलाइन बनाकर अभ्यास करें:</p>
+            <h3 class="ww-title">📝 कमजोर शब्दों की स्टेनो आउटलाइन व गलतियों की डायरी</h3>
+            <p class="ww-subtitle">इस अभ्यास में इन मुख्य शब्दों में त्रुटि हुई—आउटलाइन देखने के लिए बटन दबाएं या अपनी डायरी में सहेजें:</p>
           </div>
-          <div class="ww-actions">
+          <div class="ww-actions" style="display:flex; flex-wrap:wrap; gap:8px;">
+            <button type="button" class="btn-save-mistakes-bank" onclick="stenoComparisonView.saveToMistakesBank()">
+              ⭐ डायरी में सहेजें
+            </button>
+            <button type="button" class="btn-practice-mistakes" onclick="stenoComparisonView.startMistakesDrill()">
+              ⚡ इन गलतियों का टेस्ट दें
+            </button>
             <button type="button" class="btn-copy-weak-words" onclick="stenoComparisonView.copyWeakWords()">
-              📋 शब्द कॉपी करें
+              📋 कॉपी करें
             </button>
           </div>
         </div>
@@ -484,12 +504,35 @@ class StenoComparisonView {
                 <div class="ww-tip-row">
                   <span>💡</span> <span>${w.practice_tip}</span>
                 </div>
+                <div style="margin-top:8px;">
+                  <button type="button" class="btn-view-steno-outline" onclick="stenoComparisonView.openOutline('${this.escapeHtml(w.word)}')">
+                    🖋️ आउटलाइन देखें
+                  </button>
+                </div>
               </div>
             </div>
           `).join('')}
         </div>
       </div>
     `;
+  }
+
+  openOutline(word) {
+    if (window.stenoDictionary) {
+      stenoDictionary.showOutlineModal(word);
+    }
+  }
+
+  saveToMistakesBank() {
+    if (window.stenoDictionary) {
+      stenoDictionary.saveAllMistakes(this.currentWeakWords || []);
+    }
+  }
+
+  startMistakesDrill() {
+    if (window.stenoDictionary) {
+      stenoDictionary.startMistakesDrill();
+    }
   }
 
   copyWeakWords() {
@@ -510,106 +553,249 @@ class StenoComparisonView {
     }
   }
 
+  /* ============================================================
+     STENOSHALA-STYLE HERO CARD
+     ============================================================ */
+  renderHeroCard(report) {
+    const es = report.exam_summary || {};
+    const m = report.metrics || {};
+    const rule = (es.active_rule || report.exam_rule || 'ssc_steno');
+    const mistakePct = parseFloat(es.mistake_percent ?? m.mistake_percent ?? 0);
+
+    // Determine pass/fail status
+    let heroClass = 'hero-fail';
+    let verdictIcon = '&#10060;';
+    let verdictText = 'अयोग्य (NOT QUALIFIED)';
+    let verdictSub = 'त्रुटि दर 10% से अधिक — अभ्यास जारी रखें!';
+    let examLabel = 'SSC STENOGRAPHER';
+
+    if (rule === 'upsssc') {
+      const u = es.upsssc || {};
+      examLabel = 'UPSSSC SKILL TEST';
+      if (u.is_qualified) {
+        heroClass = 'hero-pass';
+        verdictIcon = '&#127942;';
+        verdictText = 'सफल (QUALIFIED)';
+        verdictSub = `गति ${u.achieved_wpm || m.net_wpm || 0} WPM &#38; त्रुटियां ${mistakePct}% — मानक उत्तीर्ण!`;
+      } else if ((u.speed_qualified || false) || mistakePct <= 10) {
+        heroClass = 'hero-warn';
+        verdictIcon = '&#9888;';
+        verdictText = 'आंशिक (PARTIAL)';
+        verdictSub = u.status_reason || 'गति या त्रुटि सीमा पूर्ण नहीं हुई।';
+      } else {
+        verdictSub = u.status_reason || 'गति या त्रुटि मानक पूर्ण नहीं हुए।';
+      }
+    } else {
+      // SSC
+      if (mistakePct <= 5.0) {
+        heroClass = 'hero-pass'; verdictIcon = '&#127942;';
+        verdictText = 'योग्य (QUALIFIED)';
+        verdictSub = 'Grade C &#38; D दोनों में सफल!';
+      } else if (mistakePct <= 7.0) {
+        heroClass = 'hero-pass'; verdictIcon = '&#9989;';
+        verdictText = 'योग्य — Grade D + C (Reserved)';
+        verdictSub = 'ग्रेड D (UR) &#38; ग्रेड C (Reserved) उत्तीर्ण।';
+      } else if (mistakePct <= 10.0) {
+        heroClass = 'hero-warn'; verdictIcon = '&#9888;';
+        verdictText = 'आंशिक — Grade D (Reserved)';
+        verdictSub = 'केवल ग्रेड D आरक्षित वर्ग में योग्य।';
+      } else {
+        verdictSub = `त्रुटि दर ${mistakePct}% — 10% से कम करना आवश्यक है।`;
+      }
+    }
+
+    // Build conic-gradient ring for mistake %
+    const ringPct = Math.min(100, Math.max(0, mistakePct));
+    const passColor = heroClass === 'hero-pass' ? '#34d399' : (heroClass === 'hero-warn' ? '#fbbf24' : '#f87171');
+    const failColor = 'rgba(255,255,255,0.12)';
+    const ringDeg = Math.round((ringPct / 100) * 360);
+    const ringGrad = `conic-gradient(${passColor} 0deg, ${passColor} ${ringDeg}deg, ${failColor} ${ringDeg}deg 360deg)`;
+
+    return `
+      <div class="sm-hero-card ${heroClass}">
+        <div class="sm-hero-ring-wrap">
+          <div class="sm-status-ring" style="background:${ringGrad};">
+            <div class="sm-status-ring-inner">
+              <div class="sm-ring-pct">${mistakePct}%</div>
+              <div class="sm-ring-label">त्रुटि दर</div>
+            </div>
+          </div>
+          <div class="sm-hero-verdict">${verdictIcon} ${heroClass === 'hero-pass' ? 'PASS' : (heroClass === 'hero-warn' ? 'PARTIAL' : 'FAIL')}</div>
+        </div>
+        <div class="sm-hero-body">
+          <div class="sm-hero-exam-badge">&#127919; ${examLabel}</div>
+          <h2 class="sm-hero-title">${verdictText}</h2>
+          <p class="sm-hero-subtitle">${verdictSub}</p>
+          <div class="sm-hero-actions">
+            <button class="sm-btn-retry" onclick="stenoApp.retryPractice()">&#128260; पुनः अभ्यास करें</button>
+            <button class="sm-btn-retry" onclick="stenoApp.goBack()">&#8592; वापस जाएं</button>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  /* ============================================================
+     PREMIUM METRICS GRID
+     ============================================================ */
+  renderPremiumMetricsGrid(report) {
+    const m = report.metrics || {};
+    const ec = report.error_counts || {};
+    const es = report.exam_summary || {};
+    const fullM = es.full_mistakes !== undefined ? es.full_mistakes : (ec.wrong || 0) + (ec.missing || 0) + (ec.extra || 0);
+    const halfM = es.half_mistakes !== undefined ? es.half_mistakes : (ec.matra || 0) + (ec.spelling || 0) + (ec.punctuation || 0);
+
+    return `
+      <div class="sm-metrics-grid">
+        <div class="sm-stat-card sm-card-accent-blue">
+          <div class="sm-stat-label">Net Speed (नेट गति)</div>
+          <div class="sm-stat-value">${m.net_wpm || 0}<span class="sm-stat-unit">WPM</span></div>
+          <div class="sm-stat-sub">Gross: ${m.gross_wpm || 0} WPM</div>
+        </div>
+        <div class="sm-stat-card sm-card-accent-emerald">
+          <div class="sm-stat-label">Accuracy (सटीकता)</div>
+          <div class="sm-stat-value">${m.accuracy || 0}<span class="sm-stat-unit">%</span></div>
+          <div class="sm-stat-sub">Time: ${m.time_formatted || '00:00'}</div>
+        </div>
+        <div class="sm-stat-card sm-card-accent-rose">
+          <div class="sm-stat-label">Full Mistakes (पूर्ण)</div>
+          <div class="sm-stat-value" style="color:var(--accent-red)">${fullM}</div>
+          <div class="sm-stat-sub">गलत + छूटे + अतिरिक्त</div>
+        </div>
+        <div class="sm-stat-card sm-card-accent-amber">
+          <div class="sm-stat-label">Half Mistakes (आधी)</div>
+          <div class="sm-stat-value" style="color:var(--accent-amber)">${halfM}</div>
+          <div class="sm-stat-sub">मात्रा + वर्तनी + विराम</div>
+        </div>
+      </div>
+    `;
+  }
+
+  /* ============================================================
+     MISTAKE BREAKDOWN BAR
+     ============================================================ */
+  renderBreakdownBar(report) {
+    const ec = report.error_counts || {};
+    const m = report.metrics || {};
+    const totalWords = m.total_words_official || 100;
+    const fullMistakes = (ec.wrong || 0) + (ec.missing || 0) + (ec.extra || 0);
+    const halfMistakes = (ec.matra || 0) + (ec.spelling || 0) + (ec.character || 0);
+    const punctMistakes = ec.punctuation || 0;
+    const correct = Math.max(0, totalWords - fullMistakes - halfMistakes - punctMistakes);
+
+    const total = fullMistakes + halfMistakes + punctMistakes + correct || 1;
+    const fullPct  = Math.round((fullMistakes / total) * 100);
+    const halfPct  = Math.round((halfMistakes / total) * 100);
+    const punctPct = Math.round((punctMistakes / total) * 100);
+    const corrPct  = Math.max(0, 100 - fullPct - halfPct - punctPct);
+
+    return `
+      <div class="sm-breakdown-card">
+        <div class="sm-breakdown-title">त्रुटि वितरण (Error Distribution)</div>
+        <div class="sm-breakdown-bar">
+          <div class="sm-seg-full"    style="width:${fullPct}%"  title="Full Mistakes: ${fullMistakes}"></div>
+          <div class="sm-seg-half"    style="width:${halfPct}%"  title="Half Mistakes: ${halfMistakes}"></div>
+          <div class="sm-seg-punct"   style="width:${punctPct}%" title="Punctuation: ${punctMistakes}"></div>
+          <div class="sm-seg-correct" style="width:${corrPct}%"  title="Correct: ${correct}"></div>
+        </div>
+        <div class="sm-breakdown-legend">
+          <div class="sm-legend-item"><div class="sm-legend-dot sm-dot-full"></div> पूर्ण गलती — ${fullMistakes} (${fullPct}%)</div>
+          <div class="sm-legend-item"><div class="sm-legend-dot sm-dot-half"></div> आधी गलती — ${halfMistakes} (${halfPct}%)</div>
+          <div class="sm-legend-item"><div class="sm-legend-dot sm-dot-punct"></div> विराम चिह्न — ${punctMistakes} (${punctPct}%)</div>
+          <div class="sm-legend-item"><div class="sm-legend-dot sm-dot-correct"></div> शुद्ध शब्द — ${correct} (${corrPct}%)</div>
+        </div>
+      </div>
+    `;
+  }
+
+  /* ============================================================
+     TOKEN STREAM FILTER (Stenoshala-style tabs)
+     ============================================================ */
+  filterTokens(type, btnEl) {
+    // Update active tab
+    const tabBar = btnEl.closest('.sm-tab-bar');
+    if (tabBar) {
+      tabBar.querySelectorAll('.sm-comp-tab').forEach(b => b.classList.remove('active'));
+      btnEl.classList.add('active');
+    }
+
+    const box = document.getElementById('tokenStreamBox');
+    if (!box) return;
+    const tokens = box.querySelectorAll('.eval-token');
+
+    tokens.forEach(tok => {
+      let show = true;
+      if (type === 'mistakes') {
+        show = tok.classList.contains('eval-token-wrong') || tok.classList.contains('eval-token-extra');
+      } else if (type === 'missing') {
+        show = tok.classList.contains('eval-token-missing');
+      } else if (type === 'punct') {
+        // punctuation tokens have data-error-type="punctuation"
+        show = (tok.dataset.errorType === 'punctuation') || tok.classList.contains('eval-token-wrong');
+      }
+      // type === 'all' → show all
+      tok.classList.toggle('sm-token-hide', !show);
+    });
+  }
   renderResult(report, container) {
     this.currentReport = report;
     const m = report.metrics || {};
     const ec = report.error_counts || {};
+    const es = report.exam_summary || {};
 
     const html = `
-      <div class="result-header-banner">
-        <div class="result-header-left">
-          <h2>अभ्यास मूल्यांकन परिणाम 🎉 (Practice Result)</h2>
-          <p><hindi-root text="${this.escapeHtml(report.passage_title || 'Stenographer Dictation')}"></hindi-root> • ${report.language === 'hindi' ? 'हिंदी डिक्टेशन' : 'English Dictation'}</p>
-        </div>
-        <div class="result-header-right">
-          <button class="btn-secondary" onclick="stenoApp.retryPractice()" style="color:#fff; border-color:rgba(255,255,255,0.4); background:rgba(255,255,255,0.15)">
-            🔄 पुनः अभ्यास करें (Retry)
-          </button>
-        </div>
-      </div>
+      <!-- ========== STENOSHALA-STYLE HERO CARD ========== -->
+      ${this.renderHeroCard(report)}
 
-      <!-- 1. Official Exam Qualification Card (SSC / UPSSSC) -->
-      ${this.renderExamQualificationCard(report)}
+      <!-- ========== PREMIUM METRICS GRID ========== -->
+      ${this.renderPremiumMetricsGrid(report)}
 
-      <!-- 2. Main Score Metrics Grid (Clean Cards) -->
-      <div class="result-metrics-grid">
-        <div class="metric-card highlight">
-          <div class="metric-card-label">Net Speed (नेट गति)</div>
-          <div class="metric-card-value">${m.net_wpm || 0} <span style="font-size:1rem; font-weight:600">WPM</span></div>
-        </div>
-        <div class="metric-card">
-          <div class="metric-card-label">Gross Speed (सकल गति)</div>
-          <div class="metric-card-value">${m.gross_wpm || 0} <span style="font-size:1rem; font-weight:600">WPM</span></div>
-        </div>
-        <div class="metric-card highlight">
-          <div class="metric-card-label">Accuracy (सटीकता)</div>
-          <div class="metric-card-value">${m.accuracy || 0}%</div>
-        </div>
-        <div class="metric-card">
-          <div class="metric-card-label">Total Errors (कुल गलतियां)</div>
-          <div class="metric-card-value" style="color:var(--accent-red)">${ec.total || 0}</div>
-        </div>
-        <div class="metric-card">
-          <div class="metric-card-label">Time Taken (समय)</div>
-          <div class="metric-card-value">${m.time_formatted || '00:00'}</div>
-        </div>
-        <div class="metric-card">
-          <div class="metric-card-label">Words Typed (टाइप शब्द)</div>
-          <div class="metric-card-value">${m.total_words_typed || 0} / ${m.total_words_official || 0}</div>
-        </div>
-      </div>
+      <!-- ========== OFFICIAL MISTAKE FORMULA CARD ========== -->
+      ${this.renderOfficialMistakeFormulaCard(report)}
 
-      <!-- 2b. Keystroke Efficiency & Backspace Analytics Card (Monkeytype / TypingBaba Metric) -->
+      <!-- ========== MISTAKE BREAKDOWN BAR ========== -->
+      ${this.renderBreakdownBar(report)}
+
+      <!-- ========== KEYSTROKE EFFICIENCY CARD ========== -->
       ${this.renderKeystrokeEfficiencyCard(report)}
 
-      <!-- 3. Error Breakdown Pills -->
-      <div class="error-breakdown-card">
-        <div class="error-breakdown-title">त्रुटि विश्लेषण (Error Breakdown)</div>
-        <div class="error-pills-row">
-          <div class="error-pill pill-wrong">❌ गलत शब्द: <strong>${ec.wrong || 0}</strong></div>
-          <div class="error-pill pill-missing">⚠ छूटे हुए शब्द: <strong>${ec.missing || 0}</strong></div>
-          <div class="error-pill pill-extra">➕ अतिरिक्त शब्द: <strong>${ec.extra || 0}</strong></div>
-          <div class="error-pill pill-matra">✎ मात्रा अशुद्धि: <strong>${ec.matra || 0}</strong></div>
-          <div class="error-pill pill-spelling">🔤 वर्तनी अशुद्धि: <strong>${(ec.spelling || 0) + (ec.character || 0)}</strong></div>
-          <div class="error-pill pill-punctuation" style="background:#e0f2fe; color:#0369a1; border:1px solid #bae6fd">
-            । विराम चिह्न: <strong>${ec.punctuation || 0}</strong>
-          </div>
-        </div>
-      </div>
-
-      <!-- 4. Official Steno Shorthand Notes & Outlines Card -->
+      <!-- ========== STENO NOTES CARD ========== -->
       ${this.renderStenoNotesSection(report)}
 
-      <!-- 5. Aligned Stream Comparison Section (The Visual Core) -->
+      <!-- ========== WORD-BY-WORD COMPARISON ========== -->
       <div class="comparison-section">
-        <div class="section-header" style="margin-bottom: 12px;">
+        <div class="sm-comp-header">
           <div>
-            <h3 style="font-size:1.15rem; font-weight:700">मूल आलेख बनाम आपका टंकण (Word-by-Word Comparison)</h3>
-            <p class="section-subtitle">प्रत्येक शब्द पर क्लिक करके उसका मिलान व अशुद्धि का विवरण देखें:</p>
+            <div class="sm-comp-title">मूल आलेख बनाम आपका टंकण</div>
+            <div class="sm-comp-subtitle">Word-by-Word Comparison — शब्द पर क्लिक करें विवरण देखने के लिए</div>
+          </div>
+          <div class="sm-tab-bar">
+            <button class="sm-comp-tab active" onclick="stenoComparisonView.filterTokens('all', this)">सभी शब्द</button>
+            <button class="sm-comp-tab tab-mistakes" onclick="stenoComparisonView.filterTokens('mistakes', this)">&#10060; गलतियां</button>
+            <button class="sm-comp-tab tab-punct" onclick="stenoComparisonView.filterTokens('punct', this)">। विराम</button>
+            <button class="sm-comp-tab tab-missing" onclick="stenoComparisonView.filterTokens('missing', this)">&#9888; छूटे</button>
           </div>
         </div>
-
         <div class="comparison-legend">
-          <div class="legend-item"><span class="legend-dot dot-correct"></span> ✓ शुद्ध (Correct)</div>
-          <div class="legend-item"><span class="legend-dot dot-wrong"></span> ❌ गलत / मात्रा दोष (Wrong)</div>
-          <div class="legend-item"><span class="legend-dot dot-missing"></span> ⚠ छूटा हुआ (Missing)</div>
-          <div class="legend-item"><span class="legend-dot dot-extra"></span> ➕ अतिरिक्त (Extra)</div>
+          <div class="legend-item"><span class="legend-dot dot-correct"></span> &#10003; शुद्ध (Correct)</div>
+          <div class="legend-item"><span class="legend-dot dot-wrong"></span> &#10060; गलत / मात्रा दोष (Wrong)</div>
+          <div class="legend-item"><span class="legend-dot dot-missing"></span> &#9888; छूटा हुआ (Missing)</div>
+          <div class="legend-item"><span class="legend-dot dot-extra"></span> &#10133; अतिरिक्त (Extra)</div>
         </div>
-
         <div class="token-stream-box notranslate" id="tokenStreamBox" translate="no">
           ${this.renderTokenStream(report.aligned_tokens || [])}
         </div>
       </div>
 
-      <!-- 6. Compact Personal Weak Words Bank (Top 6 Focus Words) -->
+      <!-- ========== WEAK WORDS BANK ========== -->
       ${this.renderPersonalWeakWordsBank(report)}
 
-      <!-- 7. Collapsible Detailed Error Table (Accordion) -->
+      <!-- ========== DETAILED ERROR TABLE ========== -->
       ${(report.error_table && report.error_table.length > 0) ? `
         <details class="error-table-accordion" style="margin-top:20px; background:var(--bg-surface); border:1px solid var(--border-subtle); border-radius:var(--radius-lg); padding:16px;">
           <summary style="font-weight:700; font-size:1.05rem; cursor:pointer; display:flex; justify-content:space-between; align-items:center; user-select:none; padding:4px 0;">
-            <span>📋 विस्तृत त्रुटि तालिका देखें (Detailed Error Table — ${report.error_table.length} त्रुटियां दर्ज)</span>
-            <span style="font-size:0.85rem; color:var(--primary); font-weight:600;">क्लिक करके खोलें / बंद करें ▼</span>
+            <span>&#128203; विस्तृत त्रुटि तालिका देखें (Detailed Error Table — ${report.error_table.length} त्रुटियां दर्ज)</span>
+            <span style="font-size:0.85rem; color:var(--primary); font-weight:600;">क्लिक करके खोलें / बंद करें &#9660;</span>
           </summary>
           <div style="margin-top:16px;">
             <div class="table-filter-bar">
@@ -641,14 +827,15 @@ class StenoComparisonView {
         </details>
       ` : ''}
 
-      <!-- Bottom Action Buttons -->
-      <div style="display:flex; justify-content:center; gap:16px; margin-top:30px; margin-bottom:40px;">
-        <button class="btn-secondary" onclick="stenoApp.goBack()">← वापस जाएं (Back)</button>
-        <button class="btn-primary" onclick="stenoApp.retryPractice()">🔄 पुनः अभ्यास करें (Retry)</button>
-      </div>
-    `;
+      <!-- ========== MASTER PASSAGE SECTION ========== -->
+      ${this.renderMasterPassageSection(report)}
 
-    container.innerHTML = html;
+      <!-- Bottom Action Buttons -->
+      <div style="display:flex; justify-content:center; gap:16px; margin-top:30px; margin-bottom:40px; flex-wrap:wrap;">
+        <button class="btn-secondary" onclick="stenoApp.goBack()">&#8592; वापस जाएं (Back)</button>
+        <button class="btn-primary" onclick="stenoApp.retryPractice()">&#128260; पुनः अभ्यास करें (Retry)</button>
+      </div>
+    `;    container.innerHTML = html;
     this.attachTokenListeners();
   }
 
@@ -663,9 +850,15 @@ class StenoComparisonView {
       let tooltipText = '';
 
       if (t.status === 'wrong') {
-        cssClass = 'eval-token-wrong';
-        displayText = t.student || '(रिक्त)';
-        tooltipText = `अपेक्षित: ${t.official || '—'}`;
+        if (t.error_type === 'punctuation') {
+          cssClass = 'eval-token-wrong eval-token-punct';
+          displayText = t.student || t.official || '(विराम)';
+          tooltipText = `विराम चिह्न भेद (अपेक्षित: '${t.official || '—'}', आपका इनपुट: '${t.student || '—'}')`;
+        } else {
+          cssClass = 'eval-token-wrong';
+          displayText = t.student || '(रिक्त)';
+          tooltipText = `अपेक्षित: ${t.official || '—'}`;
+        }
       } else if (t.status === 'missing') {
         cssClass = 'eval-token-missing';
         displayText = t.official || '';
@@ -676,12 +869,20 @@ class StenoComparisonView {
         tooltipText = 'अतिरिक्त शब्द (Unwanted)';
       }
 
+      // Sanitize display and tooltip: ensure & is never shown as a character between Hindi words (Shift+7 dash artifact)
+      if (displayText && /[\u0900-\u097F]&[\u0900-\u097F]/.test(displayText)) {
+        displayText = displayText.replace(/&/g, '-');
+      }
+      if (tooltipText && /[\u0900-\u097F]&[\u0900-\u097F]/.test(tooltipText)) {
+        tooltipText = tooltipText.replace(/&/g, '-');
+      }
+
       // If token is in Kruti Dev ASCII, apply font-krutidev; if Hindi Devanagari, apply font-mangal
       const isTokenKruti = !/[\u0900-\u097F]/.test(displayText) && /[a-zA-Z]/.test(displayText);
       const fontClass = isTokenKruti ? ' font-krutidev' : ' font-mangal';
       const titleAttr = tooltipText ? ` title="${this.escapeHtml(tooltipText)}"` : '';
 
-      return `<span class="eval-token ${cssClass}${fontClass} notranslate skiptranslate" translate="no" data-idx="${idx}"${titleAttr}><hindi-root text="${this.escapeHtml(displayText)}"></hindi-root></span>`;
+      return `<span class="eval-token ${cssClass}${fontClass} notranslate skiptranslate" translate="no" data-idx="${idx}" data-error-type="${this.escapeHtml(t.error_type || '')}"${titleAttr}><hindi-root text="${this.escapeHtml(displayText)}"></hindi-root></span>`;
     }).join(' ');
   }
 

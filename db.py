@@ -6,6 +6,7 @@ Manages SQLite schema, migrations, queries, and realistic seed data.
 import sqlite3
 import math
 import os
+import re
 import json
 import hashlib
 import secrets
@@ -22,13 +23,18 @@ _CATEGORY_DETAIL_CACHE = {}  # category_id -> {"timestamp": float, "cat_dict": d
 _CATEGORY_DETAIL_CACHE_TTL = 60  # 60 seconds
 _FREE_PASSAGE_IDS_CACHE = {"data": None, "timestamp": 0}
 
+_cached_categories = None
+_cached_categories_time = 0
+
 def invalidate_categories_cache():
-    global _CATEGORIES_CACHE, _CATEGORY_DETAIL_CACHE, _FREE_PASSAGE_IDS_CACHE
+    global _CATEGORIES_CACHE, _CATEGORY_DETAIL_CACHE, _FREE_PASSAGE_IDS_CACHE, _cached_categories, _cached_categories_time
     _CATEGORIES_CACHE["data"] = None
     _CATEGORIES_CACHE["timestamp"] = 0
     _CATEGORY_DETAIL_CACHE.clear()
     _FREE_PASSAGE_IDS_CACHE["data"] = None
     _FREE_PASSAGE_IDS_CACHE["timestamp"] = 0
+    _cached_categories = None
+    _cached_categories_time = 0
 
 DB_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'stenomaster.db')
 
@@ -1870,6 +1876,45 @@ def safe_execute_passage_query(conn, query: str, params: list = None):
         raise q_err
 
 
+
+def resolve_canonical_word_count(category_id, passage_title="", raw_count=0):
+    try:
+        cid = int(category_id) if category_id is not None and str(category_id).isdigit() else None
+    except:
+        cid = None
+    title = str(passage_title or "")
+
+    if cid in (126, 129) or "खंड 1" in title or "खंड 2" in title or "खंड-1" in title or "खंड-2" in title or "khand-1" in title or "khand-2" in title:
+        return 400
+
+    if cid == 130 or "अंक 01" in title or "ank-01" in title or "ank 01" in title:
+        return 800
+
+    if cid == 131 or "अंक 02" in title or "ank-02" in title or "ank 02" in title:
+        m = re.search(r'Class\s*(\d+)', title, re.IGNORECASE)
+        if m:
+            cnum = int(m.group(1))
+            return 1000 if cnum >= 13 else 800
+        try:
+            rc = float(raw_count or 0)
+            if rc >= 880:
+                return 1000
+        except:
+            pass
+        return 800
+
+    try:
+        cnt = int(round(float(raw_count or 0)))
+    except:
+        cnt = 400
+    if 340 <= cnt <= 540:
+        return 400
+    if 680 <= cnt <= 870:
+        return 800
+    if 880 <= cnt <= 1100:
+        return 1000
+    return cnt if cnt > 0 else 400
+
 def get_passages(
     language: Optional[str] = None,
     difficulty: Optional[str] = None,
@@ -1967,14 +2012,14 @@ def get_passages(
     result = []
     for r in rows:
         item = dict(r)
+        cat_id = item.get('category_id')
         target_wpm = item.get('target_wpm') or 80
         dur_sec = item.get('duration_seconds') or 300
         off_text = item.get('official_text') or ''
-        word_count = len(off_text.split()) if off_text.strip() else max(1, int(round(target_wpm * dur_sec / 60)))
-
-        cat_id = item.get('category_id')
+        raw_cnt = len(off_text.split()) if off_text.strip() else max(1, int(round(target_wpm * dur_sec / 60)))
+        word_count = resolve_canonical_word_count(cat_id, item.get('title'), raw_cnt)
         is_cat_unlocked = user_has_pro or (cat_id in unlocked_category_ids)
-        is_free_tier = (item['id'] in free_ids)
+        is_free_tier = (item['id'] in free_ids) or (not bool(item.get('is_premium')))
         is_locked = not (is_cat_unlocked or is_free_tier)
 
         if summary:
@@ -2009,6 +2054,75 @@ def get_passages(
             item['is_locked'] = is_locked
             result.append(item)
     return result
+
+
+def get_admin_passages_paginated(
+    page: int = 1,
+    limit: int = 25,
+    search: Optional[str] = None,
+    category_id: Optional[int] = None
+) -> Dict[str, Any]:
+    conn = get_db()
+    offset = max(0, (page - 1) * limit)
+
+    where_clauses = ["1=1"]
+    params = []
+
+    if category_id:
+        where_clauses.append("p.category_id = ?")
+        params.append(int(category_id))
+    if search and search.strip():
+        where_clauses.append("(p.title ILIKE ? OR p.tags ILIKE ?)")
+        s = f"%{search.strip()}%"
+        params.extend([s, s])
+
+    where_str = " AND ".join(where_clauses)
+
+    count_sql = f"""
+        SELECT COUNT(*) as total
+        FROM passages p
+        LEFT JOIN categories c ON p.category_id = c.id
+        WHERE {where_str}
+    """
+    cur = safe_execute_passage_query(conn, count_sql, list(params))
+    total_row = cur.fetchone()
+    total = total_row['total'] if isinstance(total_row, dict) else (total_row[0] if total_row else 0)
+
+    sql = f"""
+        SELECT p.id, p.title, p.category_id, p.language, p.difficulty,
+               p.target_wpm, p.duration_seconds, p.audio_url, p.steno_notes_url, p.steno_notes_type,
+               p.tags, p.status, p.is_premium, p.typing_system,
+               CASE WHEN p.official_text IS NOT NULL AND length(trim(p.official_text)) > 0 THEN 1 ELSE 0 END as has_mangal,
+               CASE WHEN p.official_text_krutidev IS NOT NULL AND length(trim(p.official_text_krutidev)) > 0 THEN 1 ELSE 0 END as has_kruti,
+               COALESCE(c.name, '') as category_name,
+               COALESCE(c.slug, '') as category_slug
+        FROM passages p
+        LEFT JOIN categories c ON p.category_id = c.id
+        WHERE {where_str}
+        ORDER BY p.id ASC
+        LIMIT ? OFFSET ?
+    """
+    exec_params = list(params) + [limit, offset]
+    cur = safe_execute_passage_query(conn, sql, exec_params)
+    rows = cur.fetchall()
+
+    passages = []
+    for r in rows:
+        item = dict(r)
+        target_wpm = item.get('target_wpm') or 80
+        dur_sec = item.get('duration_seconds') or 300
+        item['word_count'] = resolve_canonical_word_count(item.get('category_id'), item.get('title'), max(1, int(round(target_wpm * dur_sec / 60))))
+        item['typing_system'] = item.get('typing_system') or 'dual'
+        passages.append(item)
+
+    total_pages = math.ceil(total / limit) if limit > 0 else 1
+    return {
+        "passages": passages,
+        "total": total,
+        "page": page,
+        "limit": limit,
+        "total_pages": total_pages
+    }
 
 
 def get_passage_detail(passage_id: int, user_id: Optional[int] = None, include_official: bool = False, is_admin: bool = False) -> Optional[Dict[str, Any]]:
@@ -2052,23 +2166,24 @@ def get_passage_detail(passage_id: int, user_id: Optional[int] = None, include_o
         c.execute("UPDATE passages SET view_count = view_count + 1 WHERE id = ?", (passage_id,))
         conn.commit()
         res_dict = dict(row)
+        p_cat_id = res_dict.get('category_id')
         target_wpm = res_dict.get('target_wpm') or 80
         dur_sec = res_dict.get('duration_seconds') or 300
         off_text = res_dict.get('official_text') or ''
-        res_dict['word_count'] = len(off_text.split()) if off_text.strip() else max(1, int(round(target_wpm * dur_sec / 60)))
+        raw_c = len(off_text.split()) if off_text.strip() else max(1, int(round(target_wpm * dur_sec / 60)))
+        res_dict['word_count'] = resolve_canonical_word_count(p_cat_id, res_dict.get('title'), raw_c)
         res_dict['typing_system'] = res_dict.get('typing_system') or 'dual'
         res_dict['official_mangal_text'] = res_dict.get('official_text')
         res_dict['official_kruti_dev_text'] = res_dict.get('official_text_krutidev')
         free_ids = set(get_free_passage_ids(2))
         user_has_pro = is_user_premium(user_id) if user_id else False
-        p_cat_id = res_dict.get('category_id')
         is_free_passage = not bool(res_dict.get('is_premium'))
         is_cat_unlocked = False
         if is_admin or user_has_pro:
             is_cat_unlocked = True
         elif user_id and p_cat_id:
             is_cat_unlocked = is_category_unlocked_for_user(user_id, p_cat_id)
-        res_dict['is_free_tier'] = (res_dict['id'] in free_ids)
+        res_dict['is_free_tier'] = is_free_passage or (res_dict['id'] in free_ids)
         res_dict['is_locked'] = not (is_cat_unlocked or res_dict['is_free_tier'])
         conn.close()
         return res_dict
@@ -4982,6 +5097,7 @@ def get_categories_with_user_status(user_id: Optional[int] = None) -> List[Dict[
             'ramdhari-gupta-khand-1': '📘',
             'cat-1789642826908': '⚡',
             'ramdhari-gupta-khand-2': '📙',
+            'anand-patrika-ank-01': '📰',
             'editorial-passages': '📰',
             'ssc-steno': '🎯',
             'upsssc-steno': '🏛️',
@@ -5084,6 +5200,8 @@ def get_passages_by_category(category_id: Any, user_id: Optional[int] = None) ->
             ORDER BY id ASC
         """, (category_id,))
         p_rows = [dict(r) for r in c.fetchall()]
+        for p in p_rows:
+            p['word_count'] = resolve_canonical_word_count(p.get('category_id'), p.get('title'), p.get('word_count'))
 
         # Query free passage ids in same connection: strictly top 2 of this category
         free_ids = set([p['id'] for p in p_rows[:2]])
