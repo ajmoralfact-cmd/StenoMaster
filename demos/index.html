@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>StenoMaster UI Concepts — 3 Premium Demos</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Noto+Sans+Devanagari:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0b1120;
+      --card-bg: #1e293b;
+      --border: #334155;
+      --primary: #3b82f6;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Plus Jakarta Sans', 'Noto Sans Devanagari', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Header */
+    .showcase-header {
+      padding: 24px 36px;
+      background: rgba(15, 23, 42, 0.9);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .header-left h1 {
+      font-size: 1.4rem;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .header-left p {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      margin-top: 3px;
+    }
+
+    .selector-nav {
+      display: flex;
+      gap: 10px;
+    }
+    .nav-btn {
+      background: #1e293b;
+      border: 1px solid #475569;
+      color: #e2e8f0;
+      padding: 8px 18px;
+      border-radius: 8px;
+      font-size: 0.88rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      text-decoration: none;
+    }
+    .nav-btn:hover {
+      background: #334155;
+      border-color: #64748b;
+    }
+    .nav-btn.active {
+      background: #2563eb;
+      color: #ffffff;
+      border-color: #2563eb;
+      box-shadow: 0 0 16px rgba(37,99,235,0.4);
+    }
+    .fullscreen-btn {
+      background: #0f172a;
+      border: 1px solid #334155;
+      color: #38bdf8;
+      padding: 8px 14px;
+      border-radius: 8px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      cursor: pointer;
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* Comparison Bar */
+    .compare-ribbon {
+      background: #0f172a;
+      border-bottom: 1px solid var(--border);
+      padding: 12px 36px;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 18px;
+    }
+    .ribbon-card {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 8px;
+      padding: 10px 14px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .ribbon-card:hover, .ribbon-card.active-card {
+      background: rgba(37,99,235,0.12);
+      border-color: #3b82f6;
+    }
+    .ribbon-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 4px;
+    }
+    .ribbon-title {
+      font-size: 0.88rem;
+      font-weight: 800;
+      color: #f1f5f9;
+    }
+    .ribbon-badge {
+      font-size: 0.68rem;
+      font-weight: 800;
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+    .b-blue { background: rgba(59,130,246,0.25); color: #93c5fd; }
+    .b-cyan { background: rgba(6,182,212,0.25); color: #67e8f9; }
+    .b-emerald { background: rgba(16,185,129,0.25); color: #6ee7b7; }
+    .ribbon-desc {
+      font-size: 0.75rem;
+      color: #94a3b8;
+      line-height: 1.4;
+    }
+
+    /* Live Preview Container */
+    .preview-frame-container {
+      flex: 1;
+      width: 100%;
+      height: calc(100vh - 170px);
+      background: #f8fafc;
+      position: relative;
+    }
+    iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+      display: block;
+    }
+
+    @media (max-width: 900px) {
+      .compare-ribbon { display: none; }
+      .showcase-header { flex-direction: column; gap: 14px; align-items: flex-start; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <header class="showcase-header">
+    <div class="header-left">
+      <h1>🎙️ StenoMaster — 3 Premium UI Demos</h1>
+      <p>अपनी पसंद का सबसे आकर्षक और स्वच्छ लेआउट चुनें (Zero Clutter, No Useless Words)</p>
+    </div>
+
+    <div class="selector-nav">
+      <button class="nav-btn active" onclick="loadDemo('demo1_stenoshala_pure.html', this, 'ribbon-1')">
+        <span>🎨</span> Demo 1: Stenoshala Clean
+      </button>
+      <button class="nav-btn" onclick="loadDemo('demo2_modern_sapphire.html', this, 'ribbon-2')">
+        <span>💎</span> Demo 2: Modern Sapphire
+      </button>
+      <button class="nav-btn" onclick="loadDemo('demo3_minimal_focus.html', this, 'ribbon-3')">
+        <span>⚡</span> Demo 3: Minimal Focus
+      </button>
+      <a id="btnFullScreen" href="demo1_stenoshala_pure.html" target="_blank" class="fullscreen-btn" title="नए टैब में फुल स्क्रीन खोलें">
+        ↗ Fullscreen
+      </a>
+      <a href="/" class="fullscreen-btn" style="color:#ef4444; border-color:#ef4444;">
+        ← Back to App
+      </a>
+    </div>
+  </header>
+
+  <!-- Comparison Ribbon -->
+  <div class="compare-ribbon">
+    <div class="ribbon-card active-card" id="ribbon-1" onclick="loadDemo('demo1_stenoshala_pure.html', document.querySelectorAll('.nav-btn')[0], 'ribbon-1')">
+      <div class="ribbon-head">
+        <span class="ribbon-title">Demo 1: Stenoshala Pure Clean</span>
+        <span class="ribbon-badge b-blue">Exact Replica</span>
+      </div>
+      <div class="ribbon-desc">लेफ्ट साइडबार + यूजर वेलकम कार्ड + पास्टेल हेडफोन बबल्स + नीट बुलेट्स व एरो बटन्स।</div>
+    </div>
+
+    <div class="ribbon-card" id="ribbon-2" onclick="loadDemo('demo2_modern_sapphire.html', document.querySelectorAll('.nav-btn')[1], 'ribbon-2')">
+      <div class="ribbon-head">
+        <span class="ribbon-title">Demo 2: Modern Sapphire</span>
+        <span class="ribbon-badge b-cyan">Interactive & Rich</span>
+      </div>
+      <div class="ribbon-desc">सैफायर ब्लू टोन + लाइव ऑडियो वेवफॉर्म प्रीव्यू + स्पीड फिल्टर (60/80/100/120 WPM) + क्विक स्टैट्स।</div>
+    </div>
+
+    <div class="ribbon-card" id="ribbon-3" onclick="loadDemo('demo3_minimal_focus.html', document.querySelectorAll('.nav-btn')[2], 'ribbon-3')">
+      <div class="ribbon-head">
+        <span class="ribbon-title">Demo 3: Minimal Focus</span>
+        <span class="ribbon-badge b-emerald">High Contrast</span>
+      </div>
+      <div class="ribbon-desc">0% भटकाव + कीबोर्ड शॉर्टकट [1][2][3][4] + कठिनाई स्तर (सरल/मध्यम/कठिन) + 1-क्लिक लॉन्च।</div>
+    </div>
+  </div>
+
+  <!-- Iframe Preview -->
+  <div class="preview-frame-container">
+    <iframe id="demoFrame" src="demo1_stenoshala_pure.html"></iframe>
+  </div>
+
+  <script>
+    function loadDemo(url, btnEl, ribbonId) {
+      document.getElementById('demoFrame').src = url;
+      document.getElementById('btnFullScreen').href = url;
+      
+      document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+      if (btnEl) btnEl.classList.add('active');
+
+      document.querySelectorAll('.ribbon-card').forEach(r => r.classList.remove('active-card'));
+      if (ribbonId) {
+        const rc = document.getElementById(ribbonId);
+        if (rc) rc.classList.add('active-card');
+      }
+    }
+  </script>
+</body>
+</html>

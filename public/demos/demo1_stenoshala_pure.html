@@ -1,0 +1,1133 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Demo 1: Stenoshala Pure Clean — StenoMaster</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Noto+Sans+Devanagari:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-body: #f8fafc;
+      --bg-card: #ffffff;
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --text-subtle: #94a3b8;
+      --border-color: #e2e8f0;
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --primary-soft: #eff6ff;
+      --shadow-sm: 0 1px 3px rgba(0,0,0,0.05);
+      --shadow-md: 0 4px 20px -2px rgba(15, 23, 42, 0.06);
+      --shadow-lg: 0 12px 32px -4px rgba(15, 23, 42, 0.08);
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 18px;
+      --radius-xl: 24px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Plus Jakarta Sans', 'Noto Sans Devanagari', -apple-system, sans-serif;
+      background-color: var(--bg-body);
+      color: var(--text-main);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Top Demo Switcher Bar */
+    .demo-top-bar {
+      background: #0f172a;
+      color: #ffffff;
+      padding: 10px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.85rem;
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+    .demo-tabs {
+      display: flex;
+      gap: 8px;
+    }
+    .demo-tab-btn {
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.2);
+      color: #cbd5e1;
+      padding: 5px 14px;
+      border-radius: 20px;
+      text-decoration: none;
+      font-weight: 600;
+      transition: all 0.2s;
+    }
+    .demo-tab-btn.active, .demo-tab-btn:hover {
+      background: #2563eb;
+      color: #ffffff;
+      border-color: #2563eb;
+    }
+
+    /* Stenoshala Top Navbar */
+    .steno-navbar {
+      height: 72px;
+      background: #ffffff;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 28px;
+      position: sticky;
+      top: 41px;
+      z-index: 99;
+    }
+    .brand-group {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+    }
+    .brand-icon-box {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.4rem;
+      color: #2563eb;
+    }
+    .brand-title {
+      font-size: 1.15rem;
+      font-weight: 800;
+      color: #0f172a;
+      line-height: 1.2;
+    }
+    .brand-subtitle {
+      font-size: 0.68rem;
+      font-weight: 700;
+      letter-spacing: 0.8px;
+      color: #64748b;
+    }
+
+    /* Search Bar */
+    .search-container {
+      position: relative;
+      width: 460px;
+    }
+    .search-input {
+      width: 100%;
+      height: 44px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 22px;
+      padding: 0 60px 0 42px;
+      font-size: 0.9rem;
+      color: #0f172a;
+      transition: all 0.2s;
+    }
+    .search-input:focus {
+      outline: none;
+      background: #ffffff;
+      border-color: #2563eb;
+      box-shadow: 0 0 0 3px rgba(37,99,235,0.12);
+    }
+    .search-icon-left {
+      position: absolute;
+      left: 16px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #94a3b8;
+      font-size: 1rem;
+    }
+    .search-badge-ctrlk {
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: #e2e8f0;
+      color: #64748b;
+      font-size: 0.72rem;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 6px;
+    }
+
+    /* Nav Actions */
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .notif-btn {
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.15rem;
+      color: #475569;
+      cursor: pointer;
+      position: relative;
+    }
+    .notif-dot {
+      position: absolute;
+      top: 9px;
+      right: 9px;
+      width: 8px;
+      height: 8px;
+      background: #ef4444;
+      border-radius: 50%;
+      border: 2px solid #ffffff;
+    }
+    .user-profile-chip {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      padding: 5px 14px 5px 6px;
+      border-radius: 30px;
+      cursor: pointer;
+      box-shadow: var(--shadow-sm);
+    }
+    .user-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: #3b82f6;
+      color: #ffffff;
+      font-weight: 700;
+      font-size: 0.9rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .user-name {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: #0f172a;
+    }
+    .user-role-label {
+      font-size: 0.68rem;
+      color: #64748b;
+    }
+
+    /* Layout Wrapper */
+    .app-layout {
+      display: flex;
+      max-width: 1540px;
+      margin: 0 auto;
+      padding: 24px;
+      gap: 24px;
+    }
+
+    /* Left Sidebar */
+    .app-sidebar {
+      width: 250px;
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    /* Welcome Card (Stenoshala Exact Style) */
+    .sidebar-user-card {
+      background: linear-gradient(135deg, #0d2040 0%, #17386d 100%);
+      border-radius: var(--radius-lg);
+      padding: 20px;
+      color: #ffffff;
+      box-shadow: var(--shadow-md);
+    }
+    .user-card-head {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    .card-avatar-circle {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.15);
+      border: 1.5px solid rgba(255,255,255,0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 1.1rem;
+      color: #ffffff;
+    }
+    .user-welcome-sub {
+      font-size: 0.72rem;
+      color: #93c5fd;
+      font-weight: 500;
+    }
+    .user-welcome-name {
+      font-size: 0.92rem;
+      font-weight: 800;
+      color: #ffffff;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 140px;
+    }
+    .sidebar-logout-btn {
+      width: 100%;
+      background: #ffffff;
+      border: none;
+      color: #0f172a;
+      padding: 9px;
+      border-radius: var(--radius-md);
+      font-size: 0.85rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .sidebar-logout-btn:hover {
+      background: #f1f5f9;
+      transform: translateY(-1px);
+    }
+
+    /* Language Chip Card (Mint Green in Screenshot) */
+    .sidebar-lang-card {
+      background: #e6f7f2;
+      border: 1px solid #bcece0;
+      border-radius: var(--radius-lg);
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .lang-card-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .lang-icon-badge {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      background: #0d9488;
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+    }
+    .lang-label-sub {
+      font-size: 0.65rem;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      color: #0f766e;
+    }
+    .lang-name-val {
+      font-size: 0.88rem;
+      font-weight: 700;
+      color: #115e59;
+    }
+    .lang-edit-btn {
+      color: #0d9488;
+      cursor: pointer;
+      font-size: 0.9rem;
+      padding: 4px;
+    }
+
+    /* Sidebar Menu */
+    .sidebar-menu-wrap {
+      background: #ffffff;
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border-color);
+      padding: 16px 12px;
+      box-shadow: var(--shadow-sm);
+    }
+    .menu-section-heading {
+      font-size: 0.68rem;
+      font-weight: 800;
+      color: #94a3b8;
+      letter-spacing: 0.8px;
+      margin-bottom: 10px;
+      padding-left: 10px;
+    }
+    .nav-pill-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 14px;
+      border-radius: var(--radius-md);
+      color: #475569;
+      text-decoration: none;
+      font-size: 0.88rem;
+      font-weight: 600;
+      margin-bottom: 4px;
+      transition: all 0.2s;
+    }
+    .nav-pill-item:hover {
+      background: #f1f5f9;
+      color: #0f172a;
+    }
+    .nav-pill-item.active {
+      background: #eff6ff;
+      color: #1d4ed8;
+      font-weight: 700;
+      position: relative;
+    }
+    .nav-pill-item.active::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 8px;
+      bottom: 8px;
+      width: 4px;
+      background: #2563eb;
+      border-radius: 0 4px 4px 0;
+    }
+    .nav-pill-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .nav-badge-discount {
+      background: #ef4444;
+      color: #ffffff;
+      font-size: 0.68rem;
+      font-weight: 800;
+      padding: 3px 8px;
+      border-radius: 12px;
+    }
+
+    /* Main Content Area */
+    .app-main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 22px;
+      min-width: 0;
+    }
+
+    /* Hero Banner (Stenoshala Exact Style) */
+    .hero-banner {
+      background: linear-gradient(110deg, #f0f7ff 0%, #ffffff 45%, #eff6ff 100%);
+      border: 1px solid #dbeafe;
+      border-radius: var(--radius-xl);
+      padding: 32px 36px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: relative;
+      overflow: hidden;
+      box-shadow: var(--shadow-sm);
+    }
+    .hero-content-left {
+      max-width: 620px;
+      z-index: 2;
+    }
+    .hero-headline {
+      font-size: 2.1rem;
+      font-weight: 800;
+      line-height: 1.25;
+      color: #0f2952;
+      margin-bottom: 18px;
+    }
+    .hero-headline span.accent {
+      color: #2563eb;
+    }
+    .hero-feature-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 22px;
+    }
+    .hero-feature-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: #334155;
+    }
+    .hero-feature-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      background: #2563eb;
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.95rem;
+      flex-shrink: 0;
+    }
+    .hero-badge-number-one {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: #ffffff;
+      border: 1px solid #fde047;
+      padding: 8px 16px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(234, 179, 8, 0.12);
+    }
+    .number-one-medal {
+      width: 28px;
+      height: 28px;
+      background: #facc15;
+      color: #713f12;
+      font-weight: 800;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.82rem;
+    }
+    .number-one-text {
+      font-size: 0.9rem;
+      font-weight: 800;
+      color: #0f172a;
+    }
+
+    /* Hero Right Graphic Preview */
+    .hero-graphic-right {
+      position: relative;
+      width: 380px;
+      height: 240px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .hero-laptop-card {
+      width: 320px;
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 14px;
+      padding: 16px;
+      box-shadow: var(--shadow-lg);
+      transform: rotate(-3deg);
+    }
+    .laptop-audio-bar {
+      height: 28px;
+      background: #f1f5f9;
+      border-radius: 6px;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      padding: 0 10px;
+      gap: 8px;
+    }
+    .floating-badge-top {
+      position: absolute;
+      top: 10px;
+      right: 15px;
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 8px 14px;
+      box-shadow: var(--shadow-md);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transform: rotate(2deg);
+    }
+    .floating-badge-bottom {
+      position: absolute;
+      bottom: 12px;
+      left: 10px;
+      background: #ffffff;
+      border: 1px solid #bfdbfe;
+      border-radius: 10px;
+      padding: 6px 12px;
+      box-shadow: var(--shadow-md);
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: #1e40af;
+    }
+
+    /* Download Banner (Dark Blue) */
+    .download-app-banner {
+      background: #0f2952;
+      border-radius: var(--radius-lg);
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      color: #ffffff;
+    }
+    .app-banner-left {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .app-play-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      background: rgba(255,255,255,0.1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+    }
+    .app-title-text {
+      font-size: 1rem;
+      font-weight: 800;
+    }
+    .app-subtitle-text {
+      font-size: 0.8rem;
+      color: #93c5fd;
+    }
+    .app-download-btn {
+      background: #ffffff;
+      color: #0f2952;
+      border: none;
+      padding: 10px 22px;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-weight: 800;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.2s;
+    }
+    .app-download-btn:hover {
+      background: #e2e8f0;
+    }
+
+    /* Exam Pills Row */
+    .exam-pills-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      overflow-x: auto;
+      padding-bottom: 4px;
+    }
+    .exam-pill {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: #0f172a;
+      white-space: nowrap;
+      cursor: pointer;
+      padding: 6px 0;
+      transition: color 0.2s;
+    }
+    .exam-pill:hover {
+      color: #2563eb;
+    }
+    .exam-view-all {
+      margin-left: auto;
+      color: #2563eb;
+      font-weight: 800;
+      font-size: 0.85rem;
+      text-decoration: none;
+      white-space: nowrap;
+    }
+
+    /* Section Heading */
+    .section-header-wrap {
+      margin-top: 10px;
+    }
+    .section-category-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: #2563eb;
+      font-size: 0.85rem;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+    .section-main-title {
+      font-size: 1.8rem;
+      font-weight: 800;
+      color: #0f172a;
+      margin-bottom: 4px;
+    }
+    .section-sub-desc {
+      font-size: 0.9rem;
+      color: #64748b;
+    }
+
+    /* 4-Column Stenoshala Cards Grid */
+    .stenoshala-cards-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 20px;
+    }
+
+    /* Single Stenoshala Card */
+    .steno-card {
+      background: #ffffff;
+      border-radius: var(--radius-xl);
+      border: 1px solid #e2e8f0;
+      overflow: hidden;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      box-shadow: var(--shadow-sm);
+      transition: all 0.25s ease;
+    }
+    .steno-card:hover {
+      transform: translateY(-4px);
+      box-shadow: var(--shadow-lg);
+      border-color: #cbd5e1;
+    }
+
+    /* Top Banner / Ribbon */
+    .card-pro-ribbon {
+      position: absolute;
+      top: 12px;
+      left: -32px;
+      background: linear-gradient(90deg, #f59e0b, #d97706);
+      color: #ffffff;
+      font-size: 0.65rem;
+      font-weight: 800;
+      padding: 4px 34px;
+      transform: rotate(-45deg);
+      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+      z-index: 5;
+      letter-spacing: 0.5px;
+    }
+
+    /* Card Pastel Header */
+    .card-header-art {
+      position: relative;
+      height: 90px;
+      padding: 18px 20px 0 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      overflow: hidden;
+    }
+
+    /* Shapes inside header */
+    .pastel-blob {
+      position: absolute;
+      width: 140px;
+      height: 140px;
+      border-radius: 50%;
+      top: -40px;
+      left: 10px;
+      z-index: 1;
+      opacity: 0.45;
+    }
+    .blob-gold { background: #fed7aa; }
+    .blob-green { background: #bbf7d0; }
+    .blob-amber { background: #fef08a; }
+    .blob-purple { background: #e9d5ff; }
+
+    /* Circular Headphone Badge */
+    .card-icon-circle {
+      position: relative;
+      z-index: 2;
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.06);
+    }
+    .icon-gold { background: #2563eb; color: #ffffff; }
+    .icon-green { background: #059669; color: #ffffff; }
+    .icon-amber { background: #d97706; color: #ffffff; }
+    .icon-purple { background: #7c3aed; color: #ffffff; }
+
+    /* Top Right Arrow Button */
+    .card-arrow-btn {
+      position: relative;
+      z-index: 2;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      color: #0f172a;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.1rem;
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+      transition: all 0.2s;
+    }
+    .steno-card:hover .card-arrow-btn {
+      background: #2563eb;
+      color: #ffffff;
+      border-color: #2563eb;
+    }
+
+    /* Card Body */
+    .card-content {
+      padding: 12px 20px 20px 20px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+    .card-main-title {
+      font-size: 1.12rem;
+      font-weight: 800;
+      color: #0f172a;
+      line-height: 1.35;
+      margin-bottom: 6px;
+    }
+    .card-meta-subtitle {
+      font-size: 0.8rem;
+      color: #64748b;
+      margin-bottom: 16px;
+      font-weight: 500;
+    }
+
+    /* Feature Chips list */
+    .card-feature-chips {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 18px;
+    }
+    .card-chip-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: #334155;
+    }
+    .chip-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .dot-gold { background: #2563eb; }
+    .dot-green { background: #059669; }
+    .dot-amber { background: #d97706; }
+    .dot-purple { background: #7c3aed; }
+
+    /* Bottom Button */
+    .card-cta-btn {
+      margin-top: auto;
+      width: 100%;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: var(--radius-md);
+      padding: 10px;
+      font-size: 0.88rem;
+      font-weight: 700;
+      color: #1e293b;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      text-decoration: none;
+      transition: all 0.2s;
+    }
+    .steno-card:hover .card-cta-btn {
+      background: #2563eb;
+      color: #ffffff;
+      border-color: #2563eb;
+    }
+
+    /* Responsive */
+    @media (max-width: 1200px) {
+      .stenoshala-cards-grid { grid-template-columns: repeat(2, 1fr); }
+      .hero-graphic-right { display: none; }
+    }
+    @media (max-width: 768px) {
+      .app-sidebar { display: none; }
+      .stenoshala-cards-grid { grid-template-columns: 1fr; }
+      .search-container { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Demo Switcher -->
+  <div class="demo-top-bar">
+    <div><strong>StenoMaster UI Demos:</strong> स्वच्छ व आकर्षक इंटरफ़ेस (Zero Clutter)</div>
+    <div class="demo-tabs">
+      <a href="demo1_stenoshala_pure.html" class="demo-tab-btn active">Demo 1: Stenoshala Pure Clean</a>
+      <a href="demo2_modern_sapphire.html" class="demo-tab-btn">Demo 2: Modern Sapphire</a>
+      <a href="demo3_minimal_focus.html" class="demo-tab-btn">Demo 3: Minimal Focus</a>
+      <a href="/" class="demo-tab-btn" style="background:#ef4444; color:#fff; border-color:#ef4444;">← Back to App</a>
+    </div>
+  </div>
+
+  <!-- Top Navbar -->
+  <header class="steno-navbar">
+    <a href="#" class="brand-group">
+      <div class="brand-icon-box">🎙️</div>
+      <div>
+        <div class="brand-title">StenoMaster Shorthand Academy</div>
+        <div class="brand-subtitle">PRACTICE • ANALYSE • IMPROVE</div>
+      </div>
+    </a>
+
+    <div class="search-container">
+      <span class="search-icon-left">🔍</span>
+      <input type="text" class="search-input" placeholder="Search dictations, tests, passages...">
+      <span class="search-badge-ctrlk">Ctrl K</span>
+    </div>
+
+    <div class="nav-actions">
+      <div class="notif-btn" title="सूचनाएं">
+        🔔
+        <span class="notif-dot"></span>
+      </div>
+      <div class="user-profile-chip">
+        <div class="user-avatar">H</div>
+        <div>
+          <div class="user-name">Harsh Khare</div>
+          <div class="user-role-label">Student Dashboard</div>
+        </div>
+        <span style="font-size:0.75rem; color:#94a3b8; margin-left:4px;">▼</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- App Body Layout -->
+  <div class="app-layout">
+
+    <!-- Left Sidebar -->
+    <aside class="app-sidebar">
+      <!-- User Welcome Card -->
+      <div class="sidebar-user-card">
+        <div class="user-card-head">
+          <div class="card-avatar-circle">H</div>
+          <div>
+            <div class="user-welcome-sub">Welcome back</div>
+            <div class="user-welcome-name">Harsh Khare</div>
+          </div>
+        </div>
+        <button class="sidebar-logout-btn" onclick="alert('लॉगआउट सफल!')">
+          <span>🚪</span> Logout
+        </button>
+      </div>
+
+      <!-- Shorthand Language Selector (Mint Green) -->
+      <div class="sidebar-lang-card">
+        <div class="lang-card-left">
+          <div class="lang-icon-badge">⌨️</div>
+          <div>
+            <div class="lang-label-sub">SHORTHAND LANGUAGE</div>
+            <div class="lang-name-val">हिंदी स्टेनो (Hindi)</div>
+          </div>
+        </div>
+        <span class="lang-edit-btn" title="बदलें">✏️</span>
+      </div>
+
+      <!-- Main Navigation Menu -->
+      <nav class="sidebar-menu-wrap">
+        <div class="menu-section-heading">MAIN MENU</div>
+        <a href="#" class="nav-pill-item active">
+          <div class="nav-pill-left"><span>🏠</span> Home</div>
+        </a>
+        <a href="#" class="nav-pill-item">
+          <div class="nav-pill-left"><span>📊</span> Dashboard</div>
+        </a>
+        <a href="#" class="nav-pill-item">
+          <div class="nav-pill-left"><span>🎧</span> All Dictations</div>
+        </a>
+        <a href="#" class="nav-pill-item">
+          <div class="nav-pill-left"><span>⏱️</span> Live Speed Tests</div>
+        </a>
+        <a href="#" class="nav-pill-item">
+          <div class="nav-pill-left"><span>🎫</span> STENO PASS</div>
+          <span class="nav-badge-discount">56% OFF</span>
+        </a>
+        <a href="#" class="nav-pill-item">
+          <div class="nav-pill-left"><span>📖</span> Shorthand Outlines</div>
+        </a>
+      </nav>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="app-main">
+
+      <!-- Hero Banner (Stenoshala 550+ Selections Style) -->
+      <section class="hero-banner">
+        <div class="hero-content-left">
+          <h1 class="hero-headline">
+            550+ Selections in <span class="accent">SSC Steno 2025-26 Exam</span>
+          </h1>
+
+          <div class="hero-feature-list">
+            <div class="hero-feature-item">
+              <div class="hero-feature-icon">🔉</div>
+              <span>2500+ Dictations, play each one at any speed (60 to 120 WPM)</span>
+            </div>
+            <div class="hero-feature-item">
+              <div class="hero-feature-icon">💻</div>
+              <span>Transcription software that is already being used in Government Exams</span>
+            </div>
+          </div>
+
+          <div class="hero-badge-number-one">
+            <div class="number-one-medal">#1</div>
+            <span class="number-one-text">India's #1 Shorthand Practice Platform</span>
+          </div>
+        </div>
+
+        <div class="hero-graphic-right">
+          <div class="hero-laptop-card">
+            <div class="laptop-audio-bar">
+              <span style="font-size:0.8rem; color:#2563eb;">▶</span>
+              <div style="flex:1; height:4px; background:#cbd5e1; border-radius:2px;">
+                <div style="width:65%; height:100%; background:#2563eb; border-radius:2px;"></div>
+              </div>
+              <span style="font-size:0.7rem; font-weight:700; color:#64748b;">80 WPM</span>
+            </div>
+            <div style="font-size:0.75rem; color:#475569; line-height:1.5;">
+              महोदय, इस सदन में प्रस्तुत किए गए बजट प्रस्तावों पर मैं अपने विचार व्यक्त करना चाहता हूँ...
+            </div>
+          </div>
+          <div class="floating-badge-top">
+            <span style="font-size:1.2rem;">🏆</span>
+            <div>
+              <div style="font-size:0.75rem; font-weight:800; color:#0f172a;">550+ Selections</div>
+              <div style="font-size:0.65rem; color:#f59e0b;">⭐⭐⭐⭐⭐</div>
+            </div>
+          </div>
+          <div class="floating-badge-bottom">
+            ✓ Your Practice + Antigravity AI = Success
+          </div>
+        </div>
+      </section>
+
+      <!-- App Download Bar -->
+      <div class="download-app-banner">
+        <div class="app-banner-left">
+          <div class="app-play-icon">📱</div>
+          <div>
+            <div class="app-title-text">Download StenoMaster Mobile App from Play Store</div>
+            <div class="app-subtitle-text">Take dictations, attend classes, track attempts and stay updated on ongoing exams.</div>
+          </div>
+        </div>
+        <a href="#" class="app-download-btn">Download Now →</a>
+      </div>
+
+      <!-- Exam Filter Chips -->
+      <div class="exam-pills-row">
+        <div class="exam-pill" style="color:#2563eb; border-bottom:2px solid #2563eb; padding-bottom:4px;">SSC Stenographer Skill Test</div>
+        <div class="exam-pill">हाईकोर्ट स्टेनोग्राफर स्किल टेस्ट</div>
+        <div class="exam-pill">UPSSSC आशुलिपिक परीक्षा</div>
+        <div class="exam-pill">DDA Steno Skill Test</div>
+        <div class="exam-pill">RSMSSB शीघ्रलिपिक परीक्षा</div>
+        <a href="#" class="exam-view-all">View All Exams →</a>
+      </div>
+
+      <!-- Section Header -->
+      <div class="section-header-wrap">
+        <div class="section-category-tag">🎧 दैनिक अभ्यास लाइब्रेरी</div>
+        <h2 class="section-main-title">Hindi Dictations (हिंदी अभ्यास)</h2>
+        <p class="section-sub-desc">Daily-use practice library — रामधारी गुप्ता खंड 1, खंड 2, आनंद पत्रिका, व कोर्ट स्पेशल।</p>
+      </div>
+
+      <!-- 4-Column Cards Grid -->
+      <div class="stenoshala-cards-grid">
+
+        <!-- Card 1: Ramdhari Khand 1 (Gold/Pro Style) -->
+        <div class="steno-card">
+          <div class="card-pro-ribbon">👑 PRO LEVEL</div>
+          <div class="card-header-art">
+            <div class="pastel-blob blob-gold"></div>
+            <div class="card-icon-circle icon-gold">🎧</div>
+            <div class="card-arrow-btn">→</div>
+          </div>
+          <div class="card-content">
+            <h3 class="card-main-title">रामधारी गुप्ता खंड - 1 (100 अभ्यास)</h3>
+            <div class="card-meta-subtitle">Hindi • 400 Words • 60-100 WPM</div>
+
+            <div class="card-feature-chips">
+              <div class="card-chip-row"><span class="chip-dot dot-gold"></span> <span>संपूर्ण 100 प्रतिलेखन अभ्यास</span></div>
+              <div class="card-chip-row"><span class="chip-dot dot-gold"></span> <span>60, 80, 100 WPM गति विकल्प</span></div>
+              <div class="card-chip-row"><span class="chip-dot dot-gold"></span> <span>SSC ग्रेड C व D परीक्षा के लिए श्रेष्ठ</span></div>
+              <div class="card-chip-row"><span class="chip-dot dot-gold"></span> <span>विराम चिह्न छूट व आधा गलती विकल्प</span></div>
+            </div>
+
+            <a href="/practice?id=1" class="card-cta-btn">अभ्यास शुरू करें →</a>
+          </div>
+        </div>
+
+        <!-- Card 2: Ramdhari Khand 2 (Mint Green Style) -->
+        <div class="steno-card">
+          <div class="card-header-art">
+            <div class="pastel-blob blob-green"></div>
+            <div class="card-icon-circle icon-green">🎧</div>
+            <div class="card-arrow-btn">→</div>
+          </div>
+          <div class="card-content">
+            <h3 class="card-main-title">रामधारी गुप्ता खंड - 2 (150 अभ्यास)</h3>
+            <div class="card-meta-subtitle">Hindi • 800 Words • 80-110 WPM</div>
+
+            <div class="card-feature-chips">
+              <div class="card-chip-row"><span class="chip-dot dot-green"></span> <span>संपूर्ण 150 उच्च गति अभ्यास</span></div>
+              <div class="card-chip-row"><span class="chip-dot dot-green"></span> <span>संसदीय वाद-विवाद व योजनाएं</span></div>
+              <div class="card-chip-row"><span class="chip-dot dot-green"></span> <span>हस्तलिखित आउटलाइन उपलब्ध</span></div>
+              <div class="card-chip-row"><span class="chip-dot dot-green"></span> <span>ऑल-इंडिया रैंक व लीडरबोर्ड</span></div>
+            </div>
+
+            <a href="/practice?id=101" class="card-cta-btn">अभ्यास शुरू करें →</a>
+          </div>
+        </div>
+
+        <!-- Card 3: Anand Patrika (Amber/Yellow Style) -->
+        <div class="steno-card">
+          <div class="card-header-art">
+            <div class="pastel-blob blob-amber"></div>
+            <div class="card-icon-circle icon-amber">🎧</div>
+            <div class="card-arrow-btn">→</div>
+          </div>
+          <div class="card-content">
+            <h3 class="card-main-title">आनंद मासिक पत्रिका (34 अंक)</h3>
+            <div class="card-meta-subtitle">Hindi • 800-1000 Words • 80-120 WPM</div>
+
+            <div class="card-feature-chips">
+              <div class="card-chip-row"><span class="chip-dot dot-amber"></span> <span>अंक 1 से 34 संपूर्ण प्रतिलेखन</span></div>
+              <div class="card-chip-row"><span class="chip-dot dot-amber"></span> <span>कठिन वाक्यांश व शब्दावली</span></div>
+              <div class="card-chip-row"><span class="chip-dot dot-amber"></span> <span>पार्लियामेंट्री रिपोर्टर स्पेशल</span></div>
+              <div class="card-chip-row"><span class="chip-dot dot-amber"></span> <span>स्वच्छ ऑडियो व टेस्ट इंटरफ़ेस</span></div>
+            </div>
+
+            <a href="/practice?id=251" class="card-cta-btn">अभ्यास शुरू करें →</a>
+          </div>
+        </div>
+
+        <!-- Card 4: Court Special (Royal Purple Style) -->
+        <div class="steno-card">
+          <div class="card-header-art">
+            <div class="pastel-blob blob-purple"></div>
+            <div class="card-icon-circle icon-purple">⚖️</div>
+            <div class="card-arrow-btn">→</div>
+          </div>
+          <div class="card-content">
+            <h3 class="card-main-title">कोर्ट व विधिक डिक्टेशन (Legal)</h3>
+            <div class="card-meta-subtitle">Hindi • 400-800 Words • 80 WPM</div>
+
+            <div class="card-feature-chips">
+              <div class="card-chip-row"><span class="chip-dot dot-purple"></span> <span>सिविल व आपराधिक निर्णय</span></div>
+              <div class="card-chip-row"><span class="chip-dot dot-purple"></span> <span>इलाहाबाद व दिल्ली हाईकोर्ट स्पेशल</span></div>
+              <div class="card-chip-row"><span class="chip-dot dot-purple"></span> <span>विधिक पारिभाषिक शब्दावली</span></div>
+              <div class="card-chip-row"><span class="chip-dot dot-purple"></span> <span>सरकारी परीक्षा प्रारूप पर आधारित</span></div>
+            </div>
+
+            <a href="/practice?id=301" class="card-cta-btn">अभ्यास शुरू करें →</a>
+          </div>
+        </div>
+
+      </div>
+
+    </main>
+  </div>
+
+</body>
+</html>

@@ -1,0 +1,886 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Demo 2: Modern Sapphire & Glass — StenoMaster</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Noto+Sans+Devanagari:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-base: #f0f4f9;
+      --bg-surface: #ffffff;
+      --primary: #1d4ed8;
+      --primary-light: #3b82f6;
+      --primary-gradient: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+      --accent-cyan: #06b6d4;
+      --text-dark: #0f172a;
+      --text-muted: #64748b;
+      --border-subtle: #e2e8f0;
+      --shadow-card: 0 10px 25px -5px rgba(30, 64, 175, 0.07), 0 8px 10px -6px rgba(30, 64, 175, 0.04);
+      --shadow-hover: 0 20px 30px -10px rgba(30, 64, 175, 0.15);
+      --radius-sm: 8px;
+      --radius-md: 14px;
+      --radius-lg: 20px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Plus Jakarta Sans', 'Noto Sans Devanagari', -apple-system, sans-serif;
+      background-color: var(--bg-base);
+      color: var(--text-dark);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Top Demo Switcher Bar */
+    .demo-top-bar {
+      background: #0b1329;
+      color: #ffffff;
+      padding: 10px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.85rem;
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.25);
+    }
+    .demo-tabs {
+      display: flex;
+      gap: 8px;
+    }
+    .demo-tab-btn {
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.18);
+      color: #cbd5e1;
+      padding: 5px 14px;
+      border-radius: 20px;
+      text-decoration: none;
+      font-weight: 600;
+      transition: all 0.2s;
+    }
+    .demo-tab-btn.active, .demo-tab-btn:hover {
+      background: #2563eb;
+      color: #ffffff;
+      border-color: #2563eb;
+      box-shadow: 0 0 12px rgba(37,99,235,0.5);
+    }
+
+    /* Sapphire Header */
+    .sapphire-navbar {
+      height: 70px;
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border-subtle);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 32px;
+      position: sticky;
+      top: 41px;
+      z-index: 99;
+    }
+    .brand-wrap {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+    }
+    .brand-logo-gem {
+      width: 42px;
+      height: 42px;
+      border-radius: 12px;
+      background: var(--primary-gradient);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #ffffff;
+      font-size: 1.3rem;
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35);
+    }
+    .brand-text h1 {
+      font-size: 1.15rem;
+      font-weight: 800;
+      color: #0f172a;
+      letter-spacing: -0.3px;
+    }
+    .brand-text span {
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: #2563eb;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+
+    .nav-search {
+      position: relative;
+      width: 380px;
+    }
+    .nav-search input {
+      width: 100%;
+      height: 40px;
+      background: #f8fafc;
+      border: 1px solid #cbd5e1;
+      border-radius: 20px;
+      padding: 0 40px 0 38px;
+      font-size: 0.88rem;
+      color: #0f172a;
+      transition: all 0.2s;
+    }
+    .nav-search input:focus {
+      background: #ffffff;
+      border-color: #2563eb;
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(37,99,235,0.12);
+    }
+    .nav-search .search-ico {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #94a3b8;
+      font-size: 0.95rem;
+    }
+
+    .nav-user-actions {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .streak-badge {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: #fff7ed;
+      border: 1px solid #fed7aa;
+      color: #c2410c;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 0.82rem;
+      font-weight: 700;
+    }
+    .user-pill {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 4px 12px 4px 4px;
+      background: #f1f5f9;
+      border-radius: 24px;
+      cursor: pointer;
+    }
+    .user-avatar-sapphire {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--primary-gradient);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 0.85rem;
+    }
+
+    /* Main Container */
+    .sapphire-container {
+      max-width: 1400px;
+      margin: 24px auto;
+      padding: 0 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    /* Stats Quick Bar */
+    .stats-quick-bar {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+    }
+    .quick-stat-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.02);
+      transition: all 0.2s;
+    }
+    .quick-stat-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(0,0,0,0.05);
+      border-color: #bfdbfe;
+    }
+    .stat-icon-wrap {
+      width: 46px;
+      height: 46px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.3rem;
+    }
+    .stat-val {
+      font-size: 1.35rem;
+      font-weight: 800;
+      color: #0f172a;
+      line-height: 1.2;
+    }
+    .stat-lbl {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+    }
+
+    /* Sapphire Hero Banner */
+    .sapphire-hero {
+      background: linear-gradient(125deg, #0f172a 0%, #1e3a8a 60%, #1d4ed8 100%);
+      border-radius: var(--radius-lg);
+      padding: 32px 40px;
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 16px 36px -10px rgba(30, 58, 138, 0.4);
+    }
+    .hero-glow-blob {
+      position: absolute;
+      width: 350px;
+      height: 350px;
+      background: radial-gradient(circle, rgba(59, 130, 246, 0.4) 0%, rgba(0,0,0,0) 70%);
+      top: -100px;
+      right: 15%;
+      border-radius: 50%;
+      pointer-events: none;
+    }
+    .hero-badge-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      margin-bottom: 14px;
+      letter-spacing: 0.5px;
+    }
+    .hero-heading {
+      font-size: 2.2rem;
+      font-weight: 800;
+      line-height: 1.25;
+      margin-bottom: 12px;
+      letter-spacing: -0.5px;
+    }
+    .hero-heading span {
+      background: linear-gradient(90deg, #60a5fa, #38bdf8);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .hero-subtext {
+      font-size: 0.95rem;
+      color: #cbd5e1;
+      max-width: 580px;
+      margin-bottom: 22px;
+      line-height: 1.5;
+    }
+    .hero-cta-group {
+      display: flex;
+      gap: 12px;
+    }
+    .btn-sapphire-white {
+      background: #ffffff;
+      color: #1e3a8a;
+      font-weight: 800;
+      padding: 10px 24px;
+      border-radius: 10px;
+      text-decoration: none;
+      font-size: 0.9rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s;
+    }
+    .btn-sapphire-white:hover {
+      background: #f1f5f9;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 14px rgba(255,255,255,0.3);
+    }
+    .btn-sapphire-outline {
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.3);
+      color: #ffffff;
+      font-weight: 700;
+      padding: 10px 20px;
+      border-radius: 10px;
+      text-decoration: none;
+      font-size: 0.9rem;
+      transition: all 0.2s;
+    }
+    .btn-sapphire-outline:hover {
+      background: rgba(255,255,255,0.2);
+    }
+
+    /* Speed and Category Filter Bar */
+    .filter-bar-wrap {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: var(--bg-surface);
+      padding: 14px 22px;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-subtle);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+    }
+    .filter-tabs-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .filter-tab {
+      padding: 7px 16px;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      cursor: pointer;
+      color: #64748b;
+      border: 1px solid transparent;
+      transition: all 0.15s;
+      background: transparent;
+    }
+    .filter-tab:hover {
+      background: #f1f5f9;
+      color: #0f172a;
+    }
+    .filter-tab.active {
+      background: #eff6ff;
+      color: #1d4ed8;
+      border-color: #bfdbfe;
+    }
+    .speed-pills-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .speed-label {
+      font-size: 0.75rem;
+      font-weight: 800;
+      color: #94a3b8;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .speed-pill-btn {
+      padding: 5px 12px;
+      border-radius: 16px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      border: 1px solid #cbd5e1;
+      background: #ffffff;
+      color: #475569;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .speed-pill-btn.active, .speed-pill-btn:hover {
+      background: #1e40af;
+      color: #ffffff;
+      border-color: #1e40af;
+    }
+
+    /* Cards Grid */
+    .sapphire-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 20px;
+    }
+    .sapphire-card {
+      background: var(--bg-surface);
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-subtle);
+      overflow: hidden;
+      box-shadow: var(--shadow-card);
+      transition: all 0.25s ease;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+    .sapphire-card:hover {
+      transform: translateY(-5px);
+      box-shadow: var(--shadow-hover);
+      border-color: #93c5fd;
+    }
+
+    .card-top-header {
+      padding: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      position: relative;
+    }
+    .card-category-strip {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+    }
+    .strip-blue { background: linear-gradient(90deg, #2563eb, #60a5fa); }
+    .strip-teal { background: linear-gradient(90deg, #059669, #34d399); }
+    .strip-amber { background: linear-gradient(90deg, #d97706, #fbbf24); }
+    .strip-purple { background: linear-gradient(90deg, #7c3aed, #c084fc); }
+
+    .card-icon-glass {
+      width: 50px;
+      height: 50px;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.4rem;
+    }
+    .icon-glass-blue { background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; }
+    .icon-glass-teal { background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; }
+    .icon-glass-amber { background: #fffbeb; color: #b45309; border: 1px solid #fde68a; }
+    .icon-glass-purple { background: #faf5ff; color: #6d28d9; border: 1px solid #e9d5ff; }
+
+    .card-status-badge {
+      font-size: 0.7rem;
+      font-weight: 800;
+      padding: 4px 10px;
+      border-radius: 12px;
+      letter-spacing: 0.3px;
+    }
+    .badge-unlocked { background: #dcfce7; color: #15803d; }
+    .badge-popular { background: #fee2e2; color: #b91c1c; }
+
+    .card-body-content {
+      padding: 0 20px 16px 20px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+    .card-course-title {
+      font-size: 1.08rem;
+      font-weight: 800;
+      color: #0f172a;
+      line-height: 1.35;
+      margin-bottom: 6px;
+    }
+    .card-subinfo {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* Waveform preview animation */
+    .waveform-preview {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 8px 12px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      margin-bottom: 14px;
+      height: 38px;
+    }
+    .wave-bar {
+      flex: 1;
+      background: #cbd5e1;
+      border-radius: 2px;
+      height: 10px;
+      transition: height 0.2s;
+    }
+    .waveform-preview:hover .wave-bar:nth-child(2n) {
+      background: #3b82f6;
+      height: 22px;
+    }
+    .waveform-preview:hover .wave-bar:nth-child(2n+1) {
+      background: #60a5fa;
+      height: 16px;
+    }
+    .wave-play-trigger {
+      font-size: 0.85rem;
+      color: #2563eb;
+      margin-right: 6px;
+      cursor: pointer;
+    }
+
+    /* Card Feature Bullets */
+    .bullet-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+      margin-bottom: 18px;
+    }
+    .bullet-list li {
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: #334155;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .bullet-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+    }
+    .dot-blue { background: #2563eb; }
+    .dot-teal { background: #059669; }
+    .dot-amber { background: #d97706; }
+    .dot-purple { background: #7c3aed; }
+
+    /* Card CTA Bottom */
+    .card-footer {
+      padding: 14px 20px;
+      border-top: 1px solid var(--border-subtle);
+      background: #fafbfc;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .footer-left-stat {
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: #64748b;
+    }
+    .btn-card-action {
+      background: #1e40af;
+      color: #ffffff;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s;
+    }
+    .btn-card-action:hover {
+      background: #1d4ed8;
+      box-shadow: 0 4px 10px rgba(37,99,235,0.3);
+    }
+
+    /* Responsive */
+    @media (max-width: 1200px) {
+      .sapphire-grid { grid-template-columns: repeat(2, 1fr); }
+      .stats-quick-bar { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 768px) {
+      .sapphire-grid { grid-template-columns: 1fr; }
+      .stats-quick-bar { grid-template-columns: 1fr; }
+      .filter-bar-wrap { flex-direction: column; gap: 12px; align-items: flex-start; }
+      .nav-search { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Demo Switcher -->
+  <div class="demo-top-bar">
+    <div><strong>StenoMaster UI Demos:</strong> स्वच्छ व आकर्षक इंटरफ़ेस (Zero Clutter)</div>
+    <div class="demo-tabs">
+      <a href="demo1_stenoshala_pure.html" class="demo-tab-btn">Demo 1: Stenoshala Pure Clean</a>
+      <a href="demo2_modern_sapphire.html" class="demo-tab-btn active">Demo 2: Modern Sapphire</a>
+      <a href="demo3_minimal_focus.html" class="demo-tab-btn">Demo 3: Minimal Focus</a>
+      <a href="/" class="demo-tab-btn" style="background:#ef4444; color:#fff; border-color:#ef4444;">← Back to App</a>
+    </div>
+  </div>
+
+  <!-- Sapphire Top Navigation -->
+  <header class="sapphire-navbar">
+    <a href="#" class="brand-wrap">
+      <div class="brand-logo-gem">✦</div>
+      <div class="brand-text">
+        <h1>StenoMaster Pro</h1>
+        <span>SSC & High Court Exam Portal</span>
+      </div>
+    </a>
+
+    <div class="nav-search">
+      <span class="search-ico">🔍</span>
+      <input type="text" placeholder="अभ्यास डिक्टेशन खोजें...">
+    </div>
+
+    <div class="nav-user-actions">
+      <div class="streak-badge">
+        🔥 <span>7 Days Streak</span>
+      </div>
+      <div class="user-pill">
+        <div class="user-avatar-sapphire">H</div>
+        <span style="font-size:0.85rem; font-weight:700;">Harsh Khare</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Container -->
+  <main class="sapphire-container">
+
+    <!-- Quick Stats Metric Bar -->
+    <div class="stats-quick-bar">
+      <div class="quick-stat-card">
+        <div class="stat-icon-wrap" style="background:#eff6ff; color:#2563eb;">📚</div>
+        <div>
+          <div class="stat-val">150+</div>
+          <div class="stat-lbl">रामधारी खंड 1 व 2</div>
+        </div>
+      </div>
+      <div class="quick-stat-card">
+        <div class="stat-icon-wrap" style="background:#ecfdf5; color:#059669;">🎯</div>
+        <div>
+          <div class="stat-val">97.4%</div>
+          <div class="stat-lbl">औसत शुद्धता दर</div>
+        </div>
+      </div>
+      <div class="quick-stat-card">
+        <div class="stat-icon-wrap" style="background:#fef3c7; color:#d97706;">⚡</div>
+        <div>
+          <div class="stat-val">80 WPM</div>
+          <div class="stat-lbl">लक्ष्य गति (Target)</div>
+        </div>
+      </div>
+      <div class="quick-stat-card">
+        <div class="stat-icon-wrap" style="background:#faf5ff; color:#7c3aed;">🏆</div>
+        <div>
+          <div class="stat-val">AIR 14</div>
+          <div class="stat-lbl">मॉक टेस्ट रैंक</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sapphire Hero Banner -->
+    <section class="sapphire-hero">
+      <div class="hero-glow-blob"></div>
+      <div style="z-index: 2;">
+        <div class="hero-badge-tag">
+          🚀 SSC Steno 2025-26 स्पेशल बैच
+        </div>
+        <h2 class="hero-heading">
+          स्टेनोग्राफी में <span>100% सटीकता</span> और गति हासिल करें
+        </h2>
+        <p class="hero-subtext">
+          रामधारी गुप्ता, आनंद पत्रिका और कोर्ट डिक्टेशन का वास्तविक परीक्षा माहौल। बिना किसी अतिरिक्त झंझट के तुरंत टाइपिंग अभ्यास शुरू करें।
+        </p>
+        <div class="hero-cta-group">
+          <a href="/practice.html?class=1&type=ramdhari_khand_1" class="btn-sapphire-white">
+            ⚡ आज का डिक्टेशन शुरू करें
+          </a>
+          <a href="#" class="btn-sapphire-outline">
+            📋 सभी 150 अभ्यास देखें
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- Speed and Category Filter Bar -->
+    <div class="filter-bar-wrap">
+      <div class="filter-tabs-left">
+        <button class="filter-tab active">सभी डिक्टेशन</button>
+        <button class="filter-tab">रामधारी गुप्ता</button>
+        <button class="filter-tab">आनंद पत्रिका</button>
+        <button class="filter-tab">हाईकोर्ट / लीगल</button>
+      </div>
+
+      <div class="speed-pills-right">
+        <span class="speed-label">गति चुनें:</span>
+        <button class="speed-pill-btn">60 WPM</button>
+        <button class="speed-pill-btn active">80 WPM</button>
+        <button class="speed-pill-btn">100 WPM</button>
+        <button class="speed-pill-btn">120 WPM</button>
+      </div>
+    </div>
+
+    <!-- Cards Grid -->
+    <div class="sapphire-grid">
+
+      <!-- Card 1: Ramdhari Khand 1 -->
+      <div class="sapphire-card">
+        <div class="card-category-strip strip-blue"></div>
+        <div class="card-top-header">
+          <div class="card-icon-glass icon-glass-blue">📖</div>
+          <span class="card-status-badge badge-unlocked">पूरी तरह अनलॉक</span>
+        </div>
+        <div class="card-body-content">
+          <h3 class="card-course-title">रामधारी खंड - 1 (संपूर्ण)</h3>
+          <div class="card-subinfo">
+            <span>अभ्यास 1 से 100</span> • <span>ऑडियो + आउटलाइन</span>
+          </div>
+
+          <!-- Waveform visualizer -->
+          <div class="waveform-preview" title="ऑडियो प्रीव्यू">
+            <span class="wave-play-trigger">▶</span>
+            <div class="wave-bar" style="height:12px;"></div>
+            <div class="wave-bar" style="height:18px;"></div>
+            <div class="wave-bar" style="height:10px;"></div>
+            <div class="wave-bar" style="height:24px;"></div>
+            <div class="wave-bar" style="height:14px;"></div>
+            <div class="wave-bar" style="height:20px;"></div>
+            <div class="wave-bar" style="height:8px;"></div>
+            <div class="wave-bar" style="height:16px;"></div>
+            <div class="wave-bar" style="height:22px;"></div>
+            <div class="wave-bar" style="height:12px;"></div>
+          </div>
+
+          <ul class="bullet-list">
+            <li><span class="bullet-dot dot-blue"></span> 100 ऑडियो अभ्यास (80 & 100 WPM)</li>
+            <li><span class="bullet-dot dot-blue"></span> रियल-टाइम मिस्टेक मूल्यांकन</li>
+            <li><span class="bullet-dot dot-blue"></span> मानक गति 400 शब्द प्रति अभ्यास</li>
+          </ul>
+        </div>
+        <div class="card-footer">
+          <span class="footer-left-stat">100 अभ्यास उपलब्ध</span>
+          <a href="/practice.html?class=1&type=ramdhari_khand_1" class="btn-card-action">
+            शुरू करें →
+          </a>
+        </div>
+      </div>
+
+      <!-- Card 2: Ramdhari Khand 2 -->
+      <div class="sapphire-card">
+        <div class="card-category-strip strip-teal"></div>
+        <div class="card-top-header">
+          <div class="card-icon-glass icon-glass-teal">🎯</div>
+          <span class="card-status-badge badge-popular">सर्वाधिक लोकप्रिय</span>
+        </div>
+        <div class="card-body-content">
+          <h3 class="card-course-title">रामधारी खंड - 2 (संसदीय)</h3>
+          <div class="card-subinfo">
+            <span>अभ्यास 1 से 150</span> • <span>संसदीय वाद-विवाद</span>
+          </div>
+
+          <!-- Waveform visualizer -->
+          <div class="waveform-preview" title="ऑडियो प्रीव्यू">
+            <span class="wave-play-trigger">▶</span>
+            <div class="wave-bar" style="height:14px;"></div>
+            <div class="wave-bar" style="height:20px;"></div>
+            <div class="wave-bar" style="height:12px;"></div>
+            <div class="wave-bar" style="height:26px;"></div>
+            <div class="wave-bar" style="height:16px;"></div>
+            <div class="wave-bar" style="height:18px;"></div>
+            <div class="wave-bar" style="height:10px;"></div>
+            <div class="wave-bar" style="height:22px;"></div>
+            <div class="wave-bar" style="height:15px;"></div>
+            <div class="wave-bar" style="height:25px;"></div>
+          </div>
+
+          <ul class="bullet-list">
+            <li><span class="bullet-dot dot-teal"></span> 150 ऑडियो अभ्यास (800 शब्द)</li>
+            <li><span class="bullet-dot dot-teal"></span> SSC ग्रेड C & D विशेष मानक</li>
+            <li><span class="bullet-dot dot-teal"></span> बैकस्पेस व कीस्ट्रोक काउंटिंग</li>
+          </ul>
+        </div>
+        <div class="card-footer">
+          <span class="footer-left-stat">150 अभ्यास उपलब्ध</span>
+          <a href="/practice.html?class=1&type=ramdhari_khand_2" class="btn-card-action" style="background:#059669;">
+            शुरू करें →
+          </a>
+        </div>
+      </div>
+
+      <!-- Card 3: Anand Patrika -->
+      <div class="sapphire-card">
+        <div class="card-category-strip strip-amber"></div>
+        <div class="card-top-header">
+          <div class="card-icon-glass icon-glass-amber">📰</div>
+          <span class="card-status-badge badge-unlocked">अपडेटेड 2026</span>
+        </div>
+        <div class="card-body-content">
+          <h3 class="card-course-title">आनंद मासिक पत्रिका</h3>
+          <div class="card-subinfo">
+            <span>मासिक अंक 1 व 2</span> • <span>एडवांस्ड शब्दावली</span>
+          </div>
+
+          <!-- Waveform visualizer -->
+          <div class="waveform-preview" title="ऑडियो प्रीव्यू">
+            <span class="wave-play-trigger">▶</span>
+            <div class="wave-bar" style="height:10px;"></div>
+            <div class="wave-bar" style="height:16px;"></div>
+            <div class="wave-bar" style="height:24px;"></div>
+            <div class="wave-bar" style="height:12px;"></div>
+            <div class="wave-bar" style="height:20px;"></div>
+            <div class="wave-bar" style="height:15px;"></div>
+            <div class="wave-bar" style="height:22px;"></div>
+            <div class="wave-bar" style="height:11px;"></div>
+            <div class="wave-bar" style="height:19px;"></div>
+            <div class="wave-bar" style="height:14px;"></div>
+          </div>
+
+          <ul class="bullet-list">
+            <li><span class="bullet-dot dot-amber"></span> नए ज्वलंत सामाजिक मुद्दे</li>
+            <li><span class="bullet-dot dot-amber"></span> 80, 90 & 100 शब्द/मिनट गति</li>
+            <li><span class="bullet-dot dot-amber"></span> कठिन शब्दों के आउटलाइन सुझाव</li>
+          </ul>
+        </div>
+        <div class="card-footer">
+          <span class="footer-left-stat">51 अभ्यास उपलब्ध</span>
+          <a href="/practice.html?class=1&type=anand_patrika" class="btn-card-action" style="background:#d97706;">
+            शुरू करें →
+          </a>
+        </div>
+      </div>
+
+      <!-- Card 4: Legal & Court Special -->
+      <div class="sapphire-card">
+        <div class="card-category-strip strip-purple"></div>
+        <div class="card-top-header">
+          <div class="card-icon-glass icon-glass-purple">⚖️</div>
+          <span class="card-status-badge badge-unlocked">हाईकोर्ट स्पेशल</span>
+        </div>
+        <div class="card-body-content">
+          <h3 class="card-course-title">कोर्ट एवं लीगल डिक्टेशन</h3>
+          <div class="card-subinfo">
+            <span>विधिक शब्दावली</span> • <span>न्यायिक निर्णय</span>
+          </div>
+
+          <!-- Waveform visualizer -->
+          <div class="waveform-preview" title="ऑडियो प्रीव्यू">
+            <span class="wave-play-trigger">▶</span>
+            <div class="wave-bar" style="height:18px;"></div>
+            <div class="wave-bar" style="height:12px;"></div>
+            <div class="wave-bar" style="height:22px;"></div>
+            <div class="wave-bar" style="height:15px;"></div>
+            <div class="wave-bar" style="height:25px;"></div>
+            <div class="wave-bar" style="height:14px;"></div>
+            <div class="wave-bar" style="height:20px;"></div>
+            <div class="wave-bar" style="height:10px;"></div>
+            <div class="wave-bar" style="height:16px;"></div>
+            <div class="wave-bar" style="height:21px;"></div>
+          </div>
+
+          <ul class="bullet-list">
+            <li><span class="bullet-dot dot-purple"></span> सुप्रीम कोर्ट व हाईकोर्ट फैसले</li>
+            <li><span class="bullet-dot dot-purple"></span> विधिक वाक्यांश व धाराएं</li>
+            <li><span class="bullet-dot dot-purple"></span> राजस्थान, इलाहाबाद व पटना पैटर्न</li>
+          </ul>
+        </div>
+        <div class="card-footer">
+          <span class="footer-left-stat">40+ लीगल जजमेंट</span>
+          <a href="/practice.html?class=1&type=court_special" class="btn-card-action" style="background:#7c3aed;">
+            शुरू करें →
+          </a>
+        </div>
+      </div>
+
+    </div>
+
+  </main>
+
+</body>
+</html>
