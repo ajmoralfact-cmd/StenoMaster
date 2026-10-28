@@ -746,7 +746,7 @@ class StenoApp {
         this.updateUserUI();
       }
       this.restoreRouteOnLoad();
-      this.initStatsCarousel();
+      this.initStatsCarousel(); this.initHeroPosterCarousel();
 
       // Parallel background refresh without blocking page render
       Promise.all([
@@ -772,7 +772,7 @@ class StenoApp {
       this.hideAuthGateway();
       this.updateUserUI();
       this.restoreRouteOnLoad();
-      this.initStatsCarousel();
+      this.initStatsCarousel(); this.initHeroPosterCarousel();
 
       // Parallel background load of categories & dictations for guest browsing
       Promise.all([
@@ -1264,39 +1264,27 @@ class StenoApp {
   }
 
   // -------------------------------------------------------------------------
-  // Global Free Campaign Student Notification Banner
+  // Global Campaign Offer - Integrated inside Dashboard Hero Poster
   // -------------------------------------------------------------------------
   async checkGlobalCampaignBanner() {
-    // Avoid showing banner inside standalone admin portal
-    if (window.location.pathname.includes('admin')) return;
-
-    // Check if user dismissed banner in this session
-    try {
-      if (sessionStorage.getItem('steno_campaign_banner_dismissed') === '1') {
-        const existing = document.getElementById('globalCampaignStudentBanner');
-        if (existing) existing.remove();
-        return;
-      }
-    } catch (e) {}
+    // Top banner is deprecated & cleanly removed in favor of integrated poster offer pill
+    const existing = document.getElementById('globalCampaignStudentBanner');
+    if (existing) existing.remove();
 
     try {
       const res = await fetch('/api/campaign-status');
       if (!res.ok) return;
       const data = await res.json();
+
+      const badgeEl = document.getElementById('posterOfferBadge');
+      const textEl = document.getElementById('posterOfferText');
+      const pillEl = document.getElementById('posterOfferPill');
+
       if (!data || !data.enabled) {
-        const existing = document.getElementById('globalCampaignStudentBanner');
-        if (existing) existing.remove();
+        if (badgeEl) badgeEl.textContent = '🔥 स्पेशल ऑफर';
+        if (textEl) textEl.innerHTML = 'स्टेनो प्रो पास पर <strong>56% की भारी छूट</strong> • मात्र ₹100 से शुरू →';
         return;
       }
-
-      // Re-verify in case user dismissed while fetch was pending
-      try {
-        if (sessionStorage.getItem('steno_campaign_banner_dismissed') === '1') {
-          const existing = document.getElementById('globalCampaignStudentBanner');
-          if (existing) existing.remove();
-          return;
-        }
-      } catch (e) {}
 
       const theme = data.theme || 'gold';
       const themeIcons = {
@@ -1310,28 +1298,15 @@ class StenoApp {
       };
       const themeIcon = themeIcons[theme] || '✨';
 
-      let banner = document.getElementById('globalCampaignStudentBanner');
-      if (!banner) {
-        banner = document.createElement('div');
-        banner.id = 'globalCampaignStudentBanner';
-        document.body.insertBefore(banner, document.body.firstChild);
+      if (badgeEl) {
+        badgeEl.textContent = `${themeIcon} ${data.badge_text || 'स्पेशल ऑफर'}`;
       }
-
-      if (this.activeView === 'community' || document.body.classList.contains('view-active-community')) {
-        banner.style.display = 'none';
+      if (textEl) {
+        textEl.innerHTML = `<strong>${this.escapeHtml(data.banner_message || 'विशेष छूट सक्रिय')}</strong> • तुरंत लाभ उठाएं →`;
       }
-
-      banner.className = `global-campaign-banner campaign-theme-${theme}`;
-      banner.innerHTML = `
-        <div class="campaign-banner-inner">
-          <span class="campaign-sparkle">${themeIcon}</span>
-          <div class="campaign-banner-text">
-            <strong>${this.escapeHtml(data.banner_message || 'StenoMaster अभी सभी छात्रों के लिए 100% FREE है!')}</strong>
-            <span class="campaign-sub-note">सभी अभ्यास, श्रेणियां व AI डिक्टेशन्स अनलॉक हैं!</span>
-          </div>
-          <button type="button" class="campaign-banner-close" onclick="stenoApp.dismissCampaignBanner()" title="बंद करें">✕</button>
-        </div>
-      `;
+      if (pillEl) {
+        pillEl.style.display = 'inline-flex';
+      }
     } catch (err) {
       console.warn('Campaign status check notice:', err);
     }
@@ -2503,9 +2478,97 @@ class StenoApp {
     await this.handleStudentLogin();
   }
 
+
+  // -------------------------------------------------------------------------
+  // Hero Poster Carousel (Dashboard Exclusive - 3 Demos)
+  // -------------------------------------------------------------------------
+  initHeroPosterCarousel() {
+    if (this.posterCarouselTimer) {
+      clearInterval(this.posterCarouselTimer);
+      this.posterCarouselTimer = null;
+    }
+    this.currentPosterSlide = 0;
+    const carouselEl = document.getElementById('dashboardHeroPosterCarousel');
+    if (!carouselEl) return;
+
+    this.startPosterCarouselTimer();
+
+    // Pause on hover, resume on leave
+    carouselEl.onmouseenter = () => {
+      if (this.posterCarouselTimer) clearInterval(this.posterCarouselTimer);
+    };
+    carouselEl.onmouseleave = () => {
+      this.startPosterCarouselTimer();
+    };
+  }
+
+  startPosterCarouselTimer() {
+    if (this.posterCarouselTimer) clearInterval(this.posterCarouselTimer);
+    this.posterCarouselTimer = setInterval(() => {
+      // Rotate through 3 slides
+      const nextSlide = (this.currentPosterSlide + 1) % 3;
+      this.goToPosterSlide(nextSlide, false);
+    }, 5500);
+  }
+
+  goToPosterSlide(index, resetTimer = true) {
+    this.currentPosterSlide = index;
+    const slides = [
+      document.getElementById('posterSlide1'),
+      document.getElementById('posterSlide2'),
+      document.getElementById('posterSlide3')
+    ];
+    const dotsContainer = document.getElementById('posterCarouselDots');
+    const dots = dotsContainer ? dotsContainer.querySelectorAll('.carousel-dot') : [];
+
+    slides.forEach((s, idx) => {
+      if (s) {
+        if (idx === index) {
+          s.classList.add('active');
+        } else {
+          s.classList.remove('active');
+        }
+      }
+    });
+
+    dots.forEach((d, idx) => {
+      if (idx === index) {
+        d.classList.add('active');
+      } else {
+        d.classList.remove('active');
+      }
+    });
+
+    if (resetTimer) {
+      this.startPosterCarouselTimer();
+    }
+  }
+
   renderActivePlanBanner() {
     const banner = document.getElementById('dashboardActivePlanBanner');
-    if (!banner) return;
+    if (banner) banner.style.display = 'none !important';
+
+    const posterBadge = document.getElementById('posterOfferBadge');
+    const posterText = document.getElementById('posterOfferText');
+    const isEn = this.currentLang === 'en';
+    const isPremium = Boolean(this.user && (this.user.is_premium || this.user.is_free_access || (this.user.subscription_days_left && this.user.subscription_days_left > 0)));
+    const daysLeft = (this.user && typeof this.user.subscription_days_left === 'number') ? this.user.subscription_days_left : 0;
+
+    if (posterBadge && posterText) {
+      if (isPremium && daysLeft > 0) {
+        posterBadge.textContent = '👑 PRO MEMBER';
+        posterBadge.style.background = '#10b981';
+        posterText.innerHTML = isEn
+          ? `Unlimited practice active • <strong>${daysLeft >= 1000 ? 'Lifetime Access' : `${daysLeft} Days Left`}</strong>`
+          : `असीमित अभ्यास सक्रिय • <strong>${daysLeft >= 1000 ? 'लाइफटाइम एक्सेस' : `${daysLeft} दिन शेष`}</strong>`;
+      } else {
+        posterBadge.textContent = isEn ? '🔥 SPECIAL OFFER' : '🔥 स्पेशल ऑफर';
+        posterBadge.style.background = '#ef4444';
+        posterText.innerHTML = isEn
+          ? `Get <strong>56% OFF</strong> on Steno PASS • Starting @ ₹100`
+          : `स्टेनो प्रो पास पर <strong>56% की भारी छूट</strong> • मात्र ₹100 से शुरू`;
+      }
+    }
 
     const icon = document.getElementById('planBannerIcon');
     const tag = document.getElementById('planBannerTag');
@@ -2513,13 +2576,13 @@ class StenoApp {
     const subtitle = document.getElementById('planBannerSubtitle');
     const actionBtn = document.getElementById('planBannerActionBtn');
 
-    const isEn = this.currentLang === 'en';
-    const isPremium = Boolean(this.user && (this.user.is_premium || this.user.is_free_access || (this.user.subscription_days_left && this.user.subscription_days_left > 0)));
+    // isEn already defined above
+    // isPremium already declared above
     let planName = (this.user && this.user.subscription_plan) || 'StenoMaster Pro';
     if (planName === 'System Administrator' || planName.toLowerCase().includes('admin')) {
       planName = 'StenoMaster Pro (₹100/माह)';
     }
-    const daysLeft = (this.user && typeof this.user.subscription_days_left === 'number') ? this.user.subscription_days_left : 0;
+    // daysLeft already declared above
 
     // Pricing mapping
     const planPriceMapHi = {

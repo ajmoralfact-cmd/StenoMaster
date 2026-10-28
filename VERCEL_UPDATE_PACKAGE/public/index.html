@@ -67,7 +67,7 @@
   <!-- Performance Preconnects for Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="/css/style.css?v=19.0">
+  <link rel="stylesheet" href="/css/style.css?v=19.2">
 
   <!-- Shield Root Hindi Shorthand Content from Chrome / Browser Auto-Translation -->
   <script>
@@ -698,17 +698,203 @@
           </div>
         </div>
 
-        <!-- Modern Stylish Horizontal Active Plan Banner -->
-        <div id="dashboardActivePlanBanner" style="width:100%; border-radius:12px; padding:12px 20px; margin-bottom:20px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; box-shadow:0 2px 8px rgba(0,0,0,0.04); backdrop-filter:blur(6px); transition:all 0.3s ease;">
-          <div style="display:flex; align-items:center; gap:12px; flex:1; min-width:240px;">
-            <div id="planBannerIcon" style="font-size:1.6rem; line-height:1;">🟢</div>
-            <div>
-              <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
-                <span id="planBannerTag" style="font-size:0.72rem; font-weight:800; text-transform:uppercase; letter-spacing:0.5px; padding:2px 8px; border-radius:6px;">सक्रिय प्लान</span>
-                <strong id="planBannerTitle" style="font-size:1.02rem; font-weight:800;">StenoMaster Pro</strong>
+        <!-- =====================================================================
+             StenoMaster Hero Poster Carousel (Dashboard Exclusive - 3 Demos)
+             ===================================================================== -->
+        <div class="dashboard-poster-carousel" id="dashboardHeroPosterCarousel">
+          <div class="poster-slides-container">
+
+            <!-- SLIDE 1: Selection Excellence (Practicing Male Aspirant) -->
+            <div class="poster-slide active" id="posterSlide1" style="background: linear-gradient(108deg, #eff6ff 0%, #f8faff 45%, #ffffff 85%);">
+              <div class="poster-content-left">
+                <!-- Integrated Offer Pill (Merged from separate strip) -->
+                <div class="poster-offer-pill" id="posterOfferPill" onclick="window.location.href='/plans'" title="ऑफर विवरण देखें (Click for Offer Details)">
+                  <span class="offer-pill-badge" id="posterOfferBadge">🔥 स्पेशल ऑफर</span>
+                  <span class="offer-pill-text" id="posterOfferText">स्टेनो प्रो पास पर <strong>56% की भारी छूट</strong> • मात्र ₹100 से शुरू</span>
+                  <span class="offer-pill-arrow">→</span>
+                </div>
+
+                <h2 class="poster-headline">
+                  1250+ Selections in <br>
+                  <span style="color: #1d4ed8;">SSC Steno & High Court Exams</span>
+                </h2>
+                <div class="poster-gold-line"></div>
+
+                <div class="poster-feature-list">
+                  <div class="poster-feature-pill">
+                    <div class="poster-feature-icon" style="background: linear-gradient(135deg, #2563eb, #1d4ed8); color: #fff;">
+                      🎧
+                    </div>
+                    <div class="poster-feature-text">
+                      <strong>2500+ ऑडियो डिक्टेशन्स</strong> — 60 से 160 WPM तक किसी भी मनचाही गति पर सुनें व लिखें
+                    </div>
+                  </div>
+                  <div class="poster-feature-pill">
+                    <div class="poster-feature-icon" style="background: linear-gradient(135deg, #0284c7, #0369a1); color: #fff;">
+                      🖥️
+                    </div>
+                    <div class="poster-feature-text">
+                      <strong>सरकारी परीक्षा अनुरूप सॉफ्टवेयर</strong> — हूबहू SSC Grade C/D व कोर्ट जैसा रियल टाइपिंग सॉफ्टवेयर
+                    </div>
+                  </div>
+                </div>
+
+                <div class="poster-laurel-badge">
+                  <div class="laurel-shield">#1</div>
+                  <div class="laurel-text">🏆 भारत का सर्वश्रेष्ठ हिंदी एवं अंग्रेजी आशुलिपि अभ्यास मंच</div>
+                </div>
               </div>
-              <div id="planBannerSubtitle" style="font-size:0.82rem; margin-top:2px;">वैधता एवं शेष दिनों का विवरण</div>
+
+              <div class="poster-visual-right">
+                <img src="/assets/banners/banner_demo1_male_student.jpg" alt="Steno Aspirant Practicing" class="poster-bg-photo">
+                <div class="floating-card-top">
+                  <div style="font-size: 1.6rem;">🏆</div>
+                  <div>
+                    <div style="font-size: 0.94rem; font-weight: 800; color: #1d4ed8;">1,250+ Selections</div>
+                    <div style="font-size: 0.72rem; color: #64748b; font-weight: 600;">SSC & Court Steno 2025-26</div>
+                    <div style="color: #f59e0b; font-size: 0.75rem; letter-spacing: 1px;">★★★★★</div>
+                  </div>
+                </div>
+                <div class="floating-card-bottom">
+                  <div style="width:24px; height:24px; background:#2563eb; color:#fff; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:0.8rem; font-weight:900;">✓</div>
+                  <div style="font-size:0.8rem; font-weight:700; color:#0f172a;">
+                    आपकी मेहनत + हमारी तकनीक = <span style="color:#2563eb;">निश्चित सफलता</span>
+                  </div>
+                </div>
+              </div>
             </div>
+
+            <!-- SLIDE 2: Speed Booster & Ramdhari Gupta + Court Workspace -->
+            <div class="poster-slide" id="posterSlide2" style="background: linear-gradient(110deg, #f0fdf4 0%, #f8fafc 42%, #ffffff 85%);">
+              <div class="poster-content-left">
+                <!-- Integrated Offer Pill -->
+                <div class="poster-offer-pill" onclick="window.location.href='/plans'" style="background:rgba(236,253,245,0.95); border-color:#a7f3d0; color:#065f46;" title="प्लान देखें">
+                  <span class="offer-pill-badge" style="background:#059669;">⚡ 60-160 WPM</span>
+                  <span class="offer-pill-text">रामधारी गुप्ता 150 कक्षाएं + आनंद पत्रिका अनलॉक करें</span>
+                  <span class="offer-pill-arrow" style="color:#059669;">→</span>
+                </div>
+
+                <h2 class="poster-headline">
+                  Complete Shorthand Mastery <br>
+                  <span style="color: #059669;">60 से 160 WPM तक स्पीड बूस्टर</span>
+                </h2>
+                <div class="poster-gold-line" style="background:#10b981;"></div>
+
+                <div class="poster-feature-list">
+                  <div class="poster-feature-pill">
+                    <div class="poster-feature-icon" style="background: linear-gradient(135deg, #059669, #10b981); color: #fff;">
+                      📚
+                    </div>
+                    <div class="poster-feature-text">
+                      <strong>रामधारी गुप्ता (खंड 1 व 2) के 150 अभ्यास</strong> + आनंद मासिक पत्रिका के 800-1000 शब्द डिक्टेशन्स
+                    </div>
+                  </div>
+                  <div class="poster-feature-pill">
+                    <div class="poster-feature-icon" style="background: linear-gradient(135deg, #0284c7, #2563eb); color: #fff;">
+                      ⚖️
+                    </div>
+                    <div class="poster-feature-text">
+                      <strong>विधिक एवं संपादकीय डिक्टेशन्स</strong> — हाई कोर्ट, सिविल कोर्ट व SSC ग्रेड C/D स्पेशल मैटर
+                    </div>
+                  </div>
+                </div>
+
+                <div class="poster-laurel-badge" style="background:linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border-color:#86efac;">
+                  <div class="laurel-shield" style="background:#059669;">PRO</div>
+                  <div class="laurel-text">⚡ 60 → 120 WPM सर्टिफाइड स्पीड ग्रोथ गारंटी</div>
+                </div>
+              </div>
+
+              <div class="poster-visual-right">
+                <img src="/assets/banners/banner_demo2_court_workspace.jpg" alt="Court & SSC Studio" class="poster-bg-photo">
+                <div class="floating-card-top">
+                  <div style="font-size: 1.6rem;">⚡</div>
+                  <div>
+                    <div style="font-size: 0.94rem; font-weight: 800; color: #059669;">160 WPM Ready</div>
+                    <div style="font-size: 0.72rem; color: #64748b; font-weight: 600;">विधानसभा / रिपोर्टर स्पेशल</div>
+                    <div style="color: #059669; font-size: 0.75rem; font-weight:700;">🚀 100% Accuracy Ladder</div>
+                  </div>
+                </div>
+                <div class="floating-card-bottom">
+                  <div style="width:24px; height:24px; background:#10b981; color:#fff; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:0.8rem; font-weight:900;">🎯</div>
+                  <div style="font-size:0.8rem; font-weight:700; color:#0f172a;">
+                    0.5x, 0.75x, 1.0x, 1.2x, 1.5x स्पीड कंट्रोल
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- SLIDE 3: Smart AI Dictation & Exam Simulator -->
+            <div class="poster-slide" id="posterSlide3" style="background: linear-gradient(110deg, #fdf4ff 0%, #f8faff 45%, #ffffff 85%);">
+              <div class="poster-content-left">
+                <!-- Integrated Offer Pill -->
+                <div class="poster-offer-pill" onclick="window.location.href='/plans'" style="background:rgba(250,245,255,0.95); border-color:#e9d5ff; color:#6b21a8;" title="प्लान देखें">
+                  <span class="offer-pill-badge" style="background:#7c3aed;">🤖 AI ENGINE</span>
+                  <span class="offer-pill-text">पूर्ण व अर्ध गलतियों का लाइव मूल्यांकन • ऑल-इंडिया रैंक</span>
+                  <span class="offer-pill-arrow" style="color:#7c3aed;">→</span>
+                </div>
+
+                <h2 class="poster-headline">
+                  Smart AI Shorthand Engine <br>
+                  <span style="color: #7c3aed;">सरकारी मानकों पर सटीक त्रुटि मूल्यांकन</span>
+                </h2>
+                <div class="poster-gold-line" style="background:#a855f7;"></div>
+
+                <div class="poster-feature-list">
+                  <div class="poster-feature-pill">
+                    <div class="poster-feature-icon" style="background: linear-gradient(135deg, #7c3aed, #9333ea); color: #fff;">
+                      🎯
+                    </div>
+                    <div class="poster-feature-text">
+                      <strong>पूर्ण व अर्ध गलती (Full & Half Mistake)</strong> — SSC, UPSSSC एवं हाई कोर्ट के नियमों अनुसार शब्द-दर-शब्द जांच
+                    </div>
+                  </div>
+                  <div class="poster-feature-pill">
+                    <div class="poster-feature-icon" style="background: linear-gradient(135deg, #2563eb, #3b82f6); color: #fff;">
+                      📲
+                    </div>
+                    <div class="poster-feature-text">
+                      <strong>OTG कीबोर्ड टाइपिंग सपोर्ट</strong> — मोबाइल पर बाहरी कीबोर्ड जोड़कर या लैपटॉप पर वास्तविक परीक्षा अभ्यास
+                    </div>
+                  </div>
+                </div>
+
+                <div class="poster-laurel-badge" style="background:linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%); border-color:#d8b4fe;">
+                  <div class="laurel-shield" style="background:#7c3aed;">AI</div>
+                  <div class="laurel-text">🤖 लाइव स्कोरकार्ड, नेट WPM व ऑल-इंडिया रैंक तुरंत</div>
+                </div>
+              </div>
+
+              <div class="poster-visual-right">
+                <img src="/assets/banners/banner_demo3_selection_success.jpg" alt="Selected Candidate" class="poster-bg-photo">
+                <div class="floating-card-top">
+                  <div style="font-size: 1.6rem;">📊</div>
+                  <div>
+                    <div style="font-size: 0.94rem; font-weight: 800; color: #7c3aed;">Instant Result</div>
+                    <div style="font-size: 0.72rem; color: #64748b; font-weight: 600;">Zero-Delay Evaluation</div>
+                    <div style="color: #059669; font-size: 0.75rem; font-weight:700;">✓ 98.6% Accuracy</div>
+                  </div>
+                </div>
+                <div class="floating-card-bottom">
+                  <div style="width:24px; height:24px; background:#7c3aed; color:#fff; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:0.8rem; font-weight:900;">🏆</div>
+                  <div style="font-size:0.8rem; font-weight:700; color:#0f172a;">
+                    SSC Grade C & D Qualified Aspirant
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Carousel Indicator Dots -->
+          <div class="poster-carousel-dots" id="posterCarouselDots">
+            <span class="carousel-dot active" onclick="stenoApp.goToPosterSlide(0)" title="Slide 1"></span>
+            <span class="carousel-dot" onclick="stenoApp.goToPosterSlide(1)" title="Slide 2"></span>
+            <span class="carousel-dot" onclick="stenoApp.goToPosterSlide(2)" title="Slide 3"></span>
+          </div>
+        </div>
+        <!-- Hidden legacy container for backward compatibility -->
+        <div id="dashboardActivePlanBanner" style="display:none !important;"></div>
           </div>
           <div id="planBannerAction" style="display:flex; align-items:center; gap:10px;">
             <button type="button" id="planBannerActionBtn" class="btn-primary" onclick="window.location.href='/plans'" style="padding:8px 16px; font-size:0.84rem; font-weight:700; border-radius:8px; white-space:nowrap;">
@@ -3115,13 +3301,13 @@
   <script defer src="https://sdk.cashfree.com/js/v3/cashfree.js"></script>
 
   <!-- Core Lightweight Scripts (charts.js & comparison_view.js?v=17.3 are lazy-loaded on demand for 50% faster startup) -->
-  <script src="/js/audio_player.js?v=8.2"></script>
+  <script src="/js/audio_player.js?v=19.2"></script>
   <script src="/js/keyboard_map.js?v=8.1"></script>
   <script src="/js/typing_engine.js?v=17.3"></script>
   <script src="/js/ocr_service.js?v=1.1"></script>
   <script src="/js/steno_dictionary.js?v=1.0"></script>
   <script src="/js/comparison_view.js?v=17.3"></script>
-  <script src="/js/app.js?v=19.0"></script>
+  <script src="/js/app.js?v=19.2"></script>
   <!-- Strict Exam Hall Anti-Cheat Warning Modal -->
   <div class="modal-overlay" id="examHallWarningModal" style="z-index:99999;" onclick="if(event.target === this) stenoTypingEngine.exitExamModeFromModal()">
     <div class="modal-card" style="max-width: 480px; text-align:center; border:2px solid #ef4444; box-shadow:0 10px 40px rgba(239,68,68,0.3); position:relative; padding:28px 24px;">

@@ -103,13 +103,9 @@ class StenoAudioPlayer {
     this.speechLang = language.toLowerCase() === 'hindi' ? 'hi-IN' : 'en-US';
     this.baseTargetWpm = parseInt(targetWpm) || 80;
 
-    // Use saved WPM if valid, otherwise passage's target WPM
-    const savedWpm = parseInt(localStorage.getItem('stenomaster_target_wpm'));
-    if (!isNaN(savedWpm) && savedWpm >= 40 && savedWpm <= 120) {
-      this.currentWpm = savedWpm;
-    } else {
-      this.currentWpm = this.baseTargetWpm;
-    }
+    // Default to the passage's official target WPM (e.g. 90 WPM for Anand Patrika, 80 WPM for Khand 1)
+    // User can subsequently adjust speed via the speed changer buttons at any time
+    this.currentWpm = this.baseTargetWpm;
 
     const rate = this.currentWpm / (this.baseTargetWpm || 80);
     this.playbackSpeed = Math.max(0.4, Math.min(2.5, rate));
@@ -546,7 +542,7 @@ class StenoAudioPlayer {
     if (wpmValEl) wpmValEl.textContent = `${wpm} WPM`;
     if (multEl) {
       if (wpm === base) {
-        multEl.textContent = `(${rateStr}x • मूल 80 WPM)`;
+        multEl.textContent = '(1.0x • मूल गति)';
       } else if (wpm < base) {
         multEl.textContent = `(${rateStr}x • धीमी गति)`;
       } else {
