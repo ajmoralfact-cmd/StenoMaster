@@ -2744,105 +2744,90 @@ class StenoApp {
     const isAdmin = Boolean(this.user && this.user.role === 'admin');
     const currentView = this.activeView || (window.location.pathname.includes('profile') || window.location.pathname.includes('settings') ? 'settings' : 'home');
 
-    if (false) {
-      // Disabled: Admin portal items strictly excluded from student app
-    } else {
-      // Student Sidebar Items (Strictly NO admin items in DOM)
-      const isEn = this.currentLang === 'en';
-      const studentItems = isEn ? [
-        { id: 'download-app', icon: '📲', label: 'Download App', sub: 'Install Mobile App', action: 'installPwa' },
-        { id: 'home', icon: '🏠', label: 'Dashboard', sub: 'Home & Analytics' },
-        { id: 'classes', icon: '🎧', label: 'Practice Classes', sub: 'Dictation Sessions' },
-        { id: 'community', icon: '💬', label: 'Student Community', sub: 'Chat & Doubt Forum' },
-        { id: 'self-practice', icon: '🎙️', label: 'Self Practice', sub: 'Custom Dictation' },
-        { id: 'subscription', icon: '💳', label: 'Subscription & Pro', sub: 'Unlock All Passages', url: '/plans' },
-        { id: 'my-practice', icon: '📜', label: 'Practice History', sub: 'Attempt Records' },
-        { id: 'progress', icon: '📊', label: 'Progress & Analytics', sub: 'Speed & Accuracy' },
-        { id: 'leaderboard', icon: '🏆', label: 'Leaderboard', sub: 'Student Rankings' },
-        { id: 'bookmarks', icon: '🔖', label: 'Bookmarks', sub: 'Saved Passages' },
-        { id: 'rules', icon: '📋', label: 'Exam Rules', sub: 'UPSSSC & SSC Rules' },
-        { id: 'refer', icon: '🎁', label: 'Refer & Dual-Wallet', sub: 'Earnings & Credits', url: '/wallet' },
-        { id: 'settings', icon: '⚙️', label: 'Settings', sub: 'Profile & Preferences', url: '/profile' }
-      ] : [
-        { id: 'download-app', icon: '📲', label: 'ऐप डाउनलोड करें (App)', sub: 'मोबाइल ऐप इंस्टॉल करें', action: 'installPwa' },
-        { id: 'home', icon: '🏠', label: 'डैशबोर्ड (Dashboard)', sub: 'होम एवं आंकड़े' },
-        { id: 'classes', icon: '🎧', label: 'अभ्यास कक्षाएं (Classes)', sub: 'दैनिक डिक्टेशन' },
-        { id: 'community', icon: '💬', label: 'छात्र कम्युनिटी (Chat)', sub: 'डाउट व आउटलाइन चर्चा' },
-        { id: 'self-practice', icon: '🎙️', label: 'सेल्फ प्रैक्टिस (Self)', sub: 'कस्टम डिक्टेशन' },
-        { id: 'subscription', icon: '💳', label: 'सब्सक्रिप्शन (Subscription)', sub: 'सदस्यता एवं प्रो', url: '/plans' },
-        { id: 'my-practice', icon: '📜', label: 'अभ्यास इतिहास (History)', sub: 'पिछले टेस्ट परिणाम' },
-        { id: 'progress', icon: '📊', label: 'प्रगति विश्लेषण (Progress)', sub: 'गति व शुद्धता ग्राफ' },
-        { id: 'leaderboard', icon: '🏆', label: 'लीडरबोर्ड (Leaderboard)', sub: 'रैंकिंग बोर्ड' },
-        { id: 'bookmarks', icon: '🔖', label: 'सहेजे गए आलेख (Bookmarks)', sub: 'सहेजे गए आलेख' },
-        { id: 'rules', icon: '📋', label: 'परीक्षा नियम (Exam Rules)', sub: 'UPSSSC & SSC Rules' },
-        { id: 'refer', icon: '🎁', label: 'वॉलेट व रेफरल (Wallet)', sub: 'कमीशन व वॉलेट', url: '/wallet' },
-        { id: 'settings', icon: '⚙️', label: 'सेटिंग्स (Settings)', sub: 'प्रोफ़ाइल व प्राथमिकताएँ', url: '/profile' }
-      ];
+    const isEn = this.currentLang === 'en';
+    const studentItems = isEn ? [
+      { id: 'home', icon: '🏠', label: 'Dashboard', iconBg: '#eff6ff', iconColor: '#2563eb' },
+      { id: 'classes', icon: '🎧', label: 'Practice Classes', iconBg: '#e0f2fe', iconColor: '#0284c7' },
+      { id: 'subscription', icon: '💳', label: 'Steno PASS', iconBg: '#ecfdf5', iconColor: '#059669', badge: '56% OFF', badgeClass: 'badge-discount', url: '/plans' },
+      { id: 'leaderboard', icon: '🏆', label: 'Leaderboard', iconBg: '#fef3c7', iconColor: '#d97706' },
+      { id: 'self-practice', icon: '🎙️', label: 'Self Practice', iconBg: '#faf5ff', iconColor: '#8b5cf6', badge: 'NEW', badgeClass: 'badge-new' },
+      { id: 'community', icon: '💬', label: 'Student Community', iconBg: '#fce7f3', iconColor: '#db2777' },
+      { id: 'my-practice', icon: '📜', label: 'Practice History', iconBg: '#f1f5f9', iconColor: '#475569' },
+      { id: 'progress', icon: '📊', label: 'Progress Graph', iconBg: '#ede9fe', iconColor: '#6d28d9' },
+      { id: 'rules', icon: '📋', label: 'Exam Rules', iconBg: '#fff1f2', iconColor: '#e11d48' },
+      { id: 'refer', icon: '🎁', label: 'Wallet & Refer', iconBg: '#ecfdf5', iconColor: '#10b981', url: '/wallet' },
+      { id: 'download-app', icon: '📲', label: 'Mobile App', iconBg: '#eff6ff', iconColor: '#2563eb', badge: 'APP', badgeClass: 'badge-app', action: 'installPwa' },
+      { id: 'settings', icon: '⚙️', label: 'Settings', iconBg: '#f1f5f9', iconColor: '#64748b', url: '/profile' }
+    ] : [
+      { id: 'home', icon: '🏠', label: 'डैशबोर्ड (Home)', iconBg: '#eff6ff', iconColor: '#2563eb' },
+      { id: 'classes', icon: '🎧', label: 'अभ्यास कक्षाएं', iconBg: '#e0f2fe', iconColor: '#0284c7' },
+      { id: 'subscription', icon: '💳', label: 'स्टेनो पास (PASS)', iconBg: '#ecfdf5', iconColor: '#059669', badge: '56% OFF', badgeClass: 'badge-discount', url: '/plans' },
+      { id: 'leaderboard', icon: '🏆', label: 'लीडरबोर्ड', iconBg: '#fef3c7', iconColor: '#d97706' },
+      { id: 'self-practice', icon: '🎙️', label: 'सेल्फ प्रैक्टिस', iconBg: '#faf5ff', iconColor: '#8b5cf6', badge: 'NEW', badgeClass: 'badge-new' },
+      { id: 'community', icon: '💬', label: 'कम्युनिटी चैट', iconBg: '#fce7f3', iconColor: '#db2777' },
+      { id: 'my-practice', icon: '📜', label: 'अभ्यास इतिहास', iconBg: '#f1f5f9', iconColor: '#475569' },
+      { id: 'progress', icon: '📊', label: 'प्रगति विश्लेषण', iconBg: '#ede9fe', iconColor: '#6d28d9' },
+      { id: 'rules', icon: '📋', label: 'परीक्षा नियम', iconBg: '#fff1f2', iconColor: '#e11d48' },
+      { id: 'refer', icon: '🎁', label: 'वॉलेट व रेफरल', iconBg: '#ecfdf5', iconColor: '#10b981', url: '/wallet' },
+      { id: 'download-app', icon: '📲', label: 'मोबाइल ऐप', iconBg: '#eff6ff', iconColor: '#2563eb', badge: 'APP', badgeClass: 'badge-app', action: 'installPwa' },
+      { id: 'settings', icon: '⚙️', label: 'सेटिंग्स', iconBg: '#f1f5f9', iconColor: '#64748b', url: '/profile' }
+    ];
 
-      navContainer.innerHTML = `
-        ${isAdmin ? `
-          <a href="/admin.html" class="nav-item" data-sidebar-item="admin-console-link" style="background:rgba(239,68,68,0.08); border:1px solid rgba(239,68,68,0.25); border-radius:10px; margin-top:8px; color:#ef4444;" title="${isEn ? 'Admin Console' : 'एडमिन कंसोल'}">
-            <span class="nav-item-icon">🛡️</span>
-            <div style="flex:1; min-width:0;">
-              <div style="font-weight:700; font-size:0.86rem; color:#ef4444;">Admin Console</div>
-              <div style="font-size:0.7rem; color:var(--text-muted);">${isEn ? 'Open Admin Console ➔' : 'प्रशासनिक पोर्टल खोलें ➔'}</div>
-            </div>
-          </a>
-        ` : ''}
-        <div class="sidebar-role-badge student-badge">
-          <span>👨‍🎓</span> <span>${isEn ? 'STUDENT PORTAL' : 'विद्यार्थी पोर्टल (STUDENT)'}</span>
-        </div>
-        ${studentItems.map(item => `
-          <a href="javascript:void(0)" class="nav-item ${currentView === item.id ? 'active' : ''} ${item.action === 'installPwa' ? 'pwa-sidebar-highlight' : ''}" data-sidebar-item="${item.id}" title="${item.label}">
-            <span class="nav-item-icon">${item.icon}</span>
-            <div style="flex:1; min-width:0;">
-              <div style="font-weight:600; font-size:0.86rem; line-height:1.2;">${item.label}</div>
-              <div style="font-size:0.7rem; color:var(--text-muted);">${item.sub}</div>
-            </div>
-          </a>
-        `).join('')}
+    navContainer.innerHTML = `
+      ${isAdmin ? `
+        <a href="/admin.html" class="nav-item admin-item" data-sidebar-item="admin-console-link" style="background:rgba(239,68,68,0.06); border:1px solid rgba(239,68,68,0.2); border-radius:12px; margin-bottom:8px; color:#dc2626;" title="${isEn ? 'Admin Console' : 'एडमिन कंसोल'}">
+          <div class="nav-item-icon-bubble" style="background:#fee2e2; color:#dc2626;">🛡️</div>
+          <span class="nav-item-title" style="color:#dc2626; font-weight:700;">Admin Console</span>
+          <span style="margin-left:auto; font-size:0.8rem; color:#dc2626;">➔</span>
+        </a>
+      ` : ''}
 
-      `;
-
-      studentItems.forEach(item => {
-        const el = navContainer.querySelector(`[data-sidebar-item="${item.id}"]`);
-        if (!el) return;
-        el.addEventListener('click', (e) => {
-          e.preventDefault();
-          this.closeSidebar();
-          if (item.action === 'installPwa') {
-            this.triggerPwaInstall();
-          } else if (item.url) {
-            window.location.href = item.url;
-          } else {
-            this.navigate(item.id);
-          }
-        });
-      });
-
-      if (footerContainer) {
-        const studentName = (this.user && (this.user.display_name || this.user.username)) || 'Student';
-        const initial = studentName.charAt(0).toUpperCase();
-        footerContainer.innerHTML = `
-          <div class="sidebar-user-preview">
-            <div class="sidebar-avatar">${initial}</div>
-            <div class="sidebar-user-details">
-              <div class="sidebar-user-name">${this.escapeHtml(studentName)}</div>
-              <div class="sidebar-user-role">👨‍🎓 Student Role</div>
-            </div>
+      ${studentItems.map(item => `
+        <a href="javascript:void(0)" class="nav-item ${currentView === item.id ? 'active' : ''}" data-sidebar-item="${item.id}" title="${item.label}">
+          <div class="nav-item-icon-bubble" style="background:${item.iconBg}; color:${item.iconColor};">
+            ${item.icon}
           </div>
-          <button class="nav-item" style="width:100%; margin-top:6px; color:var(--accent-red); justify-content:center; gap:8px;" onclick="stenoApp.closeSidebar(); stenoApp.logout();">
-            <span class="nav-item-icon">🚪</span>
-            <span>${isEn ? 'Logout' : 'लॉगआउट (Logout)'}</span>
-          </button>
-        `;
-      }
+          <span class="nav-item-title">${item.label}</span>
+          ${item.badge ? `<span class="nav-badge-pill ${item.badgeClass}">${item.badge}</span>` : ''}
+        </a>
+      `).join('')}
+    `;
+
+    studentItems.forEach(item => {
+      const el = navContainer.querySelector(`[data-sidebar-item="${item.id}"]`);
+      if (!el) return;
+      el.addEventListener('click', (e) => {
+        e.preventDefault();
+        this.closeSidebar();
+        if (item.action === 'installPwa') {
+          this.triggerPwaInstall();
+        } else if (item.url) {
+          window.location.href = item.url;
+        } else {
+          this.navigate(item.id);
+        }
+      });
+    });
+
+    if (footerContainer) {
+      const studentName = (this.user && (this.user.display_name || this.user.username)) || 'Student';
+      const initial = studentName.charAt(0).toUpperCase();
+      footerContainer.innerHTML = `
+        <div class="sidebar-user-preview">
+          <div class="sidebar-avatar">${initial}</div>
+          <div class="sidebar-user-details">
+            <div class="sidebar-user-name">${this.escapeHtml(studentName)}</div>
+            <div class="sidebar-user-role">👨‍🎓 Student Account</div>
+          </div>
+        </div>
+        <button class="nav-item sidebar-logout-btn-item" onclick="stenoApp.closeSidebar(); stenoApp.logout();">
+          <div class="nav-item-icon-bubble" style="background:#fee2e2; color:#ef4444; width:30px; height:30px; min-width:30px; font-size:0.95rem;">🚪</div>
+          <span style="color:#dc2626; font-weight:700;">${isEn ? 'Logout' : 'लॉगआउट (Logout)'}</span>
+        </button>
+      `;
     }
   }
 
-  // -------------------------------------------------------------------------
-  // Navigation & View Routing
-  // -------------------------------------------------------------------------
   initNavigation() {
     // ESC key closes slide drawer
     window.addEventListener('keydown', (e) => {

@@ -12746,3 +12746,241 @@ html.is-mobile-device #dashboardActivePlanBanner #planBannerTitle {
 html.is-mobile-device #dashboardActivePlanBanner #planBannerActionBtn {
   background: linear-gradient(135deg, #1e40af 0%, #2563eb 100%) !important;
 }
+
+
+/* ==========================================================================
+   Stenoshala Sidebar Design & Colorful Transparent Hover Highlighting
+   ========================================================================== */
+.sidebar {
+  width: 280px !important;
+  background: #ffffff !important;
+  border-right: 1px solid #dbe4ef !important;
+  box-shadow: 4px 0 24px rgba(15, 23, 42, 0.08) !important;
+  font-family: 'Plus Jakarta Sans', 'Noto Sans Devanagari', -apple-system, sans-serif !important;
+}
+
+.sidebar-header {
+  height: 68px !important;
+  padding: 0 18px !important;
+  border-bottom: 1px solid #e2e8f0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+}
+
+.sidebar-header .brand-name-text {
+  font-size: 1.15rem !important;
+  font-weight: 800 !important;
+  color: #0a1128 !important;
+  letter-spacing: -0.3px !important;
+}
+
+.sidebar-close-btn {
+  width: 32px !important;
+  height: 32px !important;
+  border-radius: 8px !important;
+  background: #f1f5f9 !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #475569 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 1rem !important;
+  cursor: pointer !important;
+  transition: all 0.2s !important;
+}
+.sidebar-close-btn:hover {
+  background: #e2e8f0 !important;
+  color: #0f172a !important;
+}
+
+/* Sidebar Navigation Scrollbar */
+.sidebar-nav {
+  flex: 1 !important;
+  padding: 14px 12px !important;
+  overflow-y: auto !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 4px !important;
+  scrollbar-width: thin !important;
+  scrollbar-color: rgba(148, 163, 184, 0.4) transparent !important;
+}
+.sidebar-nav::-webkit-scrollbar {
+  width: 5px !important;
+}
+.sidebar-nav::-webkit-scrollbar-track {
+  background: transparent !important;
+}
+.sidebar-nav::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.35) !important;
+  border-radius: 10px !important;
+}
+.sidebar-nav::-webkit-scrollbar-thumb:hover {
+  background: rgba(37, 99, 235, 0.5) !important;
+}
+
+/* Nav Item Styling */
+.nav-item {
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+  padding: 9px 12px !important;
+  border-radius: 12px !important;
+  color: #334155 !important;
+  font-size: 0.90rem !important;
+  font-weight: 600 !important;
+  text-decoration: none !important;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  cursor: pointer !important;
+  position: relative !important;
+  border: 1px solid transparent !important;
+  margin-bottom: 2px !important;
+}
+
+.nav-item-title {
+  flex: 1 !important;
+  min-width: 0 !important;
+  color: #334155 !important;
+  font-weight: 600 !important;
+  transition: color 0.2s !important;
+}
+
+/* Circular Pastel Icon Bubble (Stenoshala Style) */
+.nav-item-icon-bubble {
+  width: 36px !important;
+  height: 36px !important;
+  min-width: 36px !important;
+  border-radius: 50% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 1.15rem !important;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  flex-shrink: 0 !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04) !important;
+}
+
+/* Colorful Transparent Hover Highlighting */
+.nav-item:hover {
+  background: rgba(37, 99, 235, 0.08) !important;
+  color: #1d4ed8 !important;
+  border-color: rgba(37, 99, 235, 0.2) !important;
+  transform: translateX(4px) !important;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.08) !important;
+}
+.nav-item:hover .nav-item-title {
+  color: #1d4ed8 !important;
+  font-weight: 700 !important;
+}
+.nav-item:hover .nav-item-icon-bubble {
+  transform: scale(1.1) !important;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Active State Highlighting */
+.nav-item.active {
+  background: rgba(37, 99, 235, 0.12) !important;
+  color: #1d4ed8 !important;
+  font-weight: 800 !important;
+  border-color: rgba(37, 99, 235, 0.25) !important;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.1) !important;
+}
+.nav-item.active .nav-item-title {
+  color: #1d4ed8 !important;
+  font-weight: 800 !important;
+}
+.nav-item.active::before {
+  content: '' !important;
+  position: absolute !important;
+  left: 0 !important;
+  top: 8px !important;
+  bottom: 8px !important;
+  width: 4px !important;
+  background: #2563eb !important;
+  border-radius: 0 4px 4px 0 !important;
+}
+.nav-item.active .nav-item-icon-bubble {
+  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.2) !important;
+}
+
+/* Right-Aligned Badges (56% OFF, NEW, APP) */
+.nav-badge-pill {
+  margin-left: auto !important;
+  font-size: 0.68rem !important;
+  font-weight: 800 !important;
+  padding: 2px 8px !important;
+  border-radius: 12px !important;
+  letter-spacing: 0.3px !important;
+  line-height: 1.4 !important;
+  white-space: nowrap !important;
+}
+.nav-badge-pill.badge-discount {
+  background: #ef4444 !important;
+  color: #ffffff !important;
+  box-shadow: 0 2px 6px rgba(239, 68, 68, 0.3) !important;
+}
+.nav-badge-pill.badge-new {
+  background: #f59e0b !important;
+  color: #ffffff !important;
+  box-shadow: 0 2px 6px rgba(245, 158, 11, 0.3) !important;
+}
+.nav-badge-pill.badge-app {
+  background: #2563eb !important;
+  color: #ffffff !important;
+}
+
+/* Sidebar Footer & User Profile Preview */
+.sidebar-footer {
+  padding: 14px 14px !important;
+  border-top: 1px solid #e2e8f0 !important;
+  background: #fafbfc !important;
+}
+.sidebar-user-preview {
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+  padding: 8px 10px !important;
+  border-radius: 12px !important;
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  margin-bottom: 8px !important;
+}
+.sidebar-avatar {
+  width: 36px !important;
+  height: 36px !important;
+  border-radius: 50% !important;
+  background: linear-gradient(135deg, #1e40af 0%, #2563eb 100%) !important;
+  color: #ffffff !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-weight: 800 !important;
+  font-size: 0.95rem !important;
+}
+.sidebar-user-name {
+  font-size: 0.88rem !important;
+  font-weight: 800 !important;
+  color: #0a1128 !important;
+}
+.sidebar-user-role {
+  font-size: 0.72rem !important;
+  color: #64748b !important;
+  font-weight: 600 !important;
+}
+.sidebar-logout-btn-item {
+  width: 100% !important;
+  background: #fee2e2 !important;
+  border: 1px solid #fca5a5 !important;
+  border-radius: 10px !important;
+  color: #b91c1c !important;
+  padding: 8px 14px !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  transition: all 0.2s !important;
+}
+.sidebar-logout-btn-item:hover {
+  background: #fecaca !important;
+  border-color: #f87171 !important;
+  transform: translateY(-1px) !important;
+}
