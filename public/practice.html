@@ -24,7 +24,7 @@
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="/css/style.css?v=19.7">
+  <link rel="stylesheet" href="/css/style.css?v=19.8">
 
   <!-- Shield Root Hindi Shorthand Content from Chrome / Browser Auto-Translation -->
   <script>
@@ -155,7 +155,7 @@
       <!-- Compact Top Header -->
       <header class="top-header">
         <div class="header-left">
-          <button class="header-back-btn" id="headerBackBtn" onclick="window.history.length > 1 ? window.history.back() : window.location.href = '/'" style="display:inline-flex;" title="वापस जाएं (Go Back)" aria-label="Go Back">
+          <button class="header-back-btn" id="headerBackBtn" onclick="window.history.length > 1 ? window.history.back() : window.location.href = '/'" style="display:inline-flex;" title="वापस जाएं" aria-label="Go Back" data-i18n-title="nav_back">
             <span class="back-arrow">←</span>
             <span class="back-text" data-i18n="header_back">वापस</span>
           </button>
@@ -178,8 +178,8 @@
             <span id="userStreakCount">0 Day Streak</span>
           </div>
           <button class="lang-toggle-btn" id="langToggleBtn" onclick="stenoApp.toggleAppLanguage()" title="भाषा बदलें / Change Language" aria-label="Change Language">🌐 EN</button>
-          <button class="theme-toggle-btn" id="themeToggleBtn" onclick="stenoApp.toggleTheme()" title="थीम बदलें (Light/Dark)">🌙</button>
-          <button class="user-profile-btn" onclick="window.location.href='/profile'" title="सेटिंग्स (Settings)">
+          <button class="theme-toggle-btn" id="themeToggleBtn" onclick="stenoApp.toggleTheme()" title="थीम बदलें" data-i18n-title="btn_theme">🌙</button>
+          <button class="user-profile-btn" onclick="window.location.href='/profile'" title="सेटिंग्स" data-i18n-title="nav_settings">
             <div class="user-avatar" id="headerUserAvatar">S</div>
             <div class="header-user-meta hide-mobile">
               <span class="header-user-name" id="headerUserName">Student</span>
@@ -199,7 +199,7 @@
         <div class="practice-container">
           <div class="practice-header-bar">
             <button class="back-btn" onclick="window.history.length > 1 ? window.history.back() : window.location.href = '/'" data-i18n="practice_back">
-              ← वापस कक्षाओं पर जाएं (Back)
+              <span data-i18n="nav_back_to_classes">← वापस कक्षाओं पर जाएं</span>
             </button>
             <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
               <button type="button" id="practiceStenoNotesBtn" class="btn-sm" onclick="stenoApp.openCurrentPassageStenoNotes()" style="display:none; background:#e0e7ff; color:#4338ca; border:1px solid #c7d2fe; font-weight:700; font-size:0.75rem; border-radius:6px; cursor:pointer; padding:4px 10px;">
@@ -228,7 +228,7 @@
                 <div style="font-size:0.8rem; color:var(--text-muted);" class="hide-mobile">
                   आदेश: <span id="practiceInstructions">ऑडियो सुनें और टाइप करें</span>
                 </div>
-                <button type="button" id="toggleCountdownBtn" class="btn-sm" onclick="stenoAudioPlayer.toggleCountdownSetting()" style="font-size:0.75rem; font-weight:700; border-radius:6px; padding:4px 10px; cursor:pointer; background:var(--bg-subtle, #f3f4f6); border:1px solid var(--border-subtle, #e5e7eb); color:var(--text-secondary, #4b5563);" title="डिक्टेशन शुरू होने से पहले 3-सेकंड काउंटडाउन ऑन/ऑफ करें">⚡ तुरंत प्ले (Instant)</button>
+                <button type="button" id="toggleCountdownBtn" class="btn-sm" onclick="stenoAudioPlayer.toggleCountdownSetting()" style="font-size:0.75rem; font-weight:700; border-radius:6px; padding:4px 10px; cursor:pointer; background:var(--bg-subtle, #f3f4f6); border:1px solid var(--border-subtle, #e5e7eb); color:var(--text-secondary, #4b5563);" title="डिक्टेशन शुरू होने से पहले 3-सेकंड काउंटडाउन ऑन/ऑफ करें"><span data-i18n="practice_instant_play">⚡ तुरंत प्ले</span></button>
                 <button type="button" id="toggleMobilePlayerBtn" class="btn-sm btn-speed-toggle" onclick="stenoTypingEngine.toggleMobilePlayer()" title="डिक्टेशन गति विकल्प दिखाएं या छिपाएं">
                   <span class="speed-toggle-icon">⚡</span>
                   <span class="speed-toggle-text">स्पीड</span>
@@ -242,7 +242,7 @@
               <div class="wpm-speeder-top">
                 <div class="wpm-title-group">
                   <span class="wpm-speed-icon">⚡</span>
-                  <span class="wpm-label" data-i18n="practice_speed_label">डिक्टेशन गति (Speed):</span>
+                  <span class="wpm-label" data-i18n="practice_speed_label"><span data-i18n="practice_speed_label">डिक्टेशन गति:</span></span>
                   <strong id="wpmSpeederValue" class="wpm-val-badge">80 WPM</strong>
                   <span id="wpmMultiplierBadge" class="wpm-mult-badge">(1.00x • मूल 80 WPM)</span>
                 </div>
@@ -309,9 +309,9 @@
                 <div class="punct-rule-group" style="display:flex; align-items:center; gap:8px; background:var(--bg-subtle); padding:4px 10px; border-radius:var(--radius-md); border:1px solid var(--border-subtle);" title="विराम चिह्न (कॉमा, पूर्णविराम) मूल्यांकन नियम">
                   <label class="mode-label" style="margin:0; font-weight:700; font-size:0.82rem; white-space:nowrap;">विराम चिह्न:</label>
                   <div class="punct-toggle-chips" id="punctToggleChips" style="display:flex; gap:4px;">
-                    <button type="button" id="punctModeOffBtn" class="punct-chip-btn" onclick="stenoApp.setPunctuationMode('off')" title="विराम चिह्न (कॉमा, पूर्णविराम) छूटने पर कोई गलती नहीं कटेगी">🚫 OFF (छूट)</button>
-                    <button type="button" id="punctModeHalfBtn" class="punct-chip-btn active" onclick="stenoApp.setPunctuationMode('half')" title="SSC मानक: विराम चिह्न त्रुटि पर 0.5 अंक (आधी गलती)">🟡 0.5 (आधा)</button>
-                    <button type="button" id="punctModeFullBtn" class="punct-chip-btn" onclick="stenoApp.setPunctuationMode('full')" title="विराम चिह्न त्रुटि पर 1.0 अंक (पूर्ण गलती)">🔴 1.0 (पूर्ण)</button>
+                    <button type="button" id="punctModeOffBtn" class="punct-chip-btn" onclick="stenoApp.setPunctuationMode('off')" title="विराम चिह्न (कॉमा, पूर्णविराम) छूटने पर कोई गलती नहीं कटेगी"><span data-i18n="practice_punct_off">🚫 OFF (छूट)</span></button>
+                    <button type="button" id="punctModeHalfBtn" class="punct-chip-btn active" onclick="stenoApp.setPunctuationMode('half')" title="SSC मानक: विराम चिह्न त्रुटि पर 0.5 अंक"><span data-i18n="practice_punct_half">🟡 0.5 (आधा)</span></button>
+                    <button type="button" id="punctModeFullBtn" class="punct-chip-btn" onclick="stenoApp.setPunctuationMode('full')" title="विराम चिह्न त्रुटि पर 1.0 अंक"><span data-i18n="practice_punct_full">🔴 1.0 (पूर्ण)</span></button>
                   </div>
                 </div>
 
@@ -327,7 +327,7 @@
                       <span class="timer-dot"></span>
                       <span data-i18n="practice_timer_30">30 मिनट</span>
                     </button>
-                    <button type="button" id="timerOptionOffBtn" class="timer-slider-pill" onclick="stenoTypingEngine.setTypingTimer(0)" title="असीमित समय (बिना ऑटो-सबमिट)">
+                    <button type="button" id="timerOptionOffBtn" class="timer-slider-pill" onclick="stenoTypingEngine.setTypingTimer(0)" title="असीमित समय बिना ऑटो-सबमिट">
                       <span data-i18n="practice_timer_off">🔓 OFF</span>
                     </button>
                   </div>
@@ -336,10 +336,10 @@
                 <div class="typing-mode-group">
                   <label class="mode-label" for="typingModeSelect">Typing Mode:</label>
                   <select id="typingModeSelect" class="select-typing-mode">
-                    <option value="mangal">Mangal / Unicode Hindi (मंगल/यूनिकोड)</option>
-                    <option value="krutidev">Kruti Dev 010 (कृति देव 010)</option>
-                    <option value="inscript">Inscript Hindi (इन्स्क्रिप्ट)</option>
-                    <option value="remington">Remington-Style Hindi (रेमिंगटन)</option>
+                    <option value="mangal">मंगल / यूनिकोड हिंदी</option>
+                    <option value="krutidev">कृति देव 010</option>
+                    <option value="inscript">इन्स्क्रिप्ट हिंदी</option>
+                    <option value="remington">रेमिंगटन हिंदी</option>
                   </select>
                 </div>
               </div>
@@ -360,8 +360,8 @@
                 </div>
 
                 <div class="editor-live-stats">
-                  <div class="stat-pill"><span data-i18n="practice_words">शब्द (Words):</span> <strong id="liveWordCount">0</strong></div>
-                  <div class="stat-pill"><span data-i18n="practice_chars">वर्ण (Chars):</span> <strong id="liveCharCount">0</strong></div>
+                  <div class="stat-pill"><span data-i18n="practice_words"><span data-i18n="practice_words">शब्द:</span></span> <strong id="liveWordCount">0</strong></div>
+                  <div class="stat-pill"><span data-i18n="practice_chars"><span data-i18n="practice_chars">वर्ण:</span></span> <strong id="liveCharCount">0</strong></div>
                   <div class="stat-pill" style="color:var(--primary);"><span data-i18n="practice_time">समय:</span> <strong id="liveTimerText">00:00</strong></div>
                 </div>
               </div>
@@ -379,7 +379,7 @@
               <div class="draft-indicator" id="draftStatusText">सहेजा गया</div>
               <div style="display:flex; gap:12px;">
                 <button class="btn-secondary" onclick="if(confirm('क्या आप टेक्स्ट खाली करना चाहते हैं?')) stenoTypingEngine.clearDraft();" data-i18n="practice_clear">🗑️ साफ़ करें</button>
-                <button class="btn-primary" id="submitPracticeBtn" onclick="stenoApp.submitPractice()" style="padding:10px 28px; font-size:1rem;" data-i18n="practice_submit">🚀 सबमिट करें (Submit)</button>
+                <button class="btn-primary" id="submitPracticeBtn" onclick="stenoApp.submitPractice()" style="padding:10px 28px; font-size:1rem;" data-i18n="practice_submit"><span data-i18n="practice_submit">🚀 सबमिट करें</span></button>
               </div>
             </div>
           </div>
@@ -392,7 +392,7 @@
       <main class="page-view" id="view-result">
         <div class="view-top-back-wrap" style="margin-bottom:14px;">
           <button type="button" class="view-back-strip-btn" onclick="stenoApp.goBack()" title="वापस जाएं">
-            <span class="back-icon">←</span> <span data-i18n="practice_back">वापस जाएं (Back)</span>
+            <span class="back-icon">←</span> <span data-i18n="practice_back"><span data-i18n="modal_submit_cancel">वापस जाएं</span></span>
           </button>
         </div>
         <div class="practice-container" id="resultReportContainer">
@@ -401,7 +401,7 @@
             <h3 style="margin-bottom: 8px; font-size: 1.3rem;">कोई सक्रिय परिणाम नहीं मिला</h3>
             <p style="color: var(--text-secondary); margin-bottom: 24px; font-size: 0.95rem;">नया डिक्टेशन अभ्यास शुरू करें और अपनी गति एवं सटीकता का विस्तृत रिपोर्ट कार्ड देखें।</p>
             <button class="btn-primary" onclick="window.location.href='/'" style="padding: 10px 24px; font-size: 1rem; border-radius: 8px; cursor:pointer;">
-              🏠 मुख्य पेज (Dashboard) पर जाएं
+              🏠 मुख्य डैशबोर्ड पर जाएं
             </button>
           </div>
         </div>
@@ -419,7 +419,7 @@
   <div class="modal-overlay" id="stenoAttachmentLightboxModal" style="z-index: 10000;">
     <div class="modal-card" style="max-width: 900px; width: 95%; max-height: 92vh; display: flex; flex-direction: column;">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; border-bottom:1px solid var(--border); padding-bottom:10px;">
-        <h3 class="modal-title" id="stenoLightboxTitle" style="margin:0; font-size:1.15rem;">📝 स्टेनो आउटलाइन व नोट्स (Shorthand Notes)</h3>
+        <h3 class="modal-title" id="stenoLightboxTitle" style="margin:0; font-size:1.15rem;">📝 स्टेनो आउटलाइन व नोट्स</h3>
         <div style="display:flex; gap:8px; align-items:center;">
           <a id="stenoLightboxDownloadBtn" href="#" download class="btn-sm btn-secondary" style="font-size:0.8rem; padding:4px 10px; text-decoration:none;">⬇️ डाउनलोड</a>
           <button class="modal-close-btn" onclick="stenoApp.closeModal('stenoAttachmentLightboxModal')" style="position:static;">✕</button>
@@ -433,19 +433,19 @@
   <div class="modal-overlay" id="dualModeSelectModal" style="z-index:10000;" onclick="if(event.target===this) stenoApp.closeModal('dualModeSelectModal')">
     <div class="modal-card" style="max-width: 460px; text-align:center; padding:28px 22px;">
       <div style="font-size:44px; margin-bottom:8px;">⌨️</div>
-      <h3 class="modal-title" style="font-size:1.3rem; margin-bottom:6px;">टाइपिंग फ़ॉन्ट चुनें (Select Typing Font)</h3>
+      <h3 class="modal-title" style="font-size:1.3rem; margin-bottom:6px;">टाइपिंग फ़ॉन्ट चुनें</h3>
       <p style="color:var(--text-secondary); font-size:0.88rem; margin-bottom:18px;">
-        इस आलेख में <strong>मंगल (Unicode)</strong> और <strong>कृति देव 010</strong> दोनों उपलब्ध हैं। आप किस फ़ॉन्ट में टेस्ट देना चाहते हैं?
+        इस आलेख में <strong>मंगल (यूनिकोड)</strong> और <strong>कृति देव 010</strong> दोनों उपलब्ध हैं। आप किस फ़ॉन्ट में टेस्ट देना चाहते हैं?
       </p>
       <div style="display:flex; flex-direction:column; gap:12px; margin-bottom:18px;">
         <button type="button" class="btn-primary" onclick="stenoApp.confirmDualModeSelection('mangal_unicode')" style="padding:14px 16px; font-size:1rem; font-weight:700; background:#0284c7; border-color:#0284c7; display:flex; justify-content:space-between; align-items:center;">
-          <span>🅰️ मंगल / यूनिकोड (Mangal / Unicode)</span><span style="font-size:0.85rem; font-weight:normal; opacity:0.9;">Inscript / Gail →</span>
+          <span>🅰️ मंगल / यूनिकोड हिंदी</span><span style="font-size:0.85rem; font-weight:normal; opacity:0.9;">Inscript / Gail →</span>
         </button>
         <button type="button" class="btn-primary" onclick="stenoApp.confirmDualModeSelection('kruti_dev_010')" style="padding:14px 16px; font-size:1rem; font-weight:700; background:#d97706; border-color:#d97706; display:flex; justify-content:space-between; align-items:center;">
-          <span>⌨️ कृति देव 010 (Kruti Dev 010)</span><span style="font-size:0.85rem; font-weight:normal; opacity:0.9;">Remington →</span>
+          <span>⌨️ कृति देव 010</span><span style="font-size:0.85rem; font-weight:normal; opacity:0.9;">Remington →</span>
         </button>
       </div>
-      <button type="button" class="btn-secondary" onclick="stenoApp.closeModal('dualModeSelectModal')" style="width:100%;">रद्द करें (Cancel)</button>
+      <button type="button" class="btn-secondary" onclick="stenoApp.closeModal('dualModeSelectModal')" style="width:100%;">रद्द करें</button>
       <div style="font-size:0.8rem; color:var(--text-muted); margin-top:10px;">💡 <em>आपकी पसंद अपने आप सुरक्षित हो जाएगी।</em></div>
     </div>
   </div>
@@ -454,11 +454,11 @@
   <div class="modal-overlay" id="altCodesModal" onclick="if(event.target===this) stenoApp.closeModal('altCodesModal')">
     <div class="modal-card" style="max-width: 680px; max-height:85vh; overflow-y:auto;">
       <button class="modal-close-btn" onclick="stenoApp.closeModal('altCodesModal')">✕</button>
-      <h3 class="modal-title">⌨️ कृति देव 010 / रेमिंगटन विशेष कोड्स (Alt Codes)</h3>
+      <h3 class="modal-title"><span data-i18n="modal_altcodes_title">⌨️ कृति देव 010 / रेमिंगटन विशेष कोड्स</span></h3>
       <p class="modal-subtitle">टाइप करते समय Numpad पर `Alt` दबाकर अंक कोड टाइप करें:</p>
       <div style="display:grid; grid-template-columns: 1fr 1fr; gap:16px; margin-top:14px; font-size:0.88rem;">
         <div style="background:var(--bg-card-hover); padding:12px; border-radius:8px;">
-          <h4 style="font-size:0.85rem; color:var(--primary); margin-bottom:8px; font-weight:700;">संयुक्त अक्षर (Conjuncts)</h4>
+          <h4 style="font-size:0.85rem; color:var(--primary); margin-bottom:8px; font-weight:700;">संयुक्त अक्षर</h4>
           <table style="width:100%; border-collapse:collapse; font-size:0.85rem;">
             <tr style="border-bottom:1px solid var(--border-subtle);"><td style="padding:4px 0;"><strong>क्र</strong></td><td style="text-align:right;"><code style="background:var(--bg-surface); padding:2px 6px; border-radius:4px;">Alt + 0216</code></td></tr>
             <tr style="border-bottom:1px solid var(--border-subtle);"><td style="padding:4px 0;"><strong>त्र</strong></td><td style="text-align:right;"><code style="background:var(--bg-surface); padding:2px 6px; border-radius:4px;">= / «</code></td></tr>
@@ -487,7 +487,7 @@
         </div>
       </div>
       <div style="margin-top:16px; text-align:center;">
-        <button type="button" class="btn-primary" onclick="stenoApp.closeModal('altCodesModal')" style="padding:6px 20px;">समझ गए (Close)</button>
+        <button type="button" class="btn-primary" onclick="stenoApp.closeModal('altCodesModal')" style="padding:6px 20px;"><span data-i18n="modal_close_btn">समझ गए</span></button>
       </div>
     </div>
   </div>
@@ -514,7 +514,7 @@
       </div>
       <div style="display:flex; flex-direction:column; gap:10px;">
         <button type="button" class="btn-primary" style="padding:14px; font-size:1.05rem; font-weight:800; border-radius:12px;" onclick="stenoApp.closeModal('lockedClassProModal'); window.location.href='/plans'">⚡ सभी प्लान्स देखें →</button>
-        <button type="button" class="btn-secondary" style="border:none; color:var(--text-muted); font-size:0.82rem;" onclick="stenoApp.closeModal('lockedClassProModal')">बाद में देखें (Close)</button>
+        <button type="button" class="btn-secondary" style="border:none; color:var(--text-muted); font-size:0.82rem;" onclick="stenoApp.closeModal('lockedClassProModal')"><span data-i18n="modal_locked_later">बाद में देखें</span></button>
       </div>
     </div>
   </div>
@@ -554,7 +554,7 @@
       <button type="button" 
               class="modal-close-btn exam-warning-close-btn" 
               onclick="stenoTypingEngine.exitExamModeFromModal()" 
-              title="परीक्षा हॉल मोड बंद करें और बाहर निकलें (Exit Exam Mode)"
+              title="परीक्षा हॉल मोड बंद करें और बाहर निकलें"
               style="position:absolute; top:14px; right:14px; width:34px; height:34px; border-radius:50%; background:#f3f4f6; border:1px solid #e5e7eb; color:#4b5563; font-size:1.15rem; font-weight:700; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:all 0.2s; z-index:10; padding:0; line-height:1;"
               onmouseover="this.style.background='#fee2e2'; this.style.color='#dc2626'; this.style.borderColor='#fca5a5';"
               onmouseout="this.style.background='#f3f4f6'; this.style.color='#4b5563'; this.style.borderColor='#e5e7eb';">
@@ -569,7 +569,7 @@
         <button type="button" class="btn-primary" onclick="stenoTypingEngine.resumeExamFullScreen()" style="background:#dc2626; border-color:#dc2626; padding:10px 24px; font-weight:700; font-size:0.9rem; width:100%; max-width:340px;">📺 फुल-स्क्रीन करें और परीक्षा जारी रखें →</button>
         <button type="button" class="btn-secondary" onclick="stenoTypingEngine.exitExamModeFromModal()" style="background:transparent; border:1px solid #d1d5db; color:#4b5563; padding:8px 18px; font-size:0.85rem; font-weight:600; border-radius:8px; cursor:pointer; width:100%; max-width:340px; transition:all 0.15s ease;"
           onmouseover="this.style.background='#f3f4f6'; this.style.color='#111827'; this.style.borderColor='#9ca3af';"
-          onmouseout="this.style.background='transparent'; this.style.color='#4b5563'; this.style.borderColor='#d1d5db';">✕ परीक्षा मोड बंद करें (Exit Exam Mode)</button>
+          onmouseout="this.style.background='transparent'; this.style.color='#4b5563'; this.style.borderColor='#d1d5db';"><span data-i18n="exam_exit_btn">✕ परीक्षा मोड बंद करें</span></button>
       </div>
     </div>
   </div>
@@ -593,10 +593,10 @@
 
       <div class="countdown-actions">
         <button type="button" class="countdown-btn-skip" onclick="stenoAudioPlayer.skipCountdown()">
-          ⏩ सीधे शुरू करें (Skip)
+          <span data-i18n="countdown_skip">⏩ सीधे शुरू करें</span>
         </button>
         <button type="button" class="countdown-btn-cancel" onclick="stenoAudioPlayer.cancelCountdown()">
-          ✕ रद्द करें (Cancel)
+          <span data-i18n="countdown_cancel">✕ रद्द करें</span>
         </button>
       </div>
     </div>
@@ -606,12 +606,12 @@
   <script defer src="https://sdk.cashfree.com/js/v3/cashfree.js"></script>
   <script src="/js/charts.js?v=13.5"></script>
   <script src="/js/steno_dictionary.js?v=1.0"></script>
-  <script src="/js/comparison_view.js?v=17.3"></script>
-  <script src="/js/audio_player.js?v=19.7"></script>
+  <script src="/js/comparison_view.js?v=19.8"></script>
+  <script src="/js/audio_player.js?v=19.8"></script>
   <script src="/js/keyboard_map.js?v=8.1"></script>
-  <script src="/js/typing_engine.js?v=17.3"></script>
+  <script src="/js/typing_engine.js?v=19.8"></script>
   <script src="/js/ocr_service.js?v=1.1"></script>
-  <script src="/js/app.js?v=19.7"></script>
+  <script src="/js/app.js?v=19.8"></script>
 
   <!-- Practice Page Bootstrap -->
   <script>

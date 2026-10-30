@@ -33,7 +33,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Mukta:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/css/style.css?v=19.7">
+  <link rel="stylesheet" href="/css/style.css?v=19.8">
 
   <!-- Font Preloads for Instant Hindi Typography -->
   <link rel="preload" href="/assets/fonts/Mangal.ttf" as="font" type="font/ttf" crossorigin>
@@ -118,7 +118,7 @@
             <span>🔥</span>
             <span id="userStreakCount">0 Day Streak</span>
           </div>
-          <button class="theme-toggle-btn" id="themeToggleBtn" onclick="stenoApp.toggleTheme()" title="थीम बदलें (Light/Dark)">🌙</button>
+          <button class="theme-toggle-btn" id="themeToggleBtn" onclick="stenoApp.toggleTheme()" title="थीम बदलें" data-i18n-title="btn_theme">🌙</button>
           <button class="user-profile-btn" id="headerUserBtn" onclick="window.location.href='/profile'" title="मेरी प्रोफ़ाइल">
             <div class="user-avatar" id="headerUserAvatar">S</div>
             <div class="header-user-meta hide-mobile">
@@ -138,7 +138,7 @@
       <main class="page-view active" id="view-subscription">
         <div class="view-top-back-wrap" style="margin-bottom:14px;">
           <button type="button" class="view-back-strip-btn" onclick="window.history.length > 1 ? window.history.back() : window.location.href='/'" title="वापस जाएं">
-            <span class="back-icon">←</span> <span>वापस डैशबोर्ड पर जाएं (Back to Dashboard)</span>
+            <span class="back-icon">←</span> <span>← वापस डैशबोर्ड पर जाएं</span>
           </button>
         </div>
 
@@ -721,11 +721,11 @@
   <script defer src="https://sdk.cashfree.com/js/v3/cashfree.js"></script>
 
   <!-- Core Lightweight Scripts -->
-  <script src="/js/audio_player.js?v=19.7"></script>
+  <script src="/js/audio_player.js?v=19.8"></script>
   <script src="/js/keyboard_map.js?v=8.1"></script>
-  <script src="/js/typing_engine.js?v=17.3"></script>
+  <script src="/js/typing_engine.js?v=19.8"></script>
   <script src="/js/ocr_service.js?v=1.1"></script>
-  <script src="/js/app.js?v=19.7"></script>
+  <script src="/js/app.js?v=19.8"></script>
 
   <!-- Plans Page Bootstrap Script -->
   <script>

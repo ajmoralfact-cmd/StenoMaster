@@ -52,7 +52,8 @@ class StenoAudioPlayer {
     } catch(e) {}
     this.updateCountdownUI();
     if (window.stenoApp && typeof window.stenoApp.showToast === 'function') {
-      window.stenoApp.showToast(this.enableCountdown ? '3-सेकंड काउंटडाउन चालू (3s Countdown ON)' : 'तुरंत प्ले चालू (Instant Play ON)', 'info');
+      const isEn = document.documentElement.getAttribute('data-app-lang') === 'en';
+      window.stenoApp.showToast(this.enableCountdown ? (isEn ? '3s Countdown ON' : '3-सेकंड काउंटडाउन चालू') : (isEn ? 'Instant Play ON' : 'तुरंत प्ले चालू'), 'info');
     }
     return this.enableCountdown;
   }
@@ -67,7 +68,8 @@ class StenoAudioPlayer {
         btn.style.borderColor = '#93c5fd';
         btn.title = 'डिक्टेशन शुरू होने से पहले 3 सेकंड काउंटडाउन ऑन है। तुरंत प्ले करने के लिए क्लिक करें।';
       } else {
-        btn.innerHTML = '⚡ तुरंत प्ले (Instant)';
+        const isEn = document.documentElement.getAttribute('data-app-lang') === 'en';
+      btn.innerHTML = isEn ? '⚡ Instant Play' : '⚡ तुरंत प्ले';
         btn.style.background = 'var(--bg-subtle, #f3f4f6)';
         btn.style.color = 'var(--text-secondary, #4b5563)';
         btn.style.borderColor = 'var(--border-subtle, #e5e7eb)';

@@ -1155,7 +1155,7 @@ class StenoComparisonView {
           <!-- Official Reference Passage Box -->
           <div class="result-passage-box-wrap notranslate" id="officialPassageWrap" translate="no">
             <div class="result-box-tag notranslate" translate="no" style="color:#0284c7; background:#e0f2fe;">
-              ✓ आधिकारिक मूल पाठ (Official Reference Text)
+              ${document.documentElement.getAttribute('data-app-lang') === 'en' ? '✓ Official Reference Text' : '✓ आधिकारिक मूल पाठ'}
             </div>
             <div class="result-passage-text-content font-mangal notranslate skiptranslate" id="masterOfficialTextDisplay" translate="no">
               <hindi-root text="${this.escapeHtml(mangalText || krutiText)}"></hindi-root>
@@ -1166,7 +1166,7 @@ class StenoComparisonView {
           ${studentText ? `
             <div class="result-passage-box-wrap notranslate" id="studentPassageWrap" translate="no" style="display:none;">
               <div class="result-box-tag notranslate" translate="no" style="color:#7c3aed; background:#f3e8ff;">
-                ⌨️ आपका टाइप किया हुआ पाठ (Your Raw Typing)
+                ${document.documentElement.getAttribute('data-app-lang') === 'en' ? '⌨️ Your Raw Typed Text' : '⌨️ आपका टाइप किया हुआ पाठ'}
               </div>
               <div class="result-passage-text-content font-mangal notranslate skiptranslate" id="studentRawTextDisplay" translate="no">
                 <hindi-root text="${this.escapeHtml(studentText)}"></hindi-root>

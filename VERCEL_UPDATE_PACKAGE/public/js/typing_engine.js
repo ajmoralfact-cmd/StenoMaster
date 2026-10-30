@@ -194,7 +194,8 @@ class StenoTypingEngine {
 
         if (this.backspaceLocked && (e.key === 'Backspace' || e.key === 'Delete')) {
           e.preventDefault();
-          this.showDraftNotice('🚫 परीक्षा नियम: बैकस्पेस लॉक है (Backspace Disabled)');
+          const isEn = document.documentElement.getAttribute('data-app-lang') === 'en';
+    this.showDraftNotice(isEn ? '🚫 Exam Rule: Backspace Disabled' : '🚫 परीक्षा नियम: बैकस्पेस लॉक है');
         }
       });
 
@@ -259,7 +260,8 @@ class StenoTypingEngine {
     const savedDraft = localStorage.getItem(`stenomaster_draft_${passage.id}`);
     if (savedDraft && this.textarea) {
       this.textarea.value = savedDraft;
-      this.showDraftNotice('पिछला अधूरा ड्राफ्ट लोड किया गया (Draft restored)');
+      const isEn = document.documentElement.getAttribute('data-app-lang') === 'en';
+    this.showDraftNotice(isEn ? 'Draft restored from previous session' : 'पिछला अधूरा ड्राफ्ट लोड किया गया');
     } else if (this.textarea) {
       this.textarea.value = '';
     }
@@ -341,7 +343,8 @@ class StenoTypingEngine {
     const timerPill = this.timerEl ? this.timerEl.closest('.stat-pill') : null;
     if (timerPill) timerPill.classList.add('timer-one-minute-alert');
     if (window.stenoApp) {
-      stenoApp.showToast('⚠️ अंतिम 1 मिनट शेष है! (Final 1 Minute Alert)', 'warning');
+      const isEn = document.documentElement.getAttribute('data-app-lang') === 'en';
+      stenoApp.showToast(isEn ? '⚠️ Final 1 Minute Alert!' : '⚠️ अंतिम 1 मिनट शेष है!', 'warning');
     }
   }
 
@@ -776,7 +779,8 @@ class StenoTypingEngine {
         btn.innerHTML = '🔒 Backspace: OFF';
         btn.classList.add('btn-danger');
         btn.classList.remove('btn-secondary');
-        btn.title = 'सख्त परीक्षा मोड (Strict Exam Mode): बैकस्पेस की अक्षम है';
+        const isEn = document.documentElement.getAttribute('data-app-lang') === 'en';
+    btn.title = isEn ? 'Strict Exam Mode: Backspace Disabled' : 'सख्त परीक्षा मोड: बैकस्पेस की अक्षम है';
       } else {
         btn.innerHTML = '🔓 Backspace: ON';
         btn.classList.remove('btn-danger');
@@ -878,7 +882,8 @@ class StenoTypingEngine {
     const text = this.textarea.value;
     if (text.trim()) {
       localStorage.setItem(`stenomaster_draft_${this.currentPassageId}`, text);
-      this.showDraftNotice('ड्राफ्ट स्वतः सहेजा गया (Auto-saved)');
+      const isEn = document.documentElement.getAttribute('data-app-lang') === 'en';
+    this.showDraftNotice(isEn ? 'Draft auto-saved' : 'ड्राफ्ट स्वतः सहेजा गया');
     }
   }
 
