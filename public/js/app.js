@@ -1629,6 +1629,12 @@ class StenoApp {
         : `स्वागतम्, ${this.user.display_name || this.user.username}! Google से लॉगिन सफल! 👋`;
       this.showToast(welcomeMsg, 'success');
 
+      if (this.user && this.user.role === 'admin') {
+        this.showToast('प्रशासनिक कंसोल में आपका स्वागत है! 🛡️', 'success');
+        window.location.href = '/admin.html';
+        return;
+      }
+
       // Check if student clicked a practice class before logging in
       const pendingPracticeId = sessionStorage.getItem('pending_practice_id') || (new URLSearchParams(window.location.search)).get('return_practice');
       if (pendingPracticeId) {
@@ -1898,6 +1904,13 @@ class StenoApp {
       }
 
       this.showToast(`स्वागतम्, ${this.user.display_name || this.user.username}! 👋`, 'success');
+      // Strict Role-Based Redirection: Admin goes immediately to Admin Portal
+      if (this.user && this.user.role === 'admin') {
+        this.showToast('प्रशासनिक कंसोल में आपका स्वागत है! 🛡️', 'success');
+        window.location.href = '/admin.html';
+        return;
+      }
+
 
       // Check if student clicked a practice class before logging in
       const pendingPracticeId = sessionStorage.getItem('pending_practice_id') || (new URLSearchParams(window.location.search)).get('return_practice');
@@ -1961,7 +1974,11 @@ class StenoApp {
         console.warn('Background data hydration warning:', hydrateErr);
       }
       this.showToast(`स्वागतम्, ${this.user.display_name || this.user.username}! 👋`, 'success');
-      // Stay in Student Portal on successful student login
+      if (this.user && this.user.role === 'admin') {
+        this.showToast('प्रशासनिक कंसोल में आपका स्वागत है! 🛡️', 'success');
+        window.location.href = '/admin.html';
+        return;
+      }
       this.navigate('home');
     } catch (err) {
       const msg = err.status === 401 ? 'गलत ईमेल/यूज़रनेम अथवा पासवर्ड। (Invalid credentials)' : (err.message || 'लॉगिन विफल रहा।');
@@ -2631,6 +2648,51 @@ class StenoApp {
 
   closeMobileDrawer() {
     this.closeSidebar();
+  }
+
+  // -------------------------------------------------------------------------
+  // User Profile & Header/Sidebar Authentication UI Sync
+  // -------------------------------------------------------------------------
+  updateUserUI() {
+    try {
+      const isLogged = Boolean(this.token && this.user);
+      const guestLoginBtn = document.getElementById('headerGuestLoginBtn');
+      const userProfileBtn = document.getElementById('headerUserProfileBtn');
+      const userAvatar = document.getElementById('headerUserAvatar');
+      const userName = document.getElementById('headerUserName');
+      const userRole = document.getElementById('headerUserRole');
+      const msgUserName = document.getElementById('msgUserName');
+      const adminHeaderBtn = document.getElementById('headerAdminConsoleBtn');
+
+      if (guestLoginBtn) {
+        guestLoginBtn.style.display = isLogged ? 'none' : 'inline-flex';
+      }
+      if (userProfileBtn) {
+        userProfileBtn.style.display = isLogged ? 'flex' : 'none';
+      }
+      if (adminHeaderBtn) {
+        adminHeaderBtn.style.display = (isLogged && this.user && this.user.role === 'admin') ? 'inline-flex' : 'none';
+      }
+
+      if (isLogged && this.user) {
+        const displayName = this.user.display_name || this.user.username || 'Student';
+        const initial = (displayName.charAt(0) || 'S').toUpperCase();
+        if (userName) userName.textContent = displayName;
+        if (msgUserName) msgUserName.textContent = `Hello, ${displayName}`;
+        if (userAvatar) userAvatar.textContent = initial;
+        if (userRole) {
+          const isAdmin = this.user.role === 'admin';
+          userRole.textContent = isAdmin ? 'Admin' : (this.user.subscription_status === 'active' || this.user.subscription_status === 'pro' ? 'PRO' : 'Student');
+          userRole.className = `header-user-role ${isAdmin ? 'role-admin' : 'role-student'}`;
+        }
+      }
+
+      if (typeof this.renderSidebarNav === 'function') {
+        this.renderSidebarNav();
+      }
+    } catch (e) {
+      console.warn('updateUserUI non-fatal error:', e);
+    }
   }
 
   renderSidebarNav() {

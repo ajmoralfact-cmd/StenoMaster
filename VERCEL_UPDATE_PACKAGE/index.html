@@ -1,6 +1,7 @@
 ﻿<!DOCTYPE html>
 <html lang="hi" data-theme="light">
 <head>
+  <meta name="google-site-verification" content="googlee61739c7b3adf5e3" />
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <script>
@@ -640,6 +641,11 @@
               <span class="header-user-role role-student" id="headerUserRole">Student</span>
             </div>
           </button>
+
+          <!-- Admin Console Header Button (Visible strictly for logged-in Admin) -->
+          <a href="/admin.html" class="btn-primary header-admin-btn" id="headerAdminConsoleBtn" style="display:none; align-items:center; gap:6px; background:#ef4444; color:#ffffff; border:none; padding:7px 14px; border-radius:10px; font-weight:700; text-decoration:none; font-size:0.84rem; box-shadow:0 2px 6px rgba(239,68,68,0.25);" title="एडमिन कंसोल खोलें (Admin Control Center)">
+            <span>🛡️</span> <span class="hide-mobile">Admin Panel</span>
+          </a>
 
           <!-- Logout Button -->
           <button class="btn-secondary header-logout-btn" id="headerLogoutBtn" onclick="stenoApp.logout()" title="लॉगआउट करें">
