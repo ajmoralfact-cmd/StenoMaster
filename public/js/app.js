@@ -4156,17 +4156,8 @@ class StenoApp {
       this.currentPassage.target_wpm || 80
     );
 
-    // Pre-unlock audio element synchronously during user click to ensure zero browser autoplay block!
-    if (stenoAudioPlayer.audioElement && !stenoAudioPlayer.isSpeechSynthesis) {
-      try {
-        const unlockP = stenoAudioPlayer.audioElement.play();
-        if (unlockP !== undefined) {
-          unlockP.then(() => {
-            stenoAudioPlayer.audioElement.pause();
-            stenoAudioPlayer.audioElement.currentTime = 0;
-          }).catch(() => {});
-        }
-      } catch (e) {}
+    if (window.stenoAudioPlayer && typeof window.stenoAudioPlayer.updateCountdownUI === 'function') {
+      window.stenoAudioPlayer.updateCountdownUI();
     }
 
     // Start typing engine

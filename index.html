@@ -77,7 +77,7 @@
   <!-- Performance Preconnects for Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="/css/style.css?v=19.6">
+  <link rel="stylesheet" href="/css/style.css?v=19.7">
 
   <!-- Shield Root Hindi Shorthand Content from Chrome / Browser Auto-Translation -->
   <script>
@@ -1727,6 +1727,7 @@
                 <div style="font-size:0.8rem; color:var(--text-muted);" class="hide-mobile">
                   आदेश: <span id="practiceInstructions">ऑडियो सुनें और टाइप करें</span>
                 </div>
+                <button type="button" id="toggleCountdownBtn" class="btn-sm" onclick="stenoAudioPlayer.toggleCountdownSetting()" style="font-size:0.75rem; font-weight:700; border-radius:6px; padding:4px 10px; cursor:pointer; background:var(--bg-subtle, #f3f4f6); border:1px solid var(--border-subtle, #e5e7eb); color:var(--text-secondary, #4b5563);" title="डिक्टेशन शुरू होने से पहले 3-सेकंड काउंटडाउन ऑन/ऑफ करें">⚡ तुरंत प्ले (Instant)</button>
                 <button type="button" id="toggleMobilePlayerBtn" class="btn-sm btn-speed-toggle" onclick="stenoTypingEngine.toggleMobilePlayer()" title="डिक्टेशन गति विकल्प दिखाएं या छिपाएं">
                   <span class="speed-toggle-icon">⚡</span>
                   <span class="speed-toggle-text">स्पीड</span>
@@ -3592,13 +3593,13 @@
   <script defer src="https://sdk.cashfree.com/js/v3/cashfree.js"></script>
 
   <!-- Core Lightweight Scripts (charts.js & comparison_view.js?v=17.3 are lazy-loaded on demand for 50% faster startup) -->
-  <script src="/js/audio_player.js?v=19.6"></script>
+  <script src="/js/audio_player.js?v=19.7"></script>
   <script src="/js/keyboard_map.js?v=8.1"></script>
   <script src="/js/typing_engine.js?v=17.3"></script>
   <script src="/js/ocr_service.js?v=1.1"></script>
   <script src="/js/steno_dictionary.js?v=1.0"></script>
   <script src="/js/comparison_view.js?v=17.3"></script>
-  <script src="/js/app.js?v=19.6"></script>
+  <script src="/js/app.js?v=19.7"></script>
   <!-- Strict Exam Hall Anti-Cheat Warning Modal -->
   <div class="modal-overlay" id="examHallWarningModal" style="z-index:99999;" onclick="if(event.target === this) stenoTypingEngine.exitExamModeFromModal()">
     <div class="modal-card" style="max-width: 480px; text-align:center; border:2px solid #ef4444; box-shadow:0 10px 40px rgba(239,68,68,0.3); position:relative; padding:28px 24px;">

@@ -37,10 +37,43 @@ class StenoAudioPlayer {
     this.countdownSeconds = 3;
     this.audioCtx = null;
     this.countdownAudioMap = null;
+    this.enableCountdown = localStorage.getItem('stenomaster_enable_countdown') === 'true';
+    this.playRequestedWhenReady = false;
 
     this.initListeners();
     this.initCountdownAudios();
     this.initMediaSession();
+  }
+
+  toggleCountdownSetting() {
+    this.enableCountdown = !this.enableCountdown;
+    try {
+      localStorage.setItem('stenomaster_enable_countdown', String(this.enableCountdown));
+    } catch(e) {}
+    this.updateCountdownUI();
+    if (window.stenoApp && typeof window.stenoApp.showToast === 'function') {
+      window.stenoApp.showToast(this.enableCountdown ? '3-सेकंड काउंटडाउन चालू (3s Countdown ON)' : 'तुरंत प्ले चालू (Instant Play ON)', 'info');
+    }
+    return this.enableCountdown;
+  }
+
+  updateCountdownUI() {
+    const btn = document.getElementById('toggleCountdownBtn');
+    if (btn) {
+      if (this.enableCountdown) {
+        btn.innerHTML = '⏳ 3s काउंटडाउन: ON';
+        btn.style.background = '#dbeafe';
+        btn.style.color = '#1e40af';
+        btn.style.borderColor = '#93c5fd';
+        btn.title = 'डिक्टेशन शुरू होने से पहले 3 सेकंड काउंटडाउन ऑन है। तुरंत प्ले करने के लिए क्लिक करें।';
+      } else {
+        btn.innerHTML = '⚡ तुरंत प्ले (Instant)';
+        btn.style.background = 'var(--bg-subtle, #f3f4f6)';
+        btn.style.color = 'var(--text-secondary, #4b5563)';
+        btn.style.borderColor = 'var(--border-subtle, #e5e7eb)';
+        btn.title = 'प्ले बटन दबाते ही तुरंत ऑडियो बजेगा। 3-सेकंड काउंटडाउन के लिए क्लिक करें।';
+      }
+    }
   }
 
   initListeners() {
@@ -50,6 +83,26 @@ class StenoAudioPlayer {
       if (this.onTimeUpdateCallback) {
         this.onTimeUpdateCallback(this.currentTime, this.duration);
       }
+    });
+
+    this.audioElement.addEventListener('playing', () => {
+      this.isPlaying = true;
+      this.playRequestedWhenReady = false;
+      const playBtn = document.getElementById('audioPlayBtn');
+      if (playBtn) playBtn.innerHTML = '⏸️';
+    });
+
+    this.audioElement.addEventListener('pause', () => {
+      if (!this.isCountingDown) {
+        this.isPlaying = false;
+        const playBtn = document.getElementById('audioPlayBtn');
+        if (playBtn) playBtn.innerHTML = '▶️';
+      }
+    });
+
+    this.audioElement.addEventListener('waiting', () => {
+      const playBtn = document.getElementById('audioPlayBtn');
+      if (playBtn && this.isPlaying) playBtn.innerHTML = '⏳';
     });
 
     this.audioElement.addEventListener('ended', () => {
@@ -76,6 +129,10 @@ class StenoAudioPlayer {
         this.audioElement.playbackRate = this.playbackSpeed;
         this.audioElement.defaultPlaybackRate = this.playbackSpeed;
         try { this.audioElement.preservesPitch = true; } catch (e) {}
+      }
+      if (this.playRequestedWhenReady) {
+        this.playRequestedWhenReady = false;
+        this.startActualPlayback();
       }
     });
 
@@ -129,7 +186,7 @@ class StenoAudioPlayer {
   }
 
   play(forceDirect = false) {
-    if (!forceDirect && this.currentTime === 0 && !this.isCountingDown) {
+    if (!forceDirect && this.enableCountdown && this.currentTime === 0 && !this.isCountingDown) {
       this.startCountdown();
       return;
     }
@@ -232,7 +289,7 @@ class StenoAudioPlayer {
       this.pause();
       return false;
     } else {
-      if (this.currentTime === 0) {
+      if (this.enableCountdown && this.currentTime === 0) {
         this.startCountdown();
         return true;
       } else {
@@ -247,28 +304,17 @@ class StenoAudioPlayer {
     this.isCountingDown = true;
     this.countdownSeconds = 3;
 
-    // Pre-arm HTML5 audio element within the direct synchronous user gesture
+    // Pre-arm HTML5 audio element within direct user gesture (muted continuous playback)
     if (this.audioElement && this.audioElement.src && !this.isSpeechSynthesis) {
       try {
-        // Mute temporarily during countdown so it plays silently and maintains browser autoplay clearance
         this.audioElement.muted = true;
         const p = this.audioElement.play();
         if (p !== undefined) {
-          p.then(() => {
-            // Audio is now actively playing or primed under user gesture
-            if (this.isCountingDown) {
-              this.audioElement.pause();
-              this.audioElement.currentTime = 0;
-            }
-            this.audioElement.muted = this.isMuted;
-          }).catch((err) => {
-            console.warn('Pre-arm warning:', err);
-            this.audioElement.muted = this.isMuted;
+          p.catch((err) => {
+            console.warn('Countdown pre-arm warning:', err);
           });
         }
-      } catch (e) {
-        this.audioElement.muted = this.isMuted;
-      }
+      } catch (e) {}
     }
 
     const overlay = document.getElementById('stenoCountdownOverlay');
@@ -390,6 +436,15 @@ class StenoAudioPlayer {
         overlay.style.display = 'none';
       }, 250);
     }
+    if (this.audioElement && !this.isSpeechSynthesis && this.audioElement.src) {
+      try {
+        if (this.audioElement.readyState >= 1) {
+          this.audioElement.currentTime = 0;
+        }
+      } catch (e) {}
+      this.audioElement.muted = this.isMuted;
+      this.audioElement.volume = this.isMuted ? 0 : this.volume;
+    }
     this.startActualPlayback();
   }
 
@@ -417,42 +472,65 @@ class StenoAudioPlayer {
 
   startActualPlayback() {
     const playBtn = document.getElementById('audioPlayBtn');
+
+    // Auto-resolve missing or empty audio src
+    if (!this.audioElement.src || this.audioElement.src === window.location.href || this.audioElement.src.length === 0) {
+      const fallbackUrl = this.audioUrl || (window.stenoApp && window.stenoApp.currentPassage && window.stenoApp.currentPassage.audio_url);
+      if (fallbackUrl && fallbackUrl.trim().length > 0) {
+        this.audioElement.src = fallbackUrl;
+        this.audioElement.preload = 'auto';
+        this.audioElement.load();
+      }
+    }
+
     if (this.isSpeechSynthesis) {
       this.isPlaying = true;
       if (playBtn) playBtn.innerHTML = '⏸️';
       this.playSpeechSynthesis();
-    } else {
-      this.audioElement.muted = this.isMuted;
-      this.audioElement.volume = this.isMuted ? 0 : this.volume;
-      this.audioElement.playbackRate = this.playbackSpeed;
-      this.audioElement.defaultPlaybackRate = this.playbackSpeed;
+      return;
+    }
 
-      const attemptPlay = (retryCount = 0) => {
-        const promise = this.audioElement.play();
-        if (promise !== undefined) {
-          promise.then(() => {
+    // Indicate loading state if media is not yet ready to play
+    if (this.audioElement.readyState < 2) {
+      if (playBtn) playBtn.innerHTML = '⏳';
+      this.playRequestedWhenReady = true;
+    }
+
+    this.audioElement.muted = this.isMuted;
+    this.audioElement.volume = this.isMuted ? 0 : this.volume;
+    this.audioElement.playbackRate = this.playbackSpeed;
+    this.audioElement.defaultPlaybackRate = this.playbackSpeed;
+    try { this.audioElement.preservesPitch = true; } catch (e) {}
+
+    const attemptPlay = (retryCount = 0) => {
+      const promise = this.audioElement.play();
+      if (promise !== undefined) {
+        promise.then(() => {
+          this.isPlaying = true;
+          this.playRequestedWhenReady = false;
+          if (playBtn) playBtn.innerHTML = '⏸️';
+        }).catch((err) => {
+          console.warn(`HTML5 audio play attempt ${retryCount+1} failed:`, err);
+          if (retryCount < 3) {
+            setTimeout(() => attemptPlay(retryCount + 1), 200);
+          } else if (this.speechText && this.speechText.trim()) {
+            console.info('Switching to Web Speech Synthesis fallback');
+            this.isSpeechSynthesis = true;
             this.isPlaying = true;
             if (playBtn) playBtn.innerHTML = '⏸️';
-          }).catch((err) => {
-            console.warn(`HTML5 audio play attempt ${retryCount+1} failed:`, err);
-            if (retryCount < 2) {
-              setTimeout(() => attemptPlay(retryCount + 1), 150);
-            } else if (this.speechText) {
-              console.info('Switching to Web Speech Synthesis fallback');
-              this.isSpeechSynthesis = true;
-              this.isPlaying = true;
-              if (playBtn) playBtn.innerHTML = '⏸️';
-              this.playSpeechSynthesis();
-            } else {
-              this.isPlaying = false;
-              if (playBtn) playBtn.innerHTML = '▶️';
+            this.playSpeechSynthesis();
+          } else {
+            this.isPlaying = false;
+            if (playBtn) playBtn.innerHTML = '▶️';
+            if (window.stenoApp && typeof window.stenoApp.showToast === 'function') {
+              window.stenoApp.showToast('ऑडियो प्रारंभ करने के लिए कृपया पुनः प्ले बटन दबाएं।', 'info');
             }
-          });
-        }
-      };
+          }
+        });
+      }
+    };
 
-      attemptPlay();
-    }
+    attemptPlay();
   }
 
   pause() {
