@@ -247,17 +247,28 @@ class StenoAudioPlayer {
     this.isCountingDown = true;
     this.countdownSeconds = 3;
 
-    // Immediately pre-unlock audio on user click to satisfy browser autoplay restriction
+    // Pre-arm HTML5 audio element within the direct synchronous user gesture
     if (this.audioElement && this.audioElement.src && !this.isSpeechSynthesis) {
       try {
+        // Mute temporarily during countdown so it plays silently and maintains browser autoplay clearance
+        this.audioElement.muted = true;
         const p = this.audioElement.play();
         if (p !== undefined) {
           p.then(() => {
-            this.audioElement.pause();
-            this.audioElement.currentTime = 0;
-          }).catch(() => {});
+            // Audio is now actively playing or primed under user gesture
+            if (this.isCountingDown) {
+              this.audioElement.pause();
+              this.audioElement.currentTime = 0;
+            }
+            this.audioElement.muted = this.isMuted;
+          }).catch((err) => {
+            console.warn('Pre-arm warning:', err);
+            this.audioElement.muted = this.isMuted;
+          });
         }
-      } catch (e) {}
+      } catch (e) {
+        this.audioElement.muted = this.isMuted;
+      }
     }
 
     const overlay = document.getElementById('stenoCountdownOverlay');
@@ -411,24 +422,36 @@ class StenoAudioPlayer {
       if (playBtn) playBtn.innerHTML = '⏸️';
       this.playSpeechSynthesis();
     } else {
+      this.audioElement.muted = this.isMuted;
+      this.audioElement.volume = this.isMuted ? 0 : this.volume;
       this.audioElement.playbackRate = this.playbackSpeed;
-      this.audioElement.play()
-        .then(() => {
-          this.isPlaying = true;
-          if (playBtn) playBtn.innerHTML = '⏸️';
-        })
-        .catch((err) => {
-          console.warn('HTML5 audio play blocked, using fallback:', err);
-          if (this.speechText) {
-            this.isSpeechSynthesis = true;
+      this.audioElement.defaultPlaybackRate = this.playbackSpeed;
+
+      const attemptPlay = (retryCount = 0) => {
+        const promise = this.audioElement.play();
+        if (promise !== undefined) {
+          promise.then(() => {
             this.isPlaying = true;
             if (playBtn) playBtn.innerHTML = '⏸️';
-            this.playSpeechSynthesis();
-          } else {
-            this.isPlaying = false;
-            if (playBtn) playBtn.innerHTML = '▶️';
-          }
-        });
+          }).catch((err) => {
+            console.warn(`HTML5 audio play attempt ${retryCount+1} failed:`, err);
+            if (retryCount < 2) {
+              setTimeout(() => attemptPlay(retryCount + 1), 150);
+            } else if (this.speechText) {
+              console.info('Switching to Web Speech Synthesis fallback');
+              this.isSpeechSynthesis = true;
+              this.isPlaying = true;
+              if (playBtn) playBtn.innerHTML = '⏸️';
+              this.playSpeechSynthesis();
+            } else {
+              this.isPlaying = false;
+              if (playBtn) playBtn.innerHTML = '▶️';
+            }
+          });
+        }
+      };
+
+      attemptPlay();
     }
   }
 
@@ -629,6 +652,13 @@ class StenoAudioPlayer {
     };
 
     window.speechSynthesis.speak(this.speechUtterance);
+  }
+
+  startSpeechSynthesisFallback() {
+    this.isSpeechSynthesis = true;
+    if (this.isPlaying) {
+      this.playSpeechSynthesis();
+    }
   }
 
   formatTime(seconds) {
