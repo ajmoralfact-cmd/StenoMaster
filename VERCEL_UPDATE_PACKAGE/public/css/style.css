@@ -13727,11 +13727,24 @@ eft: 12px;
 }
 
 
+/* Ensure Testbook mobile elements are strictly hidden on desktop */
+.mobile-category-chips-bar,
+.mobile-quick-circles-row {
+  display: none !important;
+}
+
 /* ==========================================================================
    TESTBOOK-STYLE CLEAN MOBILE APP UI (Strictly Mobile View: <=768px)
    Does NOT affect desktop/PC view in any way!
    ========================================================================== */
 @media (max-width: 768px), (max-device-width: 768px) {
+  /* Ensure mobile elements display properly in mobile viewport */
+  .mobile-category-chips-bar {
+    display: block !important;
+  }
+  .mobile-quick-circles-row {
+    display: grid !important;
+  }
   /* 1. Header Clean-up */
   .top-header {
     height: 54px !important;
