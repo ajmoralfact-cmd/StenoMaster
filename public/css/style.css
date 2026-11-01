@@ -2356,7 +2356,7 @@ body {
   height: var(--bottom-nav-height);
   background-color: var(--bg-surface);
   border-top: 1px solid var(--border-subtle);
-  z-index: 40;
+  z-index: 1050;
   grid-template-columns: repeat(5, 1fr);
   box-shadow: 0 -4px 6px -1px rgb(0 0 0 / 0.05);
 }
@@ -9887,6 +9887,7 @@ html.is-mobile-device.mobile-wide-viewport .mobile-nav-btn {
   /* 3. Modern Floating Pill Bottom Navigation (Matching Mockup) */
   .mobile-bottom-nav {
     height: 64px !important;
+    z-index: 1050 !important;
     background: rgba(255, 255, 255, 0.96) !important;
     backdrop-filter: blur(12px) !important;
     border-top: 1px solid rgba(226, 232, 240, 0.8) !important;
@@ -13702,4 +13703,15 @@ eft: 12px;
 
 .plan-buy-btn.btn-gold:hover {
   box-shadow: 0 5px 14px rgba(245, 158, 11, 0.4);
+}
+
+
+/* Mobile touch active visual feedback */
+.mobile-nav-btn:active,
+.sub-tool-btn:active,
+.btn-continue-go:active,
+.category-series-card:active {
+  transform: scale(0.96) !important;
+  opacity: 0.88 !important;
+  transition: transform 0.08s ease, opacity 0.08s ease !important;
 }

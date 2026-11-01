@@ -2872,7 +2872,12 @@ class StenoApp {
       const userName = document.getElementById('headerUserName');
       const userRole = document.getElementById('headerUserRole');
       const msgUserName = document.getElementById('msgUserName');
+      const msgUserIdBadge = document.getElementById('msgUserIdBadge');
+      const msgAvatarInitial = document.getElementById('msgAvatarInitial');
+      const greetingCard = document.getElementById('mobileStudentGreetingCard');
       const adminHeaderBtn = document.getElementById('headerAdminConsoleBtn');
+      const mobileSubAuthBtn = document.getElementById('mobileSubAuthBtn');
+      const mobileSubAuthText = document.getElementById('mobileSubAuthText');
 
       if (guestLoginBtn) {
         guestLoginBtn.style.display = isLogged ? 'none' : 'inline-flex';
@@ -2884,11 +2889,37 @@ class StenoApp {
         adminHeaderBtn.style.display = (isLogged && this.user && this.user.role === 'admin') ? 'inline-flex' : 'none';
       }
 
+      // Sync Mobile Sub-Toolbar Auth Button (Login for Guest, Logout for Logged-in User)
+      if (mobileSubAuthBtn) {
+        if (isLogged) {
+          if (mobileSubAuthText) mobileSubAuthText.textContent = '🚪 Logout';
+          mobileSubAuthBtn.title = 'लॉगआउट (Logout)';
+          mobileSubAuthBtn.onclick = () => this.logout();
+        } else {
+          if (mobileSubAuthText) mobileSubAuthText.textContent = '👤 लॉगिन';
+          mobileSubAuthBtn.title = 'लॉगिन / साइन-अप (Login)';
+          mobileSubAuthBtn.onclick = () => this.openModal('loginModal');
+        }
+      }
+
+      // Sync Mobile User Greeting Card
+      if (greetingCard) {
+        if (isLogged && this.user) {
+          greetingCard.style.display = 'flex';
+        } else {
+          greetingCard.style.display = 'none';
+        }
+      }
+
       if (isLogged && this.user) {
         const displayName = this.user.display_name || this.user.username || 'Student';
         const initial = (displayName.charAt(0) || 'S').toUpperCase();
+        const studentId = this.user.student_id || this.user.student_code || ('SM' + (this.user.id || '2026'));
+
         if (userName) userName.textContent = displayName;
         if (msgUserName) msgUserName.textContent = `Hello, ${displayName}`;
+        if (msgAvatarInitial) msgAvatarInitial.textContent = initial;
+        if (msgUserIdBadge) msgUserIdBadge.textContent = studentId;
         if (userAvatar) userAvatar.textContent = initial;
         if (userRole) {
           const isAdmin = this.user.role === 'admin';
@@ -3034,14 +3065,25 @@ class StenoApp {
       }
     });
 
-    // Mobile nav & existing data-nav triggers
+    // Mobile nav & existing data-nav triggers (Both click and touch supported)
     document.querySelectorAll('[data-nav]').forEach(item => {
-      item.addEventListener('click', (e) => {
-        e.preventDefault();
+      const handleNav = (e) => {
+        if (e) {
+          e.preventDefault();
+          e.stopPropagation();
+        }
         const view = item.getAttribute('data-nav');
-        this.navigate(view);
-        this.closeSidebar();
-      });
+        if (view) {
+          this.navigate(view);
+          this.closeSidebar();
+        }
+      };
+      item.addEventListener('click', handleNav);
+      item.addEventListener('touchend', (e) => {
+        // Prevent simulated duplicate click
+        e.preventDefault();
+        handleNav(e);
+      }, { passive: false });
     });
 
     // Mount typing engine

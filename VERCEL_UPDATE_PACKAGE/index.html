@@ -77,7 +77,7 @@
   <!-- Performance Preconnects for Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="/css/style.css?v=19.8">
+  <link rel="stylesheet" href="/css/style.css?v=19.9">
 
   <!-- Shield Root Hindi Shorthand Content from Chrome / Browser Auto-Translation -->
   <script>
@@ -674,8 +674,8 @@
         <button type="button" class="sub-tool-btn" onclick="stenoApp.openRewardsModal()" title="रिवॉर्ड्स एवं घोषणाएं">
           <span>📢</span>
         </button>
-        <button type="button" class="sub-tool-btn sub-tool-logout" onclick="stenoApp.logout()" title="लॉगआउट">
-          <span>👤 Logout</span>
+        <button type="button" class="sub-tool-btn sub-tool-auth" id="mobileSubAuthBtn" onclick="stenoApp.openModal('loginModal')" title="लॉगिन / साइन-अप">
+          <span id="mobileSubAuthText">👤 लॉगिन</span>
         </button>
       </div>
 
@@ -697,18 +697,18 @@
           </div>
         </div>
 
-        <!-- Mockup Style: Mobile User Greeting Header Card -->
-        <div class="mobile-student-greeting-card hide-desktop" id="mobileStudentGreetingCard" style="align-items:center; gap:12px; margin-bottom:14px; padding:12px 14px; background:var(--bg-card, #ffffff); border-radius:16px; border:1px solid var(--border-subtle, #e2e8f0); box-shadow:0 2px 8px rgba(0,0,0,0.03);">
+        <!-- Mockup Style: Mobile User Greeting Header Card (Hidden for guests; populated dynamically on login) -->
+        <div class="mobile-student-greeting-card hide-desktop" id="mobileStudentGreetingCard" style="display:none; align-items:center; gap:12px; margin-bottom:14px; padding:12px 14px; background:var(--bg-card, #ffffff); border-radius:16px; border:1px solid var(--border-subtle, #e2e8f0); box-shadow:0 2px 8px rgba(0,0,0,0.03);">
           <div class="msg-avatar-wrap" style="width:44px; height:44px; border-radius:50%; background:linear-gradient(135deg, #0284c7, #2563eb); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:1.15rem; flex-shrink:0; overflow:hidden; border:2px solid #e0e7ff;">
-            <span id="msgAvatarInitial">H</span>
+            <span id="msgAvatarInitial">S</span>
           </div>
           <div style="flex:1; min-width:0;">
             <div style="display:flex; align-items:center; gap:6px;">
-              <strong id="msgUserName" style="font-size:1.02rem; color:var(--text-main, #0f172a); font-weight:800;">Hello, Harsh Kumar</strong>
+              <strong id="msgUserName" style="font-size:1.02rem; color:var(--text-main, #0f172a); font-weight:800;">विद्यार्थी</strong>
               <span>👋</span>
             </div>
             <div id="msgUserMeta" style="font-size:0.75rem; color:var(--text-muted, #64748b); font-weight:600; margin-top:1px;">
-              Student ID: <span id="msgUserIdBadge">SM20250981</span>
+              Student ID: <span id="msgUserIdBadge">—</span>
             </div>
           </div>
         </div>
@@ -3592,14 +3592,14 @@
   <!-- Cashfree Payment Gateway SDK (v3) - Defer to prevent blocking page render -->
   <script defer src="https://sdk.cashfree.com/js/v3/cashfree.js"></script>
 
-  <!-- Core Lightweight Scripts (charts.js & comparison_view.js?v=19.8 are lazy-loaded on demand for 50% faster startup) -->
-  <script src="/js/audio_player.js?v=19.8"></script>
+  <!-- Core Lightweight Scripts (charts.js & comparison_view.js?v=19.9 are lazy-loaded on demand for 50% faster startup) -->
+  <script src="/js/audio_player.js?v=19.9"></script>
   <script src="/js/keyboard_map.js?v=8.1"></script>
-  <script src="/js/typing_engine.js?v=19.8"></script>
+  <script src="/js/typing_engine.js?v=19.9"></script>
   <script src="/js/ocr_service.js?v=1.1"></script>
   <script src="/js/steno_dictionary.js?v=1.0"></script>
-  <script src="/js/comparison_view.js?v=19.8"></script>
-  <script src="/js/app.js?v=19.8"></script>
+  <script src="/js/comparison_view.js?v=19.9"></script>
+  <script src="/js/app.js?v=19.9"></script>
   <!-- Strict Exam Hall Anti-Cheat Warning Modal -->
   <div class="modal-overlay" id="examHallWarningModal" style="z-index:99999;" onclick="if(event.target === this) stenoTypingEngine.exitExamModeFromModal()">
     <div class="modal-card" style="max-width: 480px; text-align:center; border:2px solid #ef4444; box-shadow:0 10px 40px rgba(239,68,68,0.3); position:relative; padding:28px 24px;">
