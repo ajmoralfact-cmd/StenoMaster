@@ -13715,3 +13715,18 @@ eft: 12px;
   opacity: 0.88 !important;
   transition: transform 0.08s ease, opacity 0.08s ease !important;
 }
+
+
+/* Mobile student greeting card: strictly controlled by auth state */
+.mobile-student-greeting-card {
+  display: none !important;
+}
+.mobile-student-greeting-card.logged-in {
+  display: flex !important;
+}
+@media (min-width: 769px) {
+  .mobile-student-greeting-card,
+  .mobile-student-greeting-card.logged-in {
+    display: none !important;
+  }
+}

@@ -2905,9 +2905,9 @@ class StenoApp {
       // Sync Mobile User Greeting Card
       if (greetingCard) {
         if (isLogged && this.user) {
-          greetingCard.style.display = 'flex';
+          greetingCard.classList.add('logged-in');
         } else {
-          greetingCard.style.display = 'none';
+          greetingCard.classList.remove('logged-in');
         }
       }
 
