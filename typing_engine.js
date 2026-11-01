@@ -302,24 +302,6 @@ class StenoTypingEngine {
     if (miniSpeed && window.stenoAudioPlayer) {
       miniSpeed.textContent = `${window.stenoAudioPlayer.currentWpm || 80} WPM`;
     }
-
-    // Initialize 2-Step Mobile Flow (Default to Dictation Step 1 unless draft exists)
-    const practiceViews = document.querySelectorAll('#view-practice');
-    practiceViews.forEach(v => {
-      const savedDraft = localStorage.getItem(`stenomaster_draft_${passage.id}`);
-      v.setAttribute('data-mobile-step', (savedDraft && savedDraft.trim().length > 0) ? 'typing' : 'dictation');
-    });
-
-    const gauge = document.getElementById('mobileGaugeWpm');
-    if (gauge && window.stenoAudioPlayer) {
-      gauge.textContent = window.stenoAudioPlayer.currentWpm || 80;
-    }
-    const miniTitle = document.getElementById('miniPassageTitle');
-    if (miniTitle) miniTitle.textContent = passage.title || 'डिक्टेशन';
-    const miniSpeed = document.getElementById('miniSpeedBadge');
-    if (miniSpeed && window.stenoAudioPlayer) {
-      miniSpeed.textContent = `${window.stenoAudioPlayer.currentWpm || 80} WPM`;
-    }
     this.acquireWakeLock();
 
     // Enter Full Screen if Exam Mode is active
