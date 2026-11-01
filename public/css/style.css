@@ -14280,7 +14280,7 @@ eft: 12px;
 
 @media (max-width: 768px), (max-device-width: 768px) {
   .three-dot-btn.hide-mobile,
-  .header-left:has(.header-back-btn:not([style*="display: none"])) .three-dot-btn {
+  .header-left:has(.header-back-btn:not([style*="display: none"]):not([style*="display:none"])) .three-dot-btn {
     display: none !important;
   }
 }
