@@ -2959,6 +2959,8 @@ class StenoApp {
       { id: 'rules', icon: '📋', label: 'Exam Rules', iconBg: '#fff1f2', iconColor: '#e11d48' },
       { id: 'refer', icon: '🎁', label: 'Wallet & Refer', iconBg: '#ecfdf5', iconColor: '#10b981', url: '/wallet' },
       { id: 'download-app', icon: '📲', label: 'Mobile App', iconBg: '#eff6ff', iconColor: '#2563eb', badge: 'APP', badgeClass: 'badge-app', action: 'installPwa' },
+      { id: 'lang-toggle', icon: '🌐', label: 'Switch Language (हिंदी)', iconBg: '#e0f2fe', iconColor: '#0284c7', action: 'toggleLang' },
+      { id: 'theme-toggle', icon: '🌙', label: 'Dark / Light Theme', iconBg: '#fef3c7', iconColor: '#d97706', action: 'toggleTheme' },
       { id: 'settings', icon: '⚙️', label: 'Settings', iconBg: '#f1f5f9', iconColor: '#64748b', url: '/profile' }
     ] : [
       { id: 'home', icon: '🏠', label: 'डैशबोर्ड', iconBg: '#eff6ff', iconColor: '#2563eb' },
@@ -2972,6 +2974,8 @@ class StenoApp {
       { id: 'rules', icon: '📋', label: 'परीक्षा नियम', iconBg: '#fff1f2', iconColor: '#e11d48' },
       { id: 'refer', icon: '🎁', label: 'वॉलेट व रेफरल', iconBg: '#ecfdf5', iconColor: '#10b981', url: '/wallet' },
       { id: 'download-app', icon: '📲', label: 'मोबाइल ऐप', iconBg: '#eff6ff', iconColor: '#2563eb', badge: 'APP', badgeClass: 'badge-app', action: 'installPwa' },
+      { id: 'lang-toggle', icon: '🌐', label: 'भाषा बदलें (English)', iconBg: '#e0f2fe', iconColor: '#0284c7', action: 'toggleLang' },
+      { id: 'theme-toggle', icon: '🌙', label: 'थीम बदलें (Dark/Light)', iconBg: '#fef3c7', iconColor: '#d97706', action: 'toggleTheme' },
       { id: 'settings', icon: '⚙️', label: 'सेटिंग्स', iconBg: '#f1f5f9', iconColor: '#64748b', url: '/profile' }
     ];
 
@@ -3003,6 +3007,10 @@ class StenoApp {
         this.closeSidebar();
         if (item.action === 'installPwa') {
           this.triggerPwaInstall();
+        } else if (item.action === 'toggleLang') {
+          this.toggleAppLanguage();
+        } else if (item.action === 'toggleTheme') {
+          this.toggleTheme();
         } else if (item.url) {
           window.location.href = item.url;
         } else {
@@ -3684,10 +3692,47 @@ class StenoApp {
   // View Renderers: Home & Classes
   // -------------------------------------------------------------------------
   renderCategoryPills() {
+    const mobileChips = document.getElementById('mobileCategoryChips');
+    if (mobileChips && this.categories && this.categories.length > 0) {
+      const isEn = this.currentLang === 'en';
+      const genuineCats = this.categories.filter(c => {
+        const slug = String(c.slug || '').toLowerCase();
+        if (slug.startsWith('audit-cat-') && (!c.passage_count || c.passage_count === 0)) return false;
+        return true;
+      });
+
+      let chipsHtml = `
+        <button type="button" class="mobile-chip active" onclick="stenoApp.filterCategoryPill('all', this)">
+          <span>🌟 ${isEn ? 'All Classes' : 'सभी कक्षाएं'}</span>
+        </button>
+      `;
+
+      chipsHtml += genuineCats.map(cat => {
+        const icon = this.getCategoryIconDisplay(cat.icon, cat.slug, cat.name);
+        return `
+          <button type="button" class="mobile-chip" onclick="stenoApp.openCategoryDetail(${cat.id})">
+            <span>${icon} ${this.escapeHtml(cat.name)}</span>
+          </button>
+        `;
+      }).join('');
+
+      mobileChips.innerHTML = chipsHtml;
+    }
+
     const container = document.getElementById('homeCategoryPills');
     if (container) {
       container.innerHTML = '';
       container.style.display = 'none';
+    }
+  }
+
+  filterCategoryPill(filterType, btnEl) {
+    const chips = document.querySelectorAll('#mobileCategoryChips .mobile-chip');
+    chips.forEach(c => c.classList.remove('active'));
+    if (btnEl) btnEl.classList.add('active');
+
+    if (filterType === 'all') {
+      this.navigate('classes');
     }
   }
 

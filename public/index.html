@@ -77,7 +77,7 @@
   <!-- Performance Preconnects for Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="/css/style.css?v=19.9">
+  <link rel="stylesheet" href="/css/style.css?v=20.0">
 
   <!-- Shield Root Hindi Shorthand Content from Chrome / Browser Auto-Translation -->
   <script>
@@ -663,8 +663,32 @@
         </div>
       </header>
 
-      <!-- Mobile Sub-Toolbar (Option 3 Style - Visible strictly on mobile) -->
-      <div class="mobile-sub-toolbar" id="mobileSubToolbar">
+      <!-- Mobile Category Chips Row (Testbook App Style - Visible strictly on mobile) -->
+      <div class="mobile-category-chips-bar hide-desktop" id="mobileCategoryChipsBar">
+        <div class="mobile-chips-scroll" id="mobileCategoryChips">
+          <button type="button" class="mobile-chip active" onclick="stenoApp.filterCategoryPill('all', this)">
+            <span>🌟 सभी कक्षाएं</span>
+          </button>
+          <button type="button" class="mobile-chip" onclick="stenoApp.openCategoryDetail(126)">
+            <span>📘 रामधारी खंड 1</span>
+          </button>
+          <button type="button" class="mobile-chip" onclick="stenoApp.openCategoryDetail(129)">
+            <span>📗 रामधारी खंड 2</span>
+          </button>
+          <button type="button" class="mobile-chip" onclick="stenoApp.openCategoryDetail(130)">
+            <span>📰 दैनिक संपादकीय</span>
+          </button>
+          <button type="button" class="mobile-chip" onclick="stenoApp.openCategoryDetail(131)">
+            <span>⚖️ कोर्ट / विधिक</span>
+          </button>
+          <button type="button" class="mobile-chip" onclick="stenoApp.openCategoryDetail(128)">
+            <span>⚡ रिपोर्टर (140-160 WPM)</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Mobile Sub-Toolbar (Preserved for compatibility, hidden on modern mobile layout) -->
+      <div class="mobile-sub-toolbar" id="mobileSubToolbar" style="display:none !important;">
         <button type="button" class="sub-tool-btn" onclick="stenoApp.toggleAppLanguage()" title="भाषा बदलें">
           <span id="mobileSubLangText">🌐 हिंदी</span>
         </button>
@@ -913,6 +937,48 @@
           <span id="planBannerSubtitle" style="display:none !important;"></span>
           <div id="planBannerAction" style="display:none !important;" hidden>
             <button type="button" id="planBannerActionBtn" style="display:none !important;" hidden></button>
+          </div>
+        </div>
+
+        <!-- Mobile Testbook-Style 5 Quick Action Circles (Visible strictly on mobile) -->
+        <div class="mobile-quick-circles-row hide-desktop" id="mobileQuickCirclesRow">
+          <div class="mobile-circle-item" onclick="stenoApp.navigate('classes')" title="सभी डिक्टेशन कक्षाएं">
+            <div class="mobile-circle-icon-box circle-classes">
+              <span class="circle-badge-tag badge-free">FREE</span>
+              <span>🎧</span>
+            </div>
+            <span class="mobile-circle-label">डेली क्लास</span>
+          </div>
+
+          <div class="mobile-circle-item" onclick="stenoApp.navigate('self-practice')" title="सेल्फ डिक्टेशन व टाइपिंग">
+            <div class="mobile-circle-icon-box circle-typing">
+              <span class="circle-badge-tag badge-new">NEW</span>
+              <span>⌨️</span>
+            </div>
+            <span class="mobile-circle-label">सेल्फ टाइपिंग</span>
+          </div>
+
+          <div class="mobile-circle-item" onclick="stenoApp.navigate('rules')" title="परीक्षा नियम व शॉर्टहैंड गाइड">
+            <div class="mobile-circle-icon-box circle-rules">
+              <span>📜</span>
+            </div>
+            <span class="mobile-circle-label">परीक्षा नियम</span>
+          </div>
+
+          <div class="mobile-circle-item" onclick="stenoApp.navigate('leaderboard')" title="दैनिक व ऑल-इंडिया रैंक">
+            <div class="mobile-circle-icon-box circle-rankers">
+              <span class="circle-badge-tag badge-hot">RANK</span>
+              <span>🏆</span>
+            </div>
+            <span class="mobile-circle-label">लीडरबोर्ड</span>
+          </div>
+
+          <div class="mobile-circle-item" onclick="window.location.href='/plans'" title="स्टेनो प्रो पास">
+            <div class="mobile-circle-icon-box circle-pass">
+              <span class="circle-badge-tag badge-discount">56% OFF</span>
+              <span>💳</span>
+            </div>
+            <span class="mobile-circle-label">स्टेनो पास</span>
           </div>
         </div>
 
@@ -3592,14 +3658,14 @@
   <!-- Cashfree Payment Gateway SDK (v3) - Defer to prevent blocking page render -->
   <script defer src="https://sdk.cashfree.com/js/v3/cashfree.js"></script>
 
-  <!-- Core Lightweight Scripts (charts.js & comparison_view.js?v=19.9 are lazy-loaded on demand for 50% faster startup) -->
-  <script src="/js/audio_player.js?v=19.9"></script>
+  <!-- Core Lightweight Scripts (charts.js & comparison_view.js?v=20.0 are lazy-loaded on demand for 50% faster startup) -->
+  <script src="/js/audio_player.js?v=20.0"></script>
   <script src="/js/keyboard_map.js?v=8.1"></script>
-  <script src="/js/typing_engine.js?v=19.9"></script>
+  <script src="/js/typing_engine.js?v=20.0"></script>
   <script src="/js/ocr_service.js?v=1.1"></script>
   <script src="/js/steno_dictionary.js?v=1.0"></script>
-  <script src="/js/comparison_view.js?v=19.9"></script>
-  <script src="/js/app.js?v=19.9"></script>
+  <script src="/js/comparison_view.js?v=20.0"></script>
+  <script src="/js/app.js?v=20.0"></script>
   <!-- Strict Exam Hall Anti-Cheat Warning Modal -->
   <div class="modal-overlay" id="examHallWarningModal" style="z-index:99999;" onclick="if(event.target === this) stenoTypingEngine.exitExamModeFromModal()">
     <div class="modal-card" style="max-width: 480px; text-align:center; border:2px solid #ef4444; box-shadow:0 10px 40px rgba(239,68,68,0.3); position:relative; padding:28px 24px;">
