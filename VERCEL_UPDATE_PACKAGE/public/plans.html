@@ -33,7 +33,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Mukta:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/css/style.css?v=20.3">
+  <link rel="stylesheet" href="/css/style.css?v=20.4">
 
   <!-- Font Preloads for Instant Hindi Typography -->
   <link rel="preload" href="/assets/fonts/Mangal.ttf" as="font" type="font/ttf" crossorigin>
@@ -110,7 +110,7 @@
           </a>
         </div>
         <div class="header-right">
-          <div class="plan-validity-pill" id="headerPlanValidityBadge" onclick="window.location.href='/plans'" title="प्लान स्थिति">
+          <div class="plan-validity-pill hide-mobile" id="headerPlanValidityBadge" onclick="window.location.href='/plans'" title="प्लान स्थिति">
             <span class="validity-icon" id="headerPlanValidityIcon">👑</span>
             <span class="validity-text" id="headerPlanValidityText">2 फ्री<span class="hide-mobile"> कक्षाएं</span></span>
           </div>
@@ -982,11 +982,11 @@
   <script defer src="https://sdk.cashfree.com/js/v3/cashfree.js"></script>
 
   <!-- Core Lightweight Scripts -->
-  <script src="/js/audio_player.js?v=20.3"></script>
+  <script src="/js/audio_player.js?v=20.4"></script>
   <script src="/js/keyboard_map.js?v=8.1"></script>
-  <script src="/js/typing_engine.js?v=20.3"></script>
+  <script src="/js/typing_engine.js?v=20.4"></script>
   <script src="/js/ocr_service.js?v=1.1"></script>
-  <script src="/js/app.js?v=20.3"></script>
+  <script src="/js/app.js?v=20.4"></script>
 
   <!-- Plans Page Bootstrap Script -->
   <script>
@@ -1020,7 +1020,7 @@
           if (logoutBtn) logoutBtn.style.display = 'none';
           var userBtn = document.getElementById('headerUserBtn');
           if (userBtn) {
-            userBtn.innerHTML = '<span style="font-weight:700; color:var(--primary); font-size:0.88rem; padding:4px 10px;">🔑 लॉगिन / साइनअप</span>';
+            userBtn.innerHTML = '<span style="font-weight:700; color:var(--primary); font-size:0.82rem; padding:4px 8px;">🔑 लॉगिन<span class="hide-mobile"> / साइनअप</span></span>';
             userBtn.onclick = function() { window.stenoApp.openModal('loginModal'); };
           }
         }

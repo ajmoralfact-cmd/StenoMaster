@@ -14272,3 +14272,11 @@ eft: 12px;
     padding-bottom: 115px !important;
   }
 }
+
+
+@media (max-width: 768px), (max-device-width: 768px) {
+  .three-dot-btn.hide-mobile,
+  .header-left:has(.header-back-btn:not([style*="display: none"])) .three-dot-btn {
+    display: none !important;
+  }
+}
