@@ -2902,11 +2902,13 @@ class StenoApp {
         }
       }
 
-      // Sync Mobile User Greeting Card
+      // Sync Mobile User Greeting Card (Strictly hidden for guest, displayed for authenticated user)
       if (greetingCard) {
         if (isLogged && this.user) {
+          greetingCard.style.setProperty('display', 'flex', 'important');
           greetingCard.classList.add('logged-in');
         } else {
+          greetingCard.style.setProperty('display', 'none', 'important');
           greetingCard.classList.remove('logged-in');
         }
       }
