@@ -14181,3 +14181,94 @@ eft: 12px;
     padding: 10px 12px 80px 12px !important;
   }
 }
+
+
+/* ==========================================================================
+   MOBILE SECTION AUDIT & OVERLAP ELIMINATION FIXES
+   ========================================================================== */
+@media (max-width: 768px), (max-device-width: 768px) {
+  /* Subpage Header Back Button Clean-up */
+  .header-back-btn {
+    width: 34px !important;
+    height: 34px !important;
+    min-width: 34px !important;
+    border-radius: 8px !important;
+    background: #f8fafc !important;
+    border: 1px solid #e2e8f0 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 0 !important;
+    font-size: 1.15rem !important;
+    color: #1e293b !important;
+    flex-shrink: 0 !important;
+  }
+  
+  .header-back-btn .back-text {
+    display: none !important;
+  }
+
+  .header-view-badge,
+  #activeViewBadge {
+    display: none !important;
+  }
+
+  /* When on subpages and back button is visible, hide three-dot button so left side is compact */
+  .top-header:has(.header-back-btn:not([style*="display: none"]):not([style*="display:none"])) .three-dot-btn {
+    display: none !important;
+  }
+
+  /* Sidebar Drawer z-index and height */
+  .sidebar {
+    z-index: 2100 !important;
+    top: 0 !important;
+    bottom: 0 !important;
+    height: 100vh !important;
+    height: 100dvh !important;
+    width: 290px !important;
+    max-width: 82vw !important;
+    box-shadow: 4px 0 24px rgba(0, 0, 0, 0.25) !important;
+    padding-top: 10px !important;
+  }
+
+  .sidebar-overlay {
+    z-index: 2099 !important;
+  }
+
+  /* PWA Install Popup: ensure it NEVER sits on top of modals or sidebar */
+  .mobile-pwa-popup {
+    z-index: 950 !important;
+  }
+
+  /* Hide PWA popup when modals or sidebar are open */
+  body:has(.modal-overlay.active) .mobile-pwa-popup,
+  body:has(.sidebar.open) .mobile-pwa-popup,
+  .modal-overlay.active ~ .mobile-pwa-popup,
+  .sidebar.open ~ .mobile-pwa-popup {
+    display: none !important;
+  }
+
+  /* Category series card buy button styling (Solid Green with white text) */
+  .category-series-card .cat-action-section button.btn-secondary,
+  .category-series-card button.btn-secondary {
+    background: linear-gradient(135deg, #059669 0%, #10b981 100%) !important;
+    color: #ffffff !important;
+    border: none !important;
+    box-shadow: 0 4px 14px rgba(16, 185, 129, 0.3) !important;
+    font-weight: 800 !important;
+  }
+
+  .category-series-card .cat-action-section button.btn-primary,
+  .category-series-card button.btn-primary {
+    background: linear-gradient(135deg, #1e40af 0%, #2563eb 100%) !important;
+    color: #ffffff !important;
+    border: none !important;
+    box-shadow: 0 4px 14px rgba(37, 99, 235, 0.3) !important;
+    font-weight: 800 !important;
+  }
+
+  /* Sufficient bottom padding so bottom nav & floating elements never overlap content */
+  .page-view {
+    padding-bottom: 115px !important;
+  }
+}

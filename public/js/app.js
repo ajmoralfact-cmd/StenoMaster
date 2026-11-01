@@ -1,4 +1,4 @@
-﻿/**
+/**
  * StenoMaster Main Client Application
  * Master Controller for State, Routing, Views, Authentication, and Interactions
  */
@@ -79,7 +79,7 @@ const I18N_DICTIONARY = {
     "nav_admin": "एडमिन कंसोल",
     "nav_logout": "लॉगआउट",
     "nav_back": "वापस",
-    "nav_back_to_dashboard": "← वापस डैशबोर्ड पर जाएं",
+    "nav_back_to_dashboard": "वापस डैशबोर्ड पर जाएं",
     "nav_back_to_classes": "← वापस कक्षाओं पर जाएं",
     "header_plan_validity": "2 फ्री कक्षाएं",
     "header_streak": "Day Streak",

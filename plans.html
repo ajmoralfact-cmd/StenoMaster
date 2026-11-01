@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="hi" data-theme="light">
 <head>
   <!-- Google Analytics 4 (GA4) -->
@@ -33,7 +33,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Mukta:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/css/style.css?v=20.2">
+  <link rel="stylesheet" href="/css/style.css?v=20.3">
 
   <!-- Font Preloads for Instant Hindi Typography -->
   <link rel="preload" href="/assets/fonts/Mangal.ttf" as="font" type="font/ttf" crossorigin>
@@ -98,21 +98,21 @@
         <div class="header-left">
           <button class="header-back-btn" id="headerBackBtn" onclick="window.history.length > 1 ? window.history.back() : window.location.href = '/'" style="display:inline-flex;" title="वापस जाएं (Go Back)" aria-label="Go Back">
             <span class="back-arrow">←</span>
-            <span class="back-text">वापस</span>
+            <span class="back-text hide-mobile">वापस</span>
           </button>
-          <button class="three-dot-btn" id="navToggleBtn" onclick="stenoApp.toggleSidebar()" aria-label="Open navigation menu" aria-expanded="false">
+          <button class="three-dot-btn hide-mobile" id="navToggleBtn" onclick="stenoApp.toggleSidebar()" aria-label="Open navigation menu" aria-expanded="false">
             <span class="three-dots-icon">⋮</span>
           </button>
           <a href="/" class="header-brand-link" title="StenoMaster">
             <img src="/assets/logo.png" alt="StenoMaster" class="header-brand-logo" width="34" height="34">
             <span class="header-brand-name">StenoMaster</span>
-            <span class="header-view-badge" id="activeViewBadge">Subscription Plans</span>
+            <span class="header-view-badge hide-mobile" id="activeViewBadge">Subscription Plans</span>
           </a>
         </div>
         <div class="header-right">
           <div class="plan-validity-pill" id="headerPlanValidityBadge" onclick="window.location.href='/plans'" title="प्लान स्थिति">
             <span class="validity-icon" id="headerPlanValidityIcon">👑</span>
-            <span class="validity-text" id="headerPlanValidityText">2 फ्री कक्षाएं</span>
+            <span class="validity-text" id="headerPlanValidityText">2 फ्री<span class="hide-mobile"> कक्षाएं</span></span>
           </div>
           <div class="streak-badge" id="streakBadge" title="आपकी दैनिक अभ्यास स्ट्रीक">
             <span>🔥</span>
@@ -138,7 +138,7 @@
       <main class="page-view active" id="view-subscription">
         <div class="view-top-back-wrap" style="margin-bottom:12px;">
           <button type="button" class="view-back-strip-btn" onclick="window.history.length > 1 ? window.history.back() : window.location.href='/'" title="वापस जाएं">
-            <span class="back-icon">←</span> <span>← वापस डैशबोर्ड पर जाएं</span>
+            <span class="back-icon">←</span> <span>वापस डैशबोर्ड पर जाएं</span>
           </button>
         </div>
 
@@ -982,11 +982,11 @@
   <script defer src="https://sdk.cashfree.com/js/v3/cashfree.js"></script>
 
   <!-- Core Lightweight Scripts -->
-  <script src="/js/audio_player.js?v=20.2"></script>
+  <script src="/js/audio_player.js?v=20.3"></script>
   <script src="/js/keyboard_map.js?v=8.1"></script>
-  <script src="/js/typing_engine.js?v=20.2"></script>
+  <script src="/js/typing_engine.js?v=20.3"></script>
   <script src="/js/ocr_service.js?v=1.1"></script>
-  <script src="/js/app.js?v=20.2"></script>
+  <script src="/js/app.js?v=20.3"></script>
 
   <!-- Plans Page Bootstrap Script -->
   <script>
