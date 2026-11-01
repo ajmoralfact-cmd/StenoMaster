@@ -14195,13 +14195,17 @@ eft: 12px;
     border-radius: 8px !important;
     background: #f8fafc !important;
     border: 1px solid #e2e8f0 !important;
-    display: inline-flex !important;
     align-items: center !important;
     justify-content: center !important;
     padding: 0 !important;
     font-size: 1.15rem !important;
     color: #1e293b !important;
     flex-shrink: 0 !important;
+  }
+
+  .header-back-btn[style*="display: none"],
+  .header-back-btn[style*="display:none"] {
+    display: none !important;
   }
   
   .header-back-btn .back-text {
