@@ -77,7 +77,7 @@
   <!-- Performance Preconnects for Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="/css/style.css?v=21.2">
+  <link rel="stylesheet" href="/css/style.css?v=21.5">
 
   <!-- Shield Root Hindi Shorthand Content from Chrome / Browser Auto-Translation -->
   <script>
@@ -1787,6 +1787,7 @@
           </div>
 
           <!-- Professional Audio Player Card -->
+          <audio id="stenoMainAudio" preload="auto" playsinline webkit-playsinline style="display:none;"></audio>
           <div class="audio-player-card">
             <!-- Mobile Step 1: Dictation Hero Gauge (Demo 3 - Mobile Only) -->
             <div class="mobile-dictation-hero" id="mobileDictationHero">
@@ -1910,7 +1911,7 @@
                     <!-- Mobile Step 2: Mini Audio Replay Bar (Demo 3 - Mobile Only) -->
           <div class="mobile-mini-audio-bar" id="mobileMiniAudioBar" style="display:none;">
             <div class="mini-audio-left">
-              <button type="button" class="mini-play-btn" onclick="stenoAudioPlayer.togglePlay()" title="ऑडियो चलाएं / रोकें">
+              <button type="button" class="mini-play-btn" id="miniPlayBtn" onclick="stenoAudioPlayer.togglePlay()" title="ऑडियो चलाएं / रोकें">
                 <span id="miniPlayIcon">▶</span>
               </button>
               <div class="mini-info">
@@ -3699,14 +3700,14 @@
   <!-- Cashfree Payment Gateway SDK (v3) - Defer to prevent blocking page render -->
   <script defer src="https://sdk.cashfree.com/js/v3/cashfree.js"></script>
 
-  <!-- Core Lightweight Scripts (charts.js & comparison_view.js?v=21.2 are lazy-loaded on demand for 50% faster startup) -->
-  <script src="/js/audio_player.js?v=21.2"></script>
+  <!-- Core Lightweight Scripts (charts.js & comparison_view.js?v=21.5 are lazy-loaded on demand for 50% faster startup) -->
+  <script src="/js/audio_player.js?v=21.5"></script>
   <script src="/js/keyboard_map.js?v=8.1"></script>
-  <script src="/js/typing_engine.js?v=21.2"></script>
+  <script src="/js/typing_engine.js?v=21.5"></script>
   <script src="/js/ocr_service.js?v=1.1"></script>
   <script src="/js/steno_dictionary.js?v=1.0"></script>
-  <script src="/js/comparison_view.js?v=21.2"></script>
-  <script src="/js/app.js?v=21.2"></script>
+  <script src="/js/comparison_view.js?v=21.5"></script>
+  <script src="/js/app.js?v=21.5"></script>
   <!-- Strict Exam Hall Anti-Cheat Warning Modal -->
   <div class="modal-overlay" id="examHallWarningModal" style="z-index:99999;" onclick="if(event.target === this) stenoTypingEngine.exitExamModeFromModal()">
     <div class="modal-card" style="max-width: 480px; text-align:center; border:2px solid #ef4444; box-shadow:0 10px 40px rgba(239,68,68,0.3); position:relative; padding:28px 24px;">

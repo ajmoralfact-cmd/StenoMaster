@@ -24,7 +24,7 @@
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="/css/style.css?v=21.2">
+  <link rel="stylesheet" href="/css/style.css?v=21.5">
 
   <!-- Shield Root Hindi Shorthand Content from Chrome / Browser Auto-Translation -->
   <script>
@@ -217,6 +217,7 @@
             </div>
           </div>
 
+          <audio id="stenoMainAudio" preload="auto" playsinline webkit-playsinline style="display:none;"></audio>
           <!-- Audio Player Card -->
           <div class="audio-player-card sm-audio-ribbon">
             <!-- Mobile Step 1: Dictation Hero Gauge (Demo 3 - Mobile Only) -->
@@ -313,7 +314,7 @@
                     <!-- Mobile Step 2: Mini Audio Replay Bar (Demo 3 - Mobile Only) -->
           <div class="mobile-mini-audio-bar" id="mobileMiniAudioBar" style="display:none;">
             <div class="mini-audio-left">
-              <button type="button" class="mini-play-btn" onclick="stenoAudioPlayer.togglePlay()" title="ऑडियो चलाएं / रोकें">
+              <button type="button" class="mini-play-btn" id="miniPlayBtn" onclick="stenoAudioPlayer.togglePlay()" title="ऑडियो चलाएं / रोकें">
                 <span id="miniPlayIcon">▶</span>
               </button>
               <div class="mini-info">
@@ -643,12 +644,12 @@
   <script defer src="https://sdk.cashfree.com/js/v3/cashfree.js"></script>
   <script src="/js/charts.js?v=13.5"></script>
   <script src="/js/steno_dictionary.js?v=1.0"></script>
-  <script src="/js/comparison_view.js?v=21.2"></script>
-  <script src="/js/audio_player.js?v=21.2"></script>
+  <script src="/js/comparison_view.js?v=21.5"></script>
+  <script src="/js/audio_player.js?v=21.5"></script>
   <script src="/js/keyboard_map.js?v=8.1"></script>
-  <script src="/js/typing_engine.js?v=21.2"></script>
+  <script src="/js/typing_engine.js?v=21.5"></script>
   <script src="/js/ocr_service.js?v=1.1"></script>
-  <script src="/js/app.js?v=21.2"></script>
+  <script src="/js/app.js?v=21.5"></script>
 
   <!-- Practice Page Bootstrap -->
   <script>
@@ -660,11 +661,20 @@
       }
       var pIdInt = parseInt(passageId, 10);
 
+      // Pre-arm audio element immediately with the known MP3 if available
+      try {
+        var audioEl = document.getElementById('stenoMainAudio');
+        if (audioEl && pIdInt > 0 && pIdInt <= 100 && !audioEl.src) {
+          audioEl.src = '/uploads/audio_rk1_class_' + (pIdInt < 10 ? '00' : (pIdInt < 100 ? '0' : '')) + pIdInt + '.mp3';
+          audioEl.preload = 'auto';
+        }
+      } catch(e) {}
+
       function runOpenPractice(attempt) {
         attempt = attempt || 0;
         if (typeof window.stenoApp === 'undefined' || typeof window.stenoApp.openPractice !== 'function' || !window.stenoAudioPlayer) {
-          if (attempt < 120) {
-            setTimeout(function() { runOpenPractice(attempt + 1); }, 40);
+          if (attempt < 150) {
+            setTimeout(function() { runOpenPractice(attempt + 1); }, 30);
           }
           return;
         }
@@ -676,10 +686,9 @@
         }
       }
 
+      runOpenPractice(0);
       if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', function() { runOpenPractice(0); });
-      } else {
-        runOpenPractice(0);
       }
     })();
   </script>

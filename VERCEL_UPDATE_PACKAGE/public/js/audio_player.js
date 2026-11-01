@@ -13,11 +13,35 @@ class StenoAudioPlayer {
   syncPlayBtnUI(icon) {
     const playBtn = document.getElementById('audioPlayBtn');
     if (playBtn) playBtn.innerHTML = icon;
-    const miniIcon = document.getElementById('miniPlayIcon');
-    if (miniIcon) miniIcon.textContent = (icon.includes('⏸') || icon === '⏸️') ? '⏸' : '▶';
+    const isPause = icon.includes('⏸') || icon === '⏸️';
+    const miniBtns = document.querySelectorAll('.mini-play-btn, #miniPlayBtn');
+    miniBtns.forEach(btn => {
+      const iconSpan = btn.querySelector('#miniPlayIcon') || btn.querySelector('span');
+      if (iconSpan) {
+        iconSpan.textContent = isPause ? '⏸' : '▶';
+      }
+    });
   }
   constructor() {
-    this.audioElement = new Audio();
+    let el = document.getElementById('stenoMainAudio');
+    if (!el) {
+      el = document.createElement('audio');
+      el.id = 'stenoMainAudio';
+      el.preload = 'auto';
+      el.setAttribute('playsinline', '');
+      el.setAttribute('webkit-playsinline', '');
+      el.style.display = 'none';
+      if (document.body) {
+        document.body.appendChild(el);
+      } else {
+        document.addEventListener('DOMContentLoaded', () => {
+          if (!document.getElementById('stenoMainAudio') && document.body) {
+            document.body.appendChild(el);
+          }
+        });
+      }
+    }
+    this.audioElement = el;
     try {
       this.audioElement.preservesPitch = true;
       this.audioElement.mozPreservesPitch = true;
@@ -297,30 +321,17 @@ class StenoAudioPlayer {
     if (this.isPlaying) {
       this.pause();
       return false;
-    } else {
-      // Auto-resolve missing audio src immediately on play click
-      if (!this.audioElement.src || this.audioElement.src === window.location.href || this.audioElement.src.length === 0) {
-        const passage = window.stenoApp && window.stenoApp.currentPassage;
-        if (passage && passage.audio_url) {
-          this.loadAudio(passage.audio_url, passage.duration_seconds || 180, passage.official_mangal_text || passage.official_text || '', passage.language || 'hindi', passage.target_wpm || 80);
-        } else {
-          const urlId = new URLSearchParams(window.location.search).get('id');
-          if (urlId && window.stenoApp && typeof window.stenoApp.openPractice === 'function') {
-            window.stenoApp.openPractice(parseInt(urlId, 10)).then(() => {
-              this.startActualPlayback();
-            }).catch(() => {});
-            return true;
-          }
-        }
-      }
-      if (this.enableCountdown && this.currentTime === 0) {
-        this.startCountdown();
-        return true;
-      } else {
-        this.startActualPlayback();
-        return true;
-      }
     }
+
+    // Direct synchronous start:
+    // On mobile screens, never let timers break user-gesture audio autoplay policy!
+    const isMobile = (typeof window !== 'undefined') && (window.innerWidth <= 768 || /Android|iPhone|iPad|iPod/i.test(navigator.userAgent));
+    if (!isMobile && this.enableCountdown && this.currentTime === 0) {
+      this.startCountdown();
+      return true;
+    }
+
+    return this.startActualPlayback();
   }
 
   startCountdown() {
@@ -495,12 +506,21 @@ class StenoAudioPlayer {
   }
 
   startActualPlayback() {
-    const playBtn = document.getElementById('audioPlayBtn');
-
     // Auto-resolve missing or empty audio src
     if (!this.audioElement.src || this.audioElement.src === window.location.href || this.audioElement.src.length === 0) {
-      const fallbackUrl = this.audioUrl || (window.stenoApp && window.stenoApp.currentPassage && window.stenoApp.currentPassage.audio_url);
+      const passage = window.stenoApp && window.stenoApp.currentPassage;
+      let fallbackUrl = this.audioUrl || (passage && passage.audio_url);
+      if (!fallbackUrl) {
+        const urlId = new URLSearchParams(window.location.search).get('id');
+        if (urlId) {
+          const num = parseInt(urlId, 10);
+          if (num > 0 && num <= 100) {
+            fallbackUrl = /uploads/audio_rk1_class_.mp3;
+          }
+        }
+      }
       if (fallbackUrl && fallbackUrl.trim().length > 0) {
+        this.audioUrl = fallbackUrl;
         this.audioElement.src = fallbackUrl;
         this.audioElement.preload = 'auto';
         this.audioElement.load();
@@ -511,22 +531,19 @@ class StenoAudioPlayer {
       this.isPlaying = true;
       this.syncPlayBtnUI('⏸️');
       this.playSpeechSynthesis();
-      return;
-    }
-
-    // Indicate loading state if media is not yet ready to play
-    if (this.audioElement.readyState < 2) {
-      if (playBtn) playBtn.innerHTML = '⏳';
-      this.playRequestedWhenReady = true;
+      return true;
     }
 
     this.audioElement.muted = this.isMuted;
     this.audioElement.volume = this.isMuted ? 0 : this.volume;
-    this.audioElement.playbackRate = this.playbackSpeed;
-    this.audioElement.defaultPlaybackRate = this.playbackSpeed;
-    try { this.audioElement.preservesPitch = true; } catch (e) {}
+    if (this.playbackSpeed) {
+      this.audioElement.playbackRate = this.playbackSpeed;
+      this.audioElement.defaultPlaybackRate = this.playbackSpeed;
+      try { this.audioElement.preservesPitch = true; } catch (e) {}
+    }
 
-    const attemptPlay = (retryCount = 0) => {
+    // Direct synchronous play execution in gesture
+    try {
       const promise = this.audioElement.play();
       if (promise !== undefined) {
         promise.then(() => {
@@ -534,11 +551,8 @@ class StenoAudioPlayer {
           this.playRequestedWhenReady = false;
           this.syncPlayBtnUI('⏸️');
         }).catch((err) => {
-          console.warn(`HTML5 audio play attempt ${retryCount+1} failed:`, err);
-          if (retryCount < 3) {
-            setTimeout(() => attemptPlay(retryCount + 1), 200);
-          } else if (this.speechText && this.speechText.trim()) {
-            console.info('Switching to Web Speech Synthesis fallback');
+          console.warn('HTML5 audio play rejected:', err);
+          if (this.speechText && this.speechText.trim()) {
             this.isSpeechSynthesis = true;
             this.isPlaying = true;
             this.syncPlayBtnUI('⏸️');
@@ -546,15 +560,13 @@ class StenoAudioPlayer {
           } else {
             this.isPlaying = false;
             this.syncPlayBtnUI('▶️');
-            if (window.stenoApp && typeof window.stenoApp.showToast === 'function') {
-              window.stenoApp.showToast('ऑडियो प्रारंभ करने के लिए कृपया पुनः प्ले बटन दबाएं।', 'info');
-            }
           }
         });
       }
-    };
-
-    attemptPlay();
+    } catch(err) {
+      console.warn('Direct play error:', err);
+    }
+    return true;
   }
 
   pause() {
