@@ -177,6 +177,7 @@ class StenoAudioPlayer {
 
     if (audioUrl && audioUrl.trim() !== '') {
       this.isSpeechSynthesis = false;
+      this.audioUrl = audioUrl;
       this.audioElement.src = audioUrl;
       this.audioElement.preload = 'auto';
       this.audioElement.playbackRate = this.playbackSpeed;
@@ -297,6 +298,21 @@ class StenoAudioPlayer {
       this.pause();
       return false;
     } else {
+      // Auto-resolve missing audio src immediately on play click
+      if (!this.audioElement.src || this.audioElement.src === window.location.href || this.audioElement.src.length === 0) {
+        const passage = window.stenoApp && window.stenoApp.currentPassage;
+        if (passage && passage.audio_url) {
+          this.loadAudio(passage.audio_url, passage.duration_seconds || 180, passage.official_mangal_text || passage.official_text || '', passage.language || 'hindi', passage.target_wpm || 80);
+        } else {
+          const urlId = new URLSearchParams(window.location.search).get('id');
+          if (urlId && window.stenoApp && typeof window.stenoApp.openPractice === 'function') {
+            window.stenoApp.openPractice(parseInt(urlId, 10)).then(() => {
+              this.startActualPlayback();
+            }).catch(() => {});
+            return true;
+          }
+        }
+      }
       if (this.enableCountdown && this.currentTime === 0) {
         this.startCountdown();
         return true;

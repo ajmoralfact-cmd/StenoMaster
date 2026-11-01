@@ -24,7 +24,7 @@
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="/css/style.css?v=21.1">
+  <link rel="stylesheet" href="/css/style.css?v=21.2">
 
   <!-- Shield Root Hindi Shorthand Content from Chrome / Browser Auto-Translation -->
   <script>
@@ -643,40 +643,45 @@
   <script defer src="https://sdk.cashfree.com/js/v3/cashfree.js"></script>
   <script src="/js/charts.js?v=13.5"></script>
   <script src="/js/steno_dictionary.js?v=1.0"></script>
-  <script src="/js/comparison_view.js?v=21.1"></script>
-  <script src="/js/audio_player.js?v=21.1"></script>
+  <script src="/js/comparison_view.js?v=21.2"></script>
+  <script src="/js/audio_player.js?v=21.2"></script>
   <script src="/js/keyboard_map.js?v=8.1"></script>
-  <script src="/js/typing_engine.js?v=21.1"></script>
+  <script src="/js/typing_engine.js?v=21.2"></script>
   <script src="/js/ocr_service.js?v=1.1"></script>
-  <script src="/js/app.js?v=21.1"></script>
+  <script src="/js/app.js?v=21.2"></script>
 
   <!-- Practice Page Bootstrap -->
   <script>
-    // app.js instantiates window.stenoApp synchronously at load time.
-    // We just wait until the scripts finish executing (DOMContentLoaded fires after).
-    // Then call openPractice(id) from URL param.
-    document.addEventListener('DOMContentLoaded', function() {
-      function tryOpenPractice(attempt) {
-        if (typeof window.stenoApp === 'undefined' || typeof window.stenoApp.openPractice !== 'function') {
-          if (attempt < 60) { setTimeout(function() { tryOpenPractice(attempt + 1); }, 100); }
+    (function initPracticeBootstrap() {
+      var passageId = new URLSearchParams(window.location.search).get('id');
+      if (!passageId) {
+        window.location.replace('/');
+        return;
+      }
+      var pIdInt = parseInt(passageId, 10);
+
+      function runOpenPractice(attempt) {
+        attempt = attempt || 0;
+        if (typeof window.stenoApp === 'undefined' || typeof window.stenoApp.openPractice !== 'function' || !window.stenoAudioPlayer) {
+          if (attempt < 120) {
+            setTimeout(function() { runOpenPractice(attempt + 1); }, 40);
+          }
           return;
         }
-        var passageId = new URLSearchParams(window.location.search).get('id');
-        if (passageId) {
-          var pIdInt = parseInt(passageId, 10);
-          if (!window.stenoApp.currentPassage || window.stenoApp.currentPassage.id !== pIdInt) {
-            window.stenoApp.openPractice(pIdInt);
-          }
-        } else {
-          // No id — go home
-          window.location.href = '/';
+        if (!window.stenoApp.currentPassage || window.stenoApp.currentPassage.id !== pIdInt) {
+          window.stenoApp.openPractice(pIdInt);
+        }
+        if (window.stenoAudioPlayer && typeof window.stenoAudioPlayer.updateCountdownUI === 'function') {
+          window.stenoAudioPlayer.updateCountdownUI();
         }
       }
-      tryOpenPractice(0);
-      if (window.stenoAudioPlayer && typeof window.stenoAudioPlayer.updateCountdownUI === 'function') {
-        window.stenoAudioPlayer.updateCountdownUI();
+
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', function() { runOpenPractice(0); });
+      } else {
+        runOpenPractice(0);
       }
-    });
+    })();
   </script>
 
 </body>
