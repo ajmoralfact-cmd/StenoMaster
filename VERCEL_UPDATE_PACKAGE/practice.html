@@ -24,7 +24,7 @@
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="/css/style.css?v=20.5">
+  <link rel="stylesheet" href="/css/style.css?v=21.0">
 
   <!-- Shield Root Hindi Shorthand Content from Chrome / Browser Auto-Translation -->
   <script>
@@ -219,6 +219,17 @@
 
           <!-- Audio Player Card -->
           <div class="audio-player-card sm-audio-ribbon">
+            <!-- Mobile Step 1: Dictation Hero Gauge (Demo 3 - Mobile Only) -->
+            <div class="mobile-dictation-hero" id="mobileDictationHero">
+              <div class="mobile-gauge-circle">
+                <span class="mobile-gauge-val" id="mobileGaugeWpm">80</span>
+                <span class="mobile-gauge-lbl">WPM</span>
+              </div>
+              <div class="mobile-gauge-meta">
+                <div class="mobile-gauge-tag">⚡ मानक परीक्षा गति</div>
+                <div class="mobile-gauge-subtext">डिक्टेशन सुनकर नोटबुक में लिखें, फिर नीचे टाइपिंग शुरू करें</div>
+              </div>
+            </div>
             <div class="audio-title-bar">
               <div class="audio-passage-info">
                 <h3 id="practicePassageTitle" class="hindi-text notranslate skiptranslate" translate="no" lang="hi"><hindi-root text="आलेख शीर्षक"></hindi-root></h3>
@@ -282,6 +293,13 @@
               <span class="audio-time-label" id="audioRemainingTime">00:00</span>
             </div>
           </div>
+            <!-- Mobile Step 1: Start Typing CTA Button (Demo 3 - Mobile Only) -->
+            <div class="mobile-start-typing-wrap" id="mobileStartTypingWrap">
+              <button type="button" class="btn-start-typing-mobile" id="btnStartTypingMobile" onclick="stenoTypingEngine.enterTypingStep()">
+                <span>✍️ नोटबुक से टाइपिंग शुरू करें</span>
+                <span class="typing-btn-arrow">➔</span>
+              </button>
+            </div>
 
           <!-- 1-Minute Alert Banner -->
           <div id="practiceExamAlertBanner" style="display:none; margin-bottom:14px; padding:12px 16px; border-radius:10px; background:linear-gradient(135deg, rgba(239, 68, 68, 0.12), rgba(245, 158, 11, 0.12)); border:1.5px solid #ef4444; color:#b91c1c; font-weight:700; font-size:0.92rem; align-items:center; justify-content:space-between; animation:alertPulse 1.5s infinite;">
@@ -290,6 +308,25 @@
               <span id="practiceExamAlertBannerText">चेतावनी: केवल 1 मिनट शेष है! अपनी आशुलिपि आउटलाइन से टंकण शीघ्र पूर्ण करें।</span>
             </div>
             <button type="button" class="btn-sm" onclick="this.parentElement.style.display='none'" style="background:none; border:none; color:#b91c1c; font-size:1rem; cursor:pointer;">✕</button>
+          </div>
+
+                    <!-- Mobile Step 2: Mini Audio Replay Bar (Demo 3 - Mobile Only) -->
+          <div class="mobile-mini-audio-bar" id="mobileMiniAudioBar" style="display:none;">
+            <div class="mini-audio-left">
+              <button type="button" class="mini-play-btn" onclick="stenoAudioPlayer.togglePlay()" title="ऑडियो चलाएं / रोकें">
+                <span id="miniPlayIcon">▶</span>
+              </button>
+              <div class="mini-info">
+                <div class="mini-title" id="miniPassageTitle">डिक्टेशन री-प्ले</div>
+                <div class="mini-time" id="miniAudioTime">00:00 / 05:00</div>
+              </div>
+            </div>
+            <div class="mini-audio-right">
+              <span class="mini-speed-badge" id="miniSpeedBadge">80 WPM</span>
+              <button type="button" class="btn-back-to-audio" onclick="stenoTypingEngine.enterDictationStep()" title="डिक्टेशन ऑडियो पेज पर वापस जाएं">
+                ⏪ ऑडियो मोड
+              </button>
+            </div>
           </div>
 
           <!-- Typing Editor Card -->
@@ -606,12 +643,12 @@
   <script defer src="https://sdk.cashfree.com/js/v3/cashfree.js"></script>
   <script src="/js/charts.js?v=13.5"></script>
   <script src="/js/steno_dictionary.js?v=1.0"></script>
-  <script src="/js/comparison_view.js?v=20.5"></script>
-  <script src="/js/audio_player.js?v=20.5"></script>
+  <script src="/js/comparison_view.js?v=21.0"></script>
+  <script src="/js/audio_player.js?v=21.0"></script>
   <script src="/js/keyboard_map.js?v=8.1"></script>
-  <script src="/js/typing_engine.js?v=20.5"></script>
+  <script src="/js/typing_engine.js?v=21.0"></script>
   <script src="/js/ocr_service.js?v=1.1"></script>
-  <script src="/js/app.js?v=20.5"></script>
+  <script src="/js/app.js?v=21.0"></script>
 
   <!-- Practice Page Bootstrap -->
   <script>

@@ -10,6 +10,12 @@
  */
 
 class StenoAudioPlayer {
+  syncPlayBtnUI(icon) {
+    const playBtn = document.getElementById('audioPlayBtn');
+    if (playBtn) playBtn.innerHTML = icon;
+    const miniIcon = document.getElementById('miniPlayIcon');
+    if (miniIcon) miniIcon.textContent = (icon.includes('⏸') || icon === '⏸️') ? '⏸' : '▶';
+  }
   constructor() {
     this.audioElement = new Audio();
     try {
@@ -91,26 +97,26 @@ class StenoAudioPlayer {
       this.isPlaying = true;
       this.playRequestedWhenReady = false;
       const playBtn = document.getElementById('audioPlayBtn');
-      if (playBtn) playBtn.innerHTML = '⏸️';
+      this.syncPlayBtnUI('⏸️');
     });
 
     this.audioElement.addEventListener('pause', () => {
       if (!this.isCountingDown) {
         this.isPlaying = false;
         const playBtn = document.getElementById('audioPlayBtn');
-        if (playBtn) playBtn.innerHTML = '▶️';
+        this.syncPlayBtnUI('▶️');
       }
     });
 
     this.audioElement.addEventListener('waiting', () => {
       const playBtn = document.getElementById('audioPlayBtn');
-      if (playBtn && this.isPlaying) playBtn.innerHTML = '⏳';
+      this.syncPlayBtnUI('⏳');
     });
 
     this.audioElement.addEventListener('ended', () => {
       this.isPlaying = false;
       const playBtn = document.getElementById('audioPlayBtn');
-      if (playBtn) playBtn.innerHTML = '▶️';
+      this.syncPlayBtnUI('▶️');
       if (this.onEndedCallback) {
         this.onEndedCallback();
       }
@@ -469,7 +475,7 @@ class StenoAudioPlayer {
       overlay.style.display = 'none';
     }
     const playBtn = document.getElementById('audioPlayBtn');
-    if (playBtn) playBtn.innerHTML = '▶️';
+    this.syncPlayBtnUI('▶️');
   }
 
   startActualPlayback() {
@@ -487,7 +493,7 @@ class StenoAudioPlayer {
 
     if (this.isSpeechSynthesis) {
       this.isPlaying = true;
-      if (playBtn) playBtn.innerHTML = '⏸️';
+      this.syncPlayBtnUI('⏸️');
       this.playSpeechSynthesis();
       return;
     }
@@ -510,7 +516,7 @@ class StenoAudioPlayer {
         promise.then(() => {
           this.isPlaying = true;
           this.playRequestedWhenReady = false;
-          if (playBtn) playBtn.innerHTML = '⏸️';
+          this.syncPlayBtnUI('⏸️');
         }).catch((err) => {
           console.warn(`HTML5 audio play attempt ${retryCount+1} failed:`, err);
           if (retryCount < 3) {
@@ -519,11 +525,11 @@ class StenoAudioPlayer {
             console.info('Switching to Web Speech Synthesis fallback');
             this.isSpeechSynthesis = true;
             this.isPlaying = true;
-            if (playBtn) playBtn.innerHTML = '⏸️';
+            this.syncPlayBtnUI('⏸️');
             this.playSpeechSynthesis();
           } else {
             this.isPlaying = false;
-            if (playBtn) playBtn.innerHTML = '▶️';
+            this.syncPlayBtnUI('▶️');
             if (window.stenoApp && typeof window.stenoApp.showToast === 'function') {
               window.stenoApp.showToast('ऑडियो प्रारंभ करने के लिए कृपया पुनः प्ले बटन दबाएं।', 'info');
             }
@@ -546,7 +552,7 @@ class StenoAudioPlayer {
       this.audioElement.pause();
     }
     const playBtn = document.getElementById('audioPlayBtn');
-    if (playBtn) playBtn.innerHTML = '▶️';
+    this.syncPlayBtnUI('▶️');
   }
 
   stop() {
@@ -561,7 +567,7 @@ class StenoAudioPlayer {
       this.audioElement.currentTime = 0;
     }
     const playBtn = document.getElementById('audioPlayBtn');
-    if (playBtn) playBtn.innerHTML = '▶️';
+    this.syncPlayBtnUI('▶️');
   }
 
   seek(seconds) {
@@ -643,6 +649,10 @@ class StenoAudioPlayer {
     const rateStr = rate.toFixed(2);
 
     if (wpmValEl) wpmValEl.textContent = `${wpm} WPM`;
+    const gaugeEl = document.getElementById('mobileGaugeWpm');
+    if (gaugeEl) gaugeEl.textContent = wpm;
+    const miniSpeedEl = document.getElementById('miniSpeedBadge');
+    if (miniSpeedEl) miniSpeedEl.textContent = `${wpm} WPM`;
     if (multEl) {
       if (wpm === base) {
         multEl.textContent = '(1.0x • मूल गति)';

@@ -284,6 +284,42 @@ class StenoTypingEngine {
     // Apply OTG Mode, Compact Mobile Player & Screen Wake Lock
     this.applyOtgMode();
     this.initMobilePlayerState();
+
+    // Initialize 2-Step Mobile Flow (Default to Dictation Step 1 unless draft exists)
+    const practiceViews = document.querySelectorAll('#view-practice');
+    practiceViews.forEach(v => {
+      const savedDraft = localStorage.getItem(`stenomaster_draft_${passage.id}`);
+      v.setAttribute('data-mobile-step', (savedDraft && savedDraft.trim().length > 0) ? 'typing' : 'dictation');
+    });
+
+    const gauge = document.getElementById('mobileGaugeWpm');
+    if (gauge && window.stenoAudioPlayer) {
+      gauge.textContent = window.stenoAudioPlayer.currentWpm || 80;
+    }
+    const miniTitle = document.getElementById('miniPassageTitle');
+    if (miniTitle) miniTitle.textContent = passage.title || 'डिक्टेशन';
+    const miniSpeed = document.getElementById('miniSpeedBadge');
+    if (miniSpeed && window.stenoAudioPlayer) {
+      miniSpeed.textContent = `${window.stenoAudioPlayer.currentWpm || 80} WPM`;
+    }
+
+    // Initialize 2-Step Mobile Flow (Default to Dictation Step 1 unless draft exists)
+    const practiceViews = document.querySelectorAll('#view-practice');
+    practiceViews.forEach(v => {
+      const savedDraft = localStorage.getItem(`stenomaster_draft_${passage.id}`);
+      v.setAttribute('data-mobile-step', (savedDraft && savedDraft.trim().length > 0) ? 'typing' : 'dictation');
+    });
+
+    const gauge = document.getElementById('mobileGaugeWpm');
+    if (gauge && window.stenoAudioPlayer) {
+      gauge.textContent = window.stenoAudioPlayer.currentWpm || 80;
+    }
+    const miniTitle = document.getElementById('miniPassageTitle');
+    if (miniTitle) miniTitle.textContent = passage.title || 'डिक्टेशन';
+    const miniSpeed = document.getElementById('miniSpeedBadge');
+    if (miniSpeed && window.stenoAudioPlayer) {
+      miniSpeed.textContent = `${window.stenoAudioPlayer.currentWpm || 80} WPM`;
+    }
     this.acquireWakeLock();
 
     // Enter Full Screen if Exam Mode is active
@@ -622,6 +658,58 @@ class StenoTypingEngine {
         btn.classList.add('speed-open');
       }
     }
+  }
+
+  // Two-Step Mobile Practice Methods (Demo 3: Dictation Step -> Typing Step)
+  enterTypingStep() {
+    const practiceViews = document.querySelectorAll('#view-practice');
+    practiceViews.forEach(v => v.setAttribute('data-mobile-step', 'typing'));
+    if (this.currentPassage) {
+      const titleEl = document.getElementById('miniPassageTitle');
+      if (titleEl) titleEl.textContent = this.currentPassage.title || 'डिक्टेशन री-प्ले';
+    }
+    const wpmBadge = document.getElementById('miniSpeedBadge');
+    if (wpmBadge && window.stenoAudioPlayer) {
+      wpmBadge.textContent = `${window.stenoAudioPlayer.currentWpm || 80} WPM`;
+    }
+    setTimeout(() => {
+      if (this.textarea) {
+        this.textarea.focus();
+      }
+    }, 150);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  enterDictationStep() {
+    const practiceViews = document.querySelectorAll('#view-practice');
+    practiceViews.forEach(v => v.setAttribute('data-mobile-step', 'dictation'));
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  // Two-Step Mobile Practice Methods (Demo 3: Dictation Step -> Typing Step)
+  enterTypingStep() {
+    const practiceViews = document.querySelectorAll('#view-practice');
+    practiceViews.forEach(v => v.setAttribute('data-mobile-step', 'typing'));
+    if (this.currentPassage) {
+      const titleEl = document.getElementById('miniPassageTitle');
+      if (titleEl) titleEl.textContent = this.currentPassage.title || 'डिक्टेशन री-प्ले';
+    }
+    const wpmBadge = document.getElementById('miniSpeedBadge');
+    if (wpmBadge && window.stenoAudioPlayer) {
+      wpmBadge.textContent = `${window.stenoAudioPlayer.currentWpm || 80} WPM`;
+    }
+    setTimeout(() => {
+      if (this.textarea) {
+        this.textarea.focus();
+      }
+    }, 150);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  enterDictationStep() {
+    const practiceViews = document.querySelectorAll('#view-practice');
+    practiceViews.forEach(v => v.setAttribute('data-mobile-step', 'dictation'));
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   initExamAntiCheat() {
