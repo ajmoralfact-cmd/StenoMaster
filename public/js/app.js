@@ -2930,6 +2930,28 @@ class StenoApp {
         }
       }
 
+      // Sync Mobile Redesign Welcome Card
+      const mwcStudentName = document.getElementById('mwcStudentName');
+      const mwcAvatarInitial = document.getElementById('mwcAvatarInitial');
+      const mwcProBadge = document.getElementById('mwcProBadge');
+
+      if (isLogged && this.user) {
+        const displayName = this.user.display_name || this.user.username || 'विद्यार्थी';
+        const initial = (displayName.charAt(0) || 'S').toUpperCase();
+        if (mwcStudentName) mwcStudentName.textContent = displayName;
+        if (mwcAvatarInitial) mwcAvatarInitial.textContent = initial;
+        if (mwcProBadge) {
+          const isPro = this.user.subscription_status === 'active' || this.user.subscription_status === 'pro';
+          mwcProBadge.innerHTML = isPro ? '<span>👑 PRO</span>' : '<span>⚡ FREE</span>';
+        }
+      } else {
+        if (mwcStudentName) mwcStudentName.textContent = 'विद्यार्थी';
+        if (mwcAvatarInitial) mwcAvatarInitial.textContent = 'S';
+        if (mwcProBadge) {
+          mwcProBadge.innerHTML = '<span onclick="stenoApp.openModal(\'loginModal\')" style="cursor:pointer;">लॉगिन</span>';
+        }
+      }
+
       if (typeof this.renderSidebarNav === 'function') {
         this.renderSidebarNav();
       }
@@ -3781,6 +3803,25 @@ class StenoApp {
     if (avgWpmEl) avgWpmEl.textContent = `${stats.avg_wpm || 0} WPM`;
     if (avgAccEl) avgAccEl.textContent = `${stats.avg_accuracy || 0}%`;
     if (totalPracEl) totalPracEl.textContent = `${stats.total_practices || 0}`;
+
+    // Hydrate Mobile Redesign Metrics (Mobile Native Dashboard)
+    const mPerfAvgWpm = document.getElementById('perfAvgWpm');
+    const mPerfAccuracy = document.getElementById('perfAccuracy');
+    const mPerfStreak = document.getElementById('perfStreak');
+    const mPerfCompleted = document.getElementById('perfCompleted');
+    const mMccTitle = document.getElementById('mccPassageTitle');
+
+    if (mPerfAvgWpm) mPerfAvgWpm.innerHTML = `${stats.avg_wpm || 0} <small>WPM</small>`;
+    if (mPerfAccuracy) mPerfAccuracy.innerHTML = `${stats.avg_accuracy || 0}<small>%</small>`;
+    if (mPerfStreak) mPerfStreak.innerHTML = `${streakDays || 0} <small>दिन</small>`;
+    if (mPerfCompleted) mPerfCompleted.innerHTML = `${stats.total_practices || 0} <small>सत्र</small>`;
+
+    if (mMccTitle) {
+      const lastTitle = localStorage.getItem('stenomaster_last_passage_title');
+      if (lastTitle) {
+        mMccTitle.textContent = lastTitle;
+      }
+    }
     if (pointsEl) pointsEl.textContent = `${realPoints} Pts`;
 
     // Hydrate 'Continue Practice' Card with actual last practiced passage
@@ -8174,6 +8215,60 @@ ${link}`;
     }
     if (!pId) pId = 47; // Default Ramdhari Gupta Khand 1 Class 1
     this.openPractice(pId);
+  }
+
+  filterClassesMobile(query) {
+    const q = (query || '').toLowerCase().trim();
+    const catList = document.getElementById('classesCategoriesList');
+    if (!catList) return;
+    const cards = catList.querySelectorAll('.series-card, .category-row-card');
+    cards.forEach(card => {
+      const text = card.textContent.toLowerCase();
+      if (!q || text.includes(q)) {
+        card.style.display = '';
+      } else {
+        card.style.display = 'none';
+      }
+    });
+  }
+
+  filterClassesBySpeed(wpm, btnEl) {
+    if (btnEl) {
+      document.querySelectorAll('.mobile-speed-chip').forEach(c => c.classList.remove('active'));
+      btnEl.classList.add('active');
+    }
+    const catList = document.getElementById('classesCategoriesList');
+    if (!catList) return;
+    const cards = catList.querySelectorAll('.series-card, .category-row-card');
+    cards.forEach(card => {
+      if (!wpm || wpm === 0) {
+        card.style.display = '';
+      } else {
+        const text = card.textContent;
+        const speedMatch = text.includes(`${wpm} WPM`) || text.includes(`${wpm} शब्द`) || text.includes(`गति ${wpm}`);
+        card.style.display = speedMatch ? '' : 'none';
+      }
+    });
+  }
+
+  switchClassesLang(lang, btnEl) {
+    if (btnEl) {
+      document.querySelectorAll('.mobile-lang-tab-btn').forEach(b => b.classList.remove('active'));
+      btnEl.classList.add('active');
+    }
+    const catList = document.getElementById('classesCategoriesList');
+    if (!catList) return;
+    const cards = catList.querySelectorAll('.series-card, .category-row-card');
+    cards.forEach(card => {
+      const text = card.textContent.toLowerCase();
+      if (lang === 'hi') {
+        const isEnglish = text.includes('english') || text.includes('kailash chandra') || text.includes('progressive');
+        card.style.display = isEnglish ? 'none' : '';
+      } else {
+        const isEnglish = text.includes('english') || text.includes('kailash chandra') || text.includes('progressive');
+        card.style.display = isEnglish ? '' : 'none';
+      }
+    });
   }
 
   // -------------------------------------------------------------------------

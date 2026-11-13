@@ -240,8 +240,8 @@
 
     <!-- Quick Page Switcher -->
     <div class="page-nav-bar">
-      <button class="page-nav-btn" onclick="navigateTo('/', this)">🏠 होम पेज</button>
-      <button class="page-nav-btn active" onclick="navigateTo('/plans.html', this)">💎 प्लान्स व QR कोड</button>
+      <button class="page-nav-btn active" onclick="navigateTo('/', this)">🏠 होम पेज</button>
+      <button class="page-nav-btn" onclick="navigateTo('/plans.html', this)">💎 प्लान्स व QR कोड</button>
       <button class="page-nav-btn" onclick="navigateTo('/practice.html', this)">✍️ प्रैक्टिस पेज</button>
       <button class="page-nav-btn" onclick="navigateTo('/profile.html', this)">👤 प्रोफाइल</button>
       <button class="page-nav-btn" onclick="navigateTo('/admin.html', this)">⚙️ एडमिन पैनल</button>
@@ -254,7 +254,7 @@
       <div class="dynamic-island-lens"></div>
     </div>
     <div class="phone-screen" id="phoneScreen">
-      <iframe id="screenFrame" src="/plans.html" title="StenoMaster Mobile Preview"></iframe>
+      <iframe id="screenFrame" src="/" title="StenoMaster Mobile Preview"></iframe>
     </div>
   </div>
 
@@ -263,7 +263,7 @@
   </div>
 
   <script>
-    let currentPath = '/plans.html';
+    let currentPath = '/';
 
     function navigateTo(path, btnEl) {
       currentPath = path;

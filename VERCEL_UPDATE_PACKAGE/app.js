@@ -2930,6 +2930,28 @@ class StenoApp {
         }
       }
 
+      // Sync Mobile Redesign Welcome Card
+      const mwcStudentName = document.getElementById('mwcStudentName');
+      const mwcAvatarInitial = document.getElementById('mwcAvatarInitial');
+      const mwcProBadge = document.getElementById('mwcProBadge');
+
+      if (isLogged && this.user) {
+        const displayName = this.user.display_name || this.user.username || 'विद्यार्थी';
+        const initial = (displayName.charAt(0) || 'S').toUpperCase();
+        if (mwcStudentName) mwcStudentName.textContent = displayName;
+        if (mwcAvatarInitial) mwcAvatarInitial.textContent = initial;
+        if (mwcProBadge) {
+          const isPro = this.user.subscription_status === 'active' || this.user.subscription_status === 'pro';
+          mwcProBadge.innerHTML = isPro ? '<span>👑 PRO</span>' : '<span>⚡ FREE</span>';
+        }
+      } else {
+        if (mwcStudentName) mwcStudentName.textContent = 'विद्यार्थी';
+        if (mwcAvatarInitial) mwcAvatarInitial.textContent = 'S';
+        if (mwcProBadge) {
+          mwcProBadge.innerHTML = '<span onclick="stenoApp.openModal(\'loginModal\')" style="cursor:pointer;">लॉगिन</span>';
+        }
+      }
+
       if (typeof this.renderSidebarNav === 'function') {
         this.renderSidebarNav();
       }
@@ -3781,6 +3803,25 @@ class StenoApp {
     if (avgWpmEl) avgWpmEl.textContent = `${stats.avg_wpm || 0} WPM`;
     if (avgAccEl) avgAccEl.textContent = `${stats.avg_accuracy || 0}%`;
     if (totalPracEl) totalPracEl.textContent = `${stats.total_practices || 0}`;
+
+    // Hydrate Mobile Redesign Metrics (Mobile Native Dashboard)
+    const mPerfAvgWpm = document.getElementById('perfAvgWpm');
+    const mPerfAccuracy = document.getElementById('perfAccuracy');
+    const mPerfStreak = document.getElementById('perfStreak');
+    const mPerfCompleted = document.getElementById('perfCompleted');
+    const mMccTitle = document.getElementById('mccPassageTitle');
+
+    if (mPerfAvgWpm) mPerfAvgWpm.innerHTML = `${stats.avg_wpm || 0} <small>WPM</small>`;
+    if (mPerfAccuracy) mPerfAccuracy.innerHTML = `${stats.avg_accuracy || 0}<small>%</small>`;
+    if (mPerfStreak) mPerfStreak.innerHTML = `${streakDays || 0} <small>दिन</small>`;
+    if (mPerfCompleted) mPerfCompleted.innerHTML = `${stats.total_practices || 0} <small>सत्र</small>`;
+
+    if (mMccTitle) {
+      const lastTitle = localStorage.getItem('stenomaster_last_passage_title');
+      if (lastTitle) {
+        mMccTitle.textContent = lastTitle;
+      }
+    }
     if (pointsEl) pointsEl.textContent = `${realPoints} Pts`;
 
     // Hydrate 'Continue Practice' Card with actual last practiced passage
@@ -7789,6 +7830,304 @@ ${link}`;
     }
   }
 
+  applyPromoCode(rawCode) {
+    const input = document.getElementById('promoCodeInput');
+    const code = (rawCode || (input ? input.value : '') || '').trim().toUpperCase();
+
+    if (!code) {
+      this.showToast('कृपया प्रोमो कोड दर्ज करें।', 'warning');
+      if (input) input.focus();
+      return;
+    }
+
+    const validCodes = {
+      'ADITI10': 10,
+      'STENO10': 10
+    };
+
+    if (!validCodes[code]) {
+      this.showToast('अमान्य प्रोमो कोड! कृपया सही कोड दर्ज करें।', 'error');
+      return;
+    }
+
+    const discountPct = validCodes[code];
+    this.appliedPromoCode = code;
+    this.appliedDiscountPercent = discountPct;
+
+    // 1. Show Applied Banner
+    const appliedBanner = document.getElementById('promoAppliedBanner');
+    const appliedTitle = document.getElementById('promoAppliedTitle');
+    const promoCard = document.getElementById('promoCodeCard');
+    if (appliedBanner) {
+      appliedBanner.style.display = 'flex';
+      if (appliedTitle) {
+        appliedTitle.textContent = `कूपन '${code}' लागू! (-${discountPct}% छूट)`;
+      }
+    }
+    if (promoCard) {
+      promoCard.style.display = 'none';
+    }
+
+    // 2. Update Plan Cards in DOM with 10% discount
+    const planDiscounted = {
+      '1m': Math.round(100 * (1 - discountPct / 100)),
+      '3m': Math.round(250 * (1 - discountPct / 100)),
+      '6m': Math.round(450 * (1 - discountPct / 100)),
+      '1y': Math.round(800 * (1 - discountPct / 100))
+    };
+
+    const p1 = document.querySelector('.sub-plan-card[data-plan-id="1m"] .plan-price-amount');
+    if (p1) p1.innerHTML = `<span style="font-size:0.7em; text-decoration:line-through; opacity:0.6; margin-right:4px;">₹100</span>₹${planDiscounted['1m']}`;
+    const btn1 = document.querySelector('.sub-plan-card[data-plan-id="1m"] .plan-buy-btn');
+    if (btn1) btn1.innerHTML = `<span>⚡ ₹${planDiscounted['1m']} में अभी खरीदें</span> <span>→</span>`;
+
+    const p2 = document.querySelector('.sub-plan-card[data-plan-id="3m"] .plan-price-amount');
+    if (p2) p2.innerHTML = `<span style="font-size:0.7em; text-decoration:line-through; opacity:0.6; margin-right:4px;">₹250</span>₹${planDiscounted['3m']}`;
+    const btn2 = document.querySelector('.sub-plan-card[data-plan-id="3m"] .plan-buy-btn');
+    if (btn2) btn2.innerHTML = `<span>⚡ ₹${planDiscounted['3m']} में अभी खरीदें</span> <span>→</span>`;
+
+    const p3 = document.querySelector('.sub-plan-card[data-plan-id="6m"] .plan-price-amount');
+    if (p3) p3.innerHTML = `<span style="font-size:0.7em; text-decoration:line-through; opacity:0.6; margin-right:4px;">₹450</span>₹${planDiscounted['6m']}`;
+    const btn3 = document.querySelector('.sub-plan-card[data-plan-id="6m"] .plan-buy-btn');
+    if (btn3) btn3.innerHTML = `<span>⚡ ₹${planDiscounted['6m']} में अभी खरीदें</span> <span>→</span>`;
+
+    const p4 = document.querySelector('.sub-plan-card[data-plan-id="1y"] .plan-price-amount');
+    if (p4) p4.innerHTML = `<span style="font-size:0.7em; text-decoration:line-through; opacity:0.6; margin-right:4px;">₹800</span>₹${planDiscounted['1y']}`;
+    const btn4 = document.querySelector('.sub-plan-card[data-plan-id="1y"] .plan-buy-btn');
+    if (btn4) btn4.innerHTML = `<span>👑 ₹${planDiscounted['1y']} में VIP बनें</span> <span>→</span>`;
+
+    // 3. Update QR Section chips & label
+    this.setQrPlan('1m', 100);
+
+    this.showToast(`🎉 प्रोमो कोड '${code}' लागू! आपको 10% अतिरिक्त छूट मिली है।`, 'success');
+  }
+
+  removePromoCode() {
+    this.appliedPromoCode = null;
+    this.appliedDiscountPercent = 0;
+
+    const appliedBanner = document.getElementById('promoAppliedBanner');
+    const promoCard = document.getElementById('promoCodeCard');
+    const input = document.getElementById('promoCodeInput');
+    if (appliedBanner) appliedBanner.style.display = 'none';
+    if (promoCard) promoCard.style.display = 'flex';
+    if (input) input.value = '';
+
+    const p1 = document.querySelector('.sub-plan-card[data-plan-id="1m"] .plan-price-amount');
+    if (p1) p1.innerHTML = '₹100';
+    const btn1 = document.querySelector('.sub-plan-card[data-plan-id="1m"] .plan-buy-btn');
+    if (btn1) btn1.innerHTML = '<span>⚡ अभी खरीदें (Buy Now)</span> <span>→</span>';
+
+    const p2 = document.querySelector('.sub-plan-card[data-plan-id="3m"] .plan-price-amount');
+    if (p2) p2.innerHTML = '₹250';
+    const btn2 = document.querySelector('.sub-plan-card[data-plan-id="3m"] .plan-buy-btn');
+    if (btn2) btn2.innerHTML = '<span>⚡ अभी खरीदें (Buy Now)</span> <span>→</span>';
+
+    const p3 = document.querySelector('.sub-plan-card[data-plan-id="6m"] .plan-price-amount');
+    if (p3) p3.innerHTML = '₹450';
+    const btn3 = document.querySelector('.sub-plan-card[data-plan-id="6m"] .plan-buy-btn');
+    if (btn3) btn3.innerHTML = '<span>⚡ अभी खरीदें (Buy Now)</span> <span>→</span>';
+
+    const p4 = document.querySelector('.sub-plan-card[data-plan-id="1y"] .plan-price-amount');
+    if (p4) p4.innerHTML = '₹800';
+    const btn4 = document.querySelector('.sub-plan-card[data-plan-id="1y"] .plan-buy-btn');
+    if (btn4) btn4.innerHTML = '<span>👑 अभी VIP बनें (Get VIP)</span> <span>→</span>';
+
+    this.setQrPlan('1m', 100);
+
+    this.showToast('कूपन कोड हटा दिया गया।', 'info');
+  }
+
+  setQrPlan(planId, basePrice) {
+    const defaultPrices = { '1m': 100, '3m': 250, '6m': 450, '1y': 800 };
+    const price = basePrice || defaultPrices[planId] || 100;
+    let finalPrice = price;
+    if (this.appliedDiscountPercent && this.appliedDiscountPercent > 0) {
+      finalPrice = Math.round(price * (1 - this.appliedDiscountPercent / 100));
+    }
+
+    const lbl = document.getElementById('qrPayAmountLabel');
+    if (lbl) lbl.textContent = `₹${finalPrice}`;
+    const inp = document.getElementById('payAmountInput');
+    if (inp) inp.value = finalPrice;
+
+    const planNameInp = document.getElementById('payPlanNameInput');
+    const planNames = {
+      '1m': 'StenoMaster Pro — 1 Month (₹100/माह)',
+      '3m': 'StenoMaster Pro — 3 Months (₹250/90 दिन)',
+      '6m': 'StenoMaster Pro — 6 Months (₹450/180 दिन)',
+      '1y': 'StenoMaster Pro — 1 Year (₹800/365 दिन)'
+    };
+    if (planNameInp) {
+      let pName = planNames[planId] || `StenoMaster Pro — ${planId}`;
+      if (this.appliedPromoCode) {
+        pName += ` [Promo: ${this.appliedPromoCode}]`;
+      }
+      planNameInp.value = pName;
+    }
+
+    // Dynamic QR generation with exact pre-filled amount for bottom QR code
+    const bottomQrImg = document.getElementById('subActiveQrImg');
+    if (bottomQrImg) {
+      const upiUri = `upi://pay?pa=8795622714harsh@ybl&pn=StenoMaster&am=${finalPrice}.00&cu=INR&tn=StenoMaster_${planId}_Pass`;
+      bottomQrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(upiUri)}`;
+    }
+
+    // Update chips display
+    const planDiscounted = {
+      '1m': this.appliedDiscountPercent ? Math.round(100 * (1 - this.appliedDiscountPercent / 100)) : 100,
+      '3m': this.appliedDiscountPercent ? Math.round(250 * (1 - this.appliedDiscountPercent / 100)) : 250,
+      '6m': this.appliedDiscountPercent ? Math.round(450 * (1 - this.appliedDiscountPercent / 100)) : 450,
+      '1y': this.appliedDiscountPercent ? Math.round(800 * (1 - this.appliedDiscountPercent / 100)) : 800
+    };
+    const c1 = document.querySelector('.qr-plan-chip[data-plan-id="1m"]');
+    if (c1) c1.textContent = `1 माह (₹${planDiscounted['1m']})`;
+    const c2 = document.querySelector('.qr-plan-chip[data-plan-id="3m"]');
+    if (c2) c2.textContent = `3 माह (₹${planDiscounted['3m']})`;
+    const c3 = document.querySelector('.qr-plan-chip[data-plan-id="6m"]');
+    if (c3) c3.textContent = `6 माह (₹${planDiscounted['6m']})`;
+    const c4 = document.querySelector('.qr-plan-chip[data-plan-id="1y"]');
+    if (c4) c4.textContent = `1 वर्ष (₹${planDiscounted['1y']})`;
+
+    document.querySelectorAll('.qr-plan-chip').forEach(c => {
+      if (c.getAttribute('data-plan-id') === planId) c.classList.add('active');
+      else c.classList.remove('active');
+    });
+  }
+
+  openUpiCheckoutModal(planId = '1m') {
+    if (!this.user) {
+      this.openModal('loginModal');
+      return;
+    }
+
+    const planDetails = {
+      '1m': { name: 'बेसिक स्टेनो पास (1 माह)', validity: '30 दिन', price: 100 },
+      '3m': { name: 'सिल्वर स्टेनो पास (3 माह)', validity: '90 दिन', price: 250 },
+      '6m': { name: 'सुपर सेवर पास (6 माह)', validity: '180 दिन', price: 450 },
+      '1y': { name: 'गोल्ड प्रो पास (1 वर्ष VIP)', validity: '365 दिन', price: 800 }
+    };
+    const plan = planDetails[planId] || planDetails['1m'];
+    this.currentCheckoutPlanId = planId;
+    this.currentCheckoutPlan = plan;
+
+    let payableAmount = plan.price;
+    let oldPriceHtml = '';
+    if (this.appliedDiscountPercent && this.appliedDiscountPercent > 0) {
+      payableAmount = Math.round(plan.price * (1 - this.appliedDiscountPercent / 100));
+      oldPriceHtml = `<del style="color:#94a3b8; font-size:0.85rem; margin-right:4px;">₹${plan.price}</del> <span style="background:#dcfce7; color:#15803d; font-size:0.7rem; font-weight:700; padding:1px 6px; border-radius:6px;">-${this.appliedDiscountPercent}% छूट</span>`;
+    }
+    this.currentCheckoutPayableAmount = payableAmount;
+
+    const modalPlanName = document.getElementById('modalPlanName');
+    const modalPlanValidity = document.getElementById('modalPlanValidity');
+    const modalPlanOldPrice = document.getElementById('modalPlanOldPrice');
+    const modalPayableAmount = document.getElementById('modalPayableAmount');
+    const modalQrCaptionAmount = document.getElementById('modalQrCaptionAmount');
+
+    if (modalPlanName) modalPlanName.textContent = plan.name;
+    if (modalPlanValidity) modalPlanValidity.textContent = `वैधता: ${plan.validity} • सभी डिक्टेशन्स अनलॉक`;
+    if (modalPlanOldPrice) modalPlanOldPrice.innerHTML = oldPriceHtml;
+    if (modalPayableAmount) modalPayableAmount.textContent = `₹${payableAmount}`;
+    if (modalQrCaptionAmount) modalQrCaptionAmount.textContent = `₹${payableAmount}`;
+
+    // Dynamic UPI URI with PRE-FILLED EXACT AMOUNT!
+    const upiId = '8795622714harsh@ybl';
+    const note = `StenoMaster_${planId}_Pass`;
+    const upiUri = `upi://pay?pa=${upiId}&pn=StenoMaster&am=${payableAmount}.00&cu=INR&tn=${note}`;
+
+    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(upiUri)}`;
+    const qrImg = document.getElementById('modalDynamicQrImg');
+    if (qrImg) qrImg.src = qrUrl;
+
+    const directBtn = document.getElementById('modalDirectUpiAppBtn');
+    if (directBtn) {
+      directBtn.href = upiUri;
+      directBtn.innerHTML = `<span>🚀 PhonePe / GPay / Paytm से सीधे पे करें (₹${payableAmount})</span>`;
+    }
+
+    const utrInput = document.getElementById('modalUtrInput');
+    if (utrInput) utrInput.value = '';
+    const utrMsg = document.getElementById('modalUtrMsg');
+    if (utrMsg) utrMsg.style.display = 'none';
+
+    this.openModal('directUpiPaymentModal');
+  }
+
+  async submitModalUtr() {
+    if (!this.user) {
+      this.openModal('loginModal');
+      return;
+    }
+
+    const utrInput = document.getElementById('modalUtrInput');
+    const utr = (utrInput ? utrInput.value : '').trim();
+    const utrMsg = document.getElementById('modalUtrMsg');
+
+    if (!utr || utr.length < 8) {
+      this.showToast('कृपया वैध 12-अंकीय UPI UTR / Transaction ID दर्ज करें।', 'warning');
+      if (utrInput) utrInput.focus();
+      return;
+    }
+
+    const btn = document.getElementById('modalSubmitUtrBtn');
+    if (btn) {
+      btn.disabled = true;
+      btn.textContent = 'सत्यापित हो रहा है...';
+    }
+
+    try {
+      let planName = this.currentCheckoutPlan ? this.currentCheckoutPlan.name : 'StenoMaster Pro Pass';
+      if (this.appliedPromoCode) {
+        planName += ` [Promo: ${this.appliedPromoCode}]`;
+      }
+      const amount = this.currentCheckoutPayableAmount || 100;
+
+      const res = await this.apiCall('/api/subscription/request-payment', 'POST', {
+        transaction_id: utr,
+        plan_name: planName,
+        amount: amount,
+        promo_code: this.appliedPromoCode || null
+      });
+
+      if (res && res.success) {
+        if (utrMsg) {
+          utrMsg.style.display = 'block';
+          utrMsg.style.color = '#15803d';
+          utrMsg.innerHTML = '✅ <strong>अनुरोध प्राप्त हुआ!</strong> आपका भुगतान सत्यापित होते ही प्रो सदस्यता चालू कर दी जाएगी।';
+        }
+        this.showToast('🎉 भुगतान अनुरोध जमा हो गया! सत्यापन के बाद आपका प्लान सक्रिय हो जाएगा।', 'success');
+        setTimeout(() => {
+          this.closeModal('directUpiPaymentModal');
+        }, 2500);
+      } else {
+        if (utrMsg) {
+          utrMsg.style.display = 'block';
+          utrMsg.style.color = '#dc2626';
+          utrMsg.textContent = (res && res.error) || 'सबमिट करने में त्रुटि आई। कृपया पुनः प्रयास करें।';
+        }
+        this.showToast((res && res.error) || 'त्रुटि आई', 'error');
+      }
+    } catch (e) {
+      this.showToast('नेटवर्क त्रुटि। कृपया Telegram पर संपर्क करें।', 'error');
+    } finally {
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = 'सबमिट करें ✓';
+      }
+    }
+  }
+
+  proceedToCashfreePg() {
+    this.closeModal('directUpiPaymentModal');
+    this.initiateCashfreePayment(this.currentCheckoutPlanId || '1m');
+  }
+
+  copyUpiId() {
+    navigator.clipboard.writeText('8795622714harsh@ybl');
+    this.showToast('UPI ID (8795622714harsh@ybl) कॉपी हो गई!', 'success');
+  }
+
   async initiateCashfreePayment(planId = '1m') {
     if (!this.user) {
       this.openModal('loginModal');
@@ -7812,11 +8151,15 @@ ${link}`;
     this.showToast('Cashfree पेमेंट लोड हो रहा है... 🔐', 'info');
     try {
       const returnUrl = `${window.location.origin}/?order_id={order_id}`;
-      const res = await this.apiCall('/api/payment/cashfree/create-order', 'POST', {
+      const payload = {
         plan_id: planId,
         plan_days: planDays[planId] || 30,
         return_url: returnUrl
-      });
+      };
+      if (this.appliedPromoCode) {
+        payload.promo_code = this.appliedPromoCode;
+      }
+      const res = await this.apiCall('/api/payment/cashfree/create-order', 'POST', payload);
 
       if (res && res.payment_session_id && window.Cashfree) {
         const cashfree = window.Cashfree({
@@ -7872,6 +8215,60 @@ ${link}`;
     }
     if (!pId) pId = 47; // Default Ramdhari Gupta Khand 1 Class 1
     this.openPractice(pId);
+  }
+
+  filterClassesMobile(query) {
+    const q = (query || '').toLowerCase().trim();
+    const catList = document.getElementById('classesCategoriesList');
+    if (!catList) return;
+    const cards = catList.querySelectorAll('.series-card, .category-row-card');
+    cards.forEach(card => {
+      const text = card.textContent.toLowerCase();
+      if (!q || text.includes(q)) {
+        card.style.display = '';
+      } else {
+        card.style.display = 'none';
+      }
+    });
+  }
+
+  filterClassesBySpeed(wpm, btnEl) {
+    if (btnEl) {
+      document.querySelectorAll('.mobile-speed-chip').forEach(c => c.classList.remove('active'));
+      btnEl.classList.add('active');
+    }
+    const catList = document.getElementById('classesCategoriesList');
+    if (!catList) return;
+    const cards = catList.querySelectorAll('.series-card, .category-row-card');
+    cards.forEach(card => {
+      if (!wpm || wpm === 0) {
+        card.style.display = '';
+      } else {
+        const text = card.textContent;
+        const speedMatch = text.includes(`${wpm} WPM`) || text.includes(`${wpm} शब्द`) || text.includes(`गति ${wpm}`);
+        card.style.display = speedMatch ? '' : 'none';
+      }
+    });
+  }
+
+  switchClassesLang(lang, btnEl) {
+    if (btnEl) {
+      document.querySelectorAll('.mobile-lang-tab-btn').forEach(b => b.classList.remove('active'));
+      btnEl.classList.add('active');
+    }
+    const catList = document.getElementById('classesCategoriesList');
+    if (!catList) return;
+    const cards = catList.querySelectorAll('.series-card, .category-row-card');
+    cards.forEach(card => {
+      const text = card.textContent.toLowerCase();
+      if (lang === 'hi') {
+        const isEnglish = text.includes('english') || text.includes('kailash chandra') || text.includes('progressive');
+        card.style.display = isEnglish ? 'none' : '';
+      } else {
+        const isEnglish = text.includes('english') || text.includes('kailash chandra') || text.includes('progressive');
+        card.style.display = isEnglish ? '' : 'none';
+      }
+    });
   }
 
   // -------------------------------------------------------------------------

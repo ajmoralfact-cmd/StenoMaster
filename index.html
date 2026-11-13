@@ -77,7 +77,7 @@
   <!-- Performance Preconnects for Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="/css/style.css?v=22.0">
+  <link rel="stylesheet" href="/css/style.css?v=23.0">
 
   <!-- Shield Root Hindi Shorthand Content from Chrome / Browser Auto-Translation -->
   <script>
@@ -711,6 +711,124 @@
            VIEW: HOME (DASHBOARD)
            =================================================================== -->
       <main class="page-view active" id="view-home">
+        <!-- =================================================================
+             MOBILE NATIVE DASHBOARD (Strictly Mobile View: <=767px)
+             ================================================================= -->
+        <div class="mobile-dashboard-section hide-desktop">
+          <!-- 1. Personalized Welcome Card -->
+          <div class="mobile-welcome-card" id="mobileWelcomeCard">
+            <div class="mwc-left">
+              <div class="mwc-avatar-ring">
+                <span id="mwcAvatarInitial">H</span>
+              </div>
+              <div class="mwc-text-group">
+                <h3 class="mwc-greeting">Namaste, <span id="mwcStudentName">विद्यार्थी</span>! 👋</h3>
+                <p class="mwc-sub">आज अपनी स्टेनोग्राफी प्रैक्टिस को नेक्स्ट लेवल पर ले जाइए।</p>
+              </div>
+            </div>
+            <div class="mwc-badge" id="mwcProBadge">
+              <span>👑 PRO</span>
+            </div>
+          </div>
+
+          <!-- 2. Featured Continue Practice Card -->
+          <div class="mobile-continue-card" onclick="stenoApp.continueLastPractice()" id="mobileContinuePracticeCard" title="पिछला अभ्यास जारी रखें">
+            <div class="mcc-top">
+              <span class="mcc-badge">CONTINUE PRACTICE • जारी रखें ▶</span>
+              <span class="mcc-wpm-pill" id="mccWpmTag">80 WPM</span>
+            </div>
+            <h4 class="mcc-title" id="mccPassageTitle">रामधारी गुप्ता – खंड 1</h4>
+            <div class="mcc-meta">
+              <span>🎧 हिंदी डिक्टेशन</span>
+              <span>•</span>
+              <span id="mccExerciseNum">अभ्यास 1</span>
+            </div>
+            <button type="button" class="mcc-cta-btn">
+              <span>Continue Practice →</span>
+            </button>
+          </div>
+
+          <!-- 3. Student Performance 2x2 Grid -->
+          <div class="mobile-perf-header">
+            <span>📊 आपकी प्रगति (Your Performance)</span>
+          </div>
+          <div class="mobile-perf-grid">
+            <!-- 1. Avg Speed -->
+            <div class="perf-metric-card" onclick="stenoApp.navigate('my-practice')">
+              <div class="perf-metric-top">
+                <span class="perf-icon icon-speed">⚡</span>
+                <span class="perf-tag">औसत गति</span>
+              </div>
+              <div class="perf-metric-val" id="perfAvgWpm">0.0 <small>WPM</small></div>
+              <div class="perf-metric-sub">नेट स्पीड (Net WPM)</div>
+            </div>
+
+            <!-- 2. Accuracy -->
+            <div class="perf-metric-card" onclick="stenoApp.navigate('my-practice')">
+              <div class="perf-metric-top">
+                <span class="perf-icon icon-acc">🎯</span>
+                <span class="perf-tag">सटीकता</span>
+              </div>
+              <div class="perf-metric-val" id="perfAccuracy">0.0<small>%</small></div>
+              <div class="perf-metric-sub">सटीक शब्द शुद्धता</div>
+            </div>
+
+            <!-- 3. Practice Streak -->
+            <div class="perf-metric-card" onclick="stenoApp.navigate('leaderboard')">
+              <div class="perf-metric-top">
+                <span class="perf-icon icon-streak">🔥</span>
+                <span class="perf-tag">स्ट्रीक</span>
+              </div>
+              <div class="perf-metric-val" id="perfStreak">0 <small>दिन</small></div>
+              <div class="perf-metric-sub">नियमित अभ्यास</div>
+            </div>
+
+            <!-- 4. Completed Classes -->
+            <div class="perf-metric-card" onclick="stenoApp.navigate('classes')">
+              <div class="perf-metric-top">
+                <span class="perf-icon icon-classes">🏆</span>
+                <span class="perf-tag">पूर्ण अभ्यास</span>
+              </div>
+              <div class="perf-metric-val" id="perfCompleted">0 <small>कक्षाएं</small></div>
+              <div class="perf-metric-sub">कुल अभ्यास सत्र</div>
+            </div>
+          </div>
+
+          <!-- 4. Practice Categories (2x2 Clean Mobile Tiles) -->
+          <div class="mobile-perf-header" style="margin-top:16px;">
+            <span>📚 अभ्यास श्रेणियां (Practice Categories)</span>
+          </div>
+          <div class="mobile-categories-2x2-grid">
+            <div class="mobile-cat-tile tile-hindi" onclick="stenoApp.navigate('classes')">
+              <div class="cat-tile-icon">🎧</div>
+              <div class="cat-tile-title">हिंदी डिक्टेशन</div>
+              <div class="cat-tile-desc">रामधारी खंड 1, 2 व पत्रिका (250+)</div>
+              <span class="cat-tile-arrow">शुरू करें →</span>
+            </div>
+
+            <div class="mobile-cat-tile tile-english" onclick="stenoApp.navigate('self-practice')">
+              <div class="cat-tile-icon">⌨️</div>
+              <div class="cat-tile-title">सेल्फ टाइपिंग</div>
+              <div class="cat-tile-desc">स्वतंत्र टाइपिंग व फॉन्ट अभ्यास</div>
+              <span class="cat-tile-arrow">शुरू करें →</span>
+            </div>
+
+            <div class="mobile-cat-tile tile-exam" onclick="stenoApp.openPractice(47)">
+              <div class="cat-tile-icon">📜</div>
+              <div class="cat-tile-title">परीक्षा मोड</div>
+              <div class="cat-tile-desc">SSC व हाई कोर्ट रियल टेस्ट हॉल</div>
+              <span class="cat-tile-arrow">टेस्ट दें →</span>
+            </div>
+
+            <div class="mobile-cat-tile tile-perf" onclick="stenoApp.navigate('my-practice')">
+              <div class="cat-tile-icon">📊</div>
+              <div class="cat-tile-title">मेरा प्रदर्शन</div>
+              <div class="cat-tile-desc">विस्तृत इतिहास व गलती रिपोर्ट</div>
+              <span class="cat-tile-arrow">देखें →</span>
+            </div>
+          </div>
+        </div>
+
         <!-- Dashboard Section Title & Real-Time Sync Bar -->
         <div class="section-header hide-mobile" style="margin-bottom: 20px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
           <div>
@@ -1691,6 +1809,36 @@
           <div>
             <h2 class="section-title" data-i18n="classes_title">सभी अभ्यास डिक्टेशन (All Dictation Classes)</h2>
             <p class="section-subtitle" data-i18n="classes_subtitle">अपनी पसंद की भाषा, कठिनाई और श्रेणी के अनुसार अभ्यास चुनें।</p>
+          </div>
+        </div>
+
+        <!-- Mobile Classes Top Bar: Search + Language Tabs + Speed Filter Chips (Mobile Only) -->
+        <div class="mobile-classes-top-bar hide-desktop" style="margin-bottom:14px;">
+          <!-- Search Bar -->
+          <div class="mobile-classes-search-wrap">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="mobileClassesSearchInput" class="mobile-classes-search-input" placeholder="सर्च करें (उदा. रामधारी खंड 1, क्लास 15...)" oninput="stenoApp.filterClassesMobile(this.value)">
+          </div>
+
+          <!-- Language Selector Segmented Tabs -->
+          <div class="mobile-lang-tabs-row">
+            <button type="button" class="mobile-lang-tab-btn active" id="tabMobileHindiSteno" onclick="stenoApp.switchClassesLang('hi', this)">
+              <span>🅰️ हिंदी आशुलिपि</span>
+            </button>
+            <button type="button" class="mobile-lang-tab-btn" id="tabMobileEnglishSteno" onclick="stenoApp.switchClassesLang('en', this)">
+              <span>🔤 English Shorthand</span>
+            </button>
+          </div>
+
+          <!-- Horizontally Scrollable Speed Chips (40 | 50 | 60 | 80 | 100 | 120 | 140 WPM) -->
+          <div class="mobile-speed-chips-scroll">
+            <button type="button" class="mobile-speed-chip active" onclick="stenoApp.filterClassesBySpeed(0, this)">सभी गति</button>
+            <button type="button" class="mobile-speed-chip" onclick="stenoApp.filterClassesBySpeed(40, this)">40 WPM</button>
+            <button type="button" class="mobile-speed-chip" onclick="stenoApp.filterClassesBySpeed(60, this)">60 WPM</button>
+            <button type="button" class="mobile-speed-chip" onclick="stenoApp.filterClassesBySpeed(80, this)">80 WPM</button>
+            <button type="button" class="mobile-speed-chip" onclick="stenoApp.filterClassesBySpeed(100, this)">100 WPM</button>
+            <button type="button" class="mobile-speed-chip" onclick="stenoApp.filterClassesBySpeed(120, this)">120 WPM</button>
+            <button type="button" class="mobile-speed-chip" onclick="stenoApp.filterClassesBySpeed(140, this)">140 WPM</button>
           </div>
         </div>
 
@@ -2909,21 +3057,21 @@
     <!-- =====================================================================
          Mobile Bottom Navigation Bar
          ===================================================================== -->
-    <nav class="mobile-bottom-nav">
+    <nav class="mobile-bottom-nav" id="mobileBottomNav">
       <button class="mobile-nav-btn active" data-nav="home">
-        <span>🏠</span> <span data-i18n="bnav_home">होम</span>
+        <span class="mbn-icon">🏠</span> <span class="mbn-label">Home</span>
       </button>
       <button class="mobile-nav-btn" data-nav="classes">
-        <span>📚</span> <span data-i18n="bnav_classes">क्लासेस</span>
+        <span class="mbn-icon">📚</span> <span class="mbn-label">Classes</span>
       </button>
-      <button class="mobile-nav-btn" data-nav="community">
-        <span>💬</span> <span>कम्युनिटी</span>
+      <button class="mobile-nav-btn" data-nav="self-practice">
+        <span class="mbn-icon">✍️</span> <span class="mbn-label">Practice</span>
       </button>
       <button class="mobile-nav-btn" data-nav="my-practice">
-        <span>⏱️</span> <span data-i18n="bnav_history">इतिहास</span>
+        <span class="mbn-icon">📜</span> <span class="mbn-label">History</span>
       </button>
-      <button class="mobile-nav-btn" data-nav="settings">
-        <span>⚙️</span> <span data-i18n="bnav_settings">सेटिंग्स</span>
+      <button class="mobile-nav-btn" data-nav="profile">
+        <span class="mbn-icon">👤</span> <span class="mbn-label">Profile</span>
       </button>
     </nav>
 
@@ -3707,7 +3855,7 @@
   <script src="/js/ocr_service.js?v=1.1"></script>
   <script src="/js/steno_dictionary.js?v=1.0"></script>
   <script src="/js/comparison_view.js?v=21.5"></script>
-  <script src="/js/app.js?v=21.8"></script>
+  <script src="/js/app.js?v=23.0"></script>
   <!-- Strict Exam Hall Anti-Cheat Warning Modal -->
   <div class="modal-overlay" id="examHallWarningModal" style="z-index:99999;" onclick="if(event.target === this) stenoTypingEngine.exitExamModeFromModal()">
     <div class="modal-card" style="max-width: 480px; text-align:center; border:2px solid #ef4444; box-shadow:0 10px 40px rgba(239,68,68,0.3); position:relative; padding:28px 24px;">
