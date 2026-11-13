@@ -1547,6 +1547,19 @@ class StenoAdmin {
     }
   }
 
+  formatDateTimeCompact(isoStr) {
+    if (!isoStr) return null;
+    try {
+      const dt = new Date(isoStr);
+      if (isNaN(dt.getTime())) return String(isoStr);
+      const datePart = dt.toLocaleDateString('hi-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+      const timePart = dt.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true });
+      return `${datePart}, ${timePart}`;
+    } catch (e) {
+      return String(isoStr);
+    }
+  }
+
   // -------------------------------------------------------------------------
   // Subscribers Management & Manual Pro Grant / Revocation
   // -------------------------------------------------------------------------
@@ -1555,7 +1568,7 @@ class StenoAdmin {
     const tbody = document.getElementById('adminSubscribersTableBody');
     if (!tbody) return;
     if (!silent) {
-      tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:24px; color:var(--text-muted);"><div class="spinner-small" style="display:inline-block; margin-right:8px;"></div>सब्सक्राइबर सूची लोड हो रही है...</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:24px; color:var(--text-muted);"><div class="spinner-small" style="display:inline-block; margin-right:8px;"></div>सब्सक्राइबर सूची लोड हो रही है...</td></tr>';
     }
     try {
       const res = await stenoApp.apiCall(`/api/admin/users?_t=${Date.now()}`);
@@ -1581,7 +1594,7 @@ class StenoAdmin {
       this.renderSubscribersTable();
     } catch (err) {
       if (!silent) {
-        tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:24px; color:var(--accent-red);">त्रुटि: ${this.escapeHtml(err.message)}</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:24px; color:var(--accent-red);">त्रुटि: ${this.escapeHtml(err.message)}</td></tr>`;
       }
     }
   }
@@ -1625,7 +1638,7 @@ class StenoAdmin {
       stenoApp.showToast('एक्सपोर्ट करने के लिए कोई छात्र डेटा नहीं है।', 'info');
       return;
     }
-    const headers = ['छात्र ID', 'छात्र कोड', 'नाम', 'ईमेल', 'फोन', 'सदस्यता स्थिति', 'प्लान', 'शेष दिन', 'कुल अभ्यास', 'स्ट्रीक दिन', 'रिवॉर्ड अंक', 'रेफरल कोड'];
+    const headers = ['छात्र ID', 'छात्र कोड', 'नाम', 'ईमेल', 'फोन', 'पंजीकरण तिथि', 'पास सक्रिय तिथि', 'सदस्यता स्थिति', 'प्लान', 'शेष दिन', 'कुल अभ्यास', 'स्ट्रीक दिन', 'रिवॉर्ड अंक', 'रेफरल कोड'];
     const rows = list.map(u => {
       const isFreeAccess = !!u.is_free_access;
       const isPro = u.effective_status === 'active' || isFreeAccess;
@@ -1644,6 +1657,8 @@ class StenoAdmin {
         `"${(u.display_name || u.username || '').replace(/"/g, '""')}"`,
         `"${(u.email || '').replace(/"/g, '""')}"`,
         `"${(u.phone || '').replace(/"/g, '""')}"`,
+        `"${(this.formatDateTimeCompact(u.created_at) || '').replace(/"/g, '""')}"`,
+        `"${(this.formatDateTimeCompact(u.subscription_start) || 'कोई पास नहीं').replace(/"/g, '""')}"`,
         `"${statusStr}"`,
         `"${planName.replace(/"/g, '""')}"`,
         `"${daysStr}"`,
@@ -1715,7 +1730,7 @@ class StenoAdmin {
     });
 
     if (filtered.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:32px; color:var(--text-muted); font-size:0.9rem;">कोई छात्र/सब्सक्राइबर नहीं मिला।</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:32px; color:var(--text-muted); font-size:0.9rem;">कोई छात्र/सब्सक्राइबर नहीं मिला।</td></tr>';
       return;
     }
 
@@ -1822,7 +1837,23 @@ class StenoAdmin {
             </div>
           </td>
 
-          <!-- 4. एक्टिविटी (Activity) -->
+          <!-- 4. पंजीकरण व पास तिथि (Dates) -->
+          <td>
+            <div style="display:flex; flex-direction:column; gap:4px;">
+              <!-- 1st Line: पंजीकरण तिथि -->
+              <div style="font-size:0.78rem; color:var(--text-main); font-weight:600; display:flex; align-items:center; gap:5px;" title="छात्र रजिस्ट्रेशन तिथि">
+                <span style="opacity:0.85;">📝</span>
+                <span><strong>पंजीकरण:</strong> ${this.formatDateTimeCompact(u.created_at) || 'उपलब्ध नहीं'}</span>
+              </div>
+              <!-- 2nd Line: पास मिलने की तिथि -->
+              <div style="font-size:0.77rem; color:${u.subscription_start ? '#059669' : 'var(--text-muted)'}; font-weight:600; display:flex; align-items:center; gap:5px;" title="पास सक्रियण तिथि">
+                <span style="opacity:0.85;">👑</span>
+                <span><strong>पास:</strong> ${this.formatDateTimeCompact(u.subscription_start) || 'कोई पास नहीं'}</span>
+              </div>
+            </div>
+          </td>
+
+          <!-- 5. एक्टिविटी (Activity) -->
           <td>
             <div style="font-weight:700; font-size:0.86rem; color:var(--text-main);">
               🎯 ${u.attempts_count || 0} अभ्यास

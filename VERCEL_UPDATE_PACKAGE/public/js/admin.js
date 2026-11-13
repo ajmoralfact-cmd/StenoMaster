@@ -321,14 +321,113 @@ class StenoAdmin {
     this.renderGlobalCampaignCard();
   }
 
-  async loadPassages() {
+  async loadPassages(page = 1) {
     try {
-      const res = await stenoApp.apiCall('/api/admin/passages');
+      this.passagesPage = page;
+      if (!this.passagesLimit) this.passagesLimit = 25;
+      if (this.passagesSearch === undefined) this.passagesSearch = '';
+      if (this.passagesCategory === undefined) this.passagesCategory = '';
+
+      let url = `/api/admin/passages?page=${page}&limit=${this.passagesLimit}`;
+      if (this.passagesSearch) url += `&search=${encodeURIComponent(this.passagesSearch)}`;
+      if (this.passagesCategory) url += `&category_id=${this.passagesCategory}`;
+
+      const res = await stenoApp.apiCall(url);
       this.passagesList = res.passages || [];
+      this.passagesTotal = res.total !== undefined ? res.total : this.passagesList.length;
+      this.passagesTotalPages = res.total_pages || Math.ceil(this.passagesTotal / this.passagesLimit) || 1;
+
+      this.populatePassageCategoryFilter();
       this.renderPassagesTable();
+      this.renderPassagesPagination();
     } catch (err) {
       console.error('Failed to load admin passages:', err);
     }
+  }
+
+  populatePassageCategoryFilter() {
+    const sel = document.getElementById('adminPassagesCategoryFilter');
+    if (!sel || sel.options.length > 1) return;
+    if (this.categoriesList && this.categoriesList.length > 0) {
+      this.categoriesList.forEach(c => {
+        const opt = document.createElement('option');
+        opt.value = c.id;
+        opt.textContent = `📁 ${c.name}`;
+        sel.appendChild(opt);
+      });
+    }
+  }
+
+  filterPassagesCategory(catId) {
+    this.passagesCategory = catId || '';
+    this.loadPassages(1);
+  }
+
+  searchPassages(val) {
+    if (this._passageSearchTimeout) clearTimeout(this._passageSearchTimeout);
+    this._passageSearchTimeout = setTimeout(() => {
+      this.passagesSearch = (val || '').trim();
+      this.loadPassages(1);
+    }, 300);
+  }
+
+  changePassagesLimit(limit) {
+    this.passagesLimit = parseInt(limit, 10) || 25;
+    this.loadPassages(1);
+  }
+
+  renderPassagesPagination() {
+    const badge = document.getElementById('adminPassagesCountBadge');
+    if (badge) badge.textContent = `${this.passagesTotal} आलेख`;
+
+    const info = document.getElementById('adminPassagesPageInfo');
+    if (info) {
+      if (this.passagesTotal === 0) {
+        info.textContent = 'कोई आलेख नहीं मिला';
+      } else {
+        const start = (this.passagesPage - 1) * this.passagesLimit + 1;
+        const end = Math.min(this.passagesPage * this.passagesLimit, this.passagesTotal);
+        info.textContent = `प्रदर्शित: ${start}-${end} / कुल ${this.passagesTotal} आलेख (पृष्ठ ${this.passagesPage}/${this.passagesTotalPages})`;
+      }
+    }
+
+    const btnContainer = document.getElementById('adminPassagesPageButtons');
+    if (!btnContainer) return;
+
+    if (this.passagesTotalPages <= 1) {
+      btnContainer.innerHTML = '';
+      return;
+    }
+
+    let btnsHtml = '';
+    // Previous button
+    btnsHtml += `<button class="btn-secondary" style="padding:4px 10px; font-size:0.8rem;" ${this.passagesPage <= 1 ? 'disabled style="opacity:0.5;"' : ''} onclick="stenoAdmin.loadPassages(${this.passagesPage - 1})">« पिछला</button>`;
+
+    // Page numbers (smart sliding window)
+    const cur = this.passagesPage;
+    const total = this.passagesTotalPages;
+    const startP = Math.max(1, cur - 2);
+    const endP = Math.min(total, cur + 2);
+
+    if (startP > 1) {
+      btnsHtml += `<button class="btn-secondary" style="padding:4px 8px; font-size:0.8rem;" onclick="stenoAdmin.loadPassages(1)">1</button>`;
+      if (startP > 2) btnsHtml += `<span style="padding:0 4px; color:var(--text-muted);">...</span>`;
+    }
+
+    for (let p = startP; p <= endP; p++) {
+      const active = p === cur ? 'background:var(--primary); color:#fff; font-weight:700; border-color:var(--primary);' : '';
+      btnsHtml += `<button class="btn-secondary" style="padding:4px 9px; font-size:0.8rem; ${active}" onclick="stenoAdmin.loadPassages(${p})">${p}</button>`;
+    }
+
+    if (endP < total) {
+      if (endP < total - 1) btnsHtml += `<span style="padding:0 4px; color:var(--text-muted);">...</span>`;
+      btnsHtml += `<button class="btn-secondary" style="padding:4px 8px; font-size:0.8rem;" onclick="stenoAdmin.loadPassages(${total})">${total}</button>`;
+    }
+
+    // Next button
+    btnsHtml += `<button class="btn-secondary" style="padding:4px 10px; font-size:0.8rem;" ${this.passagesPage >= total ? 'disabled style="opacity:0.5;"' : ''} onclick="stenoAdmin.loadPassages(${this.passagesPage + 1})">अगला »</button>`;
+
+    btnContainer.innerHTML = btnsHtml;
   }
 
   renderPassagesTable() {
@@ -341,8 +440,8 @@ class StenoAdmin {
     }
 
     tbody.innerHTML = this.passagesList.map(p => {
-      const hasMangal = !!(p.official_text && p.official_text.trim());
-      const hasKruti = !!(p.official_text_krutidev && p.official_text_krutidev.trim());
+      const hasMangal = !!(p.has_mangal !== undefined ? p.has_mangal : (p.official_text && p.official_text.trim()));
+      const hasKruti = !!(p.has_kruti !== undefined ? p.has_kruti : (p.official_text_krutidev && p.official_text_krutidev.trim()));
       const fontBadges = `
         <div style="display:flex; flex-direction:column; gap:3px;">
           <span class="badge" style="background:${hasMangal ? '#e0f2fe' : '#fee2e2'}; color:${hasMangal ? '#0284c7' : '#ef4444'}; font-size:0.75rem;">
@@ -530,9 +629,20 @@ class StenoAdmin {
     stenoApp.openModal('passageEditModal');
   }
 
-  openEditPassage(id) {
-    const p = this.passagesList.find(item => item.id === id);
+  async openEditPassage(id) {
+    let p = this.passagesList.find(item => item.id === id);
     if (!p) return;
+
+    if (!p.official_text) {
+      try {
+        const detailRes = await stenoApp.apiCall(`/api/passages/${id}`);
+        if (detailRes && detailRes.passage) {
+          p = Object.assign(p, detailRes.passage);
+        }
+      } catch (e) {
+        console.warn('Could not fetch passage full text for editing:', e);
+      }
+    }
 
     this.populateCategoryDropdown();
     document.getElementById('passageModalTitle').textContent = 'स्टेनो आलेख संशोधित करें (Edit Passage)';
@@ -1437,6 +1547,19 @@ class StenoAdmin {
     }
   }
 
+  formatDateTimeCompact(isoStr) {
+    if (!isoStr) return null;
+    try {
+      const dt = new Date(isoStr);
+      if (isNaN(dt.getTime())) return String(isoStr);
+      const datePart = dt.toLocaleDateString('hi-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+      const timePart = dt.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true });
+      return `${datePart}, ${timePart}`;
+    } catch (e) {
+      return String(isoStr);
+    }
+  }
+
   // -------------------------------------------------------------------------
   // Subscribers Management & Manual Pro Grant / Revocation
   // -------------------------------------------------------------------------
@@ -1445,7 +1568,7 @@ class StenoAdmin {
     const tbody = document.getElementById('adminSubscribersTableBody');
     if (!tbody) return;
     if (!silent) {
-      tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:24px; color:var(--text-muted);"><div class="spinner-small" style="display:inline-block; margin-right:8px;"></div>सब्सक्राइबर सूची लोड हो रही है...</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:24px; color:var(--text-muted);"><div class="spinner-small" style="display:inline-block; margin-right:8px;"></div>सब्सक्राइबर सूची लोड हो रही है...</td></tr>';
     }
     try {
       const res = await stenoApp.apiCall(`/api/admin/users?_t=${Date.now()}`);
@@ -1471,7 +1594,7 @@ class StenoAdmin {
       this.renderSubscribersTable();
     } catch (err) {
       if (!silent) {
-        tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:24px; color:var(--accent-red);">त्रुटि: ${this.escapeHtml(err.message)}</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:24px; color:var(--accent-red);">त्रुटि: ${this.escapeHtml(err.message)}</td></tr>`;
       }
     }
   }
@@ -1515,7 +1638,7 @@ class StenoAdmin {
       stenoApp.showToast('एक्सपोर्ट करने के लिए कोई छात्र डेटा नहीं है।', 'info');
       return;
     }
-    const headers = ['छात्र ID', 'छात्र कोड', 'नाम', 'ईमेल', 'फोन', 'सदस्यता स्थिति', 'प्लान', 'शेष दिन', 'कुल अभ्यास', 'स्ट्रीक दिन', 'रिवॉर्ड अंक', 'रेफरल कोड'];
+    const headers = ['छात्र ID', 'छात्र कोड', 'नाम', 'ईमेल', 'फोन', 'पंजीकरण तिथि', 'पास सक्रिय तिथि', 'सदस्यता स्थिति', 'प्लान', 'शेष दिन', 'कुल अभ्यास', 'स्ट्रीक दिन', 'रिवॉर्ड अंक', 'रेफरल कोड'];
     const rows = list.map(u => {
       const isFreeAccess = !!u.is_free_access;
       const isPro = u.effective_status === 'active' || isFreeAccess;
@@ -1534,6 +1657,8 @@ class StenoAdmin {
         `"${(u.display_name || u.username || '').replace(/"/g, '""')}"`,
         `"${(u.email || '').replace(/"/g, '""')}"`,
         `"${(u.phone || '').replace(/"/g, '""')}"`,
+        `"${(this.formatDateTimeCompact(u.created_at) || '').replace(/"/g, '""')}"`,
+        `"${(this.formatDateTimeCompact(u.subscription_start) || 'कोई पास नहीं').replace(/"/g, '""')}"`,
         `"${statusStr}"`,
         `"${planName.replace(/"/g, '""')}"`,
         `"${daysStr}"`,
@@ -1605,7 +1730,7 @@ class StenoAdmin {
     });
 
     if (filtered.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:32px; color:var(--text-muted); font-size:0.9rem;">कोई छात्र/सब्सक्राइबर नहीं मिला।</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:32px; color:var(--text-muted); font-size:0.9rem;">कोई छात्र/सब्सक्राइबर नहीं मिला।</td></tr>';
       return;
     }
 
@@ -1712,7 +1837,23 @@ class StenoAdmin {
             </div>
           </td>
 
-          <!-- 4. एक्टिविटी (Activity) -->
+          <!-- 4. पंजीकरण व पास तिथि (Dates) -->
+          <td>
+            <div style="display:flex; flex-direction:column; gap:4px;">
+              <!-- 1st Line: पंजीकरण तिथि -->
+              <div style="font-size:0.78rem; color:var(--text-main); font-weight:600; display:flex; align-items:center; gap:5px;" title="छात्र रजिस्ट्रेशन तिथि">
+                <span style="opacity:0.85;">📝</span>
+                <span><strong>पंजीकरण:</strong> ${this.formatDateTimeCompact(u.created_at) || 'उपलब्ध नहीं'}</span>
+              </div>
+              <!-- 2nd Line: पास मिलने की तिथि -->
+              <div style="font-size:0.77rem; color:${u.subscription_start ? '#059669' : 'var(--text-muted)'}; font-weight:600; display:flex; align-items:center; gap:5px;" title="पास सक्रियण तिथि">
+                <span style="opacity:0.85;">👑</span>
+                <span><strong>पास:</strong> ${this.formatDateTimeCompact(u.subscription_start) || 'कोई पास नहीं'}</span>
+              </div>
+            </div>
+          </td>
+
+          <!-- 5. एक्टिविटी (Activity) -->
           <td>
             <div style="font-weight:700; font-size:0.86rem; color:var(--text-main);">
               🎯 ${u.attempts_count || 0} अभ्यास

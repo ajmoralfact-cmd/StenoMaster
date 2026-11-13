@@ -204,6 +204,11 @@ class StenoAdmin {
     if (!el) return;
 
     el.innerHTML = `
+      <!-- 0. GLOBAL 1-CLICK FREE CAMPAIGN HERO BANNER/CARD -->
+      <div id="adminGlobalFreeCampaignContainer" style="margin-bottom: 24px;">
+        <!-- Populated via stenoAdmin.renderGlobalCampaignCard() -->
+      </div>
+
       <!-- 1. Key 4 Highlight Metrics Cards -->
       <div class="stats-summary-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); margin-bottom: 24px;">
         <div class="stat-card" style="cursor:pointer;" onclick="stenoAdmin.switchTab('subscribers')" title="छात्र सूची देखें">
@@ -311,16 +316,118 @@ class StenoAdmin {
         </div>
       </div>
     `;
+
+    // Render Global Free Campaign card into the container
+    this.renderGlobalCampaignCard();
   }
 
-  async loadPassages() {
+  async loadPassages(page = 1) {
     try {
-      const res = await stenoApp.apiCall('/api/admin/passages');
+      this.passagesPage = page;
+      if (!this.passagesLimit) this.passagesLimit = 25;
+      if (this.passagesSearch === undefined) this.passagesSearch = '';
+      if (this.passagesCategory === undefined) this.passagesCategory = '';
+
+      let url = `/api/admin/passages?page=${page}&limit=${this.passagesLimit}`;
+      if (this.passagesSearch) url += `&search=${encodeURIComponent(this.passagesSearch)}`;
+      if (this.passagesCategory) url += `&category_id=${this.passagesCategory}`;
+
+      const res = await stenoApp.apiCall(url);
       this.passagesList = res.passages || [];
+      this.passagesTotal = res.total !== undefined ? res.total : this.passagesList.length;
+      this.passagesTotalPages = res.total_pages || Math.ceil(this.passagesTotal / this.passagesLimit) || 1;
+
+      this.populatePassageCategoryFilter();
       this.renderPassagesTable();
+      this.renderPassagesPagination();
     } catch (err) {
       console.error('Failed to load admin passages:', err);
     }
+  }
+
+  populatePassageCategoryFilter() {
+    const sel = document.getElementById('adminPassagesCategoryFilter');
+    if (!sel || sel.options.length > 1) return;
+    if (this.categoriesList && this.categoriesList.length > 0) {
+      this.categoriesList.forEach(c => {
+        const opt = document.createElement('option');
+        opt.value = c.id;
+        opt.textContent = `📁 ${c.name}`;
+        sel.appendChild(opt);
+      });
+    }
+  }
+
+  filterPassagesCategory(catId) {
+    this.passagesCategory = catId || '';
+    this.loadPassages(1);
+  }
+
+  searchPassages(val) {
+    if (this._passageSearchTimeout) clearTimeout(this._passageSearchTimeout);
+    this._passageSearchTimeout = setTimeout(() => {
+      this.passagesSearch = (val || '').trim();
+      this.loadPassages(1);
+    }, 300);
+  }
+
+  changePassagesLimit(limit) {
+    this.passagesLimit = parseInt(limit, 10) || 25;
+    this.loadPassages(1);
+  }
+
+  renderPassagesPagination() {
+    const badge = document.getElementById('adminPassagesCountBadge');
+    if (badge) badge.textContent = `${this.passagesTotal} आलेख`;
+
+    const info = document.getElementById('adminPassagesPageInfo');
+    if (info) {
+      if (this.passagesTotal === 0) {
+        info.textContent = 'कोई आलेख नहीं मिला';
+      } else {
+        const start = (this.passagesPage - 1) * this.passagesLimit + 1;
+        const end = Math.min(this.passagesPage * this.passagesLimit, this.passagesTotal);
+        info.textContent = `प्रदर्शित: ${start}-${end} / कुल ${this.passagesTotal} आलेख (पृष्ठ ${this.passagesPage}/${this.passagesTotalPages})`;
+      }
+    }
+
+    const btnContainer = document.getElementById('adminPassagesPageButtons');
+    if (!btnContainer) return;
+
+    if (this.passagesTotalPages <= 1) {
+      btnContainer.innerHTML = '';
+      return;
+    }
+
+    let btnsHtml = '';
+    // Previous button
+    btnsHtml += `<button class="btn-secondary" style="padding:4px 10px; font-size:0.8rem;" ${this.passagesPage <= 1 ? 'disabled style="opacity:0.5;"' : ''} onclick="stenoAdmin.loadPassages(${this.passagesPage - 1})">« पिछला</button>`;
+
+    // Page numbers (smart sliding window)
+    const cur = this.passagesPage;
+    const total = this.passagesTotalPages;
+    const startP = Math.max(1, cur - 2);
+    const endP = Math.min(total, cur + 2);
+
+    if (startP > 1) {
+      btnsHtml += `<button class="btn-secondary" style="padding:4px 8px; font-size:0.8rem;" onclick="stenoAdmin.loadPassages(1)">1</button>`;
+      if (startP > 2) btnsHtml += `<span style="padding:0 4px; color:var(--text-muted);">...</span>`;
+    }
+
+    for (let p = startP; p <= endP; p++) {
+      const active = p === cur ? 'background:var(--primary); color:#fff; font-weight:700; border-color:var(--primary);' : '';
+      btnsHtml += `<button class="btn-secondary" style="padding:4px 9px; font-size:0.8rem; ${active}" onclick="stenoAdmin.loadPassages(${p})">${p}</button>`;
+    }
+
+    if (endP < total) {
+      if (endP < total - 1) btnsHtml += `<span style="padding:0 4px; color:var(--text-muted);">...</span>`;
+      btnsHtml += `<button class="btn-secondary" style="padding:4px 8px; font-size:0.8rem;" onclick="stenoAdmin.loadPassages(${total})">${total}</button>`;
+    }
+
+    // Next button
+    btnsHtml += `<button class="btn-secondary" style="padding:4px 10px; font-size:0.8rem;" ${this.passagesPage >= total ? 'disabled style="opacity:0.5;"' : ''} onclick="stenoAdmin.loadPassages(${this.passagesPage + 1})">अगला »</button>`;
+
+    btnContainer.innerHTML = btnsHtml;
   }
 
   renderPassagesTable() {
@@ -333,8 +440,8 @@ class StenoAdmin {
     }
 
     tbody.innerHTML = this.passagesList.map(p => {
-      const hasMangal = !!(p.official_text && p.official_text.trim());
-      const hasKruti = !!(p.official_text_krutidev && p.official_text_krutidev.trim());
+      const hasMangal = !!(p.has_mangal !== undefined ? p.has_mangal : (p.official_text && p.official_text.trim()));
+      const hasKruti = !!(p.has_kruti !== undefined ? p.has_kruti : (p.official_text_krutidev && p.official_text_krutidev.trim()));
       const fontBadges = `
         <div style="display:flex; flex-direction:column; gap:3px;">
           <span class="badge" style="background:${hasMangal ? '#e0f2fe' : '#fee2e2'}; color:${hasMangal ? '#0284c7' : '#ef4444'}; font-size:0.75rem;">
@@ -522,9 +629,20 @@ class StenoAdmin {
     stenoApp.openModal('passageEditModal');
   }
 
-  openEditPassage(id) {
-    const p = this.passagesList.find(item => item.id === id);
+  async openEditPassage(id) {
+    let p = this.passagesList.find(item => item.id === id);
     if (!p) return;
+
+    if (!p.official_text) {
+      try {
+        const detailRes = await stenoApp.apiCall(`/api/passages/${id}`);
+        if (detailRes && detailRes.passage) {
+          p = Object.assign(p, detailRes.passage);
+        }
+      } catch (e) {
+        console.warn('Could not fetch passage full text for editing:', e);
+      }
+    }
 
     this.populateCategoryDropdown();
     document.getElementById('passageModalTitle').textContent = 'स्टेनो आलेख संशोधित करें (Edit Passage)';
@@ -1429,6 +1547,19 @@ class StenoAdmin {
     }
   }
 
+  formatDateTimeCompact(isoStr) {
+    if (!isoStr) return null;
+    try {
+      const dt = new Date(isoStr);
+      if (isNaN(dt.getTime())) return String(isoStr);
+      const datePart = dt.toLocaleDateString('hi-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+      const timePart = dt.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true });
+      return `${datePart}, ${timePart}`;
+    } catch (e) {
+      return String(isoStr);
+    }
+  }
+
   // -------------------------------------------------------------------------
   // Subscribers Management & Manual Pro Grant / Revocation
   // -------------------------------------------------------------------------
@@ -1437,7 +1568,7 @@ class StenoAdmin {
     const tbody = document.getElementById('adminSubscribersTableBody');
     if (!tbody) return;
     if (!silent) {
-      tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:24px; color:var(--text-muted);"><div class="spinner-small" style="display:inline-block; margin-right:8px;"></div>सब्सक्राइबर सूची लोड हो रही है...</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:24px; color:var(--text-muted);"><div class="spinner-small" style="display:inline-block; margin-right:8px;"></div>सब्सक्राइबर सूची लोड हो रही है...</td></tr>';
     }
     try {
       const res = await stenoApp.apiCall(`/api/admin/users?_t=${Date.now()}`);
@@ -1463,7 +1594,7 @@ class StenoAdmin {
       this.renderSubscribersTable();
     } catch (err) {
       if (!silent) {
-        tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:24px; color:var(--accent-red);">त्रुटि: ${this.escapeHtml(err.message)}</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:24px; color:var(--accent-red);">त्रुटि: ${this.escapeHtml(err.message)}</td></tr>`;
       }
     }
   }
@@ -1507,7 +1638,7 @@ class StenoAdmin {
       stenoApp.showToast('एक्सपोर्ट करने के लिए कोई छात्र डेटा नहीं है।', 'info');
       return;
     }
-    const headers = ['छात्र ID', 'छात्र कोड', 'नाम', 'ईमेल', 'फोन', 'सदस्यता स्थिति', 'प्लान', 'शेष दिन', 'कुल अभ्यास', 'स्ट्रीक दिन', 'रिवॉर्ड अंक', 'रेफरल कोड'];
+    const headers = ['छात्र ID', 'छात्र कोड', 'नाम', 'ईमेल', 'फोन', 'पंजीकरण तिथि', 'पास सक्रिय तिथि', 'सदस्यता स्थिति', 'प्लान', 'शेष दिन', 'कुल अभ्यास', 'स्ट्रीक दिन', 'रिवॉर्ड अंक', 'रेफरल कोड'];
     const rows = list.map(u => {
       const isFreeAccess = !!u.is_free_access;
       const isPro = u.effective_status === 'active' || isFreeAccess;
@@ -1526,6 +1657,8 @@ class StenoAdmin {
         `"${(u.display_name || u.username || '').replace(/"/g, '""')}"`,
         `"${(u.email || '').replace(/"/g, '""')}"`,
         `"${(u.phone || '').replace(/"/g, '""')}"`,
+        `"${(this.formatDateTimeCompact(u.created_at) || '').replace(/"/g, '""')}"`,
+        `"${(this.formatDateTimeCompact(u.subscription_start) || 'कोई पास नहीं').replace(/"/g, '""')}"`,
         `"${statusStr}"`,
         `"${planName.replace(/"/g, '""')}"`,
         `"${daysStr}"`,
@@ -1597,15 +1730,18 @@ class StenoAdmin {
     });
 
     if (filtered.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:32px; color:var(--text-muted); font-size:0.9rem;">कोई छात्र/सब्सक्राइबर नहीं मिला।</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:32px; color:var(--text-muted); font-size:0.9rem;">कोई छात्र/सब्सक्राइबर नहीं मिला।</td></tr>';
       return;
     }
+
+    if (!this.selectedSubscriberIds) this.selectedSubscriberIds = new Set();
 
     tbody.innerHTML = filtered.map(u => {
       const isFreeAccess = !!u.is_free_access;
       const isPro = u.effective_status === 'active' || isFreeAccess;
       const isExpired = u.effective_status === 'expired';
       const hasCatAccess = !isPro && Array.isArray(u.unlocked_categories) && u.unlocked_categories.length > 0;
+      const isChecked = this.selectedSubscriberIds.has(u.id);
 
       let statusBadge = `<span class="sub-status-badge free">🆓 Free Tier</span>`;
       let daysBadge = `लाइफटाइम`;
@@ -1635,7 +1771,14 @@ class StenoAdmin {
       const initialChar = (u.display_name || u.username || 'S').trim().charAt(0).toUpperCase();
 
       return `
-        <tr>
+        <tr class="${isChecked ? 'row-selected' : ''}">
+          <!-- 0. Checkbox -->
+          <td style="text-align:center;">
+            <input type="checkbox" class="sub-row-checkbox" data-user-id="${u.id}" ${isChecked ? 'checked' : ''}
+                   onchange="stenoAdmin.toggleSubscriberSelection(${u.id}, this.checked)"
+                   style="width:16px; height:16px; cursor:pointer; accent-color:#4f46e5;">
+          </td>
+
           <!-- 1. छात्र (Student Info) -->
           <td>
             <div style="display:flex; align-items:center; gap:10px;">
@@ -1694,7 +1837,23 @@ class StenoAdmin {
             </div>
           </td>
 
-          <!-- 4. एक्टिविटी (Activity) -->
+          <!-- 4. पंजीकरण व पास तिथि (Dates) -->
+          <td>
+            <div style="display:flex; flex-direction:column; gap:4px;">
+              <!-- 1st Line: पंजीकरण तिथि -->
+              <div style="font-size:0.78rem; color:var(--text-main); font-weight:600; display:flex; align-items:center; gap:5px;" title="छात्र रजिस्ट्रेशन तिथि">
+                <span style="opacity:0.85;">📝</span>
+                <span><strong>पंजीकरण:</strong> ${this.formatDateTimeCompact(u.created_at) || 'उपलब्ध नहीं'}</span>
+              </div>
+              <!-- 2nd Line: पास मिलने की तिथि -->
+              <div style="font-size:0.77rem; color:${u.subscription_start ? '#059669' : 'var(--text-muted)'}; font-weight:600; display:flex; align-items:center; gap:5px;" title="पास सक्रियण तिथि">
+                <span style="opacity:0.85;">👑</span>
+                <span><strong>पास:</strong> ${this.formatDateTimeCompact(u.subscription_start) || 'कोई पास नहीं'}</span>
+              </div>
+            </div>
+          </td>
+
+          <!-- 5. एक्टिविटी (Activity) -->
           <td>
             <div style="font-weight:700; font-size:0.86rem; color:var(--text-main);">
               🎯 ${u.attempts_count || 0} अभ्यास
@@ -1724,7 +1883,569 @@ class StenoAdmin {
         </tr>
       `;
     }).join('');
+
+    // Update bulk action dock state
+    this.updateBulkActionDock();
   }
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // GLOBAL 1-CLICK FREE CAMPAIGN METHODS
+  // ══════════════════════════════════════════════════════════════════════════
+
+  async renderGlobalCampaignCard() {
+    const container = document.getElementById('adminGlobalFreeCampaignContainer');
+    if (!container) return;
+
+    try {
+      const res = await stenoApp.apiCall('/api/admin/global-free-campaign');
+      const isEnabled = res && res.enabled;
+      const endStr = res && res.campaign_end;
+      const bannerMsg = (res && res.banner_message) || 'StenoMaster अभी सभी के लिए FREE है! 🎉';
+      const currentTheme = (res && res.theme) || 'gold';
+
+      let timeRemainingText = '';
+      if (isEnabled && endStr) {
+        try {
+          const endDate = new Date(endStr);
+          const diffMs = endDate - new Date();
+          if (diffMs > 0) {
+            const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+            const diffDays = Math.floor(diffHours / 24);
+            const remHours = diffHours % 24;
+            timeRemainingText = `⏳ शेष समय: <strong>${diffDays > 0 ? `${diffDays} दिन ` : ''}${remHours} घंटे</strong> (वैधता: ${endDate.toLocaleDateString('hi-IN', { day:'numeric', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' })})`;
+          } else {
+            timeRemainingText = '⏳ समय समाप्त';
+          }
+        } catch (e) {}
+      }
+
+      const themeOptions = [
+        { id: 'gold', name: '👑 क्लासिक रॉयल गोल्ड (Classic Gold)', icon: '👑' },
+        { id: 'diwali', name: '🪔 दीवाली स्पेशल (Diwali Fest & Lamps)', icon: '🪔' },
+        { id: 'tricolor', name: '🇮🇳 15 अगस्त / 26 जनवरी तिरंगा (Tricolor)', icon: '🇮🇳' },
+        { id: 'holi', name: '🎨 होली उत्सव धमाका (Holi Vibrant Colors)', icon: '🎨' },
+        { id: 'newyear', name: '🎆 नया साल स्पेशल (New Year Fireworks)', icon: '🎆' },
+        { id: 'fire', name: '🔥 सुपर सेवर महा-ऑफर (Electric Fire Red)', icon: '🔥' },
+        { id: 'emerald', name: '🌿 वसंत / विजयदशमी (Emerald Green)', icon: '🌿' }
+      ];
+
+      container.innerHTML = `
+        <div class="global-campaign-card ${isEnabled ? 'campaign-active' : 'campaign-inactive'}" style="padding:22px 24px; border-radius:18px; border:2px solid ${isEnabled ? '#f59e0b' : 'var(--border)'}; background:${isEnabled ? 'linear-gradient(135deg, rgba(254,243,199,0.95), rgba(253,230,138,0.6))' : 'var(--card-bg)'}; box-shadow:${isEnabled ? '0 8px 30px rgba(245,158,11,0.22)' : '0 2px 10px rgba(0,0,0,0.04)'}; transition:all 0.3s ease;">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:16px;">
+            <div style="flex:1; min-width:280px;">
+              <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
+                <span style="font-size:1.8rem;">🎉</span>
+                <h3 style="margin:0; font-size:1.25rem; font-weight:800; color:${isEnabled ? '#92400e' : 'var(--text-main)'};">
+                  ग्लोबल 1-क्लिक ऑल फ्री कैम्पेन (Global Free Campaign)
+                </h3>
+                <span class="badge" style="font-size:0.75rem; font-weight:800; padding:3px 10px; border-radius:20px; background:${isEnabled ? '#10b981' : '#6b7280'}; color:#fff;">
+                  ${isEnabled ? '🟢 लाइव सक्रिय (LIVE FREE)' : '⚪ बंद (INACTIVE)'}
+                </span>
+              </div>
+              <p style="margin:0 0 12px 0; font-size:0.86rem; color:${isEnabled ? '#78350f' : 'var(--text-muted)'}; line-height:1.5;">
+                ${isEnabled
+                  ? `वर्तमान में <strong>पूरा ऐप सभी पुराने व नए छात्रों के लिए निःशुल्क खुला हुआ है</strong>। छात्र पोर्टल पर नीचे सेट की गई थीम में रंगीन फेस्टिव बैनर प्रदर्शित हो रहा है।`
+                  : `एक क्लिक में पूरे ऐप को सभी छात्रों (पुराने + नए) के लिए निर्धारित दिनों हेतु 100% निःशुल्क खोलें।`
+                }
+              </p>
+
+              <!-- Campaign Controls Form: Message & Theme -->
+              <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:12px; margin-bottom:14px; background:rgba(255,255,255,0.7); padding:12px 14px; border-radius:12px; border:1px solid rgba(245,158,11,0.3);">
+                <div>
+                  <label style="display:block; font-size:0.78rem; font-weight:700; color:#92400e; margin-bottom:4px;">
+                    📢 छात्र बैनर मैसेज (Custom Offer Text):
+                  </label>
+                  <input type="text" id="globalCampaignBannerInput" class="form-input" 
+                         value="${this.escapeHtml(bannerMsg)}" 
+                         placeholder="उदा. 🪔 दीवाली महा-धमाका: सभी छात्रों के लिए StenoMaster 100% FREE!"
+                         style="background:#fff; font-size:0.86rem; padding:7px 10px; border-color:rgba(245,158,11,0.5);">
+                </div>
+
+                <div>
+                  <label style="display:block; font-size:0.78rem; font-weight:700; color:#92400e; margin-bottom:4px;">
+                    🎨 फेस्टिव बैनर थीम चुनें (Colourful Theme):
+                  </label>
+                  <select id="globalCampaignThemeSelect" class="form-select" style="background:#fff; font-size:0.86rem; padding:7px 10px; border-color:rgba(245,158,11,0.5); font-weight:600;">
+                    ${themeOptions.map(t => `
+                      <option value="${t.id}" ${t.id === currentTheme ? 'selected' : ''}>
+                        ${t.name}
+                      </option>
+                    `).join('')}
+                  </select>
+                </div>
+              </div>
+
+              ${isEnabled ? `
+                <!-- Live Duration Adjuster Toolbar -->
+                <div style="background:rgba(255,255,255,0.85); padding:12px 14px; border-radius:12px; border:1.5px solid rgba(245,158,11,0.4); margin-bottom:12px;">
+                  <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:8px;">
+                    <div style="font-size:0.85rem; color:#b45309; font-weight:700;">
+                      ${timeRemainingText}
+                    </div>
+                    <span style="font-size:0.75rem; color:#92400e; font-weight:600;">⏱️ दिन बढ़ाएं या घटाएं:</span>
+                  </div>
+                  <div style="display:flex; gap:6px; flex-wrap:wrap; align-items:center;">
+                    <button type="button" class="btn-sm btn-secondary" onclick="stenoAdmin.adjustGlobalCampaignDays(3)" style="padding:4px 10px; font-weight:700; background:#ecfdf5; color:#047857; border-color:#a7f3d0;" title="3 दिन और जोड़ें">+3 दिन</button>
+                    <button type="button" class="btn-sm btn-secondary" onclick="stenoAdmin.adjustGlobalCampaignDays(7)" style="padding:4px 10px; font-weight:700; background:#ecfdf5; color:#047857; border-color:#a7f3d0;" title="7 दिन और जोड़ें">+7 दिन</button>
+                    <button type="button" class="btn-sm btn-secondary" onclick="stenoAdmin.adjustGlobalCampaignDays(15)" style="padding:4px 10px; font-weight:700; background:#ecfdf5; color:#047857; border-color:#a7f3d0;" title="15 दिन और जोड़ें">+15 दिन</button>
+                    <button type="button" class="btn-sm btn-secondary" onclick="stenoAdmin.adjustGlobalCampaignDays(-3)" style="padding:4px 10px; font-weight:700; background:#fef2f2; color:#b91c1c; border-color:#fecaca;" title="3 दिन कम करें">-3 दिन</button>
+                    <button type="button" class="btn-sm btn-secondary" onclick="stenoAdmin.adjustGlobalCampaignDays(-7)" style="padding:4px 10px; font-weight:700; background:#fef2f2; color:#b91c1c; border-color:#fecaca;" title="7 दिन कम करें">-7 दिन</button>
+                    
+                    <div style="display:inline-flex; align-items:center; gap:4px; margin-left:auto;">
+                      <input type="number" id="customAdjustDaysInput" placeholder="दिन" min="-365" max="365" style="width:65px; padding:4px 8px; font-size:0.8rem; border:1px solid var(--border); border-radius:6px; text-align:center;">
+                      <button type="button" class="btn-sm btn-primary" onclick="stenoAdmin.submitCustomAdjustDays()" style="padding:4px 10px; font-size:0.8rem; background:#4f46e5; border:none; font-weight:700;">लागू करें</button>
+                    </div>
+                  </div>
+                </div>
+              ` : ''}
+            </div>
+
+            <!-- Action Controls Buttons -->
+            <div style="display:flex; flex-direction:column; gap:10px; align-items:flex-end;">
+              ${isEnabled ? `
+                <div style="display:flex; flex-direction:column; gap:8px; align-items:flex-end;">
+                  <button type="button" class="btn-primary" onclick="stenoAdmin.saveActiveCampaignChanges()" style="background:linear-gradient(135deg, #10b981, #059669); border:none; padding:9px 18px; font-weight:800; font-size:0.88rem; border-radius:10px; box-shadow:0 3px 10px rgba(16,185,129,0.3); cursor:pointer;">
+                    💾 थीम व टेक्स्ट अपडेट करें
+                  </button>
+                  <button type="button" class="btn-secondary" onclick="stenoAdmin.stopGlobalCampaign()" style="background:#fee2e2; color:#dc2626; border-color:#fca5a5; padding:8px 16px; font-weight:700; font-size:0.84rem; border-radius:10px; cursor:pointer;">
+                    🛑 कैम्पेन बंद करें (Re-lock App)
+                  </button>
+                </div>
+              ` : `
+                <div style="display:flex; flex-direction:column; gap:10px; align-items:flex-end;">
+                  <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                    <select id="globalCampaignDaysSelect" class="form-select" style="padding:8px 12px; font-weight:700; font-size:0.88rem; border-radius:10px; border:1.5px solid var(--border);">
+                      <option value="3">⚡ 3 दिन फ्री</option>
+                      <option value="7" selected>🌟 7 दिन फ्री (1 सप्ताह)</option>
+                      <option value="15">🔥 15 दिन फ्री</option>
+                      <option value="30">👑 30 दिन फ्री (1 माह)</option>
+                      <option value="60">💎 60 दिन फ्री (2 माह)</option>
+                    </select>
+                    <button type="button" class="btn-primary" onclick="stenoAdmin.startGlobalCampaign()" style="background:linear-gradient(135deg, #f59e0b, #d97706); border:none; padding:9px 20px; font-weight:800; font-size:0.9rem; border-radius:10px; box-shadow:0 4px 14px rgba(245,158,11,0.35); cursor:pointer;">
+                      🚀 1-क्लिक में पूरा ऐप फ्री करें
+                    </button>
+                  </div>
+                </div>
+              `}
+            </div>
+          </div>
+        </div>
+      `;
+    } catch (err) {
+      console.warn('Failed to render global campaign card:', err);
+    }
+  }
+
+  async startGlobalCampaign() {
+    const select = document.getElementById('globalCampaignDaysSelect');
+    const days = parseInt(select?.value || '7', 10);
+    const bannerMsg = document.getElementById('globalCampaignBannerInput')?.value?.trim() || `StenoMaster ${days} दिन के लिए सभी छात्रों के लिए बिल्कुल FREE है! 🎉`;
+    const theme = document.getElementById('globalCampaignThemeSelect')?.value || 'gold';
+
+    const confirmed = confirm(`क्या आप सचमुच पूरा ऐप ${days} दिन के लिए सभी छात्रों के लिए FREE करना चाहते हैं?\n\n• थीम: ${theme}\n• मैसेज: "${bannerMsg}"\n• सभी अभ्यास व डिक्टेशन्स तुरंत खुल जाएंगी।`);
+    if (!confirmed) return;
+
+    try {
+      const res = await stenoApp.apiCall('/api/admin/global-free-campaign', 'POST', {
+        enabled: true,
+        days: days,
+        banner_message: bannerMsg,
+        theme: theme
+      });
+      if (res && res.success) {
+        stenoApp.showToast(`🎉 ग्लोबल फ्री कैम्पेन सक्रिय! अगले ${days} दिन सब कुछ फ्री रहेगा।`, 'success');
+        await this.renderGlobalCampaignCard();
+      } else {
+        stenoApp.showToast(res.error || 'कैम्पेन सक्रिय करने में विफल', 'error');
+      }
+    } catch (err) {
+      stenoApp.showToast(`त्रुटि: ${err.message}`, 'error');
+    }
+  }
+
+  async saveActiveCampaignChanges() {
+    const bannerMsg = document.getElementById('globalCampaignBannerInput')?.value?.trim();
+    const theme = document.getElementById('globalCampaignThemeSelect')?.value || 'gold';
+
+    try {
+      const res = await stenoApp.apiCall('/api/admin/global-free-campaign', 'POST', {
+        enabled: true,
+        banner_message: bannerMsg,
+        theme: theme
+      });
+      if (res && res.success) {
+        stenoApp.showToast('✅ कैम्पेन थीम और ऑफर टेक्स्ट तुरंत लाइव अपडेट हो गया!', 'success');
+        await this.renderGlobalCampaignCard();
+      } else {
+        stenoApp.showToast(res.error || 'अपडेट करने में विफल', 'error');
+      }
+    } catch (err) {
+      stenoApp.showToast(`त्रुटि: ${err.message}`, 'error');
+    }
+  }
+
+  async adjustGlobalCampaignDays(adjustDays) {
+    const sign = adjustDays > 0 ? `+${adjustDays}` : `${adjustDays}`;
+    const confirmed = confirm(`क्या आप कैम्पेन की वैधता में ${sign} दिन समायोजित करना चाहते हैं?`);
+    if (!confirmed) return;
+
+    try {
+      const bannerMsg = document.getElementById('globalCampaignBannerInput')?.value?.trim();
+      const theme = document.getElementById('globalCampaignThemeSelect')?.value;
+
+      const res = await stenoApp.apiCall('/api/admin/global-free-campaign', 'POST', {
+        enabled: true,
+        adjust_days: adjustDays,
+        banner_message: bannerMsg,
+        theme: theme
+      });
+      if (res && res.success) {
+        stenoApp.showToast(`✅ वैधता में ${sign} दिन सफलतापूर्वक समायोजित किए गए!`, 'success');
+        await this.renderGlobalCampaignCard();
+      } else {
+        stenoApp.showToast(res.error || 'दिन बदलने में विफल', 'error');
+      }
+    } catch (err) {
+      stenoApp.showToast(`त्रुटि: ${err.message}`, 'error');
+    }
+  }
+
+  async submitCustomAdjustDays() {
+    const input = document.getElementById('customAdjustDaysInput');
+    const val = parseInt(input?.value || '0', 10);
+    if (!val || isNaN(val)) {
+      stenoApp.showToast('कृपया मान्य दिन दर्ज करें (उदा. 5 या -2)', 'warning');
+      return;
+    }
+    await this.adjustGlobalCampaignDays(val);
+  }
+
+  async stopGlobalCampaign() {
+    const confirmed = confirm('क्या आप सचमुच ग्लोबल फ्री कैम्पेन अभी बंद करना चाहते हैं?\n\nबंद करने पर केवल प्रो छात्र ही प्रीमियम सामग्री खोल सकेंगे।');
+    if (!confirmed) return;
+
+    try {
+      const res = await stenoApp.apiCall('/api/admin/global-free-campaign', 'POST', {
+        enabled: false
+      });
+      if (res && res.success) {
+        stenoApp.showToast('ℹ️ ग्लोबल फ्री कैम्पेन बंद कर दिया गया। ऐप सामान्य स्थिति में लौटा।', 'success');
+        await this.renderGlobalCampaignCard();
+      } else {
+        stenoApp.showToast(res.error || 'कैम्पेन बंद करने में विफल', 'error');
+      }
+    } catch (err) {
+      stenoApp.showToast(`त्रुटि: ${err.message}`, 'error');
+    }
+  }
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // BULK MULTI-SELECT SUBSCRIBERS METHODS
+  // ══════════════════════════════════════════════════════════════════════════
+
+  toggleSubscriberSelection(userId, isChecked) {
+    if (!this.selectedSubscriberIds) this.selectedSubscriberIds = new Set();
+    if (isChecked) {
+      this.selectedSubscriberIds.add(userId);
+    } else {
+      this.selectedSubscriberIds.delete(userId);
+    }
+    this.updateBulkActionDock();
+  }
+
+  toggleSelectAllSubscribers(isChecked) {
+    if (!this.selectedSubscriberIds) this.selectedSubscriberIds = new Set();
+    const checkboxes = document.querySelectorAll('.sub-row-checkbox');
+    checkboxes.forEach(cb => {
+      cb.checked = isChecked;
+      const uid = parseInt(cb.dataset.userId, 10);
+      if (uid) {
+        if (isChecked) {
+          this.selectedSubscriberIds.add(uid);
+        } else {
+          this.selectedSubscriberIds.delete(uid);
+        }
+      }
+    });
+    this.updateBulkActionDock();
+  }
+
+  clearSubscribersSelection() {
+    if (this.selectedSubscriberIds) this.selectedSubscriberIds.clear();
+    const master = document.getElementById('subscribersSelectAllMaster');
+    if (master) master.checked = false;
+    document.querySelectorAll('.sub-row-checkbox').forEach(cb => cb.checked = false);
+    document.querySelectorAll('#adminSubscribersTableBody tr').forEach(tr => tr.classList.remove('row-selected'));
+    this.updateBulkActionDock();
+  }
+
+  updateBulkActionDock() {
+    const dock = document.getElementById('subscribersBulkActionDock');
+    const badge = document.getElementById('bulkSelectedCount');
+    const master = document.getElementById('subscribersSelectAllMaster');
+    const count = this.selectedSubscriberIds ? this.selectedSubscriberIds.size : 0;
+
+    if (badge) badge.textContent = `${count} छात्र चयनित`;
+
+    if (dock) {
+      if (count > 0) {
+        dock.style.display = 'block';
+        setTimeout(() => dock.classList.add('visible'), 10);
+      } else {
+        dock.classList.remove('visible');
+        setTimeout(() => {
+          if (!this.selectedSubscriberIds || this.selectedSubscriberIds.size === 0) {
+            dock.style.display = 'none';
+          }
+        }, 200);
+      }
+    }
+
+    // Update table row styling
+    document.querySelectorAll('.sub-row-checkbox').forEach(cb => {
+      const uid = parseInt(cb.dataset.userId, 10);
+      const row = cb.closest('tr');
+      if (row) {
+        if (this.selectedSubscriberIds && this.selectedSubscriberIds.has(uid)) {
+          row.classList.add('row-selected');
+        } else {
+          row.classList.remove('row-selected');
+        }
+      }
+    });
+
+    // Update master checkbox state
+    if (master) {
+      const totalVisible = document.querySelectorAll('.sub-row-checkbox').length;
+      if (totalVisible > 0 && count >= totalVisible) {
+        master.checked = true;
+        master.indeterminate = false;
+      } else if (count > 0) {
+        master.checked = false;
+        master.indeterminate = true;
+      } else {
+        master.checked = false;
+        master.indeterminate = false;
+      }
+    }
+  }
+
+  openBulkProModal() {
+    const count = this.selectedSubscriberIds ? this.selectedSubscriberIds.size : 0;
+    if (count === 0) {
+      stenoApp.showToast('कृपया कम से कम 1 छात्र चुनें', 'warning');
+      return;
+    }
+
+    const summaryEl = document.getElementById('bulkProStudentSummary');
+    if (summaryEl) {
+      summaryEl.innerHTML = `
+        <div style="font-weight:700; font-size:0.95rem; color:#4338ca;">👥 ${count} छात्र चुने गए हैं</div>
+        <div style="font-size:0.78rem; color:var(--text-muted); margin-top:3px;">
+          इन सभी छात्रों को एक साथ प्रो सदस्यता प्रदान की जाएगी। यदि किसी छात्र के पास पहले से प्रो है, तो उसकी वैधता जुड़ जाएगी।
+        </div>
+      `;
+    }
+
+    stenoApp.openModal('adminBulkGrantProModal');
+  }
+
+  onBulkProDaysChange(val) {
+    const grp = document.getElementById('bulkProCustomDaysGroup');
+    if (grp) grp.style.display = val === 'custom' ? 'block' : 'none';
+  }
+
+  async submitBulkGrantPro(e) {
+    e.preventDefault();
+    const count = this.selectedSubscriberIds ? this.selectedSubscriberIds.size : 0;
+    if (count === 0) return;
+
+    const daysSelect = document.getElementById('bulkProDaysSelect');
+    let days = parseInt(daysSelect?.value || '30', 10);
+    if (daysSelect?.value === 'custom') {
+      const customDays = parseInt(document.getElementById('bulkProCustomDaysInput')?.value || '0', 10);
+      if (customDays > 0) days = customDays;
+    }
+    const planName = document.getElementById('bulkProPlanNameInput')?.value || 'StenoMaster Pro (बल्क पास)';
+
+    const btn = document.getElementById('btnSubmitBulkPro');
+    if (btn) {
+      btn.disabled = true;
+      btn.textContent = '⏳ जारी है...';
+    }
+
+    try {
+      const uids = Array.from(this.selectedSubscriberIds);
+      const res = await stenoApp.apiCall('/api/admin/bulk-grant-subscription', 'POST', {
+        user_ids: uids,
+        days: days,
+        plan_name: planName
+      });
+
+      if (res && res.success) {
+        stenoApp.showToast(`🎉 ${res.message || `${res.succeeded} छात्रों को प्रो पास दिया गया!`}`, 'success');
+        stenoApp.closeModal('adminBulkGrantProModal');
+        this.clearSubscribersSelection();
+        await this.loadSubscribers();
+      } else {
+        stenoApp.showToast(res.error || 'बल्क प्रो पास देने में विफल', 'error');
+      }
+    } catch (err) {
+      stenoApp.showToast(`त्रुटि: ${err.message}`, 'error');
+    } finally {
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = '✓ सभी को प्रो पास दें';
+      }
+    }
+  }
+
+  async openBulkCategoryModal() {
+    const count = this.selectedSubscriberIds ? this.selectedSubscriberIds.size : 0;
+    if (count === 0) {
+      stenoApp.showToast('कृपया कम से कम 1 छात्र चुनें', 'warning');
+      return;
+    }
+
+    const summaryEl = document.getElementById('bulkCatStudentSummary');
+    if (summaryEl) {
+      summaryEl.innerHTML = `
+        <div style="font-weight:700; font-size:0.95rem; color:#065f46;">👥 ${count} छात्र चुने गए हैं</div>
+        <div style="font-size:0.78rem; color:var(--text-muted); margin-top:3px;">
+          नीचे चुनी गई श्रेणियों की डिक्टेशन्स इन सभी ${count} छात्रों के लिए तुरंत फ्री में खुल जाएंगी।
+        </div>
+      `;
+    }
+
+    await this.populateBulkCategories();
+    stenoApp.openModal('adminBulkGrantCategoryModal');
+  }
+
+  async populateBulkCategories() {
+    const listEl = document.getElementById('bulkCatChecklist');
+    if (!listEl) return;
+
+    listEl.innerHTML = '<div style="padding:14px; text-align:center; color:var(--text-muted); font-size:0.84rem;"><div class="spinner-small" style="display:inline-block; margin-right:8px;"></div>श्रेणियां लोड हो रही हैं...</div>';
+
+    let cats = (this._allCategoriesCache && this._allCategoriesCache.length) ? this._allCategoriesCache : null;
+    if (!cats && this.categoriesList && this.categoriesList.length) cats = this.categoriesList;
+    if (!cats && window.stenoApp && window.stenoApp.categories && window.stenoApp.categories.length) cats = window.stenoApp.categories;
+
+    if (!cats || !cats.length) {
+      try {
+        const res = await stenoApp.apiCall('/api/categories?_t=' + Date.now());
+        cats = res.categories || [];
+      } catch (e) {
+        cats = [];
+      }
+    }
+
+    this._bulkCategoriesList = cats;
+    this.renderBulkCategoriesList(cats);
+  }
+
+  renderBulkCategoriesList(cats, filterQuery = '') {
+    const listEl = document.getElementById('bulkCatChecklist');
+    if (!listEl) return;
+
+    const q = (filterQuery || '').trim().toLowerCase();
+    const filtered = cats.filter(c => {
+      if (!q) return true;
+      const name = (c.name || '').toLowerCase();
+      const slug = (c.slug || '').toLowerCase();
+      return name.includes(q) || slug.includes(q);
+    });
+
+    if (filtered.length === 0) {
+      listEl.innerHTML = '<div style="padding:10px; text-align:center; color:var(--text-muted); font-size:0.8rem;">कोई श्रेणी नहीं मिली</div>';
+      return;
+    }
+
+    listEl.innerHTML = filtered.map(c => `
+      <label style="display:flex; align-items:center; gap:8px; padding:6px 8px; border-radius:6px; cursor:pointer; font-size:0.84rem; hover:background:var(--bg-subtle);">
+        <input type="checkbox" class="bulk-cat-item-cb" value="${c.id}" onchange="stenoAdmin.updateBulkCatBadge()" style="width:15px; height:15px; accent-color:#10b981;">
+        <span style="font-weight:600; color:var(--text-main);">${this.escapeHtml(c.name)}</span>
+        <span style="font-size:0.72rem; color:var(--text-muted); margin-left:auto;">${c.passage_count || 0} आलेख</span>
+      </label>
+    `).join('');
+
+    this.updateBulkCatBadge();
+  }
+
+  filterBulkCategories(query) {
+    if (this._bulkCategoriesList) {
+      this.renderBulkCategoriesList(this._bulkCategoriesList, query);
+    }
+  }
+
+  selectAllBulkCategories(select) {
+    document.querySelectorAll('.bulk-cat-item-cb').forEach(cb => cb.checked = select);
+    this.updateBulkCatBadge();
+  }
+
+  updateBulkCatBadge() {
+    const checked = document.querySelectorAll('.bulk-cat-item-cb:checked').length;
+    const badge = document.getElementById('bulkCatSelectedBadge');
+    if (badge) badge.textContent = `${checked} चुनी गईं`;
+  }
+
+  onBulkCatDaysChange(val) {
+    const grp = document.getElementById('bulkCatCustomDaysGroup');
+    if (grp) grp.style.display = val === 'custom' ? 'block' : 'none';
+  }
+
+  async submitBulkGrantCategory(e) {
+    e.preventDefault();
+    const count = this.selectedSubscriberIds ? this.selectedSubscriberIds.size : 0;
+    if (count === 0) return;
+
+    const checkedBoxes = Array.from(document.querySelectorAll('.bulk-cat-item-cb:checked'));
+    const categoryIds = checkedBoxes.map(cb => parseInt(cb.value, 10)).filter(Boolean);
+
+    if (categoryIds.length === 0) {
+      stenoApp.showToast('कृपया कम से कम 1 श्रेणी चुनें', 'warning');
+      return;
+    }
+
+    const daysSelect = document.getElementById('bulkCatDaysSelect');
+    let days = parseInt(daysSelect?.value || '30', 10);
+    if (daysSelect?.value === 'custom') {
+      const customDays = parseInt(document.getElementById('bulkCatCustomDaysInput')?.value || '0', 10);
+      if (customDays > 0) days = customDays;
+    }
+
+    const btn = document.getElementById('btnSubmitBulkCat');
+    if (btn) {
+      btn.disabled = true;
+      btn.textContent = '⏳ जारी है...';
+    }
+
+    try {
+      const uids = Array.from(this.selectedSubscriberIds);
+      const res = await stenoApp.apiCall('/api/admin/bulk-grant-category', 'POST', {
+        user_ids: uids,
+        category_ids: categoryIds,
+        days: days
+      });
+
+      if (res && res.success) {
+        stenoApp.showToast(`🎉 ${res.message || 'श्रेणियां सफलतापूर्वक प्रदान की गईं!'}`, 'success');
+        stenoApp.closeModal('adminBulkGrantCategoryModal');
+        this.clearSubscribersSelection();
+        await this.loadSubscribers();
+      } else {
+        stenoApp.showToast(res.error || 'श्रेणी देने में विफल', 'error');
+      }
+    } catch (err) {
+      stenoApp.showToast(`त्रुटि: ${err.message}`, 'error');
+    } finally {
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = '✓ सभी को श्रेणी एक्सेस दें';
+      }
+    }
+  }
+
 
   async toggleUserFreeAccess(userId, isChecked, userName = 'छात्र') {
     try {
