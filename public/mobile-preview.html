@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>StenoMaster — मोबाइल व्यू सिम्युलेटर (Mobile Preview)</title>
+  <link rel="icon" type="image/png" href="/assets/logo.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Devanagari:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      font-family: 'Inter', 'Noto Sans Devanagari', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #0f172a;
+      color: #f8fafc;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 16px 12px 30px;
+    }
+    .top-header {
+      width: 100%;
+      max-width: 900px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+    .brand-title {
+      font-size: 1.35rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, #38bdf8, #818cf8, #c084fc);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .controls-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: center;
+      align-items: center;
+      background: #1e293b;
+      padding: 10px 16px;
+      border-radius: 50px;
+      border: 1px solid #334155;
+      box-shadow: 0 10px 25px -5px rgba(0,0,0,0.4);
+    }
+    .btn-control {
+      background: #0f172a;
+      color: #e2e8f0;
+      border: 1px solid #475569;
+      padding: 6px 14px;
+      border-radius: 30px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s;
+    }
+    .btn-control:hover {
+      background: #334155;
+      border-color: #64748b;
+      color: #fff;
+    }
+    .btn-control.active {
+      background: #4f46e5;
+      border-color: #6366f1;
+      color: #fff;
+    }
+    .btn-popup {
+      background: linear-gradient(135deg, #10b981, #059669);
+      color: #fff;
+      border: none;
+      font-weight: 700;
+    }
+    .btn-popup:hover {
+      background: linear-gradient(135deg, #059669, #047857);
+      transform: translateY(-1px);
+    }
+    .device-select {
+      background: #0f172a;
+      color: #e2e8f0;
+      border: 1px solid #475569;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      outline: none;
+      cursor: pointer;
+    }
+
+    /* Device Mockup Wrapper */
+    .phone-container {
+      position: relative;
+      background: #18181b;
+      border-radius: 50px;
+      padding: 12px;
+      box-shadow: 0 25px 60px -15px rgba(0,0,0,0.8), 0 0 0 2px #27272a, 0 0 0 5px #09090b;
+      transition: width 0.3s ease, height 0.3s ease;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    /* Dynamic Island / Notch */
+    .dynamic-island {
+      width: 110px;
+      height: 24px;
+      background: #000;
+      border-radius: 20px;
+      position: absolute;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      padding-right: 12px;
+    }
+    .dynamic-island-lens {
+      width: 9px;
+      height: 9px;
+      background: #1e1b4b;
+      border-radius: 50%;
+      border: 1.5px solid #312e81;
+    }
+
+    /* Screen iframe */
+    .phone-screen {
+      width: 393px;
+      height: 780px;
+      border-radius: 40px;
+      overflow: hidden;
+      background: #fff;
+      border: none;
+      transition: width 0.3s ease, height 0.3s ease;
+      position: relative;
+    }
+    iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+      display: block;
+    }
+
+    /* Bottom Quick Nav */
+    .page-nav-bar {
+      margin-top: 18px;
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .page-nav-btn {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.12);
+      color: #94a3b8;
+      padding: 6px 14px;
+      border-radius: 8px;
+      font-size: 0.8rem;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.2s;
+    }
+    .page-nav-btn:hover {
+      background: rgba(255,255,255,0.12);
+      color: #fff;
+    }
+    .page-nav-btn.active {
+      background: #4f46e5;
+      color: #fff;
+      border-color: #6366f1;
+    }
+
+    /* Shortcut Help */
+    .tip-box {
+      margin-top: 20px;
+      max-width: 600px;
+      background: rgba(30, 41, 59, 0.6);
+      border: 1px solid #334155;
+      border-radius: 12px;
+      padding: 12px 18px;
+      font-size: 0.82rem;
+      color: #94a3b8;
+      text-align: center;
+      line-height: 1.6;
+    }
+    .tip-box kbd {
+      background: #0f172a;
+      border: 1px solid #475569;
+      border-radius: 4px;
+      padding: 2px 6px;
+      color: #f1f5f9;
+      font-weight: 700;
+    }
+  </style>
+</head>
+<body>
+
+  <header class="top-header">
+    <div class="brand-title">
+      <span>📱</span>
+      <span>StenoMaster — लाइव मोबाइल सिम्युलेटर</span>
+    </div>
+
+    <!-- Controls -->
+    <div class="controls-bar">
+      <!-- Device Selector -->
+      <select id="deviceSelector" class="device-select" onchange="changeDevice(this.value)">
+        <option value="393x780">📱 iPhone 15 / 16 (393 × 780)</option>
+        <option value="360x740">📱 Samsung Galaxy (360 × 740)</option>
+        <option value="412x850">📱 Pixel 8 / Pro (412 × 850)</option>
+        <option value="375x667">📱 Compact iPhone SE (375 × 667)</option>
+      </select>
+
+      <!-- Separate Mini Window Launcher -->
+      <button class="btn-control btn-popup" onclick="openMiniPopupWindow()" title="कंप्यूटर स्क्रीन पर अलग छोटी मोबाइल विंडो खोलें">
+        <span>🚀 अलग छोटी विंडो में खोलें</span>
+      </button>
+
+      <!-- Refresh Screen -->
+      <button class="btn-control" onclick="reloadScreen()" title="मोबाइल स्क्रीन रीलोड करें">
+        <span>🔄 रिफ्रेश</span>
+      </button>
+    </div>
+
+    <!-- Quick Page Switcher -->
+    <div class="page-nav-bar">
+      <button class="page-nav-btn" onclick="navigateTo('/', this)">🏠 होम पेज</button>
+      <button class="page-nav-btn active" onclick="navigateTo('/plans.html', this)">💎 प्लान्स व QR कोड</button>
+      <button class="page-nav-btn" onclick="navigateTo('/practice.html', this)">✍️ प्रैक्टिस पेज</button>
+      <button class="page-nav-btn" onclick="navigateTo('/profile.html', this)">👤 प्रोफाइल</button>
+      <button class="page-nav-btn" onclick="navigateTo('/admin.html', this)">⚙️ एडमिन पैनल</button>
+    </div>
+  </header>
+
+  <!-- Mobile Mockup Frame -->
+  <div class="phone-container" id="phoneContainer">
+    <div class="dynamic-island">
+      <div class="dynamic-island-lens"></div>
+    </div>
+    <div class="phone-screen" id="phoneScreen">
+      <iframe id="screenFrame" src="/plans.html" title="StenoMaster Mobile Preview"></iframe>
+    </div>
+  </div>
+
+  <div class="tip-box">
+    💡 <strong>प्रो टिप:</strong> आप ऊपर लगे <strong>"अलग छोटी विंडो में खोलें"</strong> बटन को दबाकर अपने कंप्यूटर पर ही एक अलग छोटी मोबाइल-साइज्ड विंडो चला सकते हैं। या किसी भी पेज पर कीबोर्ड का <kbd>F12</kbd> दबाकर <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>M</kbd> दबाएं।
+  </div>
+
+  <script>
+    let currentPath = '/plans.html';
+
+    function navigateTo(path, btnEl) {
+      currentPath = path;
+      const frame = document.getElementById('screenFrame');
+      frame.src = path;
+      document.querySelectorAll('.page-nav-btn').forEach(b => b.classList.remove('active'));
+      if (btnEl) btnEl.classList.add('active');
+    }
+
+    function reloadScreen() {
+      const frame = document.getElementById('screenFrame');
+      frame.src = currentPath + '?_t=' + Date.now();
+    }
+
+    function changeDevice(val) {
+      const [w, h] = val.split('x').map(Number);
+      const screen = document.getElementById('phoneScreen');
+      screen.style.width = w + 'px';
+      screen.style.height = h + 'px';
+    }
+
+    function openMiniPopupWindow() {
+      const url = window.location.origin + currentPath;
+      const w = 412;
+      const h = 880;
+      const left = Math.max(0, (window.screen.width - w) / 2);
+      const top = Math.max(0, (window.screen.height - h) / 2);
+      const popup = window.open(
+        url,
+        'StenoMasterMobilePreview',
+        `width=${w},height=${h},top=${top},left=${left},scrollbars=yes,resizable=yes,status=no,location=no,toolbar=no,menubar=no`
+      );
+      if (popup) popup.focus();
+    }
+  </script>
+</body>
+</html>
