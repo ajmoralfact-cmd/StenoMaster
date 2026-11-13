@@ -261,7 +261,7 @@
             <div id="subPlansGrid" class="subscription-plans-grid">
               
               <!-- PLAN 1: 1 Month (₹100) -->
-              <div class="sub-plan-card stenoshala-card" data-plan-id="1m" onclick="stenoApp.initiateCashfreePayment('1m')">
+              <div class="sub-plan-card stenoshala-card" data-plan-id="1m" onclick="stenoApp.openUpiCheckoutModal('1m')">
                 <div class="plan-top-badge badge-starter">⚡ स्टार्टर पास</div>
                 <div>
                   <div class="plan-card-header">
@@ -331,13 +331,13 @@
                   </ul>
                 </div>
 
-                <button type="button" class="plan-buy-btn" onclick="event.stopPropagation(); stenoApp.initiateCashfreePayment('1m')">
+                <button type="button" class="plan-buy-btn" onclick="event.stopPropagation(); stenoApp.openUpiCheckoutModal('1m')">
                   <span>⚡ अभी खरीदें (Buy Now)</span> <span>→</span>
                 </button>
               </div>
 
               <!-- PLAN 2: 3 Months (₹250 - MOST POPULAR) -->
-              <div class="sub-plan-card stenoshala-card card-popular" data-plan-id="3m" onclick="stenoApp.initiateCashfreePayment('3m')">
+              <div class="sub-plan-card stenoshala-card card-popular" data-plan-id="3m" onclick="stenoApp.openUpiCheckoutModal('3m')">
                 <div class="plan-top-badge badge-popular">⭐ सर्वाधिक लोकप्रिय</div>
                 <div>
                   <div class="plan-card-header">
@@ -411,13 +411,13 @@
                   </ul>
                 </div>
 
-                <button type="button" class="plan-buy-btn" onclick="event.stopPropagation(); stenoApp.initiateCashfreePayment('3m')">
+                <button type="button" class="plan-buy-btn" onclick="event.stopPropagation(); stenoApp.openUpiCheckoutModal('3m')">
                   <span>⚡ अभी खरीदें (Buy Now)</span> <span>→</span>
                 </button>
               </div>
 
               <!-- PLAN 3: 6 Months (₹450 - SUPER SAVER) -->
-              <div class="sub-plan-card stenoshala-card" data-plan-id="6m" onclick="stenoApp.initiateCashfreePayment('6m')">
+              <div class="sub-plan-card stenoshala-card" data-plan-id="6m" onclick="stenoApp.openUpiCheckoutModal('6m')">
                 <div class="plan-top-badge badge-saver">💰 सुपर सेवर</div>
                 <div>
                   <div class="plan-card-header">
@@ -487,13 +487,13 @@
                   </ul>
                 </div>
 
-                <button type="button" class="plan-buy-btn" style="background:linear-gradient(135deg, #059669 0%, #047857 100%); box-shadow:0 3px 10px rgba(5,150,105,0.25);" onclick="event.stopPropagation(); stenoApp.initiateCashfreePayment('6m')">
+                <button type="button" class="plan-buy-btn" style="background:linear-gradient(135deg, #059669 0%, #047857 100%); box-shadow:0 3px 10px rgba(5,150,105,0.25);" onclick="event.stopPropagation(); stenoApp.openUpiCheckoutModal('6m')">
                   <span>⚡ अभी खरीदें (Buy Now)</span> <span>→</span>
                 </button>
               </div>
 
               <!-- PLAN 4: 1 Year (₹800 - BEST VALUE) -->
-              <div class="sub-plan-card stenoshala-card card-best" data-plan-id="1y" onclick="stenoApp.initiateCashfreePayment('1y')">
+              <div class="sub-plan-card stenoshala-card card-best" data-plan-id="1y" onclick="stenoApp.openUpiCheckoutModal('1y')">
                 <div class="plan-top-badge badge-best">👑 सर्वश्रेष्ठ मूल्य</div>
                 <div>
                   <div class="plan-card-header">
@@ -571,7 +571,7 @@
                   </ul>
                 </div>
 
-                <button type="button" class="plan-buy-btn btn-gold" onclick="event.stopPropagation(); stenoApp.initiateCashfreePayment('1y')">
+                <button type="button" class="plan-buy-btn btn-gold" onclick="event.stopPropagation(); stenoApp.openUpiCheckoutModal('1y')">
                   <span>👑 अभी खरीदें (Buy Now)</span> <span>→</span>
                 </button>
               </div>
@@ -622,7 +622,7 @@
                   </div>
                   <div style="margin-top:10px; display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
                     <span style="font-weight:700;">UPI ID:</span>
-                    <code id="subUpiIdDisplay" style="background:var(--bg-surface); padding:4px 12px; border-radius:6px; font-weight:800; font-size:1rem; color:var(--primary); border:1px solid var(--border-subtle);">stenomaster@upi</code>
+                    <code id="subUpiIdDisplay" style="background:var(--bg-surface); padding:4px 12px; border-radius:6px; font-weight:800; font-size:1rem; color:var(--primary); border:1px solid var(--border-subtle);">8795622714harsh@ybl</code>
                     <button type="button" class="btn-secondary" style="padding:4px 10px; font-size:0.8rem; font-weight:700;" onclick="stenoApp.copyUpiId()">📋 कॉपी</button>
                   </div>
                   <div style="font-size:0.8rem; color:var(--text-muted); margin-top:8px;">
@@ -867,6 +867,97 @@
     </div>
   </div>
 
+  <!-- Modal: Instant Dynamic UPI Checkout (Exact Amount Pre-filled) -->
+  <div id="directUpiPaymentModal" class="modal-overlay" onclick="if(event.target===this) stenoApp.closeModal('directUpiPaymentModal')" style="display:none; position:fixed; inset:0; background:rgba(15,23,42,0.8); backdrop-filter:blur(6px); z-index:999999; justify-content:center; align-items:center; padding:16px;">
+    <div class="modal-card" style="background:var(--bg-card, #ffffff); width:100%; max-width:500px; border-radius:22px; box-shadow:0 25px 50px -12px rgba(0,0,0,0.5); overflow:hidden; border:1.5px solid #86efac; animation:scaleUp 0.25s cubic-bezier(0.16, 1, 0.3, 1); max-height:92vh; display:flex; flex-direction:column; padding:0 !important;">
+      
+      <!-- Modal Header -->
+      <div style="background:linear-gradient(135deg, #065f46 0%, #047857 50%, #0f172a 100%); color:#ffffff; padding:18px 22px; display:flex; align-items:center; justify-content:space-between; border-bottom:2px solid #10b981;">
+        <div style="display:flex; align-items:center; gap:10px;">
+          <span style="font-size:1.8rem; background:rgba(255,255,255,0.15); padding:6px 10px; border-radius:12px;">🛡️ ⚡</span>
+          <div>
+            <h3 style="margin:0; font-size:1.15rem; font-weight:800; color:#ffffff;">सुरक्षित UPI भुगतान (Instant Checkout)</h3>
+            <p style="margin:2px 0 0 0; font-size:0.75rem; color:#a7f3d0;">स्कैन करते ही सटीक राशि अपने आप आ जाएगी</p>
+          </div>
+        </div>
+        <button type="button" onclick="stenoApp.closeModal('directUpiPaymentModal')" style="background:rgba(255,255,255,0.15); border:none; color:#ffffff; width:34px; height:34px; border-radius:50%; font-size:1.2rem; cursor:pointer; display:flex; align-items:center; justify-content:center;" title="बंद करें">✕</button>
+      </div>
+
+      <!-- Modal Body (Scrollable) -->
+      <div style="padding:20px 22px; overflow-y:auto; flex:1; text-align:center;">
+        
+        <!-- Selected Plan & Price Summary -->
+        <div style="background:#f0fdf4; border:1.5px solid #86efac; border-radius:14px; padding:14px 18px; margin-bottom:16px; text-align:left; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+          <div>
+            <span style="font-size:0.75rem; font-weight:700; color:#15803d; text-transform:uppercase; letter-spacing:0.5px;" id="modalPlanBadge">प्लान विवरण</span>
+            <div style="font-weight:800; font-size:1.02rem; color:#0f172a; margin-top:2px;" id="modalPlanName">बेसिक स्टेनो पास (1 माह)</div>
+            <div style="font-size:0.76rem; color:#475569;" id="modalPlanValidity">वैधता: 30 दिन • सभी सुविधाएं अनलॉक</div>
+          </div>
+          <div style="text-align:right;">
+            <div style="font-size:0.75rem; color:#64748b;" id="modalPlanOldPrice"></div>
+            <div style="font-size:1.6rem; font-weight:900; color:#059669;" id="modalPayableAmount">₹100</div>
+          </div>
+        </div>
+
+        <!-- Dynamic QR Code Card -->
+        <div style="background:#ffffff; border:2px dashed #10b981; border-radius:18px; padding:16px; margin-bottom:14px; display:inline-block; box-shadow:0 8px 24px rgba(16,185,129,0.12);">
+          <img id="modalDynamicQrImg" src="" width="200" height="200" alt="UPI QR Code" style="width:200px; height:200px; object-fit:contain; border-radius:10px; display:block; margin:0 auto; background:#ffffff;" />
+          <div style="margin-top:10px; font-size:0.78rem; font-weight:700; color:#065f46;">
+            ✓ स्कैन करते ही <strong id="modalQrCaptionAmount" style="color:#059669; font-size:0.92rem;">₹100</strong> स्वतः भरा हुआ आ जाएगा
+          </div>
+        </div>
+
+        <!-- Mobile Direct Pay Button -->
+        <div style="margin-bottom:14px;">
+          <a id="modalDirectUpiAppBtn" href="#" class="btn-primary" style="display:inline-flex; align-items:center; justify-content:center; gap:8px; width:100%; padding:12px; font-size:0.95rem; font-weight:800; border-radius:12px; background:linear-gradient(135deg, #10b981 0%, #059669 100%); color:#ffffff; text-decoration:none; box-shadow:0 4px 15px rgba(16,185,129,0.35);">
+            <span>🚀 PhonePe / GPay / Paytm से सीधे पे करें</span>
+          </a>
+          <div style="font-size:0.72rem; color:#64748b; margin-top:4px;">(मोबाइल यूज़र्स बटन दबाकर सीधे UPI ऐप खोल सकते हैं)</div>
+        </div>
+
+        <!-- Copy UPI ID Strip -->
+        <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:8px 12px; display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+          <div style="font-size:0.8rem; color:#475569;">
+            <span style="font-weight:700;">UPI ID:</span>
+            <code style="font-weight:800; color:#0f172a; margin-left:6px; font-size:0.88rem;">8795622714harsh@ybl</code>
+          </div>
+          <button type="button" class="btn-secondary" onclick="navigator.clipboard.writeText('8795622714harsh@ybl'); stenoApp.showToast('UPI ID कॉपी हो गई!', 'success');" style="padding:4px 10px; font-size:0.75rem; font-weight:700;">
+            📋 कॉपी
+          </button>
+        </div>
+
+        <!-- Verification / UTR Section -->
+        <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:14px; padding:14px; text-align:left;">
+          <div style="font-weight:800; font-size:0.86rem; color:#0f172a; margin-bottom:6px; display:flex; align-items:center; gap:6px;">
+            <span>✍️ भुगतान के बाद 12-अंकीय UTR दर्ज करें:</span>
+          </div>
+          <div style="display:flex; gap:8px; margin-bottom:8px;">
+            <input type="text" id="modalUtrInput" placeholder="जैसे 328409182736" style="flex:1; padding:9px 12px; border-radius:8px; border:1.5px solid #cbd5e1; font-size:0.86rem; font-weight:600;" pattern="[0-9A-Za-z]{8,24}" />
+            <button type="button" id="modalSubmitUtrBtn" onclick="stenoApp.submitModalUtr()" style="background:#0f172a; color:#ffffff; font-weight:800; padding:9px 16px; border-radius:8px; border:none; cursor:pointer; font-size:0.84rem;">
+              सबमिट करें ✓
+            </button>
+          </div>
+          <div id="modalUtrMsg" style="display:none; font-size:0.8rem; margin-bottom:8px;"></div>
+          
+          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; font-size:0.76rem; color:#64748b; margin-top:8px;">
+            <span>अथवा स्क्रीनशॉट Telegram पर भेजें:</span>
+            <a href="https://t.me/+Flh4wmJt6lA1MGE1" target="_blank" rel="noopener noreferrer" style="color:#0088cc; font-weight:800; text-decoration:none; display:inline-flex; align-items:center; gap:4px;">
+              <span>✈️ Telegram सपोर्ट</span> ↗
+            </a>
+          </div>
+        </div>
+
+        <!-- Fallback to Cashfree Card/Netbanking Option -->
+        <div style="margin-top:14px; text-align:center;">
+          <a href="javascript:void(0)" onclick="stenoApp.proceedToCashfreePg()" style="font-size:0.78rem; color:#64748b; text-decoration:underline;">
+            कार्ड या नेटबैंकिंग (Cashfree Gateway) से भुगतान करना चाहते हैं? यहाँ क्लिक करें
+          </a>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
   <!-- Modal: Multi-Category Custom Checkout / Buy Categories -->
   <div id="categoryCheckoutModal" class="modal-overlay" onclick="if(event.target===this) stenoApp.closeCategoryCheckoutModal()" style="display:none; position:fixed; inset:0; background:rgba(15,23,42,0.78); backdrop-filter:blur(6px); z-index:999999; justify-content:center; align-items:center; padding:16px; pointer-events:auto;">
     <div class="modal-card" style="background:var(--bg-card, #ffffff); width:100%; max-width:540px; border-radius:20px; box-shadow:0 25px 50px -12px rgba(0,0,0,0.4); overflow:hidden; border:1px solid var(--border, #e2e8f0); animation:scaleUp 0.2s cubic-bezier(0.16, 1, 0.3, 1); max-height:90vh; display:flex; flex-direction:column; pointer-events:auto; padding:0 !important;">
@@ -1026,7 +1117,7 @@
   <script src="/js/keyboard_map.js?v=8.1"></script>
   <script src="/js/typing_engine.js?v=21.1"></script>
   <script src="/js/ocr_service.js?v=1.1"></script>
-  <script src="/js/app.js?v=21.7"></script>
+  <script src="/js/app.js?v=21.8"></script>
 
   <!-- Plans Page Bootstrap Script -->
   <script>

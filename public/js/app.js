@@ -7925,6 +7925,13 @@ ${link}`;
       planNameInp.value = pName;
     }
 
+    // Dynamic QR generation with exact pre-filled amount for bottom QR code
+    const bottomQrImg = document.getElementById('subActiveQrImg');
+    if (bottomQrImg) {
+      const upiUri = `upi://pay?pa=8795622714harsh@ybl&pn=StenoMaster&am=${finalPrice}.00&cu=INR&tn=StenoMaster_${planId}_Pass`;
+      bottomQrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(upiUri)}`;
+    }
+
     // Update chips display
     const planDiscounted = {
       '1m': this.appliedDiscountPercent ? Math.round(100 * (1 - this.appliedDiscountPercent / 100)) : 100,
@@ -7945,6 +7952,139 @@ ${link}`;
       if (c.getAttribute('data-plan-id') === planId) c.classList.add('active');
       else c.classList.remove('active');
     });
+  }
+
+  openUpiCheckoutModal(planId = '1m') {
+    if (!this.user) {
+      this.openModal('loginModal');
+      return;
+    }
+
+    const planDetails = {
+      '1m': { name: 'बेसिक स्टेनो पास (1 माह)', validity: '30 दिन', price: 100 },
+      '3m': { name: 'सिल्वर स्टेनो पास (3 माह)', validity: '90 दिन', price: 250 },
+      '6m': { name: 'सुपर सेवर पास (6 माह)', validity: '180 दिन', price: 450 },
+      '1y': { name: 'गोल्ड प्रो पास (1 वर्ष VIP)', validity: '365 दिन', price: 800 }
+    };
+    const plan = planDetails[planId] || planDetails['1m'];
+    this.currentCheckoutPlanId = planId;
+    this.currentCheckoutPlan = plan;
+
+    let payableAmount = plan.price;
+    let oldPriceHtml = '';
+    if (this.appliedDiscountPercent && this.appliedDiscountPercent > 0) {
+      payableAmount = Math.round(plan.price * (1 - this.appliedDiscountPercent / 100));
+      oldPriceHtml = `<del style="color:#94a3b8; font-size:0.85rem; margin-right:4px;">₹${plan.price}</del> <span style="background:#dcfce7; color:#15803d; font-size:0.7rem; font-weight:700; padding:1px 6px; border-radius:6px;">-${this.appliedDiscountPercent}% छूट</span>`;
+    }
+    this.currentCheckoutPayableAmount = payableAmount;
+
+    const modalPlanName = document.getElementById('modalPlanName');
+    const modalPlanValidity = document.getElementById('modalPlanValidity');
+    const modalPlanOldPrice = document.getElementById('modalPlanOldPrice');
+    const modalPayableAmount = document.getElementById('modalPayableAmount');
+    const modalQrCaptionAmount = document.getElementById('modalQrCaptionAmount');
+
+    if (modalPlanName) modalPlanName.textContent = plan.name;
+    if (modalPlanValidity) modalPlanValidity.textContent = `वैधता: ${plan.validity} • सभी डिक्टेशन्स अनलॉक`;
+    if (modalPlanOldPrice) modalPlanOldPrice.innerHTML = oldPriceHtml;
+    if (modalPayableAmount) modalPayableAmount.textContent = `₹${payableAmount}`;
+    if (modalQrCaptionAmount) modalQrCaptionAmount.textContent = `₹${payableAmount}`;
+
+    // Dynamic UPI URI with PRE-FILLED EXACT AMOUNT!
+    const upiId = '8795622714harsh@ybl';
+    const note = `StenoMaster_${planId}_Pass`;
+    const upiUri = `upi://pay?pa=${upiId}&pn=StenoMaster&am=${payableAmount}.00&cu=INR&tn=${note}`;
+
+    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(upiUri)}`;
+    const qrImg = document.getElementById('modalDynamicQrImg');
+    if (qrImg) qrImg.src = qrUrl;
+
+    const directBtn = document.getElementById('modalDirectUpiAppBtn');
+    if (directBtn) {
+      directBtn.href = upiUri;
+      directBtn.innerHTML = `<span>🚀 PhonePe / GPay / Paytm से सीधे पे करें (₹${payableAmount})</span>`;
+    }
+
+    const utrInput = document.getElementById('modalUtrInput');
+    if (utrInput) utrInput.value = '';
+    const utrMsg = document.getElementById('modalUtrMsg');
+    if (utrMsg) utrMsg.style.display = 'none';
+
+    this.openModal('directUpiPaymentModal');
+  }
+
+  async submitModalUtr() {
+    if (!this.user) {
+      this.openModal('loginModal');
+      return;
+    }
+
+    const utrInput = document.getElementById('modalUtrInput');
+    const utr = (utrInput ? utrInput.value : '').trim();
+    const utrMsg = document.getElementById('modalUtrMsg');
+
+    if (!utr || utr.length < 8) {
+      this.showToast('कृपया वैध 12-अंकीय UPI UTR / Transaction ID दर्ज करें।', 'warning');
+      if (utrInput) utrInput.focus();
+      return;
+    }
+
+    const btn = document.getElementById('modalSubmitUtrBtn');
+    if (btn) {
+      btn.disabled = true;
+      btn.textContent = 'सत्यापित हो रहा है...';
+    }
+
+    try {
+      let planName = this.currentCheckoutPlan ? this.currentCheckoutPlan.name : 'StenoMaster Pro Pass';
+      if (this.appliedPromoCode) {
+        planName += ` [Promo: ${this.appliedPromoCode}]`;
+      }
+      const amount = this.currentCheckoutPayableAmount || 100;
+
+      const res = await this.apiCall('/api/subscription/request-payment', 'POST', {
+        transaction_id: utr,
+        plan_name: planName,
+        amount: amount,
+        promo_code: this.appliedPromoCode || null
+      });
+
+      if (res && res.success) {
+        if (utrMsg) {
+          utrMsg.style.display = 'block';
+          utrMsg.style.color = '#15803d';
+          utrMsg.innerHTML = '✅ <strong>अनुरोध प्राप्त हुआ!</strong> आपका भुगतान सत्यापित होते ही प्रो सदस्यता चालू कर दी जाएगी।';
+        }
+        this.showToast('🎉 भुगतान अनुरोध जमा हो गया! सत्यापन के बाद आपका प्लान सक्रिय हो जाएगा।', 'success');
+        setTimeout(() => {
+          this.closeModal('directUpiPaymentModal');
+        }, 2500);
+      } else {
+        if (utrMsg) {
+          utrMsg.style.display = 'block';
+          utrMsg.style.color = '#dc2626';
+          utrMsg.textContent = (res && res.error) || 'सबमिट करने में त्रुटि आई। कृपया पुनः प्रयास करें।';
+        }
+        this.showToast((res && res.error) || 'त्रुटि आई', 'error');
+      }
+    } catch (e) {
+      this.showToast('नेटवर्क त्रुटि। कृपया Telegram पर संपर्क करें।', 'error');
+    } finally {
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = 'सबमिट करें ✓';
+      }
+    }
+  }
+
+  proceedToCashfreePg() {
+    this.closeModal('directUpiPaymentModal');
+    this.initiateCashfreePayment(this.currentCheckoutPlanId || '1m');
+  }
+
+  copyUpiId() {
+    navigator.clipboard.writeText('8795622714harsh@ybl');
+    this.showToast('UPI ID (8795622714harsh@ybl) कॉपी हो गई!', 'success');
   }
 
   async initiateCashfreePayment(planId = '1m') {
