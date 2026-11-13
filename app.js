@@ -8286,6 +8286,24 @@ ${link}`;
 
   async loadCommunityPosts(forceRefresh = false) {
     if (!this.user) {
+      const feedEl = document.getElementById('communityPostsFeed');
+      if (feedEl) {
+        feedEl.innerHTML = `
+          <div class="tg-date-pill">${this.formatDatePill(new Date().toISOString())}</div>
+          <div class="tg-msg-row incoming" style="max-width: 90%; align-self: center; margin: 24px auto; text-align: center;">
+            <div class="tg-msg-bubble" style="background:#ffffff; border-radius:14px; padding:22px; box-shadow:0 4px 15px rgba(0,0,0,0.06); border: 1px solid #e2e8f0;">
+              <div style="font-size: 2.2rem; margin-bottom: 8px;">🔒 💬</div>
+              <strong style="color:#0f172a; font-size: 1rem; display:block; margin-bottom: 6px;">StenoMaster कम्युनिटी चैट</strong>
+              <p style="font-size: 0.82rem; color:#64748b; margin: 0 0 14px 0; line-height: 1.5;">
+                ऑल-इंडिया स्टेनो छात्रों से जुड़ने, आउटलाइन्स पूछने और चर्चा में भाग लेने के लिए कृपया लॉगिन करें।
+              </p>
+              <button type="button" class="btn-primary btn-sm" onclick="app.openModal('loginModal')" style="border-radius:18px; padding:8px 22px; font-weight:600;">
+                🔑 लॉगिन / रजिस्टर करें
+              </button>
+            </div>
+          </div>
+        `;
+      }
       this.openModal('loginModal');
       return;
     }
@@ -8458,28 +8476,62 @@ ${link}`;
     const feedEl = document.getElementById('communityPostsFeed');
     if (!feedEl) return;
 
-    if (!posts || posts.length === 0) {
-      feedEl.innerHTML = `
-        <div class="tg-date-pill">आज, 14 अक्टूबर 2026</div>
-        <div class="tg-msg-row incoming" style="max-width: 90%; align-self: center;">
-          <div class="tg-msg-bubble" style="text-align: center; background:#ffffff; border-radius:12px; padding:18px;">
-            <div style="font-size: 2.2rem; margin-bottom: 6px;">✍️</div>
-            <strong style="color:#0f172a; font-size: 0.95rem;">StenoMaster ऑल-इंडिया छात्र ग्रुप में आपका स्वागत है!</strong>
-            <p style="font-size: 0.8rem; color:#64748b; margin: 6px 0 12px 0; line-height: 1.45;">
-              यहाँ आप रामधारी खंड 1 व 2, SSC, UPSSSC स्टेनो आउटलाइन्स पूछ सकते हैं या नोटबुक की फ़ोटो भेजकर साथी छात्रों से सहायता ले सकते हैं।
-            </p>
-            <button type="button" class="btn-primary btn-sm" onclick="document.getElementById('commPostTextarea').focus()" style="border-radius:18px; padding:6px 16px;">
-              💬 पहला सवाल पूछें
-            </button>
+    const currentUserId = this.user ? (this.user.user_id || this.user.id) : null;
+    const isAdmin = Boolean(this.user && this.user.role === 'admin');
+    const userName = this.user ? (this.user.display_name || this.user.username || 'विद्यार्थी') : 'विद्यार्थी';
+
+    // Check if this user is a "new user" (has never posted a message in the community)
+    let hasUserPosted = false;
+    if (currentUserId) {
+      const storedPosted = localStorage.getItem('sm_has_posted_community_' + currentUserId);
+      const postedInFeed = Array.isArray(posts) && posts.some(p => (p.user_id === currentUserId));
+      hasUserPosted = Boolean(storedPosted || postedInFeed);
+    }
+    const isNewUser = !hasUserPosted;
+
+    // Build Welcome Message HTML (ONLY FOR NEW USERS)
+    const welcomeCardHtml = isNewUser ? `
+      <div id="tgWelcomeCard" class="tg-msg-row incoming" style="max-width: 92%; align-self: center; margin: 12px auto; animation: tgMsgFadeIn 0.3s ease;">
+        <div class="tg-msg-bubble" style="text-align: center; background: linear-gradient(135deg, #ffffff 0%, #f0fdf4 100%); border: 1.5px solid #86efac; border-radius: 16px; padding: 18px 16px; box-shadow: 0 4px 15px rgba(22, 163, 74, 0.08);">
+          <div style="font-size: 2.2rem; margin-bottom: 6px;">👋 ✍️</div>
+          <div style="display:inline-block; background:#dcfce7; color:#15803d; font-size:0.72rem; font-weight:700; padding:2px 10px; border-radius:12px; margin-bottom:8px; text-transform:uppercase; letter-spacing:0.5px;">
+            नया छात्र स्वागत
           </div>
+          <strong style="display:block; color:#0f172a; font-size: 1rem; margin-bottom: 6px;">
+            ${userName ? 'नमस्ते ' + this.escapeHtml(userName) + '! ' : ''}StenoMaster ऑल-इंडिया कम्युनिटी में आपका स्वागत है!
+          </strong>
+          <p style="font-size: 0.82rem; color:#475569; margin: 0 0 12px 0; line-height: 1.5;">
+            यहाँ आप रामधारी खंड 1 व 2, SSC, UPSSSC, हाईकोर्ट परीक्षा के कठिन शब्दों की आउटलाइन्स पूछ सकते हैं अथवा नोटबुक की फ़ोटो भेजकर साथी छात्रों से सहायता ले सकते हैं।
+          </p>
+          <div style="background:#ffffff; border:1px dashed #cbd5e1; border-radius:10px; padding:8px 12px; margin-bottom:12px; font-size:0.78rem; color:#64748b;">
+            💡 <em>नीचे अपना पहला सवाल, आउटलाइन या 'नमस्ते' लिखकर भेजें। पहला संदेश भेजते ही यह वेलकम कार्ड स्वतः हट जाएगा।</em>
+          </div>
+          <button type="button" class="btn-primary btn-sm" onclick="const ta = document.getElementById('commPostTextarea'); if(ta){ ta.focus(); ta.placeholder='अपना पहला संदेश यहाँ लिखें...'; }" style="border-radius:20px; padding:7px 18px; font-size:0.85rem; font-weight:600; box-shadow: 0 2px 8px rgba(2, 132, 199, 0.25);">
+            💬 पहला सवाल या संदेश लिखें
+          </button>
         </div>
-      `;
+      </div>
+    ` : '';
+
+    if (!posts || posts.length === 0) {
+      if (isNewUser) {
+        feedEl.innerHTML = `
+          <div class="tg-date-pill">${this.formatDatePill(new Date().toISOString())}</div>
+          ${welcomeCardHtml}
+        `;
+      } else {
+        feedEl.innerHTML = `
+          <div class="tg-date-pill">${this.formatDatePill(new Date().toISOString())}</div>
+          <div class="tg-msg-row incoming" style="max-width: 90%; align-self: center; margin: 24px auto; text-align: center;">
+            <div class="tg-msg-bubble" style="background:#ffffff; border-radius:12px; padding:18px 24px; color:#64748b; font-size:0.86rem; box-shadow:0 2px 8px rgba(0,0,0,0.04);">
+              💬 कम्युनिटी चैट में अभी कोई नया संदेश नहीं है। नीचे से चर्चा शुरू करें!
+            </div>
+          </div>
+        `;
+      }
       this.lastCommunityPostId = 0;
       return;
     }
-
-    const currentUserId = this.user ? (this.user.user_id || this.user.id) : null;
-    const isAdmin = Boolean(this.user && this.user.role === 'admin');
 
     const htmlParts = [];
     let lastDateKey = null;
@@ -8497,6 +8549,10 @@ ${link}`;
       }
       htmlParts.push(this.buildSingleCommunityPostHtml(post, currentUserId, isAdmin));
     });
+
+    if (isNewUser) {
+      htmlParts.push(welcomeCardHtml);
+    }
 
     this._lastRenderedDateKey = lastDateKey;
     feedEl.innerHTML = htmlParts.join('');
@@ -8602,6 +8658,13 @@ ${link}`;
     const authorName = this.user.display_name || this.user.username || 'विद्यार्थी';
     const nowIso = new Date().toISOString();
 
+    // Mark user as having posted a message in community
+    if (currentUserId) {
+      try {
+        localStorage.setItem('sm_has_posted_community_' + currentUserId, '1');
+      } catch (e) {}
+    }
+
     // 1. INSTANT LOCAL OPTIMISTIC UI: Clear input immediately (0ms delay!)
     if (textarea) {
       textarea.value = '';
@@ -8613,6 +8676,19 @@ ${link}`;
 
     // 2. Play subtle sent tick sound
     this.playChatSound('sent');
+
+    // Ek message bhejne ke baad welcome card turant hat jaye
+    const welcomeCard = document.getElementById('tgWelcomeCard');
+    if (welcomeCard) {
+      welcomeCard.style.transition = 'opacity 0.25s ease, transform 0.25s ease';
+      welcomeCard.style.opacity = '0';
+      welcomeCard.style.transform = 'scale(0.95)';
+      setTimeout(() => {
+        if (welcomeCard && welcomeCard.parentNode) {
+          welcomeCard.parentNode.removeChild(welcomeCard);
+        }
+      }, 250);
+    }
 
     // 3. Construct optimistic message object & immediately inject into the feed
     const feedEl = document.getElementById('communityPostsFeed');
@@ -8639,8 +8715,16 @@ ${link}`;
     };
 
     if (feedEl) {
+      const welcomeCardInDom = feedEl.querySelector('#tgWelcomeCard');
+      if (welcomeCardInDom) welcomeCardInDom.remove();
       const emptyState = feedEl.querySelector('.comm-empty-state');
       if (emptyState) feedEl.innerHTML = '';
+      feedEl.querySelectorAll('.tg-msg-bubble').forEach(b => {
+        if (b.textContent.includes('कम्युनिटी चैट में अभी कोई नया संदेश नहीं है')) {
+          const row = b.closest('.tg-msg-row');
+          if (row) row.remove();
+        }
+      });
 
       const postDateKey = new Date(nowIso).toDateString();
       if (!this._lastRenderedDateKey || this._lastRenderedDateKey !== postDateKey) {
