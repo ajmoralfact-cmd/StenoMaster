@@ -14886,3 +14886,439 @@ eft: 12px;
     line-height: 1.65 !important;
   }
 }
+
+
+/* ==========================================================================
+   MOBILE SCREEN COMPACT & SLEEK REFINEMENT (<=768px)
+   Eliminates oversized fonts, giant emojis, bloated banners & tall plan cards.
+   Gives a native, tight, compact EdTech app feel (Testbook / Unacademy style).
+   ========================================================================== */
+@media (max-width: 768px), (max-device-width: 768px) {
+
+  /* 1. Global Mobile Root & Viewport Sizing */
+  body {
+    -webkit-text-size-adjust: 100% !important;
+    text-size-adjust: 100% !important;
+  }
+
+  /* 2. DASHBOARD: Sleek Compact Hero Carousel */
+  .dashboard-poster-carousel {
+    border-radius: 12px !important;
+    margin-bottom: 10px !important;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04) !important;
+    border: 1px solid #e2e8f0 !important;
+  }
+  .poster-slides-container {
+    height: 135px !important;
+    min-height: 135px !important;
+  }
+  .poster-slide {
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    overflow: hidden !important;
+  }
+  .poster-content-left {
+    flex: 1 !important;
+    padding: 10px 12px !important;
+    justify-content: center !important;
+    max-width: 65% !important;
+  }
+  .poster-offer-pill {
+    padding: 2px 7px !important;
+    font-size: 0.64rem !important;
+    margin-bottom: 3px !important;
+    gap: 4px !important;
+  }
+  .offer-pill-badge {
+    font-size: 0.55rem !important;
+    padding: 1px 4px !important;
+  }
+  .poster-headline {
+    font-size: 0.88rem !important;
+    line-height: 1.22 !important;
+    margin: 2px 0 4px 0 !important;
+    font-weight: 800 !important;
+    display: -webkit-box !important;
+    -webkit-line-clamp: 2 !important;
+    -webkit-box-orient: vertical !important;
+    overflow: hidden !important;
+  }
+  .poster-gold-line {
+    width: 22px !important;
+    height: 2px !important;
+    margin-bottom: 4px !important;
+  }
+  .poster-feature-list {
+    display: none !important;
+  }
+  .poster-laurel-badge {
+    padding: 2px 6px !important;
+    margin-top: 2px !important;
+    gap: 4px !important;
+  }
+  .laurel-shield {
+    width: 15px !important;
+    height: 15px !important;
+    font-size: 0.58rem !important;
+  }
+  .laurel-text {
+    font-size: 0.65rem !important;
+    font-weight: 700 !important;
+  }
+  .poster-visual-right {
+    flex: 0 0 35% !important;
+    height: 100% !important;
+    width: 35% !important;
+    position: relative !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+  .poster-bg-photo {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+    object-position: top center !important;
+    mask-image: linear-gradient(to right, transparent 0%, black 25%) !important;
+    -webkit-mask-image: linear-gradient(to right, transparent 0%, black 25%) !important;
+  }
+  .floating-card-top,
+  .floating-card-bottom {
+    display: none !important; /* Hide oversized cards floating over image on mobile */
+  }
+  .poster-carousel-dots {
+    padding: 3px 0 4px 0 !important;
+  }
+  .carousel-dot {
+    width: 5px !important;
+    height: 5px !important;
+  }
+  .carousel-dot.active {
+    width: 14px !important;
+  }
+
+  /* 3. DASHBOARD: Compact 5 Quick Action Circles */
+  .mobile-quick-circles-row {
+    grid-template-columns: repeat(5, 1fr) !important;
+    gap: 4px !important;
+    margin: 8px 0 12px 0 !important;
+    padding: 0 !important;
+  }
+  .mobile-circle-icon-box {
+    width: 38px !important;
+    height: 38px !important;
+    border-radius: 10px !important;
+    font-size: 1.05rem !important;
+    margin-bottom: 4px !important;
+  }
+  .circle-badge-tag {
+    font-size: 0.46rem !important;
+    padding: 1px 3px !important;
+    top: -4px !important;
+    right: -4px !important;
+  }
+  .mobile-circle-label {
+    font-size: 0.62rem !important;
+    font-weight: 700 !important;
+    line-height: 1.1 !important;
+  }
+
+  /* 4. DASHBOARD: Compact Continue Practice Card */
+  .continue-practice-card {
+    padding: 10px 12px !important;
+    border-radius: 12px !important;
+    margin-bottom: 10px !important;
+  }
+  .continue-practice-card h4 {
+    font-size: 0.88rem !important;
+    line-height: 1.2 !important;
+  }
+  .continue-practice-card p {
+    font-size: 0.70rem !important;
+  }
+  .btn-continue-go {
+    padding: 5px 12px !important;
+    font-size: 0.74rem !important;
+    border-radius: 7px !important;
+  }
+
+  /* 5. DASHBOARD: Compact Category Series Cards */
+  .category-series-card {
+    padding: 10px 12px !important;
+    border-radius: 12px !important;
+    margin-bottom: 8px !important;
+    gap: 8px !important;
+  }
+  .cat-left-section {
+    gap: 8px !important;
+  }
+  .cat-left-section > div:first-child {
+    width: 36px !important;
+    height: 36px !important;
+    min-width: 36px !important;
+    border-radius: 9px !important;
+    font-size: 1.15rem !important;
+  }
+  .category-series-card .cat-left-section h4 {
+    font-size: 0.88rem !important;
+    line-height: 1.2 !important;
+  }
+  .category-series-card .cat-left-section p {
+    font-size: 0.70rem !important;
+  }
+  .cat-action-section button {
+    padding: 6px 12px !important;
+    font-size: 0.76rem !important;
+    border-radius: 8px !important;
+  }
+
+  /* 6. DASHBOARD: Compact Stats Cards */
+  .horizontal-stats-grid {
+    gap: 6px !important;
+    margin-bottom: 8px !important;
+  }
+  .h-stat-card {
+    min-height: 56px !important;
+    height: 56px !important;
+    padding: 5px 4px !important;
+    border-radius: 10px !important;
+  }
+  .h-stat-card .h-stat-icon {
+    font-size: 1rem !important;
+  }
+  .h-stat-card .h-stat-val {
+    font-size: 0.92rem !important;
+  }
+  .h-stat-card .h-stat-label {
+    font-size: 0.62rem !important;
+  }
+
+  /* ========================================================================
+     PLANS & PRICING PAGE (/plans) COMPACT MOBILE OPTIMIZATION
+     ======================================================================== */
+  .clean-sub-container {
+    padding: 8px 10px 30px 10px !important;
+  }
+
+  /* Slim Header Banner */
+  .plans-top-hero-banner {
+    border-radius: 10px !important;
+    margin-bottom: 10px !important;
+  }
+  .plans-top-hero-banner img {
+    max-height: 105px !important;
+  }
+
+  /* Header Title & Subtitle */
+  .clean-sub-container .section-title {
+    font-size: 1.12rem !important;
+    margin-bottom: 2px !important;
+  }
+  .clean-sub-container .section-subtitle {
+    font-size: 0.74rem !important;
+    margin-bottom: 6px !important;
+  }
+
+  /* Trust Pills */
+  .plans-trust-pills {
+    padding: 4px 10px !important;
+    gap: 4px 8px !important;
+    margin-bottom: 8px !important;
+    border-radius: 20px !important;
+  }
+  .trust-pill-item {
+    font-size: 0.68rem !important;
+    gap: 4px !important;
+  }
+  .trust-pill-item .check-circle {
+    width: 13px !important;
+    height: 13px !important;
+    font-size: 0.52rem !important;
+  }
+
+  /* Status Bar */
+  .sub-active-bar {
+    padding: 8px 10px !important;
+    margin-bottom: 8px !important;
+    border-radius: 10px !important;
+  }
+  .sub-active-lead {
+    font-size: 0.76rem !important;
+  }
+  .sub-active-desc {
+    display: none !important;
+  }
+  .sub-active-pill-inactive {
+    font-size: 0.68rem !important;
+    padding: 2px 7px !important;
+  }
+
+  /* Gold Coins Bar */
+  #subGoldCoinsBanner {
+    padding: 8px 10px !important;
+    margin-bottom: 8px !important;
+    border-radius: 10px !important;
+    gap: 6px !important;
+  }
+  #subGoldCoinsBanner span[style*="font-size:1.8rem"],
+  #subGoldCoinsBanner span[style*="font-size: 1.8rem"] {
+    font-size: 1.15rem !important;
+  }
+  #subGoldCoinsBanner div[style*="font-size:0.95rem"] {
+    font-size: 0.78rem !important;
+  }
+  #subGoldCoinsBanner div[style*="font-size:0.78rem"] {
+    display: none !important;
+  }
+  #subGoldCoinsBanner button {
+    padding: 5px 10px !important;
+    font-size: 0.72rem !important;
+    border-radius: 6px !important;
+  }
+
+  /* Sub Mode Tabs */
+  .sub-mode-tabs {
+    margin-bottom: 10px !important;
+    padding: 3px !important;
+    gap: 4px !important;
+    border-radius: 10px !important;
+  }
+  .sub-mode-tabs button {
+    padding: 7px 6px !important;
+    font-size: 0.74rem !important;
+    border-radius: 7px !important;
+    gap: 4px !important;
+  }
+
+  /* Promo Code Card */
+  #promoCodeCard {
+    padding: 8px 10px !important;
+    margin-bottom: 10px !important;
+    border-radius: 10px !important;
+    gap: 6px !important;
+  }
+  #promoCodeCard span[style*="font-size:1.8rem"],
+  #promoCodeCard span[style*="font-size: 1.8rem"] {
+    font-size: 1.1rem !important;
+    padding: 3px 6px !important;
+    border-radius: 6px !important;
+  }
+  #promoCodeCard div[style*="font-size:0.95rem"] {
+    font-size: 0.78rem !important;
+  }
+  #promoCodeCard div[style*="font-size:0.74rem"] {
+    display: none !important;
+  }
+  #promoCodeCard input {
+    padding: 5px 8px !important;
+    font-size: 0.76rem !important;
+    width: 110px !important;
+  }
+  #promoCodeCard button {
+    padding: 5px 10px !important;
+    font-size: 0.74rem !important;
+  }
+
+  /* Subscription Plans Grid */
+  .subscription-plans-grid {
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+    margin: 8px 0 16px 0 !important;
+  }
+
+  /* Compact Sleek Plan Card */
+  .sub-plan-card.stenoshala-card {
+    padding: 12px 12px 10px 12px !important;
+    border-radius: 12px !important;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04) !important;
+  }
+  .plan-top-badge {
+    top: -9px !important;
+    font-size: 0.58rem !important;
+    padding: 1px 7px !important;
+    border-radius: 10px !important;
+  }
+  .plan-card-header {
+    margin-bottom: 4px !important;
+  }
+  .plan-icon-title {
+    gap: 6px !important;
+    margin-bottom: 2px !important;
+  }
+  .plan-icon-box {
+    width: 26px !important;
+    height: 26px !important;
+    border-radius: 6px !important;
+    font-size: 0.92rem !important;
+  }
+  .plan-name-text {
+    font-size: 0.90rem !important;
+    line-height: 1.2 !important;
+  }
+  .plan-desc-text {
+    font-size: 0.68rem !important;
+    margin-bottom: 4px !important;
+  }
+  .plan-discount-pill {
+    font-size: 0.60rem !important;
+    padding: 1px 5px !important;
+    margin-bottom: 2px !important;
+  }
+  .plan-price-block {
+    gap: 4px !important;
+    margin-bottom: 2px !important;
+  }
+  .plan-price-strike {
+    font-size: 0.80rem !important;
+  }
+  .plan-price-amount {
+    font-size: 1.40rem !important;
+    letter-spacing: -0.3px !important;
+  }
+  .plan-price-period {
+    font-size: 0.70rem !important;
+  }
+  .plan-rate-meta {
+    gap: 4px !important;
+    margin-bottom: 6px !important;
+  }
+  .plan-validity-pill,
+  .plan-monthly-pill {
+    font-size: 0.62rem !important;
+    padding: 1px 5px !important;
+    border-radius: 4px !important;
+  }
+  .plan-card-divider {
+    margin-bottom: 6px !important;
+  }
+
+  /* Compact Bullet Features: Show top 4, hide 5-8 on mobile to avoid endless scrolling */
+  .plan-features-list {
+    margin: 0 0 10px 0 !important;
+    gap: 4px !important;
+  }
+  .plan-features-list .plan-feature-item:nth-child(n+5) {
+    display: none !important;
+  }
+  .plan-feature-item {
+    font-size: 0.68rem !important;
+    gap: 5px !important;
+    line-height: 1.22 !important;
+  }
+  .feature-check-icon {
+    width: 12px !important;
+    height: 12px !important;
+    min-width: 12px !important;
+    font-size: 0.50rem !important;
+  }
+
+  /* Compact Buy Now Button */
+  .plan-buy-btn {
+    padding: 8px 12px !important;
+    font-size: 0.80rem !important;
+    border-radius: 8px !important;
+    min-height: 36px !important;
+    height: 36px !important;
+  }
+}
