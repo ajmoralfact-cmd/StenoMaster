@@ -64,6 +64,28 @@ def get_local_ip():
         return "127.0.0.1"
 
 
+def validate_promo_code(code: str) -> dict:
+    clean = (code or '').strip().upper()
+    valid_codes = {
+        'ADITI10': {'discount_percent': 10, 'title': 'Aditi Special 10% OFF'},
+        'STENO10': {'discount_percent': 10, 'title': 'Steno Special 10% OFF'}
+    }
+    if clean in valid_codes:
+        pct = valid_codes[clean]['discount_percent']
+        return {
+            'valid': True,
+            'code': clean,
+            'discount_percent': pct,
+            'title': valid_codes[clean]['title'],
+            'message': f"🎉 प्रोमो कोड '{clean}' सफलतापूर्वक लागू हो गया! आपको {pct}% की विशेष छूट मिली है।"
+        }
+    return {
+        'valid': False,
+        'code': clean,
+        'error': 'अमान्य कूपन कोड। कृपया सही प्रोमो कोड दर्ज करें।'
+    }
+
+
 class StenoMasterHandler(http.server.SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, directory=STATIC_DIR, **kwargs)
@@ -591,6 +613,15 @@ class StenoMasterHandler(http.server.SimpleHTTPRequestHandler):
             return
 
         if path == '/api/subscription/details':
+            # Promo Code support for Category Checkout
+            promo_code = str(data.get('promo_code') or '').strip().upper()
+            if promo_code:
+                pinfo = validate_promo_code(promo_code)
+                if pinfo.get('valid'):
+                    discount_pct = pinfo['discount_percent']
+                    discount_amount = round(total_amount * (discount_pct / 100.0), 2)
+                    total_amount = max(1.0, round(total_amount - discount_amount, 2))
+
             admin_settings = db.get_admin_settings()
             sub_info = db.get_user_subscription_info(user['user_id']) if user else {
                 "is_premium": False,
@@ -624,6 +655,14 @@ class StenoMasterHandler(http.server.SimpleHTTPRequestHandler):
                 return
             requests = db.get_user_payment_requests(user['user_id'])
             self._send_json(200, {"requests": requests})
+            return
+
+        # Validate Promo Code Endpoint
+        if path == '/api/payment/validate-promo':
+            code = params.get('code', [''])[0]
+            res = validate_promo_code(code)
+            status_code = 200 if res.get('valid') else 400
+            self._send_json(status_code, res)
             return
 
         # Cashfree Student Payment History
@@ -1298,6 +1337,14 @@ class StenoMasterHandler(http.server.SimpleHTTPRequestHandler):
             })
             return
 
+        if path == '/api/payment/validate-promo':
+            data = self._read_json_body() or {}
+            code = data.get('code') or params.get('code', [''])[0]
+            res = validate_promo_code(code)
+            status_code = 200 if res.get('valid') else 400
+            self._send_json(status_code, res)
+            return
+
         # Phase 3 / Cashfree PG Payment Endpoints
         if path == '/api/payment/cashfree/create-order':
             if not user:
@@ -1318,9 +1365,24 @@ class StenoMasterHandler(http.server.SimpleHTTPRequestHandler):
                 amount = float(first_plan['price'])
                 plan_days = int(first_plan['days'])
 
+            # Promo Code Support (e.g. ADITI10 -> 10% discount)
+            promo_code = str(data.get('promo_code') or '').strip().upper()
+            applied_discount = 0
+            if promo_code:
+                promo_info = validate_promo_code(promo_code)
+                if promo_info.get('valid'):
+                    discount_pct = promo_info['discount_percent']
+                    discount_amount = round(amount * (discount_pct / 100.0), 2)
+                    amount = max(1.0, round(amount - discount_amount, 2))
+                    applied_discount = discount_pct
+
             return_url = data.get('return_url')
 
             res = CashfreeService.create_order(user, amount=amount, plan_days=plan_days, return_url=return_url)
+            if res.get("success") and applied_discount > 0:
+                res["promo_applied"] = promo_code
+                res["discount_percent"] = applied_discount
+                res["final_amount"] = amount
             if res.get("success"):
                 self._send_json(200, res)
             else:

@@ -218,6 +218,42 @@
             </button>
           </div>
 
+          <!-- Promo Code Card -->
+          <div id="promoCodeCard" style="margin-bottom:18px; background:linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%); border:1.5px solid #86efac; border-radius:14px; padding:14px 18px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; box-shadow:0 3px 12px rgba(16,185,129,0.08);">
+            <div style="display:flex; align-items:center; gap:12px;">
+              <span style="font-size:1.8rem; background:#dcfce7; padding:6px 10px; border-radius:10px;">🏷️</span>
+              <div>
+                <div style="font-weight:800; font-size:0.95rem; color:#15803d; display:flex; align-items:center; gap:8px;">
+                  <span>क्या आपके पास प्रोमो / कूपन कोड है?</span>
+                  <span style="background:#16a34a; color:#ffffff; font-size:0.68rem; padding:2px 8px; border-radius:10px; font-weight:700;">10% अतिरिक्त छूट</span>
+                </div>
+                <div style="font-size:0.78rem; color:#475569; margin-top:2px;">
+                  प्रोमो कोड <strong>ADITI10</strong> डालें और सभी प्लान्स पर तुरंत <strong>10% की भारी छूट</strong> पाएं!
+                </div>
+              </div>
+            </div>
+            <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+              <input type="text" id="promoCodeInput" placeholder="उदा. ADITI10" style="text-transform:uppercase; font-weight:800; letter-spacing:1px; padding:9px 14px; border-radius:8px; border:1.5px solid #86efac; background:#ffffff; font-size:0.88rem; color:#0f172a; outline:none; width:160px;" onkeyup="if(event.key==='Enter') stenoApp.applyPromoCode()" />
+              <button type="button" id="applyPromoBtn" onclick="stenoApp.applyPromoCode()" style="background:linear-gradient(135deg, #10b981 0%, #059669 100%); border:none; color:#ffffff; font-weight:800; padding:9px 18px; border-radius:8px; cursor:pointer; font-size:0.86rem; box-shadow:0 2px 8px rgba(16,185,129,0.25); transition:all 0.2s;">
+                लागू करें ⚡
+              </button>
+            </div>
+          </div>
+
+          <!-- Applied Promo Notice Strip -->
+          <div id="promoAppliedBanner" style="display:none; margin-bottom:18px; background:#ecfdf5; border:1.5px solid #10b981; border-radius:12px; padding:12px 18px; justify-content:space-between; align-items:center; box-shadow:0 2px 10px rgba(16,185,129,0.12);">
+            <div style="display:flex; align-items:center; gap:10px;">
+              <span style="font-size:1.5rem;">🎉</span>
+              <div>
+                <strong style="color:#065f46; font-size:0.92rem;" id="promoAppliedTitle">कूपन 'ADITI10' लागू! (-10% छूट)</strong>
+                <span style="color:#047857; font-size:0.8rem; margin-left:6px; display:inline-block;">सभी प्लान्स की कीमतों में 10% की छूट घटा दी गई है।</span>
+              </div>
+            </div>
+            <button type="button" onclick="stenoApp.removePromoCode()" style="background:transparent; border:1px solid #6ee7b7; color:#047857; font-size:0.75rem; font-weight:700; padding:4px 10px; border-radius:6px; cursor:pointer;">
+              ✕ कूपन हटाएं
+            </button>
+          </div>
+
           <!-- Wrap 1: Monthly Plans (The 4 Core Full-Window Stenoshala Cards) -->
           <div id="subMonthlyPlansWrap">
             
@@ -990,7 +1026,7 @@
   <script src="/js/keyboard_map.js?v=8.1"></script>
   <script src="/js/typing_engine.js?v=21.1"></script>
   <script src="/js/ocr_service.js?v=1.1"></script>
-  <script src="/js/app.js?v=21.6"></script>
+  <script src="/js/app.js?v=21.7"></script>
 
   <!-- Plans Page Bootstrap Script -->
   <script>
