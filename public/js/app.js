@@ -926,21 +926,35 @@ class StenoApp {
   }
 
   setTheme(theme) {
-    document.documentElement.setAttribute('data-theme', theme);
-    localStorage.setItem('stenomaster_theme', theme);
-    const toggleBtn = document.getElementById('themeToggleBtn');
-    if (toggleBtn) {
-      toggleBtn.textContent = theme === 'dark' ? '☀️' : '🌙';
-    }
+    const isDark = theme === 'dark';
+    this.currentTheme = isDark ? 'dark' : 'light';
+    document.documentElement.setAttribute('data-theme', this.currentTheme);
+    localStorage.setItem('stenomaster_theme', this.currentTheme);
+
+    // Update all theme buttons across top header, mobile navigation, and drawers
+    document.querySelectorAll('.theme-toggle-btn, .sub-tool-btn[onclick*="toggleTheme"], #themeToggleBtn').forEach(btn => {
+      btn.textContent = isDark ? '☀️' : '🌙';
+      btn.title = isDark ? 'लाइट थीम में बदलें (Switch to Light Mode)' : 'डार्क थीम में बदलें (Switch to Dark Mode)';
+      btn.setAttribute('aria-label', btn.title);
+    });
+
     const subTheme = document.getElementById('mobileSubThemeIcon');
     if (subTheme) {
-      subTheme.textContent = theme === 'dark' ? '☀️' : '🌙';
+      subTheme.textContent = isDark ? '☀️' : '🌙';
+    }
+
+    const select = document.getElementById('settingsThemeSelect');
+    if (select && select.value !== this.currentTheme) {
+      select.value = this.currentTheme;
     }
   }
 
   toggleTheme() {
-    const current = document.documentElement.getAttribute('data-theme') || 'light';
-    this.setTheme(current === 'dark' ? 'light' : 'dark');
+    const current = document.documentElement.getAttribute('data-theme') || localStorage.getItem('stenomaster_theme') || 'light';
+    const nextTheme = current === 'dark' ? 'light' : 'dark';
+    this.setTheme(nextTheme);
+    const isEn = this.currentLang === 'en';
+    this.showToast(nextTheme === 'dark' ? (isEn ? '🌙 Dark Mode Activated' : '🌙 डार्क थीम सक्रिय') : (isEn ? '☀️ Light Mode Activated' : '☀️ लाइट थीम सक्रिय'), 'info');
   }
 
   // -------------------------------------------------------------------------
