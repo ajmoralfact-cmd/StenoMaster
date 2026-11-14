@@ -1,6 +1,4 @@
 {
-  "version": "23.1.0",
-  "updated_at": "2026-11-14T04:08:50Z",
-  "commit": "f867b4ad31",
-  "description": "Admin Subscribers: Added Promo Code Column and CSV Tracking v23.1"
+  "version": "23.2.0",
+  "description": "Fix audio player syntax error and enable cross-origin playback"
 }

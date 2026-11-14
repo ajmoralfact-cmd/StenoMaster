@@ -515,7 +515,7 @@ class StenoAudioPlayer {
         if (urlId) {
           const num = parseInt(urlId, 10);
           if (num > 0 && num <= 100) {
-            fallbackUrl = /uploads/audio_rk1_class_.mp3;
+            fallbackUrl = `/uploads/audio_rk1_class_${String(num).padStart(3, '0')}.mp3`;
           }
         }
       }

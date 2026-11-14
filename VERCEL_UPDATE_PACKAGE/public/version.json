@@ -1,5 +1,4 @@
 {
-  "version": "23.1.0",
-  "updated_at": "2026-11-14T04:08:02Z",
-  "description": "Admin Subscribers: Added Promo Code Column and CSV Tracking"
+  "version": "23.2.0",
+  "description": "Audio player playback fix"
 }

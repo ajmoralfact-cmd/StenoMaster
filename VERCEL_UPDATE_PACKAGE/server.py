@@ -1,4 +1,4 @@
-﻿"""
+"""
 Production HTTP Server & REST API for StenoMaster
 Built with Python standard library (http.server, socketserver).
 Provides:
@@ -257,6 +257,9 @@ class StenoMasterHandler(http.server.SimpleHTTPRequestHandler):
     # -------------------------------------------------------------------------
     # GET Handlers
     # -------------------------------------------------------------------------
+    def do_HEAD(self):
+        self.do_GET()
+
     def do_GET(self):
         parsed = urllib.parse.urlparse(self.path)
         path = parsed.path
@@ -285,6 +288,7 @@ class StenoMasterHandler(http.server.SimpleHTTPRequestHandler):
                 cdn_url = f"https://github.com/ajmoralfact-cmd/StenoMaster/releases/download/audio-v1/{filename}"
                 self.send_response(302)
                 self.send_header('Location', cdn_url)
+                self.send_header('Access-Control-Allow-Origin', '*')
                 self.send_header('Cache-Control', 'public, max-age=604800, immutable')
                 self.end_headers()
                 return
@@ -298,6 +302,7 @@ class StenoMasterHandler(http.server.SimpleHTTPRequestHandler):
                 cdn_url = f"https://github.com/ajmoralfact-cmd/StenoMaster/releases/download/notes-v1/{asset_name}"
                 self.send_response(302)
                 self.send_header('Location', cdn_url)
+                self.send_header('Access-Control-Allow-Origin', '*')
                 self.send_header('Cache-Control', 'public, max-age=604800, immutable')
                 self.end_headers()
                 return
@@ -308,6 +313,7 @@ class StenoMasterHandler(http.server.SimpleHTTPRequestHandler):
                 cdn_url = f"https://github.com/ajmoralfact-cmd/StenoMaster/releases/download/notes-v1/{asset_name}"
                 self.send_response(302)
                 self.send_header('Location', cdn_url)
+                self.send_header('Access-Control-Allow-Origin', '*')
                 self.send_header('Cache-Control', 'public, max-age=604800, immutable')
                 self.end_headers()
                 return
