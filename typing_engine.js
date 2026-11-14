@@ -450,13 +450,13 @@ class StenoTypingEngine {
     if (btn) {
       const isEn = (window.stenoApp && window.stenoApp.currentLang === 'en') || localStorage.getItem('stenomaster_app_lang') === 'en';
       if (this.examModeEnabled) {
-        btn.innerHTML = isEn ? '🔒 Exam Mode: ON' : '🔒 परीक्षा मोड: ON';
+        btn.innerHTML = isEn ? '🔒 Exam Mode: ON' : '🔒 परीक्षा मोड: चालू';
         btn.style.background = '#dc2626';
         btn.style.color = '#ffffff';
         btn.style.borderColor = '#b91c1c';
         btn.title = isEn ? 'Strict exam mode is active (fullscreen, anti-cheat & 1-minute beep)' : 'सख्त परीक्षा मोड सक्रिय है (फुल-स्क्रीन, टैब सुरक्षा व 1-मिनट बीप)';
       } else {
-        btn.innerHTML = isEn ? '🔓 Exam Mode: OFF' : '🔓 परीक्षा मोड: OFF';
+        btn.innerHTML = isEn ? '🔓 Exam Mode: OFF' : '🔓 परीक्षा मोड: बंद';
         btn.style.background = '#fef2f2';
         btn.style.color = '#b91c1c';
         btn.style.borderColor = '#fecaca';
@@ -559,14 +559,14 @@ class StenoTypingEngine {
       const isEn = (window.stenoApp && window.stenoApp.currentLang === 'en') || localStorage.getItem('stenomaster_app_lang') === 'en';
       if (this.otgMode) {
         btn.classList.add('active');
-        btn.innerHTML = '⌨️ OTG: ON';
+        btn.innerHTML = isEn ? '⌨️ OTG: ON' : '⌨️ OTG: चालू';
         btn.style.background = '#10b981';
         btn.style.color = '#ffffff';
         btn.style.borderColor = '#059669';
         btn.title = isEn ? 'OTG physical keyboard mode active (soft keyboard hidden)' : 'OTG फिजिकल कीबोर्ड मोड चालू है (सॉफ्ट कीबोर्ड छिपा है)';
       } else {
         btn.classList.remove('active');
-        btn.innerHTML = '⌨️ OTG: OFF';
+        btn.innerHTML = isEn ? '⌨️ OTG: OFF' : '⌨️ OTG: बंद';
         btn.style.background = '';
         btn.style.color = '';
         btn.style.borderColor = '';
@@ -845,17 +845,17 @@ class StenoTypingEngine {
   updateBackspaceUI() {
     const btn = document.getElementById('toggleBackspaceBtn');
     if (btn) {
+      const isEn = (window.stenoApp && window.stenoApp.currentLang === 'en') || document.documentElement.getAttribute('data-app-lang') === 'en';
       if (this.backspaceLocked) {
-        btn.innerHTML = '🔒 Backspace: OFF';
+        btn.innerHTML = isEn ? '🔒 Backspace: OFF' : '🔒 बैकस्पेस: बंद';
         btn.classList.add('btn-danger');
         btn.classList.remove('btn-secondary');
-        const isEn = document.documentElement.getAttribute('data-app-lang') === 'en';
-    btn.title = isEn ? 'Strict Exam Mode: Backspace Disabled' : 'सख्त परीक्षा मोड: बैकस्पेस की अक्षम है';
+        btn.title = isEn ? 'Strict Exam Mode: Backspace Disabled' : 'सख्त परीक्षा मोड: बैकस्पेस की अक्षम है';
       } else {
-        btn.innerHTML = '🔓 Backspace: ON';
+        btn.innerHTML = isEn ? '🔓 Backspace: ON' : '🔓 बैकस्पेस: चालू';
         btn.classList.remove('btn-danger');
         btn.classList.add('btn-secondary');
-        btn.title = 'अभ्यास मोड (Normal Mode): बैकस्पेस की सक्षम है';
+        btn.title = isEn ? 'Practice Mode: Backspace Enabled' : 'अभ्यास मोड: बैकस्पेस की सक्षम है';
       }
     }
   }
