@@ -7274,16 +7274,10 @@ ${link}`;
         </div>
 
         <div style="display:flex; flex-direction:column; gap:10px;">
-          <button type="button" id="btnPayCategoryCashfree" class="btn-primary" onclick="stenoApp.paySelectedCategoriesCashfree()" style="width:100%; padding:14px; font-size:1.02rem; font-weight:800; border-radius:12px; background:linear-gradient(135deg, #10b981, #059669); border:none; box-shadow:0 4px 16px rgba(16,185,129,0.35); display:flex; justify-content:center; align-items:center; gap:8px;">
-            <span>⚡ ₹${data.totalAmount} का सुरक्षित ऑनलाइन भुगतान करें (Cashfree Pay Now)</span>
+          <button type="button" class="btn-primary" onclick="stenoApp.openUpiCheckoutModal('category')" style="width:100%; padding:14px; font-size:1.05rem; font-weight:800; border-radius:12px; background:linear-gradient(135deg, #0284c7, #0369a1); border:none; box-shadow:0 4px 16px rgba(2,132,199,0.35); display:flex; justify-content:center; align-items:center; gap:8px; cursor:pointer;">
+            <span>📱</span> <span>PhonePe / Google Pay / Paytm QR कोड से ₹${data.totalAmount} पे करें</span>
             <span>→</span>
           </button>
-          <button type="button" class="btn-secondary" onclick="stenoApp.openUpiCheckoutModal('category')" style="width:100%; padding:12px; font-size:0.95rem; font-weight:800; border-radius:12px; border:2px solid #0284c7; color:#0284c7; background:rgba(2,132,199,0.06); display:flex; justify-content:center; align-items:center; gap:8px; cursor:pointer;">
-            <span>📱</span> <span>सीधे PhonePe / GPay QR कोड पॉपअप में ₹${data.totalAmount} पे करें</span>
-          </button>
-          <div style="text-align:center; font-size:0.82rem; color:var(--text-muted);">
-            अथवा नीचे दिए गए QR कोड को स्कैन कर <strong>₹${data.totalAmount}</strong> का सीधा भुगतान करें ↓
-          </div>
         </div>
       </div>
     `;
@@ -7577,11 +7571,11 @@ ${link}`;
     // If currently on plans page or container exists, switch tab and update QR instantly!
     if (window.location.pathname.includes('plans') || document.getElementById('subCategoryPlansWrap')) {
       this.switchSubPlanTab('category');
-      const qrSection = document.getElementById('qrAccordionSection') || document.getElementById('subActiveQrImg');
-      if (qrSection) {
-        qrSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      const catCard = document.getElementById('subCategoryPlansWrap');
+      if (catCard) {
+        catCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
       }
-      this.showToast(`✓ चयनित ${selectedCats.length} कैटेगरीज (₹${total}) का QR कोड सक्रिय हो गया है!`, 'success');
+      this.showToast(`✓ चयनित ${selectedCats.length} कैटेगरीज (₹${total}) सुरक्षित हो गई हैं!`, 'success');
     } else {
       window.location.href = '/plans?tab=category';
     }
@@ -8336,8 +8330,8 @@ ${link}`;
   }
 
   proceedToCashfreePg() {
-    this.closeModal('directUpiPaymentModal');
-    this.initiateCashfreePayment(this.currentCheckoutPlanId || '1m');
+    // Cashfree disabled - direct UPI only
+    this.showToast('सीधा UPI व QR कोड भुगतान उपलब्ध है।', 'info');
   }
 
   copyUpiId() {

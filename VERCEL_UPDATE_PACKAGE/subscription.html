@@ -208,7 +208,7 @@
 
             <!-- The 4 Core Pricing Cards -->
             <div id="subPlansGrid" class="subscription-plans-grid">
-              <div class="sub-plan-card" data-plan-id="1m" onclick="stenoApp.initiateCashfreePayment('1m')">
+              <div class="sub-plan-card" data-plan-id="1m" onclick="stenoApp.openUpiCheckoutModal('1m')">
                 <div>
                   <div class="sub-plan-title">1 माह (30 दिन)</div>
                   <div class="sub-plan-subtitle">बेसिक मासिक अभ्यास</div>
@@ -218,12 +218,12 @@
                   </div>
                   <div class="sub-plan-savings-pill" style="visibility:hidden;">—</div>
                 </div>
-                <button type="button" class="sub-buy-now-btn" onclick="event.stopPropagation(); stenoApp.initiateCashfreePayment('1m')">
+                <button type="button" class="sub-buy-now-btn" onclick="event.stopPropagation(); stenoApp.openUpiCheckoutModal('1m')">
                   <span>⚡ ₹100 में खरीदें</span> <span>→</span>
                 </button>
               </div>
 
-              <div class="sub-plan-card" data-plan-id="3m" onclick="stenoApp.initiateCashfreePayment('3m')">
+              <div class="sub-plan-card" data-plan-id="3m" onclick="stenoApp.openUpiCheckoutModal('3m')">
                 <div class="sub-plan-card-tag tag-popular">⭐ लोकप्रिय (POPULAR)</div>
                 <div>
                   <div class="sub-plan-title">3 माह (90 दिन)</div>
@@ -234,12 +234,12 @@
                   </div>
                   <div class="sub-plan-savings-pill">🎉 ₹50 की बचत</div>
                 </div>
-                <button type="button" class="sub-buy-now-btn" onclick="event.stopPropagation(); stenoApp.initiateCashfreePayment('3m')">
+                <button type="button" class="sub-buy-now-btn" onclick="event.stopPropagation(); stenoApp.openUpiCheckoutModal('3m')">
                   <span>⚡ ₹250 में खरीदें</span> <span>→</span>
                 </button>
               </div>
 
-              <div class="sub-plan-card" data-plan-id="6m" onclick="stenoApp.initiateCashfreePayment('6m')">
+              <div class="sub-plan-card" data-plan-id="6m" onclick="stenoApp.openUpiCheckoutModal('6m')">
                 <div class="sub-plan-card-tag">💰 ₹150 की बचत</div>
                 <div>
                   <div class="sub-plan-title">6 माह (180 दिन)</div>
@@ -250,12 +250,12 @@
                   </div>
                   <div class="sub-plan-savings-pill">🎉 ₹150 की बचत</div>
                 </div>
-                <button type="button" class="sub-buy-now-btn" onclick="event.stopPropagation(); stenoApp.initiateCashfreePayment('6m')">
+                <button type="button" class="sub-buy-now-btn" onclick="event.stopPropagation(); stenoApp.openUpiCheckoutModal('6m')">
                   <span>⚡ ₹450 में खरीदें</span> <span>→</span>
                 </button>
               </div>
 
-              <div class="sub-plan-card" data-plan-id="1y" onclick="stenoApp.initiateCashfreePayment('1y')">
+              <div class="sub-plan-card" data-plan-id="1y" onclick="stenoApp.openUpiCheckoutModal('1y')">
                 <div class="sub-plan-card-tag tag-best">👑 बेस्ट वैल्यू (BEST VALUE)</div>
                 <div>
                   <div class="sub-plan-title">1 वर्ष (365 दिन)</div>
@@ -266,14 +266,14 @@
                   </div>
                   <div class="sub-plan-savings-pill">🎉 ₹400 की बचत</div>
                 </div>
-                <button type="button" class="sub-buy-now-btn" onclick="event.stopPropagation(); stenoApp.initiateCashfreePayment('1y')">
+                <button type="button" class="sub-buy-now-btn" onclick="event.stopPropagation(); stenoApp.openUpiCheckoutModal('1y')">
                   <span>⚡ ₹800 में खरीदें</span> <span>→</span>
                 </button>
               </div>
             </div>
 
             <div style="text-align:center; font-size:0.84rem; color:var(--text-muted); margin-top:12px; margin-bottom:24px;">
-              🔒 <strong>100% सुरक्षित भुगतान:</strong> बॉक्स पर क्लिक करते ही Cashfree पेमेंट पेज खुलेगा (Google Pay, PhonePe, Paytm, Cards, Net Banking)
+              🔒 <strong>100% सुरक्षित भुगतान:</strong> बॉक्स पर क्लिक करते ही UPI QR कोड पेमेंट खुलेगा (Google Pay, PhonePe, Paytm, Cards, Net Banking)
             </div>
           </div>
 
@@ -383,7 +383,7 @@
               <div class="sub-policy-content" id="subPolicyRefund" style="display:none;">
                 <p><strong>1. 2 फ्री कक्षाओं का निःशुल्क ट्रायल:</strong> प्रत्येक छात्र बिना किसी भुगतान के पहली 2 डिक्टेशन कक्षाएं पूर्णतः फ्री अभ्यास कर सकते हैं। ऑडियो और मूल्यांकन संतुष्टि के बाद ही प्रो प्लान खरीदें।</p>
                 <p><strong>2. 7-दिवसीय मनी-बैक गारंटी:</strong> यदि सदस्यता के 7 दिनों के भीतर कोई वास्तविक तकनीकी समस्या (जैसे प्रो कक्षाएं अनलॉक न होना या दोहरा भुगतान कटना) आती है और हमारी तकनीकी टीम 48 घंटे में समाधान नहीं कर पाती, तो 100% रिफंड दिया जाएगा।</p>
-                <p><strong>3. रिफंड क्लेम एवं निपटान:</strong> रिफंड हेतु <a href="mailto:stenomaster101@gmail.com" style="color:var(--primary); font-weight:700;">stenomaster101@gmail.com</a> पर Student Code व Cashfree Order ID भेजें। स्वीकृत राशि <strong>5 से 7 कार्यदिवस</strong> में सीधे आपके मूल खाते में वापस जमा हो जाएगी।</p>
+                <p><strong>3. रिफंड क्लेम एवं निपटान:</strong> रिफंड हेतु <a href="mailto:stenomaster101@gmail.com" style="color:var(--primary); font-weight:700;">stenomaster101@gmail.com</a> पर Student Code व UPI Transaction ID (UTR) भेजें। स्वीकृत राशि <strong>5 से 7 कार्यदिवस</strong> में सीधे आपके मूल खाते में वापस जमा हो जाएगी।</p>
               </div>
             </div>
 
@@ -398,7 +398,7 @@
               <div class="sub-policy-content" id="subPolicyTerms" style="display:none;">
                 <p><strong>1. सेवा का स्वरूप:</strong> StenoMaster एक निजी ऑनलाइन शैक्षणिक व आशुलिपि कौशल मूल्यांकन प्लेटफ़ॉर्म है।</p>
                 <p><strong>2. एकल डिवाइस नियम (Single-Device Access):</strong> एक समय में केवल एक ही कंप्यूटर या मोबाइल पर लॉगिन की अनुमति है।</p>
-                <p><strong>3. तुरंत डिजिटल एक्सेस:</strong> Cashfree भुगतान की पुष्टि होते ही प्रो सदस्यता तुरंत अनलॉक कर दी जाती है।</p>
+                <p><strong>3. तुरंत डिजिटल एक्सेस:</strong> UPI भुगतान की पुष्टि होते ही प्रो सदस्यता तुरंत अनलॉक कर दी जाती है।</p>
                 <p><strong>4. गैर-सरकारी अस्वीकरण:</strong> StenoMaster एक स्वतंत्र एड-टेक प्लेटफ़ॉर्म है और किसी सरकारी संस्था से संबद्ध नहीं है।</p>
               </div>
             </div>
@@ -413,7 +413,7 @@
                 <span id="subPolicyPrivacy-icon">▼</span>
               </div>
               <div class="sub-policy-content" id="subPolicyPrivacy" style="display:none;">
-                <p><strong>1. शून्य कार्ड भंडारण (Zero Card Storage):</strong> StenoMaster आपके क्रेडिट/डेबिट कार्ड नंबर, CVV अथवा UPI पिन को कभी भी अपने सर्वर पर स्टोर नहीं करता। सभी ऑनलाइन लेन-देन Cashfree के 256-bit SSL एन्क्रिप्टेड गेटवे से सुरक्षित होते हैं।</p>
+                <p><strong>1. शून्य कार्ड भंडारण (Zero Card Storage):</strong> StenoMaster आपके क्रेडिट/डेबिट कार्ड नंबर, CVV अथवा UPI पिन को कभी भी अपने सर्वर पर स्टोर नहीं करता। सभी ऑनलाइन लेन-देन 256-bit SSL एन्क्रिप्टेड गेटवे से सुरक्षित होते हैं।</p>
                 <p><strong>2. न्यूनतम डेटा:</strong> केवल आपका नाम, ईमेल, मोबाइल नंबर और अभ्यास रिपोर्ट सुरक्षित रखी जाती है।</p>
                 <p><strong>3. गैर-साझाकरण गारंटी:</strong> हम आपका व्यक्तिगत डेटा किसी भी तीसरे पक्ष या विज्ञापनदाताओं को कभी नहीं बेचते।</p>
               </div>
@@ -709,7 +709,7 @@
   <div class="toast-container" id="toastContainer"></div>
 
   <!-- Cashfree Payment Gateway SDK (v3) -->
-  <script defer src="https://sdk.cashfree.com/js/v3/cashfree.js"></script>
+  
 
   <!-- Core Lightweight Scripts -->
   <script src="/js/audio_player.js?v=8.1"></script>

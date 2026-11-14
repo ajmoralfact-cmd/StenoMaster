@@ -1,4 +1,4 @@
 {
-  "version": "23.5.1",
-  "description": "Dynamic UPI QR code generation matching exact selected category amount with full persistence and checkout modal"
+  "version": "23.5.2",
+  "description": "Remove Cashfree completely; streamline direct UPI/QR payment; keep category card viewport stable without scrolling down"
 }
