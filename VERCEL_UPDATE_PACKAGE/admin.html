@@ -755,8 +755,20 @@
 
               <!-- Main Table Card -->
               <div class="chart-card" id="adminSubscribersSection" style="margin-bottom: 28px;">
+                <!-- Subscribers View Switch (Active vs Deleted Section) -->
+                <div class="subscribers-view-tabs" style="display:flex; gap:10px; margin-bottom:16px; border-bottom:1px solid var(--border); padding-bottom:14px; flex-wrap:wrap;">
+                  <button type="button" id="subViewTabActive" class="sub-view-tab-btn active" onclick="stenoAdmin.switchSubscribersView('active')" style="padding:8px 18px; border-radius:8px; font-weight:700; font-size:0.88rem; cursor:pointer; border:1.5px solid var(--primary); background:var(--primary); color:#fff; display:inline-flex; align-items:center; gap:8px; box-shadow:0 1px 3px rgba(0,0,0,0.08);">
+                    <span>👥 सक्रिय छात्र (Active)</span>
+                    <span id="activeStudentsBadge" style="background:rgba(255,255,255,0.25); font-size:0.75rem; padding:2px 8px; border-radius:12px; font-weight:800;">0</span>
+                  </button>
+                  <button type="button" id="subViewTabDeleted" class="sub-view-tab-btn" onclick="stenoAdmin.switchSubscribersView('deleted')" style="padding:8px 18px; border-radius:8px; font-weight:700; font-size:0.88rem; cursor:pointer; border:1.5px solid #ef4444; background:transparent; color:#ef4444; display:inline-flex; align-items:center; gap:8px; transition:all 0.2s;">
+                    <span>🗑️ डिलीट किए गए छात्र (Deleted Section)</span>
+                    <span id="deletedStudentsBadge" style="background:#ef4444; color:#fff; font-size:0.75rem; padding:2px 8px; border-radius:12px; font-weight:800;">0</span>
+                  </button>
+                </div>
+
                 <!-- Subscribers Filter Toolbar -->
-                <div class="subscribers-toolbar" style="margin-bottom:16px;">
+                <div class="subscribers-toolbar"  style="margin-bottom:16px;">
                   <div class="sub-filter-pills" id="subscribersFilterPills">
                     <button type="button" class="sub-filter-pill active" id="subFilterPillAll" onclick="stenoAdmin.filterSubscribers('all', this)">सभी छात्र (All)</button>
                     <button type="button" class="sub-filter-pill" id="subFilterPillActive" onclick="stenoAdmin.filterSubscribers('active', this)">👑 सक्रिय प्रो (Pro)</button>
@@ -799,15 +811,29 @@
                     <span class="bulk-dock-badge" id="bulkSelectedCount">0 छात्र चयनित</span>
                     <span class="bulk-dock-sub">पर सामूहिक कार्रवाई करें:</span>
                   </div>
-                  <div class="bulk-dock-buttons">
+                  <div class="bulk-dock-buttons" id="bulkActiveDockButtons">
                     <button type="button" class="btn-bulk-pro" onclick="stenoAdmin.openBulkProModal()">
                       👑 बल्क प्रो पास दें
                     </button>
                     <button type="button" class="btn-bulk-category" onclick="stenoAdmin.openBulkCategoryModal()">
                       📁 श्रेणी फ्री दें
                     </button>
+                    <button type="button" class="btn-bulk-delete" onclick="stenoAdmin.confirmBulkDeleteSubscribers()" style="background:#dc2626; color:#fff; border:none; padding:7px 14px; border-radius:6px; font-weight:700; cursor:pointer; display:inline-flex; align-items:center; gap:5px; font-size:0.84rem;" title="चयनित छात्रों को डिलीट सेक्शन में भेजें">
+                      🗑️ डिलीट करें
+                    </button>
                     <button type="button" class="btn-bulk-clear" onclick="stenoAdmin.clearSubscribersSelection()" title="चयन रद्द करें">
-                      ✕ हटाएं
+                      ✕ चयन रद्द करें
+                    </button>
+                  </div>
+                  <div class="bulk-dock-buttons" id="bulkDeletedDockButtons" style="display:none;">
+                    <button type="button" class="btn-bulk-restore" onclick="stenoAdmin.confirmBulkRestoreSubscribers()" style="background:#059669; color:#fff; border:none; padding:7px 14px; border-radius:6px; font-weight:700; cursor:pointer; display:inline-flex; align-items:center; gap:5px; font-size:0.84rem;" title="चयनित छात्रों को सक्रिय सूची में वापस लाएं">
+                      ♻️ रीस्टोर करें
+                    </button>
+                    <button type="button" class="btn-bulk-perm-delete" onclick="stenoAdmin.confirmBulkPermanentDeleteSubscribers()" style="background:#991b1b; color:#fff; border:none; padding:7px 14px; border-radius:6px; font-weight:700; cursor:pointer; display:inline-flex; align-items:center; gap:5px; font-size:0.84rem;" title="डेटाबेस से हमेशा के लिए हटाएं">
+                      ❌ स्थायी डिलीट
+                    </button>
+                    <button type="button" class="btn-bulk-clear" onclick="stenoAdmin.clearSubscribersSelection()" title="चयन रद्द करें">
+                      ✕ चयन रद्द करें
                     </button>
                   </div>
                 </div>

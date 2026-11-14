@@ -17,6 +17,7 @@ class StenoAdmin {
     this.categoriesList = [];
     this.subscribersList = [];
     this.currentSubFilter = 'all';
+    this.currentSubView = 'active';
     this.settings = {};
     this.subscribersPollInterval = null;
     this.prevStudentCount = null;
@@ -1563,6 +1564,49 @@ class StenoAdmin {
   // -------------------------------------------------------------------------
   // Subscribers Management & Manual Pro Grant / Revocation
   // -------------------------------------------------------------------------
+  switchSubscribersView(view) {
+    this.currentSubView = view;
+    this.clearSubscribersSelection();
+
+    const tabActive = document.getElementById('subViewTabActive');
+    const tabDeleted = document.getElementById('subViewTabDeleted');
+    const filterPills = document.getElementById('subscribersFilterPills');
+    const bulkActiveDock = document.getElementById('bulkActiveDockButtons');
+    const bulkDeletedDock = document.getElementById('bulkDeletedDockButtons');
+
+    if (view === 'active') {
+      if (tabActive) {
+        tabActive.style.background = 'var(--primary)';
+        tabActive.style.borderColor = 'var(--primary)';
+        tabActive.style.color = '#fff';
+      }
+      if (tabDeleted) {
+        tabDeleted.style.background = 'transparent';
+        tabDeleted.style.borderColor = '#ef4444';
+        tabDeleted.style.color = '#ef4444';
+      }
+      if (filterPills) filterPills.style.display = 'flex';
+      if (bulkActiveDock) bulkActiveDock.style.display = 'flex';
+      if (bulkDeletedDock) bulkDeletedDock.style.display = 'none';
+    } else {
+      if (tabDeleted) {
+        tabDeleted.style.background = '#ef4444';
+        tabDeleted.style.borderColor = '#ef4444';
+        tabDeleted.style.color = '#fff';
+      }
+      if (tabActive) {
+        tabActive.style.background = 'transparent';
+        tabActive.style.borderColor = 'var(--border)';
+        tabActive.style.color = 'var(--text-main)';
+      }
+      if (filterPills) filterPills.style.display = 'none';
+      if (bulkActiveDock) bulkActiveDock.style.display = 'none';
+      if (bulkDeletedDock) bulkDeletedDock.style.display = 'flex';
+    }
+
+    this.loadSubscribers(this.currentSubFilter, false);
+  }
+
   async loadSubscribers(filter = 'all', silent = false) {
     if (filter) this.currentSubFilter = filter;
     const tbody = document.getElementById('adminSubscribersTableBody');
@@ -1571,10 +1615,21 @@ class StenoAdmin {
       tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding:24px; color:var(--text-muted);"><div class="spinner-small" style="display:inline-block; margin-right:8px;"></div>सब्सक्राइबर सूची लोड हो रही है...</td></tr>';
     }
     try {
-      const res = await stenoApp.apiCall(`/api/admin/users?_t=${Date.now()}`);
+      const viewMode = this.currentSubView || 'active';
+      const res = await stenoApp.apiCall(`/api/admin/users?view=${viewMode}&_t=${Date.now()}`);
       const rawUsers = res.users || [];
       // Strictly exclude Admin account from student list
       const studentsOnly = rawUsers.filter(u => u.role !== 'admin');
+
+      // Update Active & Deleted Badges
+      const deletedBadge = document.getElementById('deletedStudentsBadge');
+      if (deletedBadge) {
+        deletedBadge.textContent = res.deleted_count ?? 0;
+      }
+      const activeBadge = document.getElementById('activeStudentsBadge');
+      if (activeBadge) {
+        activeBadge.textContent = res.active_count ?? (viewMode === 'active' ? studentsOnly.length : 0);
+      }
 
       // Detect real-time student additions
       if (this.prevStudentCount !== null && studentsOnly.length > this.prevStudentCount) {
@@ -1732,14 +1787,18 @@ class StenoAdmin {
     });
 
     if (filtered.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding:32px; color:var(--text-muted); font-size:0.9rem;">कोई छात्र/सब्सक्राइबर नहीं मिला।</td></tr>';
+      const emptyText = this.currentSubView === 'deleted' ? '🗑️ डिलीट किए गए छात्रों की सूची खाली है (कोई डिलीटेड छात्र नहीं मिला)।' : 'कोई सक्रिय छात्र/सब्सक्राइबर नहीं मिला।';
+      tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; padding:32px; color:var(--text-muted); font-size:0.9rem;">${emptyText}</td></tr>`;
       return;
     }
 
     if (!this.selectedSubscriberIds) this.selectedSubscriberIds = new Set();
 
+    const isDeletedView = this.currentSubView === 'deleted';
+
     tbody.innerHTML = filtered.map(u => {
       const isFreeAccess = !!u.is_free_access;
+      const isDeletedUser = isDeletedView || !!u.is_deleted;
       const isPro = u.effective_status === 'active' || isFreeAccess;
       const isExpired = u.effective_status === 'expired';
       const hasCatAccess = !isPro && Array.isArray(u.unlocked_categories) && u.unlocked_categories.length > 0;
@@ -1858,16 +1917,27 @@ class StenoAdmin {
           <!-- 5. पंजीकरण व पास तिथि (Dates) -->
           <td>
             <div style="display:flex; flex-direction:column; gap:4px;">
-              <!-- 1st Line: पंजीकरण तिथि -->
-              <div style="font-size:0.78rem; color:var(--text-main); font-weight:600; display:flex; align-items:center; gap:5px;" title="छात्र रजिस्ट्रेशन तिथि">
-                <span style="opacity:0.85;">📝</span>
-                <span><strong>पंजीकरण:</strong> ${this.formatDateTimeCompact(u.created_at) || 'उपलब्ध नहीं'}</span>
-              </div>
-              <!-- 2nd Line: पास मिलने की तिथि -->
-              <div style="font-size:0.77rem; color:${u.subscription_start ? '#059669' : 'var(--text-muted)'}; font-weight:600; display:flex; align-items:center; gap:5px;" title="पास सक्रियण तिथि">
-                <span style="opacity:0.85;">👑</span>
-                <span><strong>पास:</strong> ${this.formatDateTimeCompact(u.subscription_start) || 'कोई पास नहीं'}</span>
-              </div>
+              ${isDeletedView ? `
+                <div style="font-size:0.78rem; color:#dc2626; font-weight:700; display:flex; align-items:center; gap:5px;" title="हटाए जाने की तिथि">
+                  <span>🗑️</span>
+                  <span><strong>हटाया गया:</strong> ${this.formatDateTimeCompact(u.deleted_at) || 'हाल ही में'}</span>
+                </div>
+                <div style="font-size:0.75rem; color:var(--text-muted); font-weight:500; display:flex; align-items:center; gap:5px;" title="रजिस्ट्रेशन तिथि">
+                  <span>📝</span>
+                  <span>पंजीकरण: ${this.formatDateTimeCompact(u.created_at) || '—'}</span>
+                </div>
+              ` : `
+                <!-- 1st Line: पंजीकरण तिथि -->
+                <div style="font-size:0.78rem; color:var(--text-main); font-weight:600; display:flex; align-items:center; gap:5px;" title="छात्र रजिस्ट्रेशन तिथि">
+                  <span style="opacity:0.85;">📝</span>
+                  <span><strong>पंजीकरण:</strong> ${this.formatDateTimeCompact(u.created_at) || 'उपलब्ध नहीं'}</span>
+                </div>
+                <!-- 2nd Line: पास मिलने की तिथि -->
+                <div style="font-size:0.77rem; color:${u.subscription_start ? '#059669' : 'var(--text-muted)'}; font-weight:600; display:flex; align-items:center; gap:5px;" title="पास सक्रियण तिथि">
+                  <span style="opacity:0.85;">👑</span>
+                  <span><strong>पास:</strong> ${this.formatDateTimeCompact(u.subscription_start) || 'कोई पास नहीं'}</span>
+                </div>
+              `}
             </div>
           </td>
 
@@ -1884,18 +1954,36 @@ class StenoAdmin {
           <!-- 5. एक्शन (Actions) -->
           <td style="text-align:right;">
             <div style="display:inline-flex; gap:6px; align-items:center; justify-content:flex-end; flex-wrap:wrap;">
-              <button class="btn-primary" style="padding:5px 10px; font-size:0.75rem; background:linear-gradient(135deg, #10b981, #059669); border-color:#059669; font-weight:700; display:inline-flex; align-items:center; gap:4px;"
-                      onclick="stenoAdmin.openGrantProModal(${u.id}, '${this.escapeHtml(u.display_name || u.username).replace(/'/g, "\\'")}', '${this.escapeHtml(u.student_code || '')}', '${u.effective_status}', ${u.subscription_days_left || 0})"
-                      title="प्रो प्लान अवधि या विशिष्ट कैटेगरीज सेट करें">
-                👑 Pro दें
-              </button>
-              ${isPro && !isFreeAccess ? `
-                <button class="btn-secondary" style="padding:5px 8px; font-size:0.75rem; color:var(--accent-red); border-color:rgba(239,68,68,0.3); font-weight:600;"
-                        onclick="stenoAdmin.revokePro(${u.id}, '${this.escapeHtml(u.display_name || u.username).replace(/'/g, "\\'")}')"
-                        title="प्रो प्लान तुरंत रद्द करें">
-                  ✕ रद्द
+              ${isDeletedView ? `
+                <button class="btn-primary" style="padding:5px 10px; font-size:0.75rem; background:#059669; border-color:#059669; font-weight:700; display:inline-flex; align-items:center; gap:4px;"
+                        onclick="stenoAdmin.confirmRestoreSubscriber(${u.id}, '${this.escapeHtml(u.display_name || u.username).replace(/'/g, "\\'")}')"
+                        title="इस छात्र को सक्रिय सूची में वापस लाएं">
+                  ♻️ रीस्टोर
                 </button>
-              ` : ''}
+                <button class="btn-secondary" style="padding:5px 8px; font-size:0.75rem; color:#dc2626; border-color:rgba(220,38,38,0.4); font-weight:700; display:inline-flex; align-items:center; gap:4px;"
+                        onclick="stenoAdmin.confirmPermanentDeleteSubscriber(${u.id}, '${this.escapeHtml(u.display_name || u.username).replace(/'/g, "\\'")}')"
+                        title="डेटाबेस से हमेशा के लिए हटाएं">
+                  ❌ स्थायी डिलीट
+                </button>
+              ` : `
+                <button class="btn-primary" style="padding:5px 10px; font-size:0.75rem; background:linear-gradient(135deg, #10b981, #059669); border-color:#059669; font-weight:700; display:inline-flex; align-items:center; gap:4px;"
+                        onclick="stenoAdmin.openGrantProModal(${u.id}, '${this.escapeHtml(u.display_name || u.username).replace(/'/g, "\\'")}', '${this.escapeHtml(u.student_code || '')}', '${u.effective_status}', ${u.subscription_days_left || 0})"
+                        title="प्रो प्लान अवधि या विशिष्ट कैटेगरीज सेट करें">
+                  👑 Pro दें
+                </button>
+                ${isPro && !isFreeAccess ? `
+                  <button class="btn-secondary" style="padding:5px 8px; font-size:0.75rem; color:var(--accent-red); border-color:rgba(239,68,68,0.3); font-weight:600;"
+                          onclick="stenoAdmin.revokePro(${u.id}, '${this.escapeHtml(u.display_name || u.username).replace(/'/g, "\\'")}')"
+                          title="प्रो प्लान तुरंत रद्द करें">
+                    ✕ रद्द
+                  </button>
+                ` : ''}
+                <button class="btn-secondary" style="padding:5px 8px; font-size:0.75rem; color:#dc2626; border-color:rgba(220,38,38,0.3); font-weight:700;"
+                        onclick="stenoAdmin.confirmDeleteSubscriber(${u.id}, '${this.escapeHtml(u.display_name || u.username).replace(/'/g, "\\'")}')"
+                        title="इस छात्र को हटाएं (Delete Student)">
+                  🗑️
+                </button>
+              `}
             </div>
           </td>
         </tr>

@@ -214,6 +214,8 @@ def run_postgres_migrations(conn):
                 "ALTER TABLE passages ADD COLUMN IF NOT EXISTS is_approved INTEGER DEFAULT 0",
                 "ALTER TABLE passages ADD COLUMN IF NOT EXISTS submitter_name TEXT",
                 "ALTER TABLE users ADD COLUMN IF NOT EXISTS is_free_access INTEGER DEFAULT 0",
+                "ALTER TABLE users ADD COLUMN IF NOT EXISTS is_deleted INTEGER DEFAULT 0",
+                "ALTER TABLE users ADD COLUMN IF NOT EXISTS deleted_at TEXT",
                 "ALTER TABLE users ADD COLUMN IF NOT EXISTS phone TEXT",
                 "ALTER TABLE users ADD COLUMN IF NOT EXISTS student_code TEXT",
                 "ALTER TABLE users ADD COLUMN IF NOT EXISTS subscription_status TEXT DEFAULT 'free'",
@@ -1129,6 +1131,21 @@ def create_user(username: str, email: str, password: str, display_name: str = No
     conn = get_db()
     c = conn.cursor()
     try:
+        # If this email or username belonged to a previously soft-deleted user, purge old record so fresh signup works cleanly
+        try:
+            c.execute("SELECT id, is_deleted FROM users WHERE LOWER(email) = ? OR LOWER(username) = ?", (email.lower().strip(), username.lower().strip()))
+            ex_user = c.fetchone()
+            if ex_user:
+                ex_id = ex_user['id'] if isinstance(ex_user, dict) else ex_user[0]
+                ex_del = (ex_user.get('is_deleted') if isinstance(ex_user, dict) else ex_user[1]) or 0
+                if ex_del:
+                    conn.commit()
+                    conn.close()
+                    admin_permanent_delete_users([int(ex_id)], 0)
+                    conn = get_db()
+                    c = conn.cursor()
+        except Exception as purge_err:
+            print(f"Purge deleted user on re-registration notice: {purge_err}")
         user_ref = f"SM{secrets.token_hex(3).upper()}"
         now = datetime.now().isoformat()
         year = datetime.now().year
@@ -1471,6 +1488,7 @@ def authenticate_user(email_or_username: str, password: str) -> Optional[Dict[st
     c.execute("""
         SELECT u.id, u.username, u.email, u.phone, u.student_code, u.password_hash, u.role, u.is_active,
                u.subscription_status, u.subscription_plan, u.subscription_start, u.subscription_end,
+               COALESCE(u.is_deleted, 0) as is_deleted,
                p.display_name, p.avatar, p.target_exam, p.preferred_language, p.preferred_typing_mode,
                p.target_wpm, p.points, p.streak_days, p.show_on_leaderboard
         FROM users u
@@ -1480,7 +1498,7 @@ def authenticate_user(email_or_username: str, password: str) -> Optional[Dict[st
             OR LOWER(u.username) = ?
             OR u.phone = ?
             OR UPPER(u.student_code) = ?
-        ) AND u.is_active = 1
+        )
     """, (clean_identifier, clean_identifier, raw_identifier, raw_identifier.upper()))
     user = c.fetchone()
 
@@ -1490,11 +1508,12 @@ def authenticate_user(email_or_username: str, password: str) -> Optional[Dict[st
         c.execute("""
             SELECT u.id, u.username, u.email, u.phone, u.student_code, u.password_hash, u.role, u.is_active,
                    u.subscription_status, u.subscription_plan, u.subscription_start, u.subscription_end,
+                   COALESCE(u.is_deleted, 0) as is_deleted,
                    p.display_name, p.avatar, p.target_exam, p.preferred_language, p.preferred_typing_mode,
                    p.target_wpm, p.points, p.streak_days, p.show_on_leaderboard
             FROM users u
             LEFT JOIN profiles p ON u.id = p.user_id
-            WHERE u.phone LIKE ? AND u.is_active = 1
+            WHERE u.phone LIKE ?
         """, (f"%{last10}",))
         user = c.fetchone()
 
@@ -1522,6 +1541,24 @@ def authenticate_user(email_or_username: str, password: str) -> Optional[Dict[st
         return None
 
     user_dict = dict(user)
+
+    # Check deleted / inactive status
+    if user_dict.get('is_deleted') == 1 or str(user_dict.get('is_deleted')) == '1':
+        conn.close()
+        return {
+            'id': user_dict['id'],
+            'is_deleted': True,
+            'error': 'DELETED_USER',
+            'message': 'यह खाता हटा दिया गया है। कृपया नए सिरे से पंजीकरण (Sign Up) करें।'
+        }
+    if user_dict.get('is_active') == 0 or str(user_dict.get('is_active')) == '0':
+        conn.close()
+        return {
+            'id': user_dict['id'],
+            'is_active': False,
+            'error': 'INACTIVE_USER',
+            'message': 'यह खाता निष्क्रिय (Inactive) है। कृपया एडमिन से संपर्क करें।'
+        }
 
     # Check subscription expiration
     if user_dict.get('subscription_status') == 'active' and user_dict.get('subscription_end'):
@@ -3158,14 +3195,22 @@ def admin_delete_category(category_id: int) -> bool:
     return True
 
 
-def get_admin_users() -> List[Dict[str, Any]]:
+def get_admin_users(include_deleted: bool = False, only_deleted: bool = False) -> List[Dict[str, Any]]:
     """Returns a list of all registered users with their profiles, subscription info, is_free_access flag, dynamic days left, and attempt counts."""
     conn = get_db()
     c = conn.cursor()
-    c.execute("""
+    where_cond = "u.role != 'admin'"
+    if only_deleted:
+        where_cond += " AND COALESCE(u.is_deleted, 0) = 1"
+    elif not include_deleted:
+        where_cond += " AND COALESCE(u.is_deleted, 0) = 0"
+
+    c.execute(f"""
         SELECT u.id, u.username, u.email, u.phone, u.student_code, u.referral_code, u.role, u.is_active, u.created_at,
                u.subscription_status, u.subscription_plan, u.subscription_start, u.subscription_end,
                COALESCE(u.is_free_access, 0) as is_free_access,
+               COALESCE(u.is_deleted, 0) as is_deleted,
+               u.deleted_at,
                u.used_promo_code,
                p.display_name, p.target_exam, p.preferred_language, p.target_wpm, p.points, p.streak_days,
                (SELECT COUNT(*) FROM practice_attempts WHERE user_id = u.id) as attempts_count,
@@ -3173,7 +3218,7 @@ def get_admin_users() -> List[Dict[str, Any]]:
                (SELECT COALESCE(SUM(reward_points), 0) FROM referrals WHERE referrer_user_id = u.id) as referral_points_earned
         FROM users u
         LEFT JOIN profiles p ON u.id = p.user_id
-        WHERE u.role != 'admin'
+        WHERE {where_cond}
         ORDER BY u.id ASC
     """)
     rows = [dict(r) for r in c.fetchall()]
@@ -3564,6 +3609,173 @@ def admin_revoke_subscription(user_id: int, admin_id: int = 1, reason: str = "")
     conn.commit()
     conn.close()
     return {"success": True, "message": f"छात्र #{user_id} की प्रो सदस्यता समाप्त कर दी गई।"}
+
+
+# ══════════════════════════════════════════════════════════════════════════
+# ADMIN USER DELETION & RESTORATION MANAGEMENT
+# ══════════════════════════════════════════════════════════════════════════
+
+def admin_soft_delete_users(user_ids: List[int], admin_id: int = 1) -> Dict[str, Any]:
+    """Soft deletes one or multiple users, moves them to Deleted section and terminates sessions."""
+    if not user_ids:
+        return {"success": False, "error": "कोई छात्र आईडी नहीं दी गई।"}
+    conn = get_db()
+    c = conn.cursor()
+    now_iso = datetime.now().isoformat()
+
+    valid_ids = []
+    for uid in user_ids:
+        try:
+            uid_int = int(uid)
+            c.execute("SELECT role, email FROM users WHERE id = ?", (uid_int,))
+            row = c.fetchone()
+            if row:
+                r_role = row['role'] if isinstance(row, dict) else row[0]
+                r_email = (row['email'] if isinstance(row, dict) else row[1]) or ''
+                if r_role != 'admin' and r_email.lower() != 'admin@stenomaster.com':
+                    valid_ids.append(uid_int)
+        except Exception as e:
+            print(f"Error checking user {uid}: {e}")
+
+    if not valid_ids:
+        conn.close()
+        return {"success": False, "error": "डिलीट करने योग्य कोई छात्र नहीं मिला (एडमिन खाते सुरक्षित हैं)।"}
+
+    placeholders = ','.join(['?'] * len(valid_ids))
+    try:
+        c.execute(f"""
+            UPDATE sessions
+            SET is_active = 0, invalidated_reason = 'user_deleted'
+            WHERE user_id IN ({placeholders})
+        """, valid_ids)
+    except Exception as e:
+        print(f"Session invalidate notice: {e}")
+
+    params = [now_iso] + valid_ids
+    c.execute(f"""
+        UPDATE users
+        SET is_deleted = 1, is_active = 0, deleted_at = ?
+        WHERE id IN ({placeholders})
+    """, params)
+    conn.commit()
+    conn.close()
+
+    for uid in valid_ids:
+        invalidate_user_attempts_cache(uid)
+
+    return {"success": True, "count": len(valid_ids), "deleted_ids": valid_ids, "message": f"{len(valid_ids)} छात्र सफलतापूर्वक डिलीटेड सेक्शन में भेज दिए गए।"}
+
+
+def admin_restore_users(user_ids: List[int], admin_id: int = 1) -> Dict[str, Any]:
+    """Restores soft-deleted users back to active student list."""
+    if not user_ids:
+        return {"success": False, "error": "कोई छात्र आईडी नहीं दी गई।"}
+    conn = get_db()
+    c = conn.cursor()
+    valid_ids = [int(u) for u in user_ids]
+    placeholders = ','.join(['?'] * len(valid_ids))
+    c.execute(f"""
+        UPDATE users
+        SET is_deleted = 0, is_active = 1, deleted_at = NULL
+        WHERE id IN ({placeholders})
+    """, valid_ids)
+    conn.commit()
+    conn.close()
+
+    for uid in valid_ids:
+        invalidate_user_attempts_cache(uid)
+
+    return {"success": True, "count": len(valid_ids), "restored_ids": valid_ids, "message": f"{len(valid_ids)} छात्र सक्रिय सूची में रीस्टोर कर दिए गए।"}
+
+
+def admin_permanent_delete_users(user_ids: List[int], admin_id: int = 1) -> Dict[str, Any]:
+    """Permanently purges users and all associated data from the database safely."""
+    if not user_ids:
+        return {"success": False, "error": "कोई छात्र आईडी नहीं दी गई।"}
+    conn = get_db()
+    c = conn.cursor()
+    valid_ids = []
+    for uid in user_ids:
+        try:
+            uid_int = int(uid)
+            c.execute("SELECT role, email FROM users WHERE id = ?", (uid_int,))
+            row = c.fetchone()
+            if row:
+                r_role = row['role'] if isinstance(row, dict) else row[0]
+                r_email = (row['email'] if isinstance(row, dict) else row[1]) or ''
+                if r_role != 'admin' and r_email.lower() != 'admin@stenomaster.com':
+                    valid_ids.append(uid_int)
+        except Exception:
+            pass
+
+    if not valid_ids:
+        conn.close()
+        return {"success": False, "error": "स्थायी रूप से हटाने योग्य कोई वैध छात्र नहीं मिला।"}
+
+    placeholders = ','.join(['?'] * len(valid_ids))
+
+    # Detect existing tables
+    existing_tables = set()
+    try:
+        c.execute("SELECT table_name FROM information_schema.tables WHERE table_schema='public'")
+        for r in c.fetchall():
+            existing_tables.add(r[0] if isinstance(r, (list, tuple)) else r['table_name'])
+    except Exception:
+        # SQLite fallback
+        try:
+            c.execute("SELECT name FROM sqlite_master WHERE type='table'")
+            for r in c.fetchall():
+                existing_tables.add(r[0] if isinstance(r, (list, tuple)) else r['name'])
+        except Exception:
+            pass
+
+    # Tables with direct user_id FK, ordered by dependency (children first)
+    dep_tables = [
+        "practice_errors",
+        "practice_attempts",
+        "bookmarks",
+        "sessions",
+        "user_settings",
+        "profiles",
+        "user_unlocked_categories",
+        "gold_coin_transactions",
+        "reward_transactions",
+        "wallet_withdrawals",
+        "withdrawal_requests",
+        "commission_transactions",
+        "payment_requests",
+        "cashfree_orders",
+        "notifications",
+                "community_likes",
+        "community_replies",
+        "community_posts"
+    ]
+
+    for tbl in dep_tables:
+        if not existing_tables or tbl in existing_tables:
+            try:
+                c.execute(f"DELETE FROM {tbl} WHERE user_id IN ({placeholders})", valid_ids)
+                conn.commit()
+            except Exception as e:
+                conn.rollback()
+                print(f"Notice on purge {tbl}: {e}")
+
+    if not existing_tables or 'referrals' in existing_tables:
+        try:
+            c.execute(f"DELETE FROM referrals WHERE referrer_user_id IN ({placeholders}) OR referred_user_id IN ({placeholders})", valid_ids + valid_ids)
+            conn.commit()
+        except Exception as e:
+            conn.rollback()
+            print(f"Notice on purge referrals: {e}")
+
+    c.execute(f"DELETE FROM users WHERE id IN ({placeholders})", valid_ids)
+    conn.commit()
+    conn.close()
+
+    for uid in valid_ids:
+        invalidate_user_attempts_cache(uid)
+
+    return {"success": True, "count": len(valid_ids), "permanent_deleted_ids": valid_ids, "message": f"{len(valid_ids)} छात्र हमेशा के लिए हटा दिए गए।"}
 
 
 def admin_review_payment(request_id: int, action: str, admin_id: int, notes: str = "") -> Dict[str, Any]:

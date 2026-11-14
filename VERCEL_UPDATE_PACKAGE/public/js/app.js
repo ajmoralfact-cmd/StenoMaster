@@ -2151,9 +2151,14 @@ class StenoApp {
       this.restoreRouteOnLoad(targetRoute);
     } catch (err) {
       const msg = err.status === 401 ? 'गलत ईमेल/यूज़रनेम अथवा पासवर्ड। (Invalid username or password)' : (err.message || 'लॉगिन विफल रहा। कृपया पुनः प्रयास करें।');
+      const isDeletedAcc = err.status === 403 || (err.message && err.message.includes('हटा दिया गया')) || err.account_deleted;
       if (errBox) {
         errBox.style.display = 'flex';
-        errBox.textContent = msg;
+        if (isDeletedAcc) {
+          errBox.innerHTML = `⚠️ <span>${this.escapeHtml(msg)}</span> <a href="javascript:void(0)" onclick="stenoApp.switchAuthGatewayTab('signup')" style="margin-left:8px; color:var(--primary); font-weight:800; text-decoration:underline;">नया Sign Up करें &rarr;</a>`;
+        } else {
+          errBox.textContent = msg;
+        }
       } else {
         this.showToast(msg, 'error');
       }

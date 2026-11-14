@@ -758,10 +758,21 @@ class StenoMasterHandler(http.server.SimpleHTTPRequestHandler):
                 return
 
             if path == '/api/admin/users':
-                all_users = db.get_admin_users()
-                # Strictly exclude admin/instructor accounts from the student management list
+                view = params.get('view', [None])[0] or params.get('status', [None])[0]
+                only_deleted = (view == 'deleted' or params.get('deleted', [None])[0] in ('1', 'true'))
+                all_users = db.get_admin_users(only_deleted=only_deleted)
                 students = [u for u in all_users if u.get('role') != 'admin']
-                self._send_json(200, {"users": students})
+                # Count deleted users for UI badge
+                deleted_users = db.get_admin_users(only_deleted=True)
+                deleted_count = len([u for u in deleted_users if u.get('role') != 'admin'])
+                active_users = db.get_admin_users(only_deleted=False)
+                active_count = len([u for u in active_users if u.get('role') != 'admin'])
+                self._send_json(200, {
+                    "users": students,
+                    "deleted_count": deleted_count,
+                    "active_count": active_count,
+                    "view": "deleted" if only_deleted else "active"
+                })
                 return
 
             if path == '/api/admin/payments':
@@ -987,6 +998,20 @@ class StenoMasterHandler(http.server.SimpleHTTPRequestHandler):
 
                 if not user_row:
                     self._send_json(401, {"error": "गलत ईमेल/यूज़रनेम अथवा पासवर्ड (Invalid credentials)"})
+                    return
+
+                if user_row.get('is_deleted'):
+                    self._send_json(403, {
+                        "error": user_row.get('message') or "यह खाता हटा दिया गया है। कृपया नए सिरे से पंजीकरण (Sign Up) करें।",
+                        "account_deleted": True
+                    })
+                    return
+
+                if user_row.get('is_active') is False or user_row.get('error') == 'INACTIVE_USER':
+                    self._send_json(403, {
+                        "error": user_row.get('message') or "यह खाता निष्क्रिय है। कृपया एडमिन से संपर्क करें।",
+                        "account_inactive": True
+                    })
                     return
 
                 client_ip = self._get_client_ip()
@@ -2124,6 +2149,42 @@ class StenoMasterHandler(http.server.SimpleHTTPRequestHandler):
                 if not target_uid:
                     self._send_json(400, {"error": "user_id आवश्यक है"})
                     return
+
+            # Admin User Soft Delete (Moves to Deleted section & disables login)
+            if path == '/api/admin/users/delete':
+                data = self._read_json_body() or {}
+                target_user_id = data.get('user_id')
+                target_user_ids = data.get('user_ids') or ([target_user_id] if target_user_id else [])
+                if not target_user_ids:
+                    self._send_json(400, {"error": "user_id या user_ids आवश्यक है"})
+                    return
+                res = db.admin_soft_delete_users([int(x) for x in target_user_ids], user.get('user_id', 1))
+                self._send_json(200 if res.get('success') else 400, res)
+                return
+
+            # Admin User Restore (Brings user back to active list)
+            if path == '/api/admin/users/restore':
+                data = self._read_json_body() or {}
+                target_user_id = data.get('user_id')
+                target_user_ids = data.get('user_ids') or ([target_user_id] if target_user_id else [])
+                if not target_user_ids:
+                    self._send_json(400, {"error": "user_id या user_ids आवश्यक है"})
+                    return
+                res = db.admin_restore_users([int(x) for x in target_user_ids], user.get('user_id', 1))
+                self._send_json(200 if res.get('success') else 400, res)
+                return
+
+            # Admin User Permanent Delete (Completely purges record)
+            if path == '/api/admin/users/permanent-delete':
+                data = self._read_json_body() or {}
+                target_user_id = data.get('user_id')
+                target_user_ids = data.get('user_ids') or ([target_user_id] if target_user_id else [])
+                if not target_user_ids:
+                    self._send_json(400, {"error": "user_id या user_ids आवश्यक है"})
+                    return
+                res = db.admin_permanent_delete_users([int(x) for x in target_user_ids], user.get('user_id', 1))
+                self._send_json(200 if res.get('success') else 400, res)
+                return
                 db.set_user_promo_code(target_uid, promo_code)
                 self._send_json(200, {"success": True, "user_id": target_uid, "promo_code": promo_code})
                 return

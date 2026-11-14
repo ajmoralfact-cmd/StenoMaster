@@ -1,4 +1,4 @@
 {
-  "version": "23.5.2",
-  "description": "Remove Cashfree completely; streamline direct UPI/QR payment; keep category card viewport stable without scrolling down"
+  "version": "23.6.0",
+  "description": "Student deletion & restoration management: soft delete moves user to dedicated Deleted section, terminates login, allows re-registration from scratch, with bulk and permanent delete actions"
 }
