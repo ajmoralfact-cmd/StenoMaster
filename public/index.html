@@ -1691,7 +1691,7 @@
                   <div id="selfOcrProgressBar" style="width:0%; height:100%; background:#10b981; transition:width 0.2s;"></div>
                 </div>
               </div>
-              <textarea id="selfMasterText" class="form-input" rows="7" placeholder="यहाँ अपना हिंदी या अंग्रेजी का मूल आलेख पेस्ट करें जिसे सुनकर आपने शॉर्टहैंड लिखा है..." style="resize:vertical; font-size:0.92rem; line-height:1.6;" oninput="stenoApp.updateSelfTextStats()"></textarea>
+              <textarea id="selfMasterText" class="form-input" rows="7" placeholder="यहाँ अपना हिंदी या अंग्रेजी का मूल आलेख पेस्ट करें जिसे सुनकर आपने शॉर्टहैंड लिखा है..." style="resize:vertical; font-size:0.92rem; line-height:1.6;" oninput="stenoApp.updateSelfTextStats()" onpaste="setTimeout(() => stenoApp.updateSelfTextStats(), 50)" onkeyup="stenoApp.updateSelfTextStats()" onchange="stenoApp.updateSelfTextStats()"></textarea>
               <div style="display:flex; justify-content:space-between; align-items:center; margin-top:6px; font-size:0.78rem; color:var(--text-muted);">
                 <span>कुल शब्द: <strong id="selfWordCount" style="color:var(--primary);">0</strong> | अक्षर: <strong id="selfCharCount">0</strong></span>
                 <span>अनुमानित समय (80 WPM पर): <strong id="selfEstTime">0 min</strong></span>

@@ -283,8 +283,28 @@ class StenoMasterHandler(http.server.SimpleHTTPRequestHandler):
                 self._serve_audio_file(file_path)
                 return
 
-            # 2. High-speed global CDN redirect for audio on Vercel serverless
-            if filename.startswith('audio_') or filename.endswith('.mp3'):
+            # 2. Check persistent database (Supabase / SQLite) for uploaded & AI-generated files FIRST
+            file_rec = db.get_uploaded_file(filename)
+            if file_rec:
+                try:
+                    os.makedirs(os.path.dirname(file_path), exist_ok=True)
+                    with open(file_path, 'wb') as f:
+                        f.write(file_rec[1])
+                    self._serve_audio_file(file_path)
+                    return
+                except Exception:
+                    self._serve_in_memory_file(filename, file_rec[0], file_rec[1])
+                    return
+
+            # 3. High-speed global CDN redirect ONLY for official pre-recorded catalog class audios
+            is_official_catalog_audio = (
+                filename.startswith('audio_rk1_class_') or
+                filename.startswith('audio_rk2_class_') or
+                filename.startswith('audio_ank1_class_') or
+                filename.startswith('audio_ank2_class_') or
+                filename.startswith('audio_rk_class_')
+            )
+            if is_official_catalog_audio:
                 cdn_url = f"https://github.com/ajmoralfact-cmd/StenoMaster/releases/download/audio-v1/{filename}"
                 self.send_response(302)
                 self.send_header('Location', cdn_url)
@@ -293,7 +313,7 @@ class StenoMasterHandler(http.server.SimpleHTTPRequestHandler):
                 self.end_headers()
                 return
 
-            # 2b. High-speed global CDN redirect for shorthand notes images
+            # 3b. High-speed global CDN redirect for shorthand notes images
             rel_subpath = path[len('/uploads/'):].strip('/')
             clean_subpath = urllib.parse.unquote(rel_subpath)
             if 'anand_patrika_ank_01' in clean_subpath or clean_subpath.startswith('page_'):
@@ -317,19 +337,6 @@ class StenoMasterHandler(http.server.SimpleHTTPRequestHandler):
                 self.send_header('Cache-Control', 'public, max-age=604800, immutable')
                 self.end_headers()
                 return
-
-            # 3. Fallback: retrieve from persistent database (Supabase / SQLite) for other assets (images, PDFs)
-            file_rec = db.get_uploaded_file(filename)
-            if file_rec:
-                try:
-                    os.makedirs(os.path.dirname(file_path), exist_ok=True)
-                    with open(file_path, 'wb') as f:
-                        f.write(file_rec[1])
-                    self._serve_audio_file(file_path)
-                    return
-                except Exception:
-                    self._serve_in_memory_file(filename, file_rec[0], file_rec[1])
-                    return
 
             self.send_error(404, "File not found")
             return
