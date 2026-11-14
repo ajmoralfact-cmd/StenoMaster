@@ -7295,6 +7295,36 @@ ${link}`;
       btnEl.style.color = '#fff';
       btnEl.classList.add('active');
     }
+    const isEn = this.currentLang === 'english';
+    const pdfWrap = document.getElementById('volumePdfBannerWrap');
+    if (pdfWrap) {
+      if (volNum) {
+        const vPad = String(volNum).padStart(2, '0');
+        const pdfUrl = `/uploads/kailash_chandra/outlines/Kailash_Chandra_Vol_${vPad}_Outlines.pdf`;
+        pdfWrap.style.display = 'block';
+        pdfWrap.innerHTML = `
+          <div style="background:linear-gradient(135deg, rgba(37,99,235,0.08), rgba(99,102,241,0.08)); border:1.5px solid rgba(37,99,235,0.25); border-radius:12px; padding:12px 16px; margin:4px 0 16px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+            <div style="display:flex; align-items:center; gap:10px;">
+              <span style="font-size:1.5rem;">📘</span>
+              <div>
+                <div style="font-weight:800; font-size:0.9rem; color:var(--text-main);">
+                  ${isEn ? `Volume ${volNum} Complete Shorthand Outlines (PDF)` : `वॉल्यूम ${volNum} सम्पूर्ण स्टेनो आउटलाइन्स (PDF)`}
+                </div>
+                <div style="font-size:0.76rem; color:var(--text-muted);">
+                  ${isEn ? 'All 22 passages handwritten Pitman shorthand outlines in one PDF' : 'सभी 22 पैसेज के हस्तलिखित स्टेनो आउटलाइन्स एक ही PDF में'}
+                </div>
+              </div>
+            </div>
+            <a href="${pdfUrl}" target="_blank" download="Kailash_Chandra_Vol_${vPad}_Outlines.pdf" style="display:inline-flex; align-items:center; gap:6px; padding:7px 16px; background:#2563eb; color:#fff; border-radius:8px; font-weight:700; font-size:0.82rem; text-decoration:none; box-shadow:0 2px 6px rgba(37,99,235,0.25); transition:transform 0.15s ease;">
+              📥 ${isEn ? 'Download PDF' : 'PDF डाउनलोड करें'}
+            </a>
+          </div>
+        `;
+      } else {
+        pdfWrap.style.display = 'none';
+        pdfWrap.innerHTML = '';
+      }
+    }
     if (subCatId === 'all') {
       this.renderCategoryPassagesList(this.currentCategoryPassages);
     } else {
