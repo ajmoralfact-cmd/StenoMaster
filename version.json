@@ -1,6 +1,4 @@
 {
-  "version": "23.2.0",
-  "updated_at": "2026-11-14T04:25:12Z",
-  "commit": "bf841f6ab9",
-  "description": "Fix audio playback: resolve regex syntax error in audio_player.js & add CORS headers (v23.2)"
+  "version": "23.3.0",
+  "description": "Fix admin panel sidebar click functionality and syntax error in admin.js"
 }

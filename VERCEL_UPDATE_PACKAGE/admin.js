@@ -4086,6 +4086,18 @@ class StenoAdmin {
       stenoApp.showToast('सेटिंग्स सहेजने में त्रुटि: ' + err.message, 'error');
     }
   }
+async setStudentPromoCode(userId, currentCode = '') {
+    const newCode = prompt(`छात्र #${userId} के लिए प्रोमो कोड दर्ज करें (उदा. ADITI10):`, currentCode || '');
+    if (newCode === null) return;
+    const clean = newCode.trim().toUpperCase();
+    try {
+      await stenoApp.apiCall('/api/admin/users/set-promo-code', 'POST', { user_id: userId, promo_code: clean });
+      stenoApp.showToast(`प्रोमो कोड '${clean || 'हटा दिया गया'}' अपडेट हो गया!`, 'success');
+      await this.loadSubscribers();
+    } catch (err) {
+      stenoApp.showToast(err.message || 'अपडेट करने में विफल', 'error');
+    }
+  }
 
 }
 
@@ -4100,18 +4112,4 @@ if (typeof window !== 'undefined') {
     window.stenoAdmin.sendTestEmail = function() { return window.stenoApp.sendTestEmail(); };
     window.stenoAdmin.submitResetPassword = function() { return window.stenoApp.submitResetPassword(); };
   }
-
-  async setStudentPromoCode(userId, currentCode = '') {
-    const newCode = prompt(`छात्र #${userId} के लिए प्रोमो कोड दर्ज करें (उदा. ADITI10):`, currentCode || '');
-    if (newCode === null) return;
-    const clean = newCode.trim().toUpperCase();
-    try {
-      await stenoApp.apiCall('/api/admin/users/set-promo-code', 'POST', { user_id: userId, promo_code: clean });
-      stenoApp.showToast(`प्रोमो कोड '${clean || 'हटा दिया गया'}' अपडेट हो गया!`, 'success');
-      await this.loadSubscribers();
-    } catch (err) {
-      stenoApp.showToast(err.message || 'अपडेट करने में विफल', 'error');
-    }
-  }
-
 }

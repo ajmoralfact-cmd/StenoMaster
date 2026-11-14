@@ -1,4 +1,4 @@
 {
-  "version": "23.2.0",
-  "description": "Fix audio player syntax error and enable cross-origin playback"
+  "version": "23.3.0",
+  "description": "Fix admin panel sidebar click functionality and syntax error in admin.js"
 }
