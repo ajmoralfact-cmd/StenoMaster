@@ -202,7 +202,8 @@ class StenoTypingEngine {
       // Anti-Cheat: Paste restriction during exam
       this.textarea.addEventListener('paste', (e) => {
         e.preventDefault();
-        this.showDraftNotice('🚫 परीक्षा नियम: कॉपी-पेस्ट करना वर्जित है');
+        const isEn = (window.stenoApp && window.stenoApp.currentLang === 'en') || document.documentElement.getAttribute('data-app-lang') === 'en';
+      this.showDraftNotice(isEn ? '🚫 Exam Rule: Copy-Paste is disabled' : '🚫 परीक्षा नियम: कॉपी-पेस्ट करना वर्जित है');
       });
     }
 
@@ -369,7 +370,8 @@ class StenoTypingEngine {
   handleTimeUpAutoSubmit() {
     this.stopPractice();
     if (window.stenoApp) {
-      stenoApp.showToast('⏱️ निर्धारित समय समाप्त! उत्तर स्वतः सबमिट किया जा रहा है...', 'info');
+      const isEn = (window.stenoApp && window.stenoApp.currentLang === 'en') || document.documentElement.getAttribute('data-app-lang') === 'en';
+      stenoApp.showToast(isEn ? '⏱️ Time is up! Submitting your test automatically...' : '⏱️ निर्धारित समय समाप्त! उत्तर स्वतः सबमिट किया जा रहा है...', 'info');
       stenoApp.submitPractice(true);
     }
   }
@@ -613,9 +615,11 @@ class StenoTypingEngine {
     localStorage.setItem('stenomaster_mobile_player_compact', isCompact ? 'true' : 'false');
     const btn = document.getElementById('toggleMobilePlayerBtn');
     if (btn) {
+      const isEn = (window.stenoApp && window.stenoApp.currentLang === 'en') || document.documentElement.getAttribute('data-app-lang') === 'en';
+      const speedTxt = isEn ? 'Speed' : 'स्पीड';
       btn.innerHTML = isCompact 
-        ? `<span class="speed-toggle-icon">⚡</span><span class="speed-toggle-text">स्पीड</span><span class="speed-toggle-arrow">▾</span>` 
-        : `<span class="speed-toggle-icon">⚡</span><span class="speed-toggle-text">स्पीड</span><span class="speed-toggle-arrow">▴</span>`;
+        ? `<span class="speed-toggle-icon">⚡</span><span class="speed-toggle-text">${speedTxt}</span><span class="speed-toggle-arrow">▾</span>` 
+        : `<span class="speed-toggle-icon">⚡</span><span class="speed-toggle-text">${speedTxt}</span><span class="speed-toggle-arrow">▴</span>`;
       btn.classList.toggle('speed-open', !isCompact);
     }
   }
@@ -630,13 +634,17 @@ class StenoTypingEngine {
     if (shouldCompact) {
       card.classList.add('audio-player-compact');
       if (btn) {
-        btn.innerHTML = `<span class="speed-toggle-icon">⚡</span><span class="speed-toggle-text">स्पीड</span><span class="speed-toggle-arrow">▾</span>`;
+        const isEn = (window.stenoApp && window.stenoApp.currentLang === 'en') || document.documentElement.getAttribute('data-app-lang') === 'en';
+        const speedTxt = isEn ? 'Speed' : 'स्पीड';
+        btn.innerHTML = `<span class="speed-toggle-icon">⚡</span><span class="speed-toggle-text">${speedTxt}</span><span class="speed-toggle-arrow">▾</span>`;
         btn.classList.remove('speed-open');
       }
     } else {
       card.classList.remove('audio-player-compact');
       if (btn) {
-        btn.innerHTML = `<span class="speed-toggle-icon">⚡</span><span class="speed-toggle-text">स्पीड</span><span class="speed-toggle-arrow">▴</span>`;
+        const isEn = (window.stenoApp && window.stenoApp.currentLang === 'en') || document.documentElement.getAttribute('data-app-lang') === 'en';
+        const speedTxt = isEn ? 'Speed' : 'स्पीड';
+        btn.innerHTML = `<span class="speed-toggle-icon">⚡</span><span class="speed-toggle-text">${speedTxt}</span><span class="speed-toggle-arrow">▾</span>`;
         btn.classList.add('speed-open');
       }
     }
@@ -648,7 +656,7 @@ class StenoTypingEngine {
     practiceViews.forEach(v => v.setAttribute('data-mobile-step', 'typing'));
     if (this.currentPassage) {
       const titleEl = document.getElementById('miniPassageTitle');
-      if (titleEl) titleEl.textContent = this.currentPassage.title || 'डिक्टेशन री-प्ले';
+      if (titleEl) titleEl.textContent = this.currentPassage.title || ((window.stenoApp && window.stenoApp.currentLang === 'en') ? 'Dictation Replay' : 'डिक्टेशन री-प्ले');
     }
     const wpmBadge = document.getElementById('miniSpeedBadge');
     if (wpmBadge && window.stenoAudioPlayer) {
@@ -674,7 +682,7 @@ class StenoTypingEngine {
     practiceViews.forEach(v => v.setAttribute('data-mobile-step', 'typing'));
     if (this.currentPassage) {
       const titleEl = document.getElementById('miniPassageTitle');
-      if (titleEl) titleEl.textContent = this.currentPassage.title || 'डिक्टेशन री-प्ले';
+      if (titleEl) titleEl.textContent = this.currentPassage.title || ((window.stenoApp && window.stenoApp.currentLang === 'en') ? 'Dictation Replay' : 'डिक्टेशन री-प्ले');
     }
     const wpmBadge = document.getElementById('miniSpeedBadge');
     if (wpmBadge && window.stenoAudioPlayer) {
@@ -809,12 +817,13 @@ class StenoTypingEngine {
 
     this.textarea.classList.remove('font-krutidev', 'font-mangal', 'font-inscript', 'font-remington');
 
+    const isEn = (window.stenoApp && window.stenoApp.currentLang === 'en') || document.documentElement.getAttribute('data-app-lang') === 'en';
     if (this.typingMode === 'krutidev') {
       this.textarea.classList.add('font-krutidev');
-      this.textarea.setAttribute('placeholder', 'कृति देव 010 में डिक्टेशन टाइप करना प्रारंभ करें...');
+      this.textarea.setAttribute('placeholder', isEn ? 'Start typing dictation in Kruti Dev 010...' : 'कृति देव 010 में डिक्टेशन टाइप करना प्रारंभ करें...');
     } else {
       this.textarea.classList.add('font-mangal');
-      this.textarea.setAttribute('placeholder', 'डिक्टेशन सुनकर यहाँ टाइप करना प्रारंभ करें...');
+      this.textarea.setAttribute('placeholder', isEn ? 'Listen to dictation and start typing here...' : 'डिक्टेशन सुनकर यहाँ टाइप करना प्रारंभ करें...');
     }
   }
 
@@ -967,7 +976,8 @@ class StenoTypingEngine {
     if (this.draftStatusEl) {
       this.draftStatusEl.textContent = msg;
       setTimeout(() => {
-        if (this.draftStatusEl) this.draftStatusEl.textContent = 'सहेजा गया';
+        const isEn = (window.stenoApp && window.stenoApp.currentLang === 'en') || document.documentElement.getAttribute('data-app-lang') === 'en';
+        if (this.draftStatusEl) this.draftStatusEl.textContent = isEn ? 'Draft Saved' : 'सहेजा गया';
       }, 3000);
     }
   }

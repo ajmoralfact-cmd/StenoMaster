@@ -109,6 +109,15 @@ const I18N_DICTIONARY = {
     "practice_alt_codes": "⌨️ Alt Codes",
     "practice_otg_off": "⌨️ OTG: बंद",
     "practice_otg_on": "⌨️ OTG: चालू",
+    "header_login_btn": "लॉगिन",
+    "mobile_gauge_tag": "⚡ मानक परीक्षा गति",
+    "mobile_gauge_subtext": "डिक्टेशन सुनकर नोटबुक में लिखें, फिर नीचे टाइपिंग शुरू करें",
+    "mobile_start_typing": "✍️ नोटबुक से टाइपिंग शुरू करें",
+    "mobile_mini_replay": "डिक्टेशन री-प्ले",
+    "mobile_audio_mode": "⏪ ऑडियो मोड",
+    "speed_toggle_text": "स्पीड",
+    "practice_exam_alert_banner": "चेतावनी: केवल 1 मिनट शेष है! अपनी आशुलिपि आउटलाइन से टंकण शीघ्र पूर्ण करें।",
+    "modal_steno_outline_title": "📝 स्टेनो आउटलाइन व नोट्स",
     "practice_compact_player": "🔼 संक्षिप्त",
     "practice_expand_player": "🔽 विस्तृत",
     "practice_words": "शब्द:",
@@ -242,11 +251,20 @@ const I18N_DICTIONARY = {
     "practice_fullscreen_exit": "✕ Normal Screen",
     "practice_keyboard_off": "⌨️ Keyboard: OFF",
     "practice_keyboard_on": "⌨️ Keyboard: ON",
-    "practice_backspace_on": "🔓 बैकस्पेस: चालू",
-    "practice_backspace_off": "🔒 बैकस्पेस: बंद",
+    "practice_backspace_on": "🔓 Backspace: ON",
+    "practice_backspace_off": "🔒 Backspace: OFF",
     "practice_alt_codes": "⌨️ Alt Codes",
-    "practice_otg_off": "⌨️ OTG: बंद",
-    "practice_otg_on": "⌨️ OTG: चालू",
+    "practice_otg_off": "⌨️ OTG: OFF",
+    "practice_otg_on": "⌨️ OTG: ON",
+    "header_login_btn": "Login",
+    "mobile_gauge_tag": "⚡ Standard Exam Speed",
+    "mobile_gauge_subtext": "Listen to dictation, write shorthand in notebook, then start typing below",
+    "mobile_start_typing": "✍️ Start Typing from Shorthand Notes",
+    "mobile_mini_replay": "Dictation Replay",
+    "mobile_audio_mode": "⏪ Audio Mode",
+    "speed_toggle_text": "Speed",
+    "practice_exam_alert_banner": "Warning: Only 1 minute left! Complete your typing from shorthand notes quickly.",
+    "modal_steno_outline_title": "📝 Steno Outline & Notes",
     "practice_compact_player": "🔼 Compact",
     "practice_expand_player": "🔽 Expand",
     "practice_words": "Words:",
@@ -1094,7 +1112,7 @@ class StenoApp {
 
     const instrEl = document.getElementById('practiceInstructions');
     if (instrEl) {
-      const rawInstr = this.currentPassage.instructions || '';
+      const rawInstr = (this.currentPassage && this.currentPassage.instructions) ? this.currentPassage.instructions : '';
       if (isEn) {
         const m = rawInstr.match(/\(([^)]+)\)/);
         if (m && /[a-zA-Z]/.test(m[1])) instrEl.textContent = m[1].trim();
@@ -1132,21 +1150,61 @@ class StenoApp {
       if (optRemington) optRemington.textContent = isEn ? 'Remington Hindi' : 'रेमिंगटन हिंदी';
     }
 
-    if (window.stenoAudioPlayer && typeof stenoAudioPlayer.updateWpmUI === 'function') {
-      stenoAudioPlayer.updateWpmUI();
+    if (window.stenoAudioPlayer) {
+      if (typeof stenoAudioPlayer.updateWpmUI === 'function') {
+        try { stenoAudioPlayer.updateWpmUI(); } catch (e) {}
+      }
+      if (typeof stenoAudioPlayer.updateCountdownUI === 'function') {
+        try { stenoAudioPlayer.updateCountdownUI(); } catch (e) {}
+      }
     }
 
+    if (window.stenoTypingEngine) {
+      if (typeof stenoTypingEngine.updateExamModeUI === 'function') stenoTypingEngine.updateExamModeUI();
+      if (typeof stenoTypingEngine.updateFullscreenUI === 'function') stenoTypingEngine.updateFullscreenUI();
+      if (typeof stenoTypingEngine.applyOtgMode === 'function') stenoTypingEngine.applyOtgMode();
+      if (typeof stenoTypingEngine.updateBackspaceUI === 'function') stenoTypingEngine.updateBackspaceUI();
+      if (typeof stenoTypingEngine.initMobilePlayerState === 'function') stenoTypingEngine.initMobilePlayerState();
+    }
+
+    const draftStatusEl = document.getElementById('draftStatusText');
+    if (draftStatusEl) draftStatusEl.textContent = isEn ? 'Draft Saved' : 'सहेजा गया';
+
+    const mobileGaugeTag = document.querySelector('.mobile-gauge-tag');
+    if (mobileGaugeTag) mobileGaugeTag.textContent = isEn ? '⚡ Standard Exam Speed' : '⚡ मानक परीक्षा गति';
+
+    const mobileGaugeSub = document.querySelector('.mobile-gauge-subtext');
+    if (mobileGaugeSub) mobileGaugeSub.textContent = isEn ? 'Listen to dictation, write shorthand in notebook, then start typing below' : 'डिक्टेशन सुनकर नोटबुक में लिखें, फिर नीचे टाइपिंग शुरू करें';
+
+    const btnStartMobile = document.getElementById('btnStartTypingMobile');
+    if (btnStartMobile) {
+      const span = btnStartMobile.querySelector('span');
+      if (span) span.textContent = isEn ? '✍️ Start Typing from Shorthand Notes' : '✍️ नोटबुक से टाइपिंग शुरू करें';
+    }
+
+    const backAudioBtn = document.querySelector('.btn-back-to-audio');
+    if (backAudioBtn) backAudioBtn.textContent = isEn ? '⏪ Audio Mode' : '⏪ ऑडियो मोड';
+
+    const examRuleLabel = document.querySelector('[data-i18n="practice_exam_rule_label"]');
+    if (examRuleLabel) examRuleLabel.textContent = isEn ? '🎯 Exam Rule:' : '🎯 परीक्षा नियम:';
+
+    const punctLabel = document.querySelector('[data-i18n="practice_punct_label"]');
+    if (punctLabel) punctLabel.textContent = isEn ? 'Punctuation:' : 'विराम चिह्न:';
+
+    const timerLabel = document.querySelector('[data-i18n="practice_timer_label"]');
+    if (timerLabel) timerLabel.textContent = isEn ? '⏱️ Typing Timer:' : '⏱️ टंकण समय:';
+
     // Instantly update active plan banner
-    this.renderActivePlanBanner();
+    try { this.renderActivePlanBanner(); } catch (e) {}
 
     // Instantly update user UI (validity badge, header role)
-    this.updateUserUI();
+    try { this.updateUserUI(); } catch (e) {}
 
     // Instantly update dashboard metrics cards
-    this._applySummaryToDOM(this.userSummary || {});
+    try { this._applySummaryToDOM(this.userSummary || {}); } catch (e) {}
 
     // Run DOM-wide translation traversal (Strictly protecting core Hindi passages)
-    this.translateDOM(document.body, this.currentLang);
+    try { this.translateDOM(document.body, this.currentLang); } catch (e) { console.error('translateDOM error:', e); }
 
     // Initialize or refresh dynamic mutation observer
     this.initLanguageObserver();
@@ -4655,7 +4713,7 @@ class StenoApp {
 
     const instrEl = document.getElementById('practiceInstructions');
     if (instrEl) {
-      const rawInstr = this.currentPassage.instructions || '';
+      const rawInstr = (this.currentPassage && this.currentPassage.instructions) ? this.currentPassage.instructions : '';
       if (isEnMode) {
         const m = rawInstr.match(/\(([^)]+)\)/);
         if (m && /[a-zA-Z]/.test(m[1])) instrEl.textContent = m[1].trim();

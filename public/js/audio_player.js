@@ -91,19 +91,19 @@ class StenoAudioPlayer {
   updateCountdownUI() {
     const btn = document.getElementById('toggleCountdownBtn');
     if (btn) {
+      const isEn = (window.stenoApp && window.stenoApp.currentLang === 'en') || document.documentElement.getAttribute('data-app-lang') === 'en';
       if (this.enableCountdown) {
-        btn.innerHTML = '⏳ 3s काउंटडाउन: ON';
+        btn.innerHTML = isEn ? '⏳ 3s Countdown: ON' : '⏳ 3s काउंटडाउन: ON';
         btn.style.background = '#dbeafe';
         btn.style.color = '#1e40af';
         btn.style.borderColor = '#93c5fd';
-        btn.title = 'डिक्टेशन शुरू होने से पहले 3 सेकंड काउंटडाउन ऑन है। तुरंत प्ले करने के लिए क्लिक करें।';
+        btn.title = isEn ? '3-second countdown before dictation is active. Click for instant play.' : 'डिक्टेशन शुरू होने से पहले 3 सेकंड काउंटडाउन ऑन है। तुरंत प्ले करने के लिए क्लिक करें।';
       } else {
-        const isEn = document.documentElement.getAttribute('data-app-lang') === 'en';
-      btn.innerHTML = isEn ? '⚡ Instant Play' : '⚡ तुरंत प्ले';
+        btn.innerHTML = isEn ? '⚡ Instant Play' : '⚡ तुरंत प्ले';
         btn.style.background = 'var(--bg-subtle, #f3f4f6)';
         btn.style.color = 'var(--text-secondary, #4b5563)';
         btn.style.borderColor = 'var(--border-subtle, #e5e7eb)';
-        btn.title = 'प्ले बटन दबाते ही तुरंत ऑडियो बजेगा। 3-सेकंड काउंटडाउन के लिए क्लिक करें।';
+        btn.title = isEn ? 'Instant play active. Click to enable 3-second countdown.' : 'प्ले बटन दबाते ही तुरंत ऑडियो बजेगा। 3-सेकंड काउंटडाउन के लिए क्लिक करें।';
       }
     }
   }
@@ -442,8 +442,29 @@ class StenoAudioPlayer {
       if (ring1) ring1.style.borderColor = cur.ringColor;
       if (ring2) ring2.style.borderColor = cur.ringColor;
       if (ring3) ring3.style.borderColor = cur.ringColor;
-      if (title) title.textContent = cur.title;
-      if (sub) sub.textContent = cur.sub;
+      const isEn = (window.stenoApp && window.stenoApp.currentLang === 'en') || document.documentElement.getAttribute('data-app-lang') === 'en';
+      if (title) {
+        if (this.countdownSeconds === 0) {
+          title.textContent = isEn ? '🎉 Dictation Started!' : cur.title;
+        } else {
+          title.textContent = isEn ? 'Dictation is about to begin...' : cur.title;
+        }
+      }
+      if (sub) {
+        if (isEn) {
+          const enSubs = {
+            5: 'Five • Get ready ✍️',
+            4: 'Four • Take your shorthand notebook & pencil ✍️',
+            3: 'Three • Focus carefully 🎧',
+            2: 'Two • About to start...',
+            1: 'One • Ready!',
+            0: 'Start • Begin writing shorthand outlines! ✍️'
+          };
+          sub.textContent = enSubs[this.countdownSeconds] || cur.sub;
+        } else {
+          sub.textContent = cur.sub;
+        }
+      }
     }
 
     this.playCountdownVoice(this.countdownSeconds);
