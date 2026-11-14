@@ -481,6 +481,24 @@ class StenoMasterHandler(http.server.SimpleHTTPRequestHandler):
                 p_id = int(path.split('/')[-1])
                 is_admin = bool(user and user.get('role') == 'admin')
 
+                if p_id == 999999:
+                    self._send_json(200, {
+                        "passage": {
+                            "id": 999999,
+                            "title": "कस्टम डिक्टेशन (Self Practice)",
+                            "category_name": "Self Practice",
+                            "difficulty": "medium",
+                            "target_wpm": 80,
+                            "duration_seconds": 300,
+                            "typing_system": "mangal_unicode",
+                            "language": "hindi",
+                            "status": "published",
+                            "is_free_tier": True,
+                            "is_premium": False
+                        }
+                    })
+                    return
+
                 # Strict Freemium Access Control (First 2 classes free, all others locked)
                 if not is_admin and not db.is_passage_accessible(user_id, p_id):
                     self._send_json(403, {

@@ -4365,6 +4365,20 @@ class StenoApp {
     }
     try {
       const pId = parseInt(passageId, 10);
+      if (pId === 999999) {
+        try {
+          const stored = sessionStorage.getItem('stenomaster_custom_passage');
+          if (stored) {
+            const parsed = JSON.parse(stored);
+            this.currentPassage = parsed;
+            const selectedSystem = forcedSystem || (parsed.typing_system || 'mangal_unicode');
+            this.startPracticeWithSystem(selectedSystem);
+            return;
+          }
+        } catch(e) {
+          console.warn('Failed to parse cached custom passage:', e);
+        }
+      }
       const cardEl = document.querySelector(`.class-card[onclick*="openPractice(${passageId})"]`);
 
       // Guest Gating: If not logged in, remember requested class and trigger sleek login modal
@@ -6549,12 +6563,13 @@ ${link}`;
       audioUrl = null;
     }
 
+    const isEn = /[a-zA-Z]{5,}/.test(masterText);
     const customPassage = {
       id: 999999,
       is_custom: true,
-      title: 'कस्टम डिक्टेशन (Self Practice)',
+      title: isEn ? 'Custom Dictation (Self Practice)' : 'कस्टम डिक्टेशन (Self Practice)',
       category_name: 'Self Practice',
-      language: 'hindi',
+      language: isEn ? 'english' : 'hindi',
       difficulty: 'medium',
       target_wpm: targetSpeed,
       speed_wpm: targetSpeed,
@@ -6564,10 +6579,14 @@ ${link}`;
       official_kruti_dev_text: masterText,
       audio_url: audioUrl,
       exam_rule: targetExam,
-      typing_system: fontMode,
+      typing_system: isEn ? 'mangal_unicode' : fontMode,
       is_free_tier: true,
       is_premium: false
     };
+
+    try {
+      sessionStorage.setItem('stenomaster_custom_passage', JSON.stringify(customPassage));
+    } catch(e) {}
 
     this.currentExamRule = targetExam;
     this.openPractice(999999, fontMode, customPassage);
