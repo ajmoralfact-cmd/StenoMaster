@@ -1074,7 +1074,6 @@ class StenoApp {
       const isOpen = drawer && drawer.style.display !== 'none';
       kbBtn.innerHTML = isOpen ? (isEn ? '⌨️ Keyboard: ON' : '⌨️ कीबोर्ड: चालू') : (isEn ? '⌨️ Keyboard: OFF' : '⌨️ कीबोर्ड: बंद');
     }
-    }
 
     // Instantly update active plan banner
     this.renderActivePlanBanner();
