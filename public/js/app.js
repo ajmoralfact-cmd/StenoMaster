@@ -992,6 +992,7 @@ class StenoApp {
     const isEn = lang === 'en';
     this.currentLang = isEn ? 'en' : 'hi';
     document.documentElement.setAttribute('data-app-lang', this.currentLang);
+    document.documentElement.setAttribute('lang', isEn ? 'en' : 'hi');
 
     // Update all language toggle buttons (header/nav/etc)
     document.querySelectorAll('.lang-toggle-btn').forEach(btn => {
@@ -1165,7 +1166,11 @@ class StenoApp {
       const el = (node.nodeType === Node.ELEMENT_NODE) ? node : node.parentElement;
       if (!el) return false;
       // Core Hindi passages & titles must NEVER be translated or modified!
-      if (el.closest('hindi-root, .notranslate, .skiptranslate, [translate="no"], [lang="hi"]')) return true;
+      // Core Hindi passages & titles must NEVER be translated or modified!
+      // Do NOT check [lang="hi"] on <html> or <body>!
+      const langEl = el.closest('[lang="hi"]');
+      if (langEl && langEl !== document.documentElement && langEl !== document.body) return true;
+      if (el.closest('hindi-root, .notranslate, .skiptranslate, [translate="no"]')) return true;
       if (el.closest('#typingTextarea, #practicePassageTitle, #passageTextDisplay, #originalText, .passage-content, .hindi-passage, .hindi-text, .steno-outline-container, #stenoImageContainer, #stenoNotesModal img, #stenoNotesModal svg')) return true;
       if (el.classList && (el.classList.contains('hindi-passage') || el.classList.contains('passage-title-hindi') || el.classList.contains('raw-hindi-passage'))) return true;
       return false;
