@@ -97,6 +97,7 @@ const I18N_DICTIONARY = {
     "practice_speed_label": "डिक्टेशन गति:",
     "practice_font_size_title": "फ़ॉन्ट आकार",
     "practice_steno_notes": "📝 स्टेनो आउटलाइन देखें",
+    "practice_wpm_multiplier": "(1.0x • मूल गति)",
     "practice_exam_mode_off": "🔒 परीक्षा मोड: बंद",
     "practice_exam_mode_on": "🔒 परीक्षा मोड: चालू",
     "practice_fullscreen": "📺 फुल-स्क्रीन",
@@ -234,6 +235,7 @@ const I18N_DICTIONARY = {
     "practice_speed_label": "Dictation Speed:",
     "practice_font_size_title": "Font Size",
     "practice_steno_notes": "📝 View Steno Outline",
+    "practice_wpm_multiplier": "(1.0x • Original Speed)",
     "practice_exam_mode_off": "🔒 Exam Mode: OFF",
     "practice_exam_mode_on": "🔒 Exam Mode: ON",
     "practice_fullscreen": "📺 Full Screen",
@@ -1077,7 +1079,7 @@ class StenoApp {
 
     // Practice Room Dynamic UI Elements Translation
     const stenoBtn = document.getElementById('practiceStenoNotesBtn');
-    if (stenoBtn && stenoBtn.style.display !== 'none') {
+    if (stenoBtn) {
       const isPdf = this.currentPassage && this.currentPassage.steno_notes_type === 'pdf';
       stenoBtn.textContent = isPdf 
         ? (isEn ? '📄 View Steno PDF' : '📄 स्टेनो PDF देखें') 
@@ -1090,7 +1092,7 @@ class StenoApp {
     if (speedToggleText) speedToggleText.textContent = isEn ? 'Speed' : 'स्पीड';
 
     const instrEl = document.getElementById('practiceInstructions');
-    if (instrEl && this.currentPassage) {
+    if (instrEl) {
       const rawInstr = this.currentPassage.instructions || '';
       if (isEn) {
         const m = rawInstr.match(/\(([^)]+)\)/);
@@ -1098,7 +1100,7 @@ class StenoApp {
         else if (rawInstr.includes('आशुलिपि आउटलाइन')) instrEl.textContent = 'Type with maximum accuracy from your shorthand notes.';
         else instrEl.textContent = 'Listen carefully to the audio and transcribe with accuracy.';
       } else {
-        instrEl.textContent = rawInstr ? rawInstr.replace(/\s*\([a-zA-Z0-9\s/&+\-.:]+\)/g, '').replace(/^आदेश:\s*/, '').trim() : 'ऑडियो ध्यानपूर्वक सुनें और शुद्धता के साथ टाइप करें।';
+        instrEl.textContent = rawInstr ? rawInstr.replace(/\s*\([a-zA-Z0-9\s/&+\-.:]+\)/g, '').replace(/^आदेश:\s*/, '').trim() : (isEn ? 'Listen carefully to the audio and transcribe with accuracy.' : 'ऑडियो ध्यानपूर्वक सुनें और शुद्धता के साथ टाइप करें।');
       }
     }
 
@@ -4655,7 +4657,7 @@ class StenoApp {
         else if (rawInstr.includes('आशुलिपि आउटलाइन')) instrEl.textContent = 'Type with maximum accuracy from your shorthand notes.';
         else instrEl.textContent = 'Listen carefully to the audio and transcribe with accuracy.';
       } else {
-        instrEl.textContent = rawInstr ? rawInstr.replace(/\s*\([a-zA-Z0-9\s/&+\-.:]+\)/g, '').replace(/^आदेश:\s*/, '').trim() : 'ऑडियो ध्यानपूर्वक सुनें और शुद्धता के साथ टाइप करें।';
+        instrEl.textContent = rawInstr ? rawInstr.replace(/\s*\([a-zA-Z0-9\s/&+\-.:]+\)/g, '').replace(/^आदेश:\s*/, '').trim() : (isEn ? 'Listen carefully to the audio and transcribe with accuracy.' : 'ऑडियो ध्यानपूर्वक सुनें और शुद्धता के साथ टाइप करें।');
       }
     }
 

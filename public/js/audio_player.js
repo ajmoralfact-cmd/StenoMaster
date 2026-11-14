@@ -682,12 +682,13 @@ class StenoAudioPlayer {
     const miniSpeedEl = document.getElementById('miniSpeedBadge');
     if (miniSpeedEl) miniSpeedEl.textContent = `${wpm} WPM`;
     if (multEl) {
+      const isEn = (window.stenoApp && window.stenoApp.currentLang === 'en') || document.documentElement.getAttribute('data-app-lang') === 'en';
       if (wpm === base) {
-        multEl.textContent = '(1.0x • मूल गति)';
+        multEl.textContent = isEn ? '(1.0x • Original Speed)' : '(1.0x • मूल गति)';
       } else if (wpm < base) {
-        multEl.textContent = `(${rateStr}x • धीमी गति)`;
+        multEl.textContent = isEn ? `(${rateStr}x • Slower)` : `(${rateStr}x • धीमी गति)`;
       } else {
-        multEl.textContent = `(${rateStr}x • तीव्र गति)`;
+        multEl.textContent = isEn ? `(${rateStr}x • Faster)` : `(${rateStr}x • तीव्र गति)`;
       }
     }
     if (slider) slider.value = wpm;
