@@ -1,6 +1,4 @@
 {
-  "version": "23.3.0",
-  "updated_at": "2026-11-14T04:43:28Z",
-  "commit": "7ad9416061",
-  "description": "Fix admin panel sidebar clicks: correct class method placement in admin.js (v23.3)"
+  "version": "23.4.0",
+  "description": "Full Google SEO optimization for custom domain stenomaster.co.in"
 }
