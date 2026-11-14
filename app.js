@@ -1524,7 +1524,7 @@ class StenoApp {
                 <span class="pwa-verified-badge">✓ Free (2MB)</span>
               </div>
               <div class="mobile-pwa-app-desc">
-                फ़ास्ट स्टेनो अभ्यास के लिए ऐप डाउनलोड करें
+                ${this.currentLang === 'en' ? 'Download App for Faster Steno Practice' : 'फ़ास्ट स्टेनो अभ्यास के लिए ऐप डाउनलोड करें'}
               </div>
             </div>
           </div>
@@ -1532,7 +1532,7 @@ class StenoApp {
             <button type="button" class="btn-pwa-download" onclick="stenoApp.triggerPwaInstall()">
               <span>📲</span> <span>Install App</span>
             </button>
-            <button type="button" class="btn-pwa-close" onclick="stenoApp.dismissPwaPopup()" aria-label="Close" title="बाद में">✕</button>
+            <button type="button" class="btn-pwa-close" onclick="stenoApp.dismissPwaPopup()" aria-label="Close" title="${this.currentLang === 'en' ? 'Maybe Later' : 'बाद में'}">✕</button>
           </div>
         </div>
       `;
@@ -1540,6 +1540,7 @@ class StenoApp {
     }
 
     if (!document.getElementById('pwaInstallGuideModal')) {
+      const isEn = this.currentLang === 'en';
       const guideModal = document.createElement('div');
       guideModal.id = 'pwaInstallGuideModal';
       guideModal.className = 'pwa-guide-modal';
@@ -1547,32 +1548,32 @@ class StenoApp {
         <div class="pwa-guide-card">
           <button type="button" class="btn-pwa-close" onclick="stenoApp.closePwaGuideModal()" style="position:absolute; top:14px; right:14px;">✕</button>
           <div style="font-size:2.4rem; margin-bottom:8px;">📱</div>
-          <h3 style="margin:0; font-size:1.15rem; font-weight:800; color:#0f172a;">StenoMaster ऐप डाउनलोड करें</h3>
-          <p style="font-size:0.8rem; color:#64748b; margin:4px 0 16px 0;">क्रोम ब्राउज़र में सिर्फ 2 सेकंड में ऐप इंस्टॉल करें:</p>
+          <h3 style="margin:0; font-size:1.15rem; font-weight:800; color:#0f172a;">${isEn ? 'Download StenoMaster App' : 'StenoMaster ऐप डाउनलोड करें'}</h3>
+          <p style="font-size:0.8rem; color:#64748b; margin:4px 0 16px 0;">${isEn ? 'Install the web app in Chrome in just 2 seconds:' : 'क्रोम ब्राउज़र में सिर्फ 2 सेकंड में ऐप इंस्टॉल करें:'}</p>
           
           <div class="pwa-step-row">
             <div class="pwa-step-num">1</div>
             <div style="font-size:0.82rem; color:#1e293b; line-height:1.4;">
-              Chrome में सबसे ऊपर दाईं तरफ <strong>⋮ (3 बिंदु मेनू)</strong> पर क्लिक करें।
+              ${isEn ? 'In Chrome, click the <strong>⋮ (3-dots menu)</strong> in top-right corner.' : 'Chrome में सबसे ऊपर दाईं तरफ <strong>⋮ (3 बिंदु मेनू)</strong> पर क्लिक करें।'}
             </div>
           </div>
 
           <div class="pwa-step-row">
             <div class="pwa-step-num">2</div>
             <div style="font-size:0.82rem; color:#1e293b; line-height:1.4;">
-              मेनू में <strong>"Install app"</strong> या <strong>"Add to Home screen"</strong> चुनें।
+              ${isEn ? 'Select <strong>"Install app"</strong> or <strong>"Add to Home screen"</strong> in the menu.' : 'मेनू में <strong>"Install app"</strong> या <strong>"Add to Home screen"</strong> चुनें।'}
             </div>
           </div>
 
           <div class="pwa-step-row">
             <div class="pwa-step-num">3</div>
             <div style="font-size:0.82rem; color:#1e293b; line-height:1.4;">
-              <strong>"Install"</strong> पर टैप करें — ऐप सीधे आपके मोबाइल स्क्रीन पर आ जाएगा!
+              ${isEn ? 'Tap <strong>"Install"</strong> — the app will appear right on your screen!' : '<strong>"Install"</strong> पर टैप करें — ऐप सीधे आपके मोबाइल स्क्रीन पर आ जाएगा!'}
             </div>
           </div>
 
           <button type="button" class="btn-primary" onclick="stenoApp.closePwaGuideModal()" style="width:100%; margin-top:18px; padding:10px 16px; font-size:0.9rem; font-weight:800; border-radius:12px; background:linear-gradient(135deg, #0284c7, #2563eb); border:none; color:#fff; cursor:pointer;">
-            समझ गया (Got It)
+            ${isEn ? 'Got It' : 'समझ गया (Got It)'}
           </button>
         </div>
       `;
