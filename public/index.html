@@ -458,7 +458,7 @@
                     <label class="form-label">कीबोर्ड लेआउट</label>
                     <select id="stuRegPrefMode" class="form-select">
                       <option value="mangal">मंगल (रेमिंगटन गेल / इन्स्क्रिप्ट)</option>
-                      <option value="krutidev">कृति देव 010</option>
+                      <option value="krutidev" data-i18n="practice_mode_krutidev">कृति देव 010</option>
                       <option value="inscript">Inscript Standard</option>
                     </select>
                   </div>
@@ -2113,10 +2113,10 @@
                 <div class="typing-mode-group">
                   <label class="mode-label" for="typingModeSelect">Typing Mode:</label>
                   <select id="typingModeSelect" class="select-typing-mode">
-                    <option value="mangal">मंगल / यूनिकोड हिंदी</option>
-                    <option value="krutidev">कृति देव 010</option>
-                    <option value="inscript">इन्स्क्रिप्ट हिंदी</option>
-                    <option value="remington">रेमिंगटन हिंदी</option>
+                    <option value="mangal" data-i18n="practice_mode_mangal">मंगल / यूनिकोड हिंदी</option>
+                    <option value="krutidev" data-i18n="practice_mode_krutidev">कृति देव 010</option>
+                    <option value="inscript" data-i18n="practice_mode_inscript">इन्स्क्रिप्ट हिंदी</option>
+                    <option value="remington" data-i18n="practice_mode_remington">रेमिंगटन हिंदी</option>
                   </select>
                 </div>
               </div>
@@ -3849,13 +3849,13 @@
   
 
   <!-- Core Lightweight Scripts (charts.js & comparison_view.js?v=21.5 are lazy-loaded on demand for 50% faster startup) -->
-  <script src="/js/audio_player.js?v=23.5"></script>
+  <script src="/js/audio_player.js?v=23.6"></script>
   <script src="/js/keyboard_map.js?v=8.1"></script>
-  <script src="/js/typing_engine.js?v=23.5"></script>
+  <script src="/js/typing_engine.js?v=23.6"></script>
   <script src="/js/ocr_service.js?v=1.1"></script>
   <script src="/js/steno_dictionary.js?v=1.0"></script>
   <script src="/js/comparison_view.js?v=21.5"></script>
-  <script src="/js/app.js?v=23.5"></script>
+  <script src="/js/app.js?v=23.6"></script>
   <!-- Strict Exam Hall Anti-Cheat Warning Modal -->
   <div class="modal-overlay" id="examHallWarningModal" style="z-index:99999;" onclick="if(event.target === this) stenoTypingEngine.exitExamModeFromModal()">
     <div class="modal-card" style="max-width: 480px; text-align:center; border:2px solid #ef4444; box-shadow:0 10px 40px rgba(239,68,68,0.3); position:relative; padding:28px 24px;">
