@@ -1,4 +1,6 @@
 {
   "version": "23.3.0",
-  "description": "Fix admin panel sidebar click functionality and syntax error in admin.js"
+  "updated_at": "2026-11-14T04:43:28Z",
+  "commit": "7ad9416061",
+  "description": "Fix admin panel sidebar clicks: correct class method placement in admin.js (v23.3)"
 }
