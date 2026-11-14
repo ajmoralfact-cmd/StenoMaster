@@ -765,15 +765,28 @@
           }
         }
 
-        // Preselect or highlight plan if specified in URL (?plan=3m)
+        // Restore selected categories from session storage if present
+        var savedCat = sessionStorage.getItem('stenomaster_category_checkout');
+        if (savedCat) {
+          try {
+            window.stenoApp.selectedCategoryCheckout = JSON.parse(savedCat);
+          } catch(e) {}
+        }
+
         var params = new URLSearchParams(window.location.search);
-        var targetPlan = params.get('plan');
-        if (targetPlan) {
-          var planCard = document.querySelector('.sub-plan-card[data-plan-id="' + targetPlan + '"]');
-          if (planCard) {
-            planCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            planCard.classList.add('highlight-pulse');
-            setTimeout(function() { planCard.classList.remove('highlight-pulse'); }, 4000);
+        var targetTab = params.get('tab');
+        if (targetTab === 'category' || (window.stenoApp.selectedCategoryCheckout && window.stenoApp.selectedCategoryCheckout.totalAmount > 0)) {
+          window.stenoApp.switchSubPlanTab('category');
+        } else {
+          var targetPlan = params.get('plan');
+          if (targetPlan) {
+            window.stenoApp.setQrPlan(targetPlan);
+            var planCard = document.querySelector('.sub-plan-card[data-plan-id="' + targetPlan + '"]');
+            if (planCard) {
+              planCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              planCard.classList.add('highlight-pulse');
+              setTimeout(function() { planCard.classList.remove('highlight-pulse'); }, 4000);
+            }
           }
         }
       }

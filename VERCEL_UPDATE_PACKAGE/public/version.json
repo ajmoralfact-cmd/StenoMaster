@@ -1,4 +1,4 @@
 {
-  "version": "23.5.0",
-  "description": "Enforce login authentication prior to purchasing plans or courses; auto-redirect to plan checkout post-login; fix manual UTR submission"
+  "version": "23.5.1",
+  "description": "Dynamic UPI QR code generation matching exact selected category amount with full persistence and checkout modal"
 }

@@ -7200,6 +7200,23 @@ ${link}`;
     }
   }
 
+    setCategoryQr(amount, count = 1) {
+    const finalPrice = Math.round(Number(amount) || 49);
+    const bottomQrImg = document.getElementById('subActiveQrImg');
+    if (bottomQrImg) {
+      const upiUri = `upi://pay?pa=8795622714harsh@ybl&pn=StenoMaster&am=${finalPrice}.00&cu=INR&tn=StenoMaster_${count}_Categories`;
+      bottomQrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(upiUri)}`;
+    }
+    const lbl = document.getElementById('qrPayAmountLabel');
+    if (lbl) lbl.textContent = `₹${finalPrice}`;
+    const inp = document.getElementById('payAmountInput');
+    if (inp) inp.value = finalPrice;
+    const planNameInp = document.getElementById('payPlanNameInput');
+    if (planNameInp) {
+      planNameInp.value = `StenoMaster Categories Unlock (${count} श्रेणियां - ₹${finalPrice})`;
+    }
+  }
+
   renderCategorySubscriptionView() {
     const wrap = document.getElementById('subCategoryPlansWrap');
     if (!wrap) return;
@@ -7261,6 +7278,9 @@ ${link}`;
             <span>⚡ ₹${data.totalAmount} का सुरक्षित ऑनलाइन भुगतान करें (Cashfree Pay Now)</span>
             <span>→</span>
           </button>
+          <button type="button" class="btn-secondary" onclick="stenoApp.openUpiCheckoutModal('category')" style="width:100%; padding:12px; font-size:0.95rem; font-weight:800; border-radius:12px; border:2px solid #0284c7; color:#0284c7; background:rgba(2,132,199,0.06); display:flex; justify-content:center; align-items:center; gap:8px; cursor:pointer;">
+            <span>📱</span> <span>सीधे PhonePe / GPay QR कोड पॉपअप में ₹${data.totalAmount} पे करें</span>
+          </button>
           <div style="text-align:center; font-size:0.82rem; color:var(--text-muted);">
             अथवा नीचे दिए गए QR कोड को स्कैन कर <strong>₹${data.totalAmount}</strong> का सीधा भुगतान करें ↓
           </div>
@@ -7268,12 +7288,9 @@ ${link}`;
       </div>
     `;
 
-    const qrLabel = document.getElementById('qrPayAmountLabel');
-    if (qrLabel) qrLabel.textContent = `₹${data.totalAmount}`;
-    const payAmtInput = document.getElementById('payAmountInput');
-    if (payAmtInput) payAmtInput.value = data.totalAmount;
-    const payPlanInput = document.getElementById('payPlanNameInput');
-    if (payPlanInput) payPlanInput.value = `Categories Unlock (${data.categories.length} श्रेणियां)`;
+    // Dynamically generate QR code with the exact total category amount!
+    this.setCategoryQr(data.totalAmount, data.categories.length);
+
     const payDaysInput = document.getElementById('payPlanDaysInput');
     if (payDaysInput) payDaysInput.value = 365;
 
@@ -7291,6 +7308,11 @@ ${link}`;
     if (qrCatChip) {
       qrCatChip.style.display = 'inline-block';
       qrCatChip.textContent = `📚 चयनित कैटेगरीज (₹${data.totalAmount})`;
+      qrCatChip.onclick = () => {
+        this.setCategoryQr(data.totalAmount, data.categories.length);
+        document.querySelectorAll('.qr-plan-chip').forEach(c => c.classList.remove('active'));
+        qrCatChip.classList.add('active');
+      };
       document.querySelectorAll('.qr-plan-chip').forEach(c => {
         if (c !== qrCatChip) c.classList.remove('active');
       });
@@ -7480,6 +7502,29 @@ ${link}`;
       payBtn.disabled = total <= 0;
       payBtn.style.opacity = total <= 0 ? '0.5' : '1';
     }
+
+    // Live sync selectedCategoryCheckout state
+    if (selectedCount > 0) {
+      const selectedCats = [];
+      document.querySelectorAll('.cat-checkout-checkbox:not(:disabled)').forEach(cb => {
+        if (cb.checked) {
+          const catId = parseInt(cb.value, 10);
+          const cat = (this.categories || []).find(c => c.id === catId) || { id: catId, name: 'डिक्टेशन श्रेणी' };
+          selectedCats.push({
+            id: catId,
+            name: cat.name,
+            price: Number(cb.getAttribute('data-price') || cat.price || 49)
+          });
+        }
+      });
+      this.selectedCategoryCheckout = {
+        categories: selectedCats,
+        category_ids: selectedCats.map(c => c.id),
+        totalAmount: total,
+        all_in_one: false
+      };
+      sessionStorage.setItem('stenomaster_category_checkout', JSON.stringify(this.selectedCategoryCheckout));
+    }
   }
 
     proceedCategoryPayment() {
@@ -7509,12 +7554,36 @@ ${link}`;
       return;
     }
 
+    if (isAllInOne) {
+      this.closeCategoryCheckoutModal();
+      window.location.href = '/plans?plan=1m';
+      return;
+    }
+
+    let total = 0;
+    selectedCats.forEach(c => { total += c.price; });
+
+    const data = {
+      categories: selectedCats,
+      category_ids: selectedCats.map(c => c.id),
+      totalAmount: total,
+      all_in_one: false
+    };
+
+    this.selectedCategoryCheckout = data;
+    sessionStorage.setItem('stenomaster_category_checkout', JSON.stringify(data));
     this.closeCategoryCheckoutModal();
 
-    if (isAllInOne) {
-      window.location.href = '/plans?plan=1m';
+    // If currently on plans page or container exists, switch tab and update QR instantly!
+    if (window.location.pathname.includes('plans') || document.getElementById('subCategoryPlansWrap')) {
+      this.switchSubPlanTab('category');
+      const qrSection = document.getElementById('qrAccordionSection') || document.getElementById('subActiveQrImg');
+      if (qrSection) {
+        qrSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+      this.showToast(`✓ चयनित ${selectedCats.length} कैटेगरीज (₹${total}) का QR कोड सक्रिय हो गया है!`, 'success');
     } else {
-      window.location.href = '/plans';
+      window.location.href = '/plans?tab=category';
     }
   }
 
@@ -8066,22 +8135,39 @@ ${link}`;
       return;
     }
 
-    const planDetails = {
-      '1m': { name: 'बेसिक स्टेनो पास (1 माह)', validity: '30 दिन', price: 100 },
-      '3m': { name: 'सिल्वर स्टेनो पास (3 माह)', validity: '90 दिन', price: 250 },
-      '6m': { name: 'सुपर सेवर पास (6 माह)', validity: '180 दिन', price: 450 },
-      '1y': { name: 'गोल्ड प्रो पास (1 वर्ष VIP)', validity: '365 दिन', price: 800 }
-    };
-    const plan = planDetails[planId] || planDetails['1m'];
+    let plan;
+    let payableAmount;
+    let oldPriceHtml = '';
+    let note;
+
+    if (planId === 'category' || planId === 'categories') {
+      const data = this.selectedCategoryCheckout || { totalAmount: 49, categories: [{ name: 'डिक्टेशन श्रेणी' }] };
+      payableAmount = data.totalAmount || 49;
+      const count = (data.categories || []).length || 1;
+      plan = {
+        name: `डिक्टेशन पैकेज (${count} श्रेणियां)`,
+        validity: 'लाइफटाइम / 1 वर्ष',
+        price: payableAmount
+      };
+      note = `StenoMaster_${count}_Categories`;
+    } else {
+      const planDetails = {
+        '1m': { name: 'बेसिक स्टेनो पास (1 माह)', validity: '30 दिन', price: 100 },
+        '3m': { name: 'सिल्वर स्टेनो पास (3 माह)', validity: '90 दिन', price: 250 },
+        '6m': { name: 'सुपर सेवर पास (6 माह)', validity: '180 दिन', price: 450 },
+        '1y': { name: 'गोल्ड प्रो पास (1 वर्ष VIP)', validity: '365 दिन', price: 800 }
+      };
+      plan = planDetails[planId] || planDetails['1m'];
+      payableAmount = plan.price;
+      if (this.appliedDiscountPercent && this.appliedDiscountPercent > 0) {
+        payableAmount = Math.round(plan.price * (1 - this.appliedDiscountPercent / 100));
+        oldPriceHtml = `<del style="color:#94a3b8; font-size:0.85rem; margin-right:4px;">₹${plan.price}</del> <span style="background:#dcfce7; color:#15803d; font-size:0.7rem; font-weight:700; padding:1px 6px; border-radius:6px;">-${this.appliedDiscountPercent}% छूट</span>`;
+      }
+      note = `StenoMaster_${planId}_Pass`;
+    }
+
     this.currentCheckoutPlanId = planId;
     this.currentCheckoutPlan = plan;
-
-    let payableAmount = plan.price;
-    let oldPriceHtml = '';
-    if (this.appliedDiscountPercent && this.appliedDiscountPercent > 0) {
-      payableAmount = Math.round(plan.price * (1 - this.appliedDiscountPercent / 100));
-      oldPriceHtml = `<del style="color:#94a3b8; font-size:0.85rem; margin-right:4px;">₹${plan.price}</del> <span style="background:#dcfce7; color:#15803d; font-size:0.7rem; font-weight:700; padding:1px 6px; border-radius:6px;">-${this.appliedDiscountPercent}% छूट</span>`;
-    }
     this.currentCheckoutPayableAmount = payableAmount;
 
     const modalPlanName = document.getElementById('modalPlanName');
@@ -8091,14 +8177,13 @@ ${link}`;
     const modalQrCaptionAmount = document.getElementById('modalQrCaptionAmount');
 
     if (modalPlanName) modalPlanName.textContent = plan.name;
-    if (modalPlanValidity) modalPlanValidity.textContent = `वैधता: ${plan.validity} • सभी डिक्टेशन्स अनलॉक`;
+    if (modalPlanValidity) modalPlanValidity.textContent = `वैधता: ${plan.validity} • कक्षाएं अनलॉक`;
     if (modalPlanOldPrice) modalPlanOldPrice.innerHTML = oldPriceHtml;
     if (modalPayableAmount) modalPayableAmount.textContent = `₹${payableAmount}`;
     if (modalQrCaptionAmount) modalQrCaptionAmount.textContent = `₹${payableAmount}`;
 
     // Dynamic UPI URI with PRE-FILLED EXACT AMOUNT!
     const upiId = '8795622714harsh@ybl';
-    const note = `StenoMaster_${planId}_Pass`;
     const upiUri = `upi://pay?pa=${upiId}&pn=StenoMaster&am=${payableAmount}.00&cu=INR&tn=${note}`;
 
     const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(upiUri)}`;
