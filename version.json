@@ -1,4 +1,6 @@
 {
   "version": "23.2.0",
-  "description": "Fix audio player syntax error and enable cross-origin playback"
+  "updated_at": "2026-11-14T04:25:12Z",
+  "commit": "bf841f6ab9",
+  "description": "Fix audio playback: resolve regex syntax error in audio_player.js & add CORS headers (v23.2)"
 }
