@@ -765,7 +765,7 @@
                     <button type="button" class="sub-filter-pill" id="subFilterPillExpired" onclick="stenoAdmin.filterSubscribers('expired', this)">⏳ समाप्त (Expired)</button>
                   </div>
                   <div style="flex:1; max-width:320px;">
-                    <input type="text" id="subscriberSearchInput" class="form-input" placeholder="🔍 नाम, छात्र कोड, फोन या ईमेल खोजें..." oninput="stenoAdmin.searchSubscribers(this.value)" style="font-size:0.84rem; padding:7px 12px;">
+                    <input type="text" id="subscriberSearchInput" class="form-input" placeholder="🔍 नाम, छात्र कोड, प्रोमो कोड, फोन या ईमेल खोजें..." oninput="stenoAdmin.searchSubscribers(this.value)" style="font-size:0.84rem; padding:7px 12px;">
                   </div>
                 </div>
 
@@ -776,12 +776,13 @@
                         <th style="width:40px; text-align:center;">
                           <input type="checkbox" id="subscribersSelectAllMaster" onchange="stenoAdmin.toggleSelectAllSubscribers(this.checked)" style="width:16px; height:16px; cursor:pointer; accent-color:#4f46e5;" title="सभी छात्र चुनें / हटाएं">
                         </th>
-                        <th style="width:19%;">छात्र (Student Info)</th>
-                        <th style="width:16%;">संपर्क (Contact)</th>
-                        <th style="width:18%;">प्लान व स्थिति (Plan & Status)</th>
-                        <th style="width:20%;">पंजीकरण व पास तिथि (Dates)</th>
-                        <th style="width:12%;">एक्टिविटी (Activity)</th>
-                        <th style="width:15%; text-align:right;">एक्शन (Actions)</th>
+                        <th style="width:18%;">छात्र (Student Info)</th>
+                        <th style="width:14%;">संपर्क (Contact)</th>
+                        <th style="width:16%;">प्लान व स्थिति (Plan & Status)</th>
+                        <th style="width:13%;">🏷️ प्रोमो कोड (Promo)</th>
+                        <th style="width:18%;">पंजीकरण व पास तिथि (Dates)</th>
+                        <th style="width:10%;">एक्टिविटी (Activity)</th>
+                        <th style="width:11%; text-align:right;">एक्शन (Actions)</th>
                       </tr>
                     </thead>
                     <tbody id="adminSubscribersTableBody">
@@ -2406,7 +2407,7 @@
   <script src="/js/charts.js?v=8.1"></script>
   <script src="/js/comparison_view.js?v=20.5"></script>
   <script src="/js/ocr_service.js?v=1.1"></script>
-  <script src="/js/admin.js?v=21.9"></script>
+  <script src="/js/admin.js?v=23.1"></script>
 
   <!-- Standalone In-Page Admin Login Modal (Never redirects away) -->
   <div id="adminStandaloneAuthModal" class="modal-overlay" style="display:none; pointer-events:none; z-index:999999; background:rgba(15, 23, 42, 0.85); backdrop-filter:blur(8px);" onclick="if(event.target === this) window.closeAdminStandaloneAuthModal()">

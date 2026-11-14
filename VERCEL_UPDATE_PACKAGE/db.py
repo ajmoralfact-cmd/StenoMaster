@@ -3166,6 +3166,7 @@ def get_admin_users() -> List[Dict[str, Any]]:
         SELECT u.id, u.username, u.email, u.phone, u.student_code, u.referral_code, u.role, u.is_active, u.created_at,
                u.subscription_status, u.subscription_plan, u.subscription_start, u.subscription_end,
                COALESCE(u.is_free_access, 0) as is_free_access,
+               u.used_promo_code,
                p.display_name, p.target_exam, p.preferred_language, p.target_wpm, p.points, p.streak_days,
                (SELECT COUNT(*) FROM practice_attempts WHERE user_id = u.id) as attempts_count,
                (SELECT COUNT(*) FROM referrals WHERE referrer_user_id = u.id) as referrals_count,
@@ -3207,6 +3208,13 @@ def get_admin_users() -> List[Dict[str, Any]]:
         u_cats = unlocked_map.get(uid, [])
         r['unlocked_category_ids'] = [x['category_id'] for x in u_cats]
         r['unlocked_categories'] = u_cats
+        promo = r.get('used_promo_code')
+        if not promo:
+            sub_plan = str(r.get('subscription_plan') or '')
+            m = re.search(r'\[Promo:\s*([^\]]+)\]', sub_plan, re.IGNORECASE)
+            if m:
+                promo = m.group(1).strip()
+        r['used_promo_code'] = (promo or '').strip().upper()
         r["is_free_access"] = bool(r.get("is_free_access", 0))
         if r["role"] == "admin":
             r["effective_status"] = "admin"
@@ -6140,3 +6148,13 @@ def toggle_solve_community_post(post_id: int, user_id: int, is_admin: bool = Fal
     conn.close()
     return {"success": True, "is_solved": bool(new_solved)}
 
+
+
+def set_user_promo_code(user_id: int, promo_code: str):
+    """Sets or updates the promo code associated with a student account."""
+    conn = get_db()
+    c = conn.cursor()
+    code_val = promo_code.strip().upper() if promo_code else None
+    c.execute("UPDATE users SET used_promo_code = ? WHERE id = ?", (code_val, user_id))
+    conn.commit()
+    conn.close()

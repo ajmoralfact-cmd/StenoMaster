@@ -1085,12 +1085,22 @@ class StenoMasterHandler(http.server.SimpleHTTPRequestHandler):
             plan_name = data.get('plan_name', 'StenoMaster Pro — 1 Month (₹100/माह)')
             amount = float(data.get('amount', 100))
             screenshot_url = data.get('screenshot_url', '')
+            promo_code = str(data.get('promo_code') or '').strip().upper()
+            if not promo_code and '[Promo:' in plan_name:
+                m = re.search(r'\[Promo:\s*([^\]]+)\]', plan_name, re.IGNORECASE)
+                if m:
+                    promo_code = m.group(1).strip().upper()
 
             if not txn_id:
                 self._send_json(400, {"error": "यूटीआर / ट्रांजेक्शन आईडी आवश्यक है (Transaction ID is required)"})
                 return
 
             req_id = db.create_payment_request(user['user_id'], plan_name, amount, txn_id, screenshot_url)
+            if promo_code:
+                try:
+                    db.set_user_promo_code(user['user_id'], promo_code)
+                except Exception:
+                    pass
             self._send_json(201, {
                 "success": True,
                 "request_id": req_id,
@@ -2099,6 +2109,17 @@ class StenoMasterHandler(http.server.SimpleHTTPRequestHandler):
                     return
                 res = db.admin_toggle_free_access(int(target_user_id), is_free, user['user_id'])
                 self._send_json(200 if res.get('success') else 400, res)
+                return
+
+            if path == '/api/admin/users/set-promo-code':
+                data = self._read_json_body() or {}
+                target_uid = int(data.get('user_id') or 0)
+                promo_code = str(data.get('promo_code') or '').strip().upper()
+                if not target_uid:
+                    self._send_json(400, {"error": "user_id आवश्यक है"})
+                    return
+                db.set_user_promo_code(target_uid, promo_code)
+                self._send_json(200, {"success": True, "user_id": target_uid, "promo_code": promo_code})
                 return
 
             # Phase 3: Admin Subscription & Cashfree Settings Update

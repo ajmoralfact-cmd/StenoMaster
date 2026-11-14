@@ -1,6 +1,5 @@
 {
-  "version": "23.0.0",
-  "updated_at": "2026-11-13T17:38:32Z",
-  "commit": "0b71a1d785",
-  "description": "Mobile UI/UX Redesign Release v23.0"
+  "version": "23.1.0",
+  "updated_at": "2026-11-14T04:08:02Z",
+  "description": "Admin Subscribers: Added Promo Code Column and CSV Tracking"
 }

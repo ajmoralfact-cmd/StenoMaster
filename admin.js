@@ -1323,7 +1323,7 @@ class StenoAdmin {
     const statsEl = document.getElementById('catClassesModalStats');
     if (!tbody) return;
 
-    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:20px; color:var(--text-muted);"><div class="spinner-small" style="display:inline-block; margin-right:8px;"></div>कक्षाएं लोड हो रही हैं...</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding:20px; color:var(--text-muted);"><div class="spinner-small" style="display:inline-block; margin-right:8px;"></div>कक्षाएं लोड हो रही हैं...</td></tr>';
 
     try {
       const res = await stenoApp.apiCall('/api/categories/detail?id=' + categoryId + '&_t=' + Date.now());
@@ -1334,7 +1334,7 @@ class StenoAdmin {
       }
 
       if (!passages.length) {
-        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:30px 20px;"><div style="font-size:2rem; margin-bottom:8px;">📭</div><div style="font-size:0.95rem; font-weight:700; color:var(--text-main); margin-bottom:4px;">इस श्रेणी में अभी कोई क्लास नहीं है</div><div style="font-size:0.8rem; color:var(--text-muted); margin-bottom:14px;">छात्रों के लिए अभ्यास कक्षाएं अपलोड करने हेतु नीचे बटन दबाएं</div><button type="button" class="btn-primary" onclick="stenoAdmin.addPassageToCurrentCategory()" style="padding:6px 16px; font-size:0.84rem; font-weight:800;">➕ पहली क्लास अपलोड करें</button></td></tr>';
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding:30px 20px;"><div style="font-size:2rem; margin-bottom:8px;">📭</div><div style="font-size:0.95rem; font-weight:700; color:var(--text-main); margin-bottom:4px;">इस श्रेणी में अभी कोई क्लास नहीं है</div><div style="font-size:0.8rem; color:var(--text-muted); margin-bottom:14px;">छात्रों के लिए अभ्यास कक्षाएं अपलोड करने हेतु नीचे बटन दबाएं</div><button type="button" class="btn-primary" onclick="stenoAdmin.addPassageToCurrentCategory()" style="padding:6px 16px; font-size:0.84rem; font-weight:800;">➕ पहली क्लास अपलोड करें</button></td></tr>';
         return;
       }
 
@@ -1371,7 +1371,7 @@ class StenoAdmin {
       }).join('');
     } catch (err) {
       console.error('Error loading category classes:', err);
-      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:16px; color:#ef4444;">त्रुटि: ' + stenoApp.escapeHtml(err.message || 'कक्षाएं लोड नहीं हो सकीं') + '</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding:16px; color:#ef4444;">त्रुटि: ' + stenoApp.escapeHtml(err.message || 'कक्षाएं लोड नहीं हो सकीं') + '</td></tr>';
     }
   }
 
@@ -1499,13 +1499,13 @@ class StenoAdmin {
   async loadUsers() {
     const tbody = document.getElementById('adminUsersTableBody');
     if (!tbody) return;
-    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:24px; color:var(--text-muted);">छात्र सूची लोड हो रही है...</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding:24px; color:var(--text-muted);">छात्र सूची लोड हो रही है...</td></tr>';
     try {
       const res = await stenoApp.apiCall(`/api/admin/users?_t=${Date.now()}`);
       const rawUsers = res.users || [];
       const users = rawUsers.filter(u => u.role !== 'admin');
       if (users.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:24px; color:var(--text-muted);">कोई छात्र पंजीकृत नहीं है।</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding:24px; color:var(--text-muted);">कोई छात्र पंजीकृत नहीं है।</td></tr>';
         return;
       }
       tbody.innerHTML = users.map(u => `
@@ -1568,7 +1568,7 @@ class StenoAdmin {
     const tbody = document.getElementById('adminSubscribersTableBody');
     if (!tbody) return;
     if (!silent) {
-      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:24px; color:var(--text-muted);"><div class="spinner-small" style="display:inline-block; margin-right:8px;"></div>सब्सक्राइबर सूची लोड हो रही है...</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding:24px; color:var(--text-muted);"><div class="spinner-small" style="display:inline-block; margin-right:8px;"></div>सब्सक्राइबर सूची लोड हो रही है...</td></tr>';
     }
     try {
       const res = await stenoApp.apiCall(`/api/admin/users?_t=${Date.now()}`);
@@ -1638,7 +1638,7 @@ class StenoAdmin {
       stenoApp.showToast('एक्सपोर्ट करने के लिए कोई छात्र डेटा नहीं है।', 'info');
       return;
     }
-    const headers = ['छात्र ID', 'छात्र कोड', 'नाम', 'ईमेल', 'फोन', 'पंजीकरण तिथि', 'पास सक्रिय तिथि', 'सदस्यता स्थिति', 'प्लान', 'शेष दिन', 'कुल अभ्यास', 'स्ट्रीक दिन', 'रिवॉर्ड अंक', 'रेफरल कोड'];
+    const headers = ['छात्र ID', 'छात्र कोड', 'नाम', 'ईमेल', 'फोन', 'पंजीकरण तिथि', 'पास सक्रिय तिथि', 'सदस्यता स्थिति', 'प्लान', 'प्रोमो कोड', 'शेष दिन', 'कुल अभ्यास', 'स्ट्रीक दिन', 'रिवॉर्ड अंक', 'रेफरल कोड'];
     const rows = list.map(u => {
       const isFreeAccess = !!u.is_free_access;
       const isPro = u.effective_status === 'active' || isFreeAccess;
@@ -1661,6 +1661,7 @@ class StenoAdmin {
         `"${(this.formatDateTimeCompact(u.subscription_start) || 'कोई पास नहीं').replace(/"/g, '""')}"`,
         `"${statusStr}"`,
         `"${planName.replace(/"/g, '""')}"`,
+        `"${(u.used_promo_code || 'कोई नहीं').replace(/"/g, '""')}"`,
         `"${daysStr}"`,
         u.attempts_count || 0,
         u.streak_days || 0,
@@ -1722,7 +1723,8 @@ class StenoAdmin {
         const code = (u.student_code || '').toLowerCase();
         const email = (u.email || '').toLowerCase();
         const phone = (u.phone || '').toLowerCase();
-        if (!name.includes(q) && !code.includes(q) && !email.includes(q) && !phone.includes(q)) {
+        const promo = (u.used_promo_code || '').toLowerCase();
+        if (!name.includes(q) && !code.includes(q) && !email.includes(q) && !phone.includes(q) && !promo.includes(q)) {
           return false;
         }
       }
@@ -1730,7 +1732,7 @@ class StenoAdmin {
     });
 
     if (filtered.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:32px; color:var(--text-muted); font-size:0.9rem;">कोई छात्र/सब्सक्राइबर नहीं मिला।</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding:32px; color:var(--text-muted); font-size:0.9rem;">कोई छात्र/सब्सक्राइबर नहीं मिला।</td></tr>';
       return;
     }
 
@@ -1837,7 +1839,23 @@ class StenoAdmin {
             </div>
           </td>
 
-          <!-- 4. पंजीकरण व पास तिथि (Dates) -->
+          <!-- 4. प्रोमो कोड (Promo Code Used) -->
+          <td>
+            <div style="display:flex; align-items:center; gap:6px;">
+              ${u.used_promo_code ? `
+                <span class="badge" style="background:rgba(16,185,129,0.12); color:#047857; border:1px solid rgba(16,185,129,0.3); font-weight:700; font-size:0.78rem; padding:3px 8px; border-radius:6px; display:inline-flex; align-items:center; gap:4px;" title="कूपन / प्रोमो कोड: ${this.escapeHtml(u.used_promo_code)}">
+                  🏷️ ${this.escapeHtml(u.used_promo_code)}
+                </span>
+              ` : `
+                <span style="color:var(--text-muted); font-size:0.78rem; font-weight:500;" title="कोई प्रोमो कोड प्रयुक्त नहीं">—</span>
+              `}
+              <button type="button" class="btn-icon" style="opacity:0.6; font-size:0.75rem; padding:2px 4px; cursor:pointer; background:none; border:none;" onclick="stenoAdmin.setStudentPromoCode(${u.id}, '${this.escapeHtml(u.used_promo_code || '').replace(/'/g, "\\'")}')" title="प्रोमो कोड बदलें / जोड़ें">
+                ✏️
+              </button>
+            </div>
+          </td>
+
+          <!-- 5. पंजीकरण व पास तिथि (Dates) -->
           <td>
             <div style="display:flex; flex-direction:column; gap:4px;">
               <!-- 1st Line: पंजीकरण तिथि -->
@@ -4082,4 +4100,18 @@ if (typeof window !== 'undefined') {
     window.stenoAdmin.sendTestEmail = function() { return window.stenoApp.sendTestEmail(); };
     window.stenoAdmin.submitResetPassword = function() { return window.stenoApp.submitResetPassword(); };
   }
+
+  async setStudentPromoCode(userId, currentCode = '') {
+    const newCode = prompt(`छात्र #${userId} के लिए प्रोमो कोड दर्ज करें (उदा. ADITI10):`, currentCode || '');
+    if (newCode === null) return;
+    const clean = newCode.trim().toUpperCase();
+    try {
+      await stenoApp.apiCall('/api/admin/users/set-promo-code', 'POST', { user_id: userId, promo_code: clean });
+      stenoApp.showToast(`प्रोमो कोड '${clean || 'हटा दिया गया'}' अपडेट हो गया!`, 'success');
+      await this.loadSubscribers();
+    } catch (err) {
+      stenoApp.showToast(err.message || 'अपडेट करने में विफल', 'error');
+    }
+  }
+
 }
