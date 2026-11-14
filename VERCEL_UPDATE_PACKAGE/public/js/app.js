@@ -6298,6 +6298,10 @@ ${link}`;
   // -------------------------------------------------------------------------
   initSelfPractice() {
     this.selfAudioMode = this.selfAudioMode || 'ai';
+    const voiceSel = document.getElementById('selfAiVoiceSelect');
+    if (voiceSel && !voiceSel.value) {
+      voiceSel.value = 'male';
+    }
     this.switchSelfAudioMode(this.selfAudioMode);
     this.updateSelfTextStats();
     this.loadMyCustomClasses();
@@ -6491,6 +6495,7 @@ ${link}`;
       this.selfGeneratedDuration = data.duration_seconds;
       this.selfGeneratedText = text;
       this.selfGeneratedSpeed = speed;
+      this.selfGeneratedVoice = voice;
 
       const previewWrap = document.getElementById('selfAiPreviewWrap');
       const audioPlayer = document.getElementById('selfAiAudioPlayer');
@@ -6538,9 +6543,11 @@ ${link}`;
     let actualDuration = durationMinutes > 0 ? durationMinutes * 60 : Math.max(300, Math.round((words / targetSpeed) * 60));
 
     if (this.selfAudioMode === 'ai') {
+      const curVoice = document.getElementById('selfAiVoiceSelect')?.value || 'male';
       const needsRegen = !this.selfGeneratedAudioUrl || 
                          this.selfGeneratedText !== masterText || 
-                         this.selfGeneratedSpeed !== targetSpeed;
+                         this.selfGeneratedSpeed !== targetSpeed ||
+                         this.selfGeneratedVoice !== curVoice;
 
       if (needsRegen) {
         const genUrl = await this.generateSelfAiAudio();
