@@ -3766,7 +3766,12 @@ class StenoApp {
 
     // 3. Category Filter
     if (this.selectedCategory && this.selectedCategory !== 'all') {
-      list = list.filter(p => String(p.category_id) === String(this.selectedCategory));
+      const selCatId = Number(this.selectedCategory);
+      list = list.filter(p => {
+        if (Number(p.category_id) === selCatId) return true;
+        if (selCatId === 132 && (p.language === 'english' || (p.tags && p.tags.includes('kailash_chandra')))) return true;
+        return false;
+      });
     }
 
     // 4. Curated Target Exam Filter
@@ -3901,6 +3906,7 @@ class StenoApp {
     if (mobileChips && this.categories && this.categories.length > 0) {
       const isEn = this.currentLang === 'en';
       const genuineCats = this.categories.filter(c => {
+        if (c.parent_id) return false;
         const slug = String(c.slug || '').toLowerCase();
         if (slug.startsWith('audit-cat-') && (!c.passage_count || c.passage_count === 0)) return false;
         return true;
@@ -6844,6 +6850,7 @@ ${link}`;
     if (icon && !/^[a-zA-Z0-9_-]+$/.test(String(icon).trim())) return String(icon).trim();
 
     const str = `${slug || ''} ${name || ''}`.toLowerCase();
+    if (str.includes('kailash')) return '🏛️';
     if (str.includes('ramdhari') || str.includes('dinkar')) return '🪶';
     if (str.includes('vidhik') || str.includes('court') || str.includes('legal') || str.includes('nyay') || str.includes('scale')) return '⚖️';
     if (str.includes('samvidhan') || str.includes('constitution') || str.includes('sansad') || str.includes('landmark')) return '🏛️';
@@ -6862,6 +6869,10 @@ ${link}`;
       accent = '#059669';
       emblemBg = '#ecfdf5';
       emblemBorder = '#a7f3d0';
+    } else if (str.includes('kailash')) {
+      accent = '#4f46e5';
+      emblemBg = '#eef2ff';
+      emblemBorder = '#c7d2fe';
     } else if (str.includes('anand') || str.includes('आनंद') || str.includes('editorial') || str.includes('sampadkiya')) {
       accent = '#d97706';
       emblemBg = '#fffbeb';
@@ -6920,8 +6931,9 @@ ${link}`;
         return;
       }
 
-      // Show all genuine categories (only exclude obsolete temporary audit tests with 0 passages)
+      // Show all genuine top-level categories (child categories like the 24 volumes are viewed inside parent)
       const displayCats = cats.filter(c => {
+        if (c.parent_id) return false;
         const slug = String(c.slug || '').toLowerCase();
         if (slug.startsWith('audit-cat-') && (!c.passage_count || c.passage_count === 0)) return false;
         return true;
@@ -6969,10 +6981,10 @@ ${link}`;
             <div class="cat-middle-specs" style="display:flex; flex-direction:column; gap:6px;">
               <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
                 <span style="background:rgba(2,132,199,0.1); color:#0284c7; border:1px solid rgba(2,132,199,0.25); font-weight:800; font-size:0.8rem; padding:4px 10px; border-radius:8px; display:inline-flex; align-items:center; gap:4px;">
-                  ⚡ ${(Number(cat.id) === 130 || Number(cat.id) === 131) ? '90 WPM (मानक ऑडियो)' : '80 - 100 WPM'}
+                  ⚡ ${(Number(cat.id) === 130 || Number(cat.id) === 131) ? '90 WPM (मानक ऑडियो)' : (Number(cat.id) === 132 || String(cat.slug||'').includes('kailash')) ? '80 - 100 WPM (English)' : '80 - 100 WPM'}
                 </span>
                 <span style="background:rgba(99,102,241,0.1); color:#4f46e5; border:1px solid rgba(99,102,241,0.25); font-weight:800; font-size:0.8rem; padding:4px 10px; border-radius:8px; display:inline-flex; align-items:center; gap:4px;">
-                  📝 ${Number(cat.id) === 126 || Number(cat.id) === 129 ? '400 शब्द' : (Number(cat.id) === 130 ? '800 शब्द' : (Number(cat.id) === 131 ? '800-1000 शब्द' : '400 शब्द'))}
+                  📝 ${(Number(cat.id) === 132 || String(cat.slug||'').includes('kailash')) ? (isEn ? '800 words • 24 Volumes' : '800 शब्द • 24 वॉल्यूम') : (Number(cat.id) === 126 || Number(cat.id) === 129 ? '400 शब्द' : (Number(cat.id) === 130 ? '800 शब्द' : (Number(cat.id) === 131 ? '800-1000 शब्द' : '400 शब्द')))}
                 </span>
                 <span style="background:rgba(16,185,129,0.1); color:#059669; border:1px solid rgba(16,185,129,0.25); font-weight:800; font-size:0.8rem; padding:4px 10px; border-radius:8px; display:inline-flex; align-items:center; gap:4px;">
                   🎙️ ${isEn ? 'Audio + Steno Notes' : 'ऑडियो + आउटलाइन'}
@@ -7076,8 +7088,9 @@ ${link}`;
         const isAnand1 = (cIdInt === 130);
         const isAnand2 = (cIdInt === 131);
         const isRamdhari = (cIdInt === 126 || cIdInt === 129);
-        const wordsTag = isAnand1 ? '800 शब्द प्रति डिक्टेशन' : (isAnand2 ? '800-1000 शब्द प्रति डिक्टेशन' : (isRamdhari ? '400 शब्द प्रति डिक्टेशन' : '400 शब्द प्रति डिक्टेशन'));
-        const speedTag = (isAnand1 || isAnand2) ? '90 WPM (मानक ऑडियो)' : '80-100 WPM • ऑडियो सहित';
+        const isKailash = (cIdInt === 132 || String(cat.slug || '').includes('kailash'));
+        let wordsTag = isKailash ? (isEn ? '800 words • 24 Volumes' : '800 शब्द • 24 वॉल्यूम') : (isAnand1 ? '800 शब्द प्रति डिक्टेशन' : (isAnand2 ? '800-1000 शब्द प्रति डिक्टेशन' : (isRamdhari ? '400 शब्द प्रति डिक्टेशन' : '400 शब्द प्रति डिक्टेशन')));
+        let speedTag = isKailash ? (isEn ? '80-100 WPM (English Shorthand)' : '80-100 WPM (इंग्लिश आशुलिपि)') : ((isAnand1 || isAnand2) ? '90 WPM (मानक ऑडियो)' : '80-100 WPM • ऑडियो सहित');
         subEl.textContent = isEn 
           ? `Total ${catMeta.passage_count || 17} Dictations • ${wordsTag} • ${speedTag}`
           : `कुल ${catMeta.passage_count || 17} डिक्टेशन्स • ${wordsTag} • ${speedTag}`;
@@ -7180,6 +7193,43 @@ ${link}`;
         }
       }
 
+      // Render Subcategories / Volume Selector if present
+      const subcats = res.subcategories || (cat && cat.subcategories) || [];
+      const subWrap = document.getElementById('catDetailSubcategoriesWrap');
+      if (subWrap) {
+        if (subcats && subcats.length > 0) {
+          subWrap.style.display = 'block';
+          subWrap.innerHTML = `
+            <div style="font-size:0.88rem; font-weight:800; color:var(--text-main); margin-bottom:10px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px;">
+              <span style="display:inline-flex; align-items:center; gap:6px;">
+                <span>📚 ${isEn ? 'Browse Volumes (24 Volumes):' : 'वॉल्यूम चुनें (कुल 24 वॉल्यूम):'}</span>
+              </span>
+              <span style="font-size:0.78rem; color:var(--text-muted); font-weight:600;">
+                ${isEn ? '22 Passages per Volume' : 'प्रत्येक वॉल्यूम में 22 पैसेज'}
+              </span>
+            </div>
+            <div class="volume-selector-chips" style="display:flex; gap:8px; overflow-x:auto; padding-bottom:8px; -webkit-overflow-scrolling:touch; scrollbar-width:thin;">
+              <button type="button" class="vol-chip active" onclick="stenoApp.filterVolume('all', this)" style="padding:7px 14px; font-size:0.82rem; font-weight:800; border-radius:10px; border:1.5px solid #2563eb; background:#2563eb; color:#fff; white-space:nowrap; cursor:pointer; transition:all 0.15s ease;">
+                🌟 ${isEn ? 'All Volumes (528)' : 'सभी 24 वॉल्यूम (528)'}
+              </button>
+              ${subcats.map((sub, sIdx) => {
+                const volNum = sIdx + 1;
+                const startTx = (volNum - 1) * 22 + 1;
+                const endTx = volNum * 22;
+                return `
+                  <button type="button" class="vol-chip" onclick="stenoApp.filterVolume(${sub.id}, this, ${volNum})" style="padding:7px 14px; font-size:0.82rem; font-weight:700; border-radius:10px; border:1.5px solid var(--border); background:var(--bg-card); color:var(--text-main); white-space:nowrap; cursor:pointer; transition:all 0.15s ease;">
+                    📖 ${isEn ? `Vol ${volNum}` : `वॉल्यूम ${volNum}`} <span style="opacity:0.75; font-size:0.75rem;">(TX ${startTx}-${endTx})</span>
+                  </button>
+                `;
+              }).join('')}
+            </div>
+          `;
+        } else {
+          subWrap.style.display = 'none';
+          subWrap.innerHTML = '';
+        }
+      }
+
       this.renderCategoryPassagesList(this.currentCategoryPassages);
     };
 
@@ -7230,6 +7280,27 @@ ${link}`;
     const stickyBar = document.getElementById('catDetailStickyBar');
     if (stickyBar) stickyBar.style.display = 'none';
     this.goBack();
+  }
+
+  filterVolume(subCatId, btnEl, volNum) {
+    document.querySelectorAll('.vol-chip').forEach(b => {
+      b.style.borderColor = 'var(--border)';
+      b.style.background = 'var(--bg-card)';
+      b.style.color = 'var(--text-main)';
+      b.classList.remove('active');
+    });
+    if (btnEl) {
+      btnEl.style.borderColor = '#2563eb';
+      btnEl.style.background = '#2563eb';
+      btnEl.style.color = '#fff';
+      btnEl.classList.add('active');
+    }
+    if (subCatId === 'all') {
+      this.renderCategoryPassagesList(this.currentCategoryPassages);
+    } else {
+      const filtered = (this.currentCategoryPassages || []).filter(p => Number(p.category_id) === Number(subCatId));
+      this.renderCategoryPassagesList(filtered);
+    }
   }
 
   filterCategoryPassages(type, btnEl) {

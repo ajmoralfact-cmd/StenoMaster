@@ -2008,8 +2008,8 @@ def get_passages(
         query += " AND p.difficulty = ? "
         params.append(difficulty.lower())
     if category_id:
-        query += " AND p.category_id = ? "
-        params.append(category_id)
+        query += " AND (p.category_id = ? OR c.parent_id = ?) "
+        params.extend([category_id, category_id])
     if search:
         query += " AND (p.title LIKE ? OR p.tags LIKE ?) "
         like_str = f"%{search}%"
@@ -5303,11 +5303,19 @@ def get_categories_with_user_status(user_id: Optional[int] = None) -> List[Dict[
         c = conn.cursor()
         c.execute("""
             SELECT c.*,
-                   COUNT(p.id) as passage_count,
-                   COUNT(CASE WHEN p.is_premium = 0 THEN 1 END) as free_count
+                   (
+                     SELECT COUNT(p.id)
+                     FROM passages p
+                     JOIN categories sub ON p.category_id = sub.id
+                     WHERE (sub.id = c.id OR sub.parent_id = c.id) AND p.status = 'published'
+                   ) as passage_count,
+                   (
+                     SELECT COUNT(p.id)
+                     FROM passages p
+                     JOIN categories sub ON p.category_id = sub.id
+                     WHERE (sub.id = c.id OR sub.parent_id = c.id) AND p.status = 'published' AND p.is_premium = 0
+                   ) as free_count
             FROM categories c
-            LEFT JOIN passages p ON c.id = p.category_id AND p.status = 'published'
-            GROUP BY c.id
             ORDER BY c.sort_order ASC, c.id ASC
         """)
         rows = c.fetchall()
@@ -5318,10 +5326,12 @@ def get_categories_with_user_status(user_id: Optional[int] = None) -> List[Dict[
             'cat-1789642826908': '⚡',
             'ramdhari-gupta-khand-2': '📙',
             'anand-patrika-ank-01': '📰',
+            'anand-patrika-ank-02': '📰',
             'editorial-passages': '📰',
             'ssc-steno': '🎯',
             'upsssc-steno': '🏛️',
             'court-steno': '⚖️',
+            'kailash-chandra': '🏛️',
         }
 
         base_cats = []
@@ -5329,7 +5339,10 @@ def get_categories_with_user_status(user_id: Optional[int] = None) -> List[Dict[
             d = dict(r)
             d['price'] = int(d.get('price')) if d.get('price') is not None else 49
             slug = d.get('slug', '')
-            d['icon_emoji'] = icon_map.get(slug, '📚')
+            if slug.startswith('kailash-chandra-vol'):
+                d['icon_emoji'] = '📖'
+            else:
+                d['icon_emoji'] = icon_map.get(slug, d.get('icon') or '📚')
             base_cats.append(d)
         
         _CATEGORIES_CACHE["data"] = base_cats
@@ -5411,14 +5424,31 @@ def get_passages_by_category(category_id: Any, user_id: Optional[int] = None) ->
         cat_dict = dict(cat_row)
         cat_dict['price'] = int(cat_dict.get('price')) if cat_dict.get('price') is not None else 49
 
+        # Check for subcategories (e.g. 24 Volumes for Kailash Chandra)
+        c.execute("""
+            SELECT c.*,
+                   COUNT(p.id) as passage_count,
+                   COUNT(CASE WHEN p.is_premium = 0 THEN 1 END) as free_count
+            FROM categories c
+            LEFT JOIN passages p ON c.id = p.category_id AND p.status = 'published'
+            WHERE c.parent_id = ?
+            GROUP BY c.id
+            ORDER BY c.sort_order ASC, c.id ASC
+        """, (category_id,))
+        sub_rows = [dict(r) for r in c.fetchall()]
+        for s in sub_rows:
+            s['icon_emoji'] = '📖'
+            s['price'] = int(s.get('price')) if s.get('price') is not None else 49
+        cat_dict['subcategories'] = sub_rows
+
         c.execute("""
             SELECT id, title, category_id, language, difficulty, target_wpm, duration_seconds,
                    typing_system, is_premium, audio_url, created_at,
                    ROUND(LENGTH(official_text) / 5) as word_count
             FROM passages
-            WHERE category_id = ? AND status = 'published'
+            WHERE (category_id = ? OR category_id IN (SELECT id FROM categories WHERE parent_id = ?)) AND status = 'published'
             ORDER BY id ASC
-        """, (category_id,))
+        """, (category_id, category_id))
         p_rows = [dict(r) for r in c.fetchall()]
         for p in p_rows:
             p['word_count'] = resolve_canonical_word_count(p.get('category_id'), p.get('title'), p.get('word_count'))
@@ -5493,7 +5523,8 @@ def get_passages_by_category(category_id: Any, user_id: Optional[int] = None) ->
 
     return {
         "category": cat_res,
-        "passages": passages
+        "passages": passages,
+        "subcategories": cat_res.get('subcategories', [])
     }
 
 
