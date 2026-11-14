@@ -609,7 +609,7 @@
 
         <div class="header-right">
           <!-- Live Plan Validity Badge (Top Bar) -->
-          <div class="plan-validity-pill" id="headerPlanValidityBadge" onclick="window.location.href='/plans'" title="प्लान स्थिति एवं सदस्यता देखें (Click to view subscription)">
+          <div class="plan-validity-pill" id="headerPlanValidityBadge" onclick="stenoApp.goToPlans()" title="प्लान स्थिति एवं सदस्यता देखें (Click to view subscription)">
             <span class="validity-icon" id="headerPlanValidityIcon">👑</span>
             <span class="validity-text" id="headerPlanValidityText">2 फ्री<span class="hide-mobile"> कक्षाएं</span></span>
           </div>
@@ -869,7 +869,7 @@
             <div class="poster-slide active" id="posterSlide1" style="background: linear-gradient(108deg, #eff6ff 0%, #f8faff 45%, #ffffff 85%);">
               <div class="poster-content-left">
                 <!-- Integrated Offer Pill (Merged from separate strip) -->
-                <div class="poster-offer-pill" id="posterOfferPill" onclick="window.location.href='/plans'" title="ऑफर विवरण देखें (Click for Offer Details)">
+                <div class="poster-offer-pill" id="posterOfferPill" onclick="stenoApp.goToPlans()" title="ऑफर विवरण देखें (Click for Offer Details)">
                   <span class="offer-pill-badge" id="posterOfferBadge">🔥 स्पेशल ऑफर</span>
                   <span class="offer-pill-text" id="posterOfferText">स्टेनो प्रो पास पर <strong>56% की भारी छूट</strong> • मात्र ₹100 से शुरू</span>
                   <span class="offer-pill-arrow">→</span>
@@ -928,7 +928,7 @@
             <div class="poster-slide" id="posterSlide2" style="background: linear-gradient(110deg, #f0fdf4 0%, #f8fafc 42%, #ffffff 85%);">
               <div class="poster-content-left">
                 <!-- Integrated Offer Pill -->
-                <div class="poster-offer-pill" onclick="window.location.href='/plans'" style="background:rgba(236,253,245,0.95); border-color:#a7f3d0; color:#065f46;" title="प्लान देखें">
+                <div class="poster-offer-pill" onclick="stenoApp.goToPlans()" style="background:rgba(236,253,245,0.95); border-color:#a7f3d0; color:#065f46;" title="प्लान देखें">
                   <span class="offer-pill-badge" style="background:#059669;">⚡ 60-160 WPM</span>
                   <span class="offer-pill-text">रामधारी गुप्ता 150 कक्षाएं + आनंद पत्रिका अनलॉक करें</span>
                   <span class="offer-pill-arrow" style="color:#059669;">→</span>
@@ -987,7 +987,7 @@
             <div class="poster-slide" id="posterSlide3" style="background: linear-gradient(110deg, #fdf4ff 0%, #f8faff 45%, #ffffff 85%);">
               <div class="poster-content-left">
                 <!-- Integrated Offer Pill -->
-                <div class="poster-offer-pill" onclick="window.location.href='/plans'" style="background:rgba(250,245,255,0.95); border-color:#e9d5ff; color:#6b21a8;" title="प्लान देखें">
+                <div class="poster-offer-pill" onclick="stenoApp.goToPlans()" style="background:rgba(250,245,255,0.95); border-color:#e9d5ff; color:#6b21a8;" title="प्लान देखें">
                   <span class="offer-pill-badge" style="background:#7c3aed;">🤖 AI ENGINE</span>
                   <span class="offer-pill-text">पूर्ण व अर्ध गलतियों का लाइव मूल्यांकन • ऑल-इंडिया रैंक</span>
                   <span class="offer-pill-arrow" style="color:#7c3aed;">→</span>
@@ -1095,7 +1095,7 @@
             <span class="mobile-circle-label">लीडरबोर्ड</span>
           </div>
 
-          <div class="mobile-circle-item" onclick="window.location.href='/plans'" title="स्टेनो प्रो पास">
+          <div class="mobile-circle-item" onclick="stenoApp.goToPlans()" title="स्टेनो प्रो पास">
             <div class="mobile-circle-icon-box circle-pass">
               <span class="circle-badge-tag badge-discount">56% OFF</span>
               <span>💳</span>
@@ -3545,12 +3545,12 @@
 
       <!-- Mini Plans Grid in Modal -->
       <div style="display:grid; grid-template-columns: repeat(2, 1fr); gap:12px; margin-bottom:22px; text-align:left;">
-        <div style="background:var(--bg-subtle); border:1px solid var(--border-subtle); border-radius:10px; padding:12px 14px; cursor:pointer;" onclick="stenoApp.closeModal('lockedClassProModal'); window.location.href='/plans?plan=1m';">
+        <div style="background:var(--bg-subtle); border:1px solid var(--border-subtle); border-radius:10px; padding:12px 14px; cursor:pointer;" onclick="stenoApp.goToPlans('1m');">
           <div style="font-size:0.75rem; color:var(--text-muted); font-weight:700;">1 माह प्लान</div>
           <div style="font-size:1.3rem; font-weight:900; color:var(--primary);">₹100</div>
           <div style="font-size:0.72rem; color:var(--text-secondary); margin-top:2px;">बेसिक मासिक अभ्यास (30 दिन)</div>
         </div>
-        <div style="background:rgba(245, 158, 11, 0.08); border:2px solid #f59e0b; border-radius:10px; padding:12px 14px; cursor:pointer; position:relative;" onclick="stenoApp.closeModal('lockedClassProModal'); window.location.href='/plans?plan=3m';">
+        <div style="background:rgba(245, 158, 11, 0.08); border:2px solid #f59e0b; border-radius:10px; padding:12px 14px; cursor:pointer; position:relative;" onclick="stenoApp.goToPlans('3m');">
           <span style="position:absolute; top:-9px; right:10px; background:#f59e0b; color:#fff; font-size:0.62rem; font-weight:800; padding:2px 8px; border-radius:10px;">POPULAR</span>
           <div style="font-size:0.75rem; color:#b45309; font-weight:700;">3 माह प्लान (90 दिन)</div>
           <div style="font-size:1.3rem; font-weight:900; color:#b45309;">₹250</div>
@@ -3559,7 +3559,7 @@
       </div>
 
       <div style="display:flex; flex-direction:column; gap:10px;">
-        <button type="button" class="btn-primary" style="padding:14px; font-size:1.05rem; font-weight:800; border-radius:12px; box-shadow:0 8px 24px rgba(37, 99, 235, 0.35);" onclick="stenoApp.closeModal('lockedClassProModal'); window.location.href='/plans';">
+        <button type="button" class="btn-primary" style="padding:14px; font-size:1.05rem; font-weight:800; border-radius:12px; box-shadow:0 8px 24px rgba(37, 99, 235, 0.35);" onclick="stenoApp.goToPlans();">
           ⚡ सभी प्लान्स देखें व अनलॉक करें (View Plans & Pay) →
         </button>
         <button type="button" class="btn-secondary" style="border:none; color:var(--text-muted); font-size:0.82rem;" onclick="stenoApp.closeModal('lockedClassProModal')">

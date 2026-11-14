@@ -730,6 +730,16 @@
   <!-- Plans Page Bootstrap Script -->
   <script>
     document.addEventListener('DOMContentLoaded', function() {
+      // Guest Protection: If user is not logged in, prompt login immediately
+      var token = localStorage.getItem('stenomaster_token');
+      if (!token) {
+        var planParam = new URLSearchParams(window.location.search).get('plan') || '';
+        var ret = planParam ? ('/subscription?plan=' + planParam) : '/subscription';
+        sessionStorage.setItem('pending_purchase_return', ret);
+        window.location.replace('/?auth=login&return_to=' + encodeURIComponent(ret) + '&reason=purchase');
+        return;
+      }
+
       function tryInitPlans(attempt) {
         if (typeof window.stenoApp === 'undefined') {
           if (attempt < 60) { setTimeout(function() { tryInitPlans(attempt + 1); }, 100); }

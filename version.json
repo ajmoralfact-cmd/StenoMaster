@@ -1,6 +1,4 @@
 {
-  "version": "23.4.0",
-  "updated_at": "2026-11-14T05:14:40Z",
-  "commit": "8442ca3029",
-  "description": "SEO optimization for custom domain stenomaster.co.in (v23.4)"
+  "version": "23.5.0",
+  "description": "Enforce login authentication prior to purchasing plans or courses; auto-redirect to plan checkout post-login; fix manual UTR submission"
 }

@@ -852,14 +852,25 @@ class StenoApp {
         this.loadPassages().catch(() => {})
       ]);
 
-      // Check if URL specifically requested login (e.g. redirected from practice studio)
+      // Check if URL specifically requested login (e.g. redirected from practice studio or purchase)
       const urlParams = new URLSearchParams(window.location.search);
       if (urlParams.get('auth') === 'login') {
         const retPractice = urlParams.get('return_practice');
         if (retPractice) {
           sessionStorage.setItem('pending_practice_id', retPractice);
         }
-        this.showAuthGateway('student', 'डिक्टेशन एवं टाइपिंग अभ्यास शुरू करने के लिए कृपया लॉगिन करें।');
+        const retTo = urlParams.get('return_to');
+        if (retTo) {
+          sessionStorage.setItem('pending_purchase_return', retTo);
+        }
+        const reason = urlParams.get('reason') || '';
+        let msg = 'डिक्टेशन एवं टाइपिंग अभ्यास शुरू करने के लिए कृपया लॉगिन करें।';
+        if (reason === 'purchase') {
+          msg = 'सदस्यता प्लान या कोर्स खरीदने के लिए कृपया पहले लॉगिन करें।';
+        } else if (reason === 'category') {
+          msg = 'डिक्टेशन कैटेगरी अनलॉक करने के लिए कृपया पहले लॉगिन करें।';
+        }
+        this.showAuthGateway('student', msg);
       }
     }
   }
@@ -1845,11 +1856,8 @@ class StenoApp {
         return;
       }
 
-      // Check if student clicked a practice class before logging in
-      const pendingPracticeId = sessionStorage.getItem('pending_practice_id') || (new URLSearchParams(window.location.search)).get('return_practice');
-      if (pendingPracticeId) {
-        sessionStorage.removeItem('pending_practice_id');
-        window.location.href = `/practice?id=${pendingPracticeId}`;
+      // Check for pending purchase / plan / practice redirection
+      if (this.postLoginRedirect()) {
         return;
       }
 
@@ -2122,11 +2130,8 @@ class StenoApp {
       }
 
 
-      // Check if student clicked a practice class before logging in
-      const pendingPracticeId = sessionStorage.getItem('pending_practice_id') || (new URLSearchParams(window.location.search)).get('return_practice');
-      if (pendingPracticeId) {
-        sessionStorage.removeItem('pending_practice_id');
-        window.location.href = `/practice?id=${pendingPracticeId}`;
+      // Check for pending purchase / plan / practice redirection
+      if (this.postLoginRedirect()) {
         return;
       }
 
@@ -2189,6 +2194,7 @@ class StenoApp {
         window.location.href = '/admin.html';
         return;
       }
+      if (this.postLoginRedirect()) return;
       this.navigate('home');
     } catch (err) {
       const msg = err.status === 401 ? 'गलत ईमेल/यूज़रनेम अथवा पासवर्ड। (Invalid credentials)' : (err.message || 'लॉगिन विफल रहा।');
@@ -4264,6 +4270,52 @@ class StenoApp {
       return;
     }
     this.openModal('lockedClassProModal');
+  }
+
+
+  goToPlans(planId = null) {
+    if (!this.user || !this.token) {
+      const returnUrl = planId ? `/plans?plan=${planId}` : '/plans';
+      sessionStorage.setItem('pending_purchase_return', returnUrl);
+      this.closeModal('lockedClassProModal');
+      this.closeCategoryCheckoutModal();
+      this.showAuthGateway('student', 'प्रो सदस्यता प्लान या कोर्स खरीदने के लिए कृपया पहले लॉगिन करें।');
+      return;
+    }
+    this.closeModal('lockedClassProModal');
+    if (planId) {
+      window.location.href = `/plans?plan=${planId}`;
+    } else {
+      window.location.href = '/plans';
+    }
+  }
+
+  postLoginRedirect() {
+    // 1. Check if student had a pending purchase/plan return URL
+    const pendingPurchaseReturn = sessionStorage.getItem('pending_purchase_return') || (new URLSearchParams(window.location.search)).get('return_to');
+    if (pendingPurchaseReturn) {
+      sessionStorage.removeItem('pending_purchase_return');
+      window.location.href = pendingPurchaseReturn;
+      return true;
+    }
+
+    // 2. Check if student had a pending category purchase
+    const pendingCat = sessionStorage.getItem('pending_purchase_category');
+    if (pendingCat) {
+      sessionStorage.removeItem('pending_purchase_category');
+      this.openMultiCategoryCheckout(pendingCat === 'all' ? null : Number(pendingCat));
+      return true;
+    }
+
+    // 3. Check if student clicked a practice class before logging in
+    const pendingPracticeId = sessionStorage.getItem('pending_practice_id') || (new URLSearchParams(window.location.search)).get('return_practice');
+    if (pendingPracticeId) {
+      sessionStorage.removeItem('pending_practice_id');
+      window.location.href = `/practice?id=${pendingPracticeId}`;
+      return true;
+    }
+
+    return false;
   }
 
   async toggleBookmark(passageId, btnEl) {
@@ -7320,6 +7372,12 @@ ${link}`;
   // Multi-Category Custom Checkout Operations
   // -------------------------------------------------------------------------
   openMultiCategoryCheckout(preSelectedCatId = null) {
+    if (!this.user || !this.token) {
+      sessionStorage.setItem('pending_purchase_category', preSelectedCatId ? String(preSelectedCatId) : 'all');
+      this.closeCategoryCheckoutModal();
+      this.showAuthGateway('student', 'डिक्टेशन कैटेगरी अनलॉक करने के लिए कृपया पहले लॉगिन करें।');
+      return;
+    }
     const modal = document.getElementById('categoryCheckoutModal');
     const container = document.getElementById('checkoutCategoriesChecklist');
     const allInOneCheck = document.getElementById('checkAllInOnePass');
@@ -7425,6 +7483,11 @@ ${link}`;
   }
 
     proceedCategoryPayment() {
+    if (!this.user || !this.token) {
+      this.closeCategoryCheckoutModal();
+      this.showAuthGateway('student', 'भुगतान जारी रखने के लिए कृपया पहले लॉगिन करें।');
+      return;
+    }
     const allInOneCheck = document.getElementById('checkAllInOnePass');
     const isAllInOne = allInOneCheck ? allInOneCheck.checked : false;
 
@@ -7996,8 +8059,10 @@ ${link}`;
   }
 
   openUpiCheckoutModal(planId = '1m') {
-    if (!this.user) {
-      this.openModal('loginModal');
+    if (!this.user || !this.token) {
+      const returnUrl = `/plans?plan=${planId}`;
+      sessionStorage.setItem('pending_purchase_return', returnUrl);
+      window.location.href = `/?auth=login&return_to=${encodeURIComponent(returnUrl)}&reason=purchase`;
       return;
     }
 
@@ -8118,6 +8183,73 @@ ${link}`;
     }
   }
 
+
+  async handlePaymentSubmit(e) {
+    if (e) e.preventDefault();
+    if (!this.user || !this.token) {
+      const returnUrl = '/plans';
+      sessionStorage.setItem('pending_purchase_return', returnUrl);
+      window.location.href = `/?auth=login&return_to=${encodeURIComponent(returnUrl)}&reason=purchase`;
+      return;
+    }
+
+    const utrInput = document.getElementById('payTransactionIdInput');
+    const utr = (utrInput ? utrInput.value : '').trim();
+    const amtInput = document.getElementById('payAmountInput');
+    const amount = amtInput ? parseFloat(amtInput.value) || 100 : 100;
+    const planNameInput = document.getElementById('payPlanNameInput');
+    let planName = planNameInput ? planNameInput.value : 'StenoMaster Pro';
+    if (this.appliedPromoCode) {
+      planName += ` [Promo: ${this.appliedPromoCode}]`;
+    }
+    const msgEl = document.getElementById('paymentSubmitMsg');
+    const submitBtn = document.getElementById('submitPaymentBtn');
+
+    if (!utr || utr.length < 8) {
+      this.showToast('कृपया वैध 12-अंकीय UPI UTR / Transaction ID दर्ज करें।', 'warning');
+      if (utrInput) utrInput.focus();
+      return;
+    }
+
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'सत्यापित हो रहा है... ⏳';
+    }
+
+    try {
+      const res = await this.apiCall('/api/subscription/request-payment', 'POST', {
+        transaction_id: utr,
+        plan_name: planName,
+        amount: amount,
+        promo_code: this.appliedPromoCode || null
+      });
+
+      if (res && res.success) {
+        if (msgEl) {
+          msgEl.style.display = 'block';
+          msgEl.style.color = '#15803d';
+          msgEl.innerHTML = '✅ <strong>अनुरोध प्राप्त हुआ!</strong> आपका भुगतान सत्यापित होते ही प्रो सदस्यता चालू कर दी जाएगी।';
+        }
+        this.showToast('🎉 भुगतान अनुरोध जमा हो गया! सत्यापन के बाद आपका प्लान सक्रिय हो जाएगा।', 'success');
+        if (utrInput) utrInput.value = '';
+      } else {
+        throw new Error(res?.error || 'भुगतान अनुरोध दर्ज नहीं हो सका।');
+      }
+    } catch (err) {
+      this.showToast(err.message || 'UTR सबमिशन विफल रहा।', 'error');
+      if (msgEl) {
+        msgEl.style.display = 'block';
+        msgEl.style.color = '#dc2626';
+        msgEl.textContent = 'त्रुटि: ' + (err.message || 'सबमिशन विफल रहा।');
+      }
+    } finally {
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'मैन्युअल UTR सबमिट करें';
+      }
+    }
+  }
+
   proceedToCashfreePg() {
     this.closeModal('directUpiPaymentModal');
     this.initiateCashfreePayment(this.currentCheckoutPlanId || '1m');
@@ -8129,8 +8261,10 @@ ${link}`;
   }
 
   async initiateCashfreePayment(planId = '1m') {
-    if (!this.user) {
-      this.openModal('loginModal');
+    if (!this.user || !this.token) {
+      const returnUrl = `/plans?plan=${planId}`;
+      sessionStorage.setItem('pending_purchase_return', returnUrl);
+      window.location.href = `/?auth=login&return_to=${encodeURIComponent(returnUrl)}&reason=purchase`;
       return;
     }
 
