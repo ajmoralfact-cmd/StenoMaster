@@ -953,7 +953,7 @@ class StenoApp {
     const current = document.documentElement.getAttribute('data-theme') || localStorage.getItem('stenomaster_theme') || 'light';
     const nextTheme = current === 'dark' ? 'light' : 'dark';
     this.setTheme(nextTheme);
-    const isEn = this.currentLang === 'en';
+    const isEn = this.currentLang === 'en' || (this.currentCategoryData && this.currentCategoryData.language === 'english') || (this.currentCategory && String(this.currentCategory.slug || '').includes('kailash'));
     this.showToast(nextTheme === 'dark' ? (isEn ? '🌙 Dark Mode Activated' : '🌙 डार्क थीम सक्रिय') : (isEn ? '☀️ Light Mode Activated' : '☀️ लाइट थीम सक्रिय'), 'info');
   }
 
@@ -7196,41 +7196,32 @@ ${link}`;
       // Render Subcategories / Volume Selector if present
       const subcats = res.subcategories || (cat && cat.subcategories) || [];
       const subWrap = document.getElementById('catDetailSubcategoriesWrap');
+      const listEl = document.getElementById('catDetailPassagesList');
+      const filterBar = document.querySelector('.cat-filter-btn')?.parentElement;
+      const pdfWrap = document.getElementById('volumePdfBannerWrap');
+
       if (subWrap) {
         if (subcats && subcats.length > 0) {
           subWrap.style.display = 'block';
-          subWrap.innerHTML = `
-            <div style="font-size:0.88rem; font-weight:800; color:var(--text-main); margin-bottom:10px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px;">
-              <span style="display:inline-flex; align-items:center; gap:6px;">
-                <span>📚 ${isEn ? 'Browse Volumes (24 Volumes):' : 'वॉल्यूम चुनें (कुल 24 वॉल्यूम):'}</span>
-              </span>
-              <span style="font-size:0.78rem; color:var(--text-muted); font-weight:600;">
-                ${isEn ? '22 Passages per Volume' : 'प्रत्येक वॉल्यूम में 22 पैसेज'}
-              </span>
-            </div>
-            <div class="volume-selector-chips" style="display:flex; gap:8px; overflow-x:auto; padding-bottom:8px; -webkit-overflow-scrolling:touch; scrollbar-width:thin;">
-              <button type="button" class="vol-chip active" onclick="stenoApp.filterVolume('all', this)" style="padding:7px 14px; font-size:0.82rem; font-weight:800; border-radius:10px; border:1.5px solid #2563eb; background:#2563eb; color:#fff; white-space:nowrap; cursor:pointer; transition:all 0.15s ease;">
-                🌟 ${isEn ? 'All Volumes (528)' : 'सभी 24 वॉल्यूम (528)'}
-              </button>
-              ${subcats.map((sub, sIdx) => {
-                const volNum = sIdx + 1;
-                const startTx = (volNum - 1) * 22 + 1;
-                const endTx = volNum * 22;
-                return `
-                  <button type="button" class="vol-chip" onclick="stenoApp.filterVolume(${sub.id}, this, ${volNum})" style="padding:7px 14px; font-size:0.82rem; font-weight:700; border-radius:10px; border:1.5px solid var(--border); background:var(--bg-card); color:var(--text-main); white-space:nowrap; cursor:pointer; transition:all 0.15s ease;">
-                    📖 ${isEn ? `Vol ${volNum}` : `वॉल्यूम ${volNum}`} <span style="opacity:0.75; font-size:0.75rem;">(TX ${startTx}-${endTx})</span>
-                  </button>
-                `;
-              }).join('')}
-            </div>
-          `;
+          this.subcategoriesCache = subcats;
+          this.renderKcVolumesDirectory(subcats);
+
+          // If viewing the parent category (ID 132 or slug includes 'kailash'), show 24 Volumes Directory first
+          if (cIdInt === 132 || String(catMeta?.slug || '').startsWith('kailash-chandra')) {
+            this.showKcVolumesDirectory();
+          } else {
+            const sIdx = subcats.findIndex(s => s.id === cIdInt);
+            const vNum = sIdx !== -1 ? sIdx + 1 : 1;
+            this.openKcVolume(cIdInt, vNum);
+          }
         } else {
           subWrap.style.display = 'none';
           subWrap.innerHTML = '';
+          if (listEl) listEl.style.display = 'grid';
+          if (filterBar) filterBar.style.display = 'flex';
+          this.renderCategoryPassagesList(this.currentCategoryPassages);
         }
       }
-
-      this.renderCategoryPassagesList(this.currentCategoryPassages);
     };
 
     // 0ms Instant Hydration if already prefetched, visited, or reconstructed from memory
@@ -7280,6 +7271,196 @@ ${link}`;
     const stickyBar = document.getElementById('catDetailStickyBar');
     if (stickyBar) stickyBar.style.display = 'none';
     this.goBack();
+  }
+
+
+  renderKcVolumesDirectory(subcats) {
+    const subWrap = document.getElementById('catDetailSubcategoriesWrap');
+    if (!subWrap) return;
+
+    const isEn = this.currentLang === 'en' || (this.currentCategoryData && this.currentCategoryData.language === 'english') || (this.currentCategory && String(this.currentCategory.slug || '').includes('kailash'));
+
+    subWrap.innerHTML = `
+      <div style="margin-bottom:20px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:16px;">
+          <div style="font-size:1.15rem; font-weight:800; color:var(--text-main); display:flex; align-items:center; gap:8px;">
+            <span>📚</span>
+            <span>${isEn ? 'Select Volume (24 Volumes Directory)' : 'वॉल्यूम चुनें (कुल 24 वॉल्यूम)'}</span>
+            <span style="font-size:0.76rem; font-weight:700; padding:3px 10px; border-radius:20px; background:rgba(37,99,235,0.12); color:#2563eb; border:1px solid rgba(37,99,235,0.25);">
+              ${subcats.length} ${isEn ? 'Volumes' : 'वॉल्यूम'} • 528 ${isEn ? 'Dictations' : 'डिक्टेशन्स'}
+            </span>
+          </div>
+          <div>
+            <input type="text" class="search-box" oninput="stenoApp.filterKcVolumes(this.value)" placeholder="${isEn ? '🔍 Search Volume (e.g. Vol 1, 2)...' : '🔍 सर्च वॉल्यूम (उदा. Vol 1)...'}" style="padding:8px 14px; border-radius:10px; border:1.5px solid var(--border); background:var(--bg-card); color:var(--text-main); font-size:0.82rem; width:250px; outline:none;">
+          </div>
+        </div>
+
+        <div class="volumes-grid" id="kcVolumesGridContainer">
+          ${subcats.map((sub, sIdx) => {
+            const volNum = sIdx + 1;
+            const vPad = String(volNum).padStart(2, '0');
+            const startTx = (volNum - 1) * 22 + 1;
+            const endTx = volNum * 22;
+            const wpm = (volNum <= 5) ? 80 : ((volNum <= 10) ? 100 : 120);
+
+            // Compute completed count for this volume
+            let completedCount = 0;
+            if (this.currentCategoryPassages && Array.isArray(this.currentCategoryPassages)) {
+              completedCount = this.currentCategoryPassages.filter(p => Number(p.category_id) === Number(sub.id) && (p.user_result || (this.getRecentPassageResult && this.getRecentPassageResult(p.id)))).length;
+            }
+            const compPct = Math.round((completedCount / 22) * 100);
+
+            return `
+              <div class="vol-box" data-vol-num="${volNum}" data-title="volume ${volNum} vol ${volNum}" onclick="stenoApp.openKcVolume(${sub.id}, ${volNum})">
+                <div class="vol-head">
+                  <div class="vol-icon-badge">
+                    <span class="vol-icon-label">VOL</span>
+                    <span class="vol-icon-num">${vPad}</span>
+                  </div>
+                  <div class="vol-title-info">
+                    <div class="vol-main-title">${isEn ? `Volume ${volNum}` : `वॉल्यूम ${volNum}`}</div>
+                    <div class="vol-tx-range">${isEn ? `Transcription ${startTx} to ${endTx}` : `प्रतिलेखन संख्या ${startTx} से ${endTx}`}</div>
+                  </div>
+                </div>
+
+                <div class="vol-stats-pills">
+                  <span class="v-pill v-pill-speed">⚡ ${wpm} WPM</span>
+                  <span class="v-pill v-pill-count">📝 22 ${isEn ? 'Tests' : 'टेस्ट'}</span>
+                  <span class="v-pill v-pill-free">🎁 2 ${isEn ? 'Free Demos' : 'फ्री डेमो'}</span>
+                </div>
+
+                <div class="vol-feature-strip">
+                  <span>📄 ${isEn ? 'Steno PDF Outlines' : 'स्टेनो PDF आउटलाइन्स'}</span>
+                  <span style="color:#10b981; font-weight:800;">✓ Ready</span>
+                </div>
+
+                <div class="vol-progress-wrap">
+                  <div class="vol-progress-labels">
+                    <span>${isEn ? `Progress: ${completedCount}/22 Completed` : `प्रगति: ${completedCount}/22 पूर्ण`}</span>
+                    <span>${compPct}%</span>
+                  </div>
+                  <div class="vol-progress-track">
+                    <div class="vol-progress-bar" style="width:${compPct}%;"></div>
+                  </div>
+                </div>
+
+                <button type="button" class="vol-open-btn">
+                  <span>${isEn ? 'View Classes' : 'कक्षाएं देखें'}</span>
+                  <span class="vol-arrow">➜</span>
+                </button>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      </div>
+    `;
+  }
+
+  filterKcVolumes(query) {
+    const q = (query || '').toLowerCase().trim();
+    const boxes = document.querySelectorAll('#kcVolumesGridContainer .vol-box');
+    boxes.forEach(box => {
+      const title = (box.getAttribute('data-title') || '').toLowerCase();
+      const num = box.getAttribute('data-vol-num') || '';
+      if (!q || title.includes(q) || num === q) {
+        box.style.display = 'flex';
+      } else {
+        box.style.display = 'none';
+      }
+    });
+  }
+
+  showKcVolumesDirectory() {
+    const subWrap = document.getElementById('catDetailSubcategoriesWrap');
+    const listEl = document.getElementById('catDetailPassagesList');
+    const filterBar = document.querySelector('.cat-filter-btn')?.parentElement;
+    const pdfWrap = document.getElementById('volumePdfBannerWrap');
+    const titleEl = document.getElementById('catDetailTitle');
+    const nameEl = document.getElementById('catDetailName');
+    const subEl = document.getElementById('catDetailSub');
+
+    if (subWrap) subWrap.style.display = 'block';
+    if (listEl) listEl.style.display = 'none';
+    if (filterBar) filterBar.style.display = 'none';
+    if (pdfWrap) pdfWrap.style.display = 'none';
+
+    const isEn = this.currentLang === 'en' || (this.currentCategoryData && this.currentCategoryData.language === 'english') || (this.currentCategory && String(this.currentCategory.slug || '').includes('kailash'));
+
+    if (nameEl) {
+      nameEl.textContent = isEn ? 'Kailash Chandra Magazine (24 Volumes)' : 'कैलाश चंद्र मैगज़ीन (संपूर्ण 24 वॉल्यूम)';
+    }
+    if (subEl) {
+      subEl.textContent = isEn 
+        ? 'Total 24 Volumes • 528 Dictations • 80 & 100 WPM • Complete Shorthand Outlines PDF'
+        : 'कुल 24 वॉल्यूम • 528 डिक्टेशन्स • 80 एवं 100 WPM • सम्पूर्ण स्टेनो आउटलाइन PDF सहित';
+    }
+
+    const backBtn = document.querySelector('#view-category-detail .back-btn');
+    if (backBtn) {
+      backBtn.onclick = () => this.goBack();
+      backBtn.innerHTML = isEn ? '← Back' : '← वापस';
+    }
+  }
+
+  openKcVolume(subCatId, volNum) {
+    const subWrap = document.getElementById('catDetailSubcategoriesWrap');
+    const listEl = document.getElementById('catDetailPassagesList');
+    const filterBar = document.querySelector('.cat-filter-btn')?.parentElement;
+    const pdfWrap = document.getElementById('volumePdfBannerWrap');
+    const nameEl = document.getElementById('catDetailName');
+    const subEl = document.getElementById('catDetailSub');
+    const backBtn = document.querySelector('#view-category-detail .back-btn');
+
+    if (subWrap) subWrap.style.display = 'none';
+    if (listEl) listEl.style.display = 'grid';
+    if (filterBar) filterBar.style.display = 'flex';
+
+    const isEn = this.currentLang === 'en' || (this.currentCategoryData && this.currentCategoryData.language === 'english') || (this.currentCategory && String(this.currentCategory.slug || '').includes('kailash'));
+
+    const startTx = (volNum - 1) * 22 + 1;
+    const endTx = volNum * 22;
+    const wpm = (volNum <= 5) ? 80 : ((volNum <= 10) ? 100 : 120);
+
+    if (nameEl) {
+      nameEl.textContent = isEn ? `Volume ${volNum}` : `वॉल्यूम ${volNum}`;
+    }
+    if (subEl) {
+      subEl.textContent = isEn 
+        ? `Transcriptions ${startTx} to ${endTx} • ${wpm} WPM • Original Audio`
+        : `प्रतिलेखन संख्या ${startTx} से ${endTx} • ${wpm} WPM • आधिकारिक ऑडियो`;
+    }
+
+    if (backBtn) {
+      backBtn.onclick = () => this.showKcVolumesDirectory();
+      backBtn.innerHTML = isEn ? '← Back to 24 Volumes' : '← सभी 24 वॉल्यूम';
+    }
+
+    if (pdfWrap) {
+      const vPad = String(volNum).padStart(2, '0');
+      const pdfUrl = `/uploads/kailash_chandra/outlines/Kailash_Chandra_Vol_${vPad}_Outlines.pdf`;
+      pdfWrap.style.display = 'block';
+      pdfWrap.innerHTML = `
+        <div style="background:linear-gradient(135deg, rgba(37,99,235,0.08), rgba(99,102,241,0.08)); border:1.5px solid rgba(37,99,235,0.25); border-radius:14px; padding:12px 18px; margin:4px 0 16px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+          <div style="display:flex; align-items:center; gap:12px;">
+            <span style="font-size:1.6rem;">📘</span>
+            <div>
+              <div style="font-weight:800; font-size:0.92rem; color:var(--text-main);">
+                ${isEn ? `Volume ${volNum} Complete Shorthand Outlines (PDF)` : `वॉल्यूम ${volNum} सम्पूर्ण स्टेनो आउटलाइन्स (PDF)`}
+              </div>
+              <div style="font-size:0.76rem; color:var(--text-muted);">
+                ${isEn ? 'All 22 passages handwritten Pitman shorthand outlines in one PDF' : 'सभी 22 पैसेज के हस्तलिखित स्टेनो आउटलाइन्स एक ही PDF में'}
+              </div>
+            </div>
+          </div>
+          <a href="${pdfUrl}" target="_blank" download="Kailash_Chandra_Vol_${vPad}_Outlines.pdf" style="display:inline-flex; align-items:center; gap:6px; padding:8px 18px; background:#2563eb; color:#fff !important; border-radius:8px; font-weight:700; font-size:0.84rem; text-decoration:none; box-shadow:0 2px 8px rgba(37,99,235,0.25);">
+            📥 ${isEn ? 'Download PDF' : 'PDF डाउनलोड करें'}
+          </a>
+        </div>
+      `;
+    }
+
+    const filtered = (this.currentCategoryPassages || []).filter(p => Number(p.category_id) === Number(subCatId));
+    this.renderCategoryPassagesList(filtered.length > 0 ? filtered : this.currentCategoryPassages);
   }
 
   filterVolume(subCatId, btnEl, volNum) {
@@ -7386,6 +7567,13 @@ ${link}`;
       const wordCount = this.getCanonicalWordCount(p) || 800;
 
       // Extract Class Number & Clean Title/Topic
+      let volNum = 1;
+      if (p.category_id && p.category_id >= 133 && p.category_id <= 156) {
+        volNum = p.category_id - 133 + 1;
+      } else if (p.category_id === 132) {
+        volNum = Math.ceil((idx + 1) / 22);
+      }
+
       let classNum = idx + 1;
       let txTitle = `Transcription No. ${classNum}`;
       let topicText = '';
@@ -7440,7 +7628,7 @@ ${link}`;
             <div class="modern-dict-top">
               <div>
                 <div class="modern-dict-title notranslate skiptranslate" translate="no" lang="en">${txTitle}</div>
-                <div class="modern-dict-sub">Class ${classNum} • Kailash Chandra</div>
+                <div class="modern-dict-sub">${isEn ? `Class ${classNum} • Volume ${volNum}` : `कक्षा ${classNum} • वॉल्यूम ${volNum}`}</div>
               </div>
               <div class="modern-dict-actions">
                 <span class="modern-action-icon" title="Bookmark">🔖</span>
