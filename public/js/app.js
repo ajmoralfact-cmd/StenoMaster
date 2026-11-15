@@ -6900,6 +6900,11 @@ ${link}`;
   prefetchCategoryDetail(categoryId) {
     if (!categoryId) return;
     const cId = parseInt(categoryId, 10);
+    // Always purge cached detail for Kailash Chandra so the fresh 24 volumes directory displays
+    if (cIdInt === 132 || (cIdInt >= 133 && cIdInt <= 156)) {
+      try { sessionStorage.removeItem('stenomaster_cat_detail_' + cIdInt); } catch(e){}
+      if (this._categoryDetailCache) this._categoryDetailCache.delete(cIdInt);
+    }
     if (!this._categoryDetailCache) this._categoryDetailCache = new Map();
     if (this._categoryDetailCache.has(cId)) return;
     this.apiCall(`/api/categories/detail?id=${cId}`).then(res => {
@@ -7476,7 +7481,7 @@ ${link}`;
       btnEl.style.color = '#fff';
       btnEl.classList.add('active');
     }
-    const isEn = this.currentLang === 'english';
+    const isEn = true; // Kailash Chandra is an English shorthand course, always pure English
     const pdfWrap = document.getElementById('volumePdfBannerWrap');
     if (pdfWrap) {
       if (volNum) {
