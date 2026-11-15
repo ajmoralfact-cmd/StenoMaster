@@ -272,11 +272,21 @@ class StenoMasterHandler(http.server.SimpleHTTPRequestHandler):
             filename = urllib.parse.unquote(os.path.basename(path))
             if filename.startswith('audio_rk_class_'):
                 filename = filename.replace('audio_rk_class_', 'audio_rk1_class_')
+            rel_sub = urllib.parse.unquote(path[len('/uploads/'):].strip('/'))
             file_path = os.path.join(UPLOADS_DIR, filename)
             if not os.path.exists(file_path):
-                fallback_path = os.path.join(BASE_DIR, 'uploads', filename)
-                if os.path.exists(fallback_path):
-                    file_path = fallback_path
+                candidates = [
+                    os.path.join(BASE_DIR, 'public', 'uploads', rel_sub),
+                    os.path.join(BASE_DIR, 'uploads', rel_sub),
+                    os.path.join(BASE_DIR, 'public', 'uploads', filename),
+                    os.path.join(BASE_DIR, 'uploads', filename),
+                    os.path.join(BASE_DIR, 'public', 'uploads', 'kailash_chandra', 'audio', filename),
+                    os.path.join(BASE_DIR, 'public', 'uploads', 'kailash_chandra', 'outlines', filename),
+                ]
+                for c in candidates:
+                    if os.path.exists(c):
+                        file_path = c
+                        break
 
             # 1. If found on local disk (local server dev), serve directly with HTTP 206 Range support
             if os.path.exists(file_path):
@@ -306,6 +316,26 @@ class StenoMasterHandler(http.server.SimpleHTTPRequestHandler):
             )
             if is_official_catalog_audio:
                 cdn_url = f"https://github.com/ajmoralfact-cmd/StenoMaster/releases/download/audio-v1/{filename}"
+                self.send_response(302)
+                self.send_header('Location', cdn_url)
+                self.send_header('Access-Control-Allow-Origin', '*')
+                self.send_header('Cache-Control', 'public, max-age=604800, immutable')
+                self.end_headers()
+                return
+
+            # 3a. High-speed global CDN redirect for Kailash Chandra audio dictations
+            if filename.startswith('audio_kc_'):
+                cdn_url = f"https://github.com/ajmoralfact-cmd/StenoMaster/releases/download/kc-audio-v1/{filename}"
+                self.send_response(302)
+                self.send_header('Location', cdn_url)
+                self.send_header('Access-Control-Allow-Origin', '*')
+                self.send_header('Cache-Control', 'public, max-age=604800, immutable')
+                self.end_headers()
+                return
+
+            # 3b. High-speed global CDN redirect for Kailash Chandra Volume PDFs & Outlines
+            if filename.startswith('Kailash_Chandra_Vol_') or filename.startswith('outline_kc_'):
+                cdn_url = f"https://github.com/ajmoralfact-cmd/StenoMaster/releases/download/kc-notes-v1/{filename}"
                 self.send_response(302)
                 self.send_header('Location', cdn_url)
                 self.send_header('Access-Control-Allow-Origin', '*')

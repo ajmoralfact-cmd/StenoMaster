@@ -664,9 +664,19 @@
       // Pre-arm audio element immediately with the known MP3 if available
       try {
         var audioEl = document.getElementById('stenoMainAudio');
-        if (audioEl && pIdInt > 0 && pIdInt <= 100 && !audioEl.src) {
-          audioEl.src = '/uploads/audio_rk1_class_' + (pIdInt < 10 ? '00' : (pIdInt < 100 ? '0' : '')) + pIdInt + '.mp3';
-          audioEl.preload = 'auto';
+        if (audioEl && !audioEl.src) {
+          if (pIdInt > 0 && pIdInt <= 100) {
+            audioEl.src = '/uploads/audio_rk1_class_' + (pIdInt < 10 ? '00' : (pIdInt < 100 ? '0' : '')) + pIdInt + '.mp3';
+            audioEl.preload = 'auto';
+          } else if (pIdInt >= 331 && pIdInt <= 858) {
+            var kcNum = pIdInt - 330;
+            var vol = Math.floor((kcNum - 1) / 22) + 1;
+            var ex = ((kcNum - 1) % 22) + 1;
+            var vStr = (vol < 10 ? '0' : '') + vol;
+            var eStr = (ex < 10 ? '0' : '') + ex;
+            audioEl.src = '/uploads/kailash_chandra/audio/audio_kc_vol' + vStr + '_ex' + eStr + '.mp3';
+            audioEl.preload = 'auto';
+          }
         }
       } catch(e) {}
 

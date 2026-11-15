@@ -5142,8 +5142,11 @@ def is_category_unlocked_for_user(user_id: Optional[int], category_id: int, conn
     c.execute("""
         SELECT id, expires_at 
         FROM user_unlocked_categories 
-        WHERE user_id = ? AND category_id = ?
-    """, (user_id, category_id))
+        WHERE user_id = ? AND (
+            category_id = ? 
+            OR category_id IN (SELECT parent_id FROM categories WHERE id = ? AND parent_id IS NOT NULL)
+        )
+    """, (user_id, category_id, category_id))
     row = c.fetchone()
     if close_at_end:
         conn.close()
