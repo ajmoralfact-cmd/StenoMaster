@@ -540,8 +540,7 @@ class StenoAudioPlayer {
           } else if (num >= 331 && num <= 858) {
             const kcNum = num - 330;
             const vol = Math.floor((kcNum - 1) / 22) + 1;
-            const ex = ((kcNum - 1) % 22) + 1;
-            fallbackUrl = `/uploads/kailash_chandra/audio/audio_kc_vol${String(vol).padStart(2, '0')}_ex${String(ex).padStart(2, '0')}.mp3`;
+            fallbackUrl = `/uploads/kailash_chandra/audio/audio_kc_vol${String(vol).padStart(2, '0')}_ex${String(kcNum).padStart(2, '0')}.mp3`;
           }
         }
       }

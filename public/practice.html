@@ -671,9 +671,8 @@
           } else if (pIdInt >= 331 && pIdInt <= 858) {
             var kcNum = pIdInt - 330;
             var vol = Math.floor((kcNum - 1) / 22) + 1;
-            var ex = ((kcNum - 1) % 22) + 1;
             var vStr = (vol < 10 ? '0' : '') + vol;
-            var eStr = (ex < 10 ? '0' : '') + ex;
+            var eStr = (kcNum < 10 ? '0' : '') + kcNum;
             audioEl.src = '/uploads/kailash_chandra/audio/audio_kc_vol' + vStr + '_ex' + eStr + '.mp3';
             audioEl.preload = 'auto';
           }
