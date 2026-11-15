@@ -83,7 +83,7 @@
   <!-- Performance Preconnects for Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="/css/style.css?v=24.0">
+  <link rel="stylesheet" href="/css/style.css?v=25.0">
 
   <!-- Shield Root Hindi Shorthand Content from Chrome / Browser Auto-Translation -->
   <script>
@@ -1864,7 +1864,7 @@
       <!-- ===================================================================
            VIEW: CATEGORY CLASSES DETAIL (SCREENSHOT 2 STYLE)
            =================================================================== -->
-      <main class="page-view" id="view-category-detail" style="max-width:960px; margin:0 auto; padding-bottom:80px;">
+      <main class="page-view" id="view-category-detail" style="max-width:1340px; margin:0 auto; padding-bottom:80px;">
         <!-- Header with Back Button -->
         <div style="display:flex; align-items:center; gap:12px; margin-bottom:18px; flex-wrap:wrap;">
           <button type="button" class="back-btn" onclick="stenoApp.goBack()" style="padding:8px 16px; font-size:0.88rem; font-weight:700; border-radius:8px; display:inline-flex; align-items:center; gap:6px;">
@@ -1905,7 +1905,7 @@
         <div id="volumePdfBannerWrap" style="display:none; margin-bottom:16px;"></div>
 
         <!-- Horizontal Class Cards List -->
-        <div id="catDetailPassagesList" style="display:flex; flex-direction:column; gap:12px;"></div>
+        <div id="catDetailPassagesList" class="cat-passages-grid"></div>
 
         <!-- Sticky Floating Bottom Bar (if category is locked) -->
         <div id="catDetailStickyBar" style="display:none; position:fixed; bottom:0; left:0; right:0; background:rgba(15,23,42,0.95); backdrop-filter:blur(10px); border-top:1px solid rgba(255,255,255,0.12); padding:14px 20px; z-index:9000; box-shadow:0 -10px 25px rgba(0,0,0,0.3);">
@@ -3867,7 +3867,7 @@
   <script src="/js/ocr_service.js?v=1.1"></script>
   <script src="/js/steno_dictionary.js?v=1.0"></script>
   <script src="/js/comparison_view.js?v=21.5"></script>
-  <script src="/js/app.js?v=26.0"></script>
+  <script src="/js/app.js?v=27.0"></script>
   <!-- Strict Exam Hall Anti-Cheat Warning Modal -->
   <div class="modal-overlay" id="examHallWarningModal" style="z-index:99999;" onclick="if(event.target === this) stenoTypingEngine.exitExamModeFromModal()">
     <div class="modal-card" style="max-width: 480px; text-align:center; border:2px solid #ef4444; box-shadow:0 10px 40px rgba(239,68,68,0.3); position:relative; padding:28px 24px;">

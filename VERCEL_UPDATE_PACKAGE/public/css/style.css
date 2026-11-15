@@ -12458,7 +12458,8 @@ body:has(#view-community.active) .main-wrapper {
 /* ==========================================================================
    Stenoshala Sapphire Luxe Theme (Demo 2 Selection - Modern EdTech Polish)
    ========================================================================== */
-:root {
+:root,
+[data-theme="light"] {
   --bg-primary: #f0f4f9;
   --bg-surface: #ffffff;
   --bg-elevated: #ffffff;
@@ -12477,9 +12478,28 @@ body:has(#view-community.active) .main-wrapper {
   --shadow-hover: 0 14px 30px -6px rgba(37, 99, 235, 0.18);
 }
 
+[data-theme="dark"] {
+  --bg-primary: #0b0f19 !important;
+  --bg-surface: #131b2e !important;
+  --bg-elevated: #1a243d !important;
+  --bg-subtle: #1e293b !important;
+  --border-subtle: #243048 !important;
+  --border-strong: #334155 !important;
+  --text-main: #f8fafc !important;
+  --text-secondary: #cbd5e1 !important;
+  --text-muted: #94a3b8 !important;
+  --primary: #3b82f6 !important;
+  --primary-hover: #2563eb !important;
+  --primary-subtle: rgba(59, 130, 246, 0.18) !important;
+  --primary-border: #1e3a8a !important;
+  --primary-gradient: linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%) !important;
+  --shadow-card: 0 8px 24px -4px rgba(0, 0, 0, 0.4), 0 2px 6px -1px rgba(0,0,0,0.3) !important;
+  --shadow-hover: 0 14px 30px -6px rgba(0, 0, 0, 0.5) !important;
+}
+
 body {
-  background-color: #f0f4f9 !important;
-  color: #0a1128 !important;
+  background-color: var(--bg-primary) !important;
+  color: var(--text-main) !important;
 }
 
 /* Primary Button - Sapphire Gradient */
@@ -13023,6 +13043,240 @@ eft: 12px;
   }
 }
 
+
+/* ==========================================================================
+   Stenoshala Sapphire Luxe — Complete Dark Mode Theme Support
+   ========================================================================== */
+[data-theme="dark"] body {
+  background-color: #0b0f19 !important;
+  color: #f8fafc !important;
+}
+
+[data-theme="dark"] .top-header {
+  background: rgba(19, 27, 46, 0.96) !important;
+  border-bottom: 1px solid #243048 !important;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3) !important;
+}
+
+[data-theme="dark"] .top-header .header-brand-name {
+  color: #f8fafc !important;
+}
+
+[data-theme="dark"] .top-header .three-dot-btn,
+[data-theme="dark"] .top-header #langToggleBtn,
+[data-theme="dark"] .top-header #themeToggleBtn,
+[data-theme="dark"] .top-header .notif-btn,
+[data-theme="dark"] .top-header .user-profile-btn {
+  background: #1a243d !important;
+  border: 1px solid #243048 !important;
+  color: #f8fafc !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3) !important;
+}
+
+[data-theme="dark"] .top-header .three-dot-btn:hover,
+[data-theme="dark"] .top-header #langToggleBtn:hover,
+[data-theme="dark"] .top-header #themeToggleBtn:hover,
+[data-theme="dark"] .top-header .notif-btn:hover {
+  background: #243048 !important;
+  border-color: #3b82f6 !important;
+}
+
+[data-theme="dark"] .plan-validity-pill {
+  background: rgba(30, 58, 138, 0.35) !important;
+  border: 1px solid #1e40af !important;
+  color: #93c5fd !important;
+}
+
+[data-theme="dark"] .streak-badge {
+  background: rgba(154, 52, 18, 0.25) !important;
+  border: 1px solid #ea580c !important;
+  color: #fdba74 !important;
+}
+
+[data-theme="dark"] #dashboardActivePlanBanner {
+  background: linear-gradient(135deg, #131b2e 0%, #1a243d 100%) !important;
+  border: 1.5px solid #243048 !important;
+  box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.4) !important;
+}
+
+[data-theme="dark"] #dashboardActivePlanBanner #planBannerTitle {
+  color: #f8fafc !important;
+}
+
+[data-theme="dark"] #dashboardActivePlanBanner #planBannerSubtitle {
+  color: #94a3b8 !important;
+}
+
+[data-theme="dark"] .continue-practice-card {
+  background: linear-gradient(125deg, #0f172a 0%, #1e293b 60%, #1e3a8a 100%) !important;
+  border: 1px solid #243048 !important;
+}
+
+[data-theme="dark"] .h-stat-card {
+  background: #131b2e !important;
+  border: 1px solid #243048 !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25) !important;
+}
+
+[data-theme="dark"] .h-stat-card .h-stat-val {
+  color: #f8fafc !important;
+}
+
+[data-theme="dark"] .h-stat-card .h-stat-label {
+  color: #94a3b8 !important;
+}
+
+[data-theme="dark"] .category-series-card {
+  background: #131b2e !important;
+  border: 1px solid #243048 !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25) !important;
+}
+
+[data-theme="dark"] .category-series-card .cat-left-section h4 {
+  color: #f8fafc !important;
+}
+
+[data-theme="dark"] .category-series-card .cat-middle-specs span {
+  color: #94a3b8 !important;
+}
+
+[data-theme="dark"] .sidebar {
+  background: #131b2e !important;
+  border-right: 1px solid #243048 !important;
+  box-shadow: 10px 0 30px rgba(0, 0, 0, 0.4) !important;
+}
+
+[data-theme="dark"] .sidebar-header {
+  border-bottom: 1px solid #243048 !important;
+}
+
+[data-theme="dark"] .sidebar-header .brand-name-text {
+  color: #f8fafc !important;
+}
+
+[data-theme="dark"] .sidebar-close-btn {
+  background: #1a243d !important;
+  border: 1px solid #243048 !important;
+  color: #cbd5e1 !important;
+}
+
+[data-theme="dark"] .nav-item-title {
+  color: #cbd5e1 !important;
+}
+
+[data-theme="dark"] .nav-item:hover {
+  background: rgba(59, 130, 246, 0.15) !important;
+}
+
+[data-theme="dark"] .nav-item:hover .nav-item-title {
+  color: #60a5fa !important;
+}
+
+[data-theme="dark"] .nav-item.active {
+  background: rgba(59, 130, 246, 0.22) !important;
+}
+
+[data-theme="dark"] .nav-item.active .nav-item-title {
+  color: #93c5fd !important;
+}
+
+[data-theme="dark"] .sidebar-footer {
+  border-top: 1px solid #243048 !important;
+}
+
+[data-theme="dark"] .sidebar-user-preview {
+  background: #1a243d !important;
+  border: 1px solid #243048 !important;
+}
+
+[data-theme="dark"] .sidebar-user-name {
+  color: #f8fafc !important;
+}
+
+[data-theme="dark"] .practice-container,
+[data-theme="dark"] .typing-editor-card,
+[data-theme="dark"] .card,
+[data-theme="dark"] .profile-card {
+  background: #131b2e !important;
+  border: 1px solid #243048 !important;
+  color: #f8fafc !important;
+}
+
+[data-theme="dark"] .audio-player-card {
+  background: #131b2e !important;
+  border: 1px solid #243048 !important;
+}
+
+[data-theme="dark"] .typing-textarea {
+  background: #0b0f19 !important;
+  color: #f8fafc !important;
+  border: 1.5px solid #243048 !important;
+}
+
+[data-theme="dark"] .editor-toolbar {
+  background: #131b2e !important;
+  border-color: #243048 !important;
+}
+
+[data-theme="dark"] .exam-rule-group,
+[data-theme="dark"] .punct-rule-group,
+[data-theme="dark"] .typing-timer-group {
+  background: #1a243d !important;
+  border-color: #243048 !important;
+}
+
+[data-theme="dark"] .stat-pill {
+  background: #1a243d !important;
+  border: 1px solid #243048 !important;
+  color: #f8fafc !important;
+}
+
+[data-theme="dark"] .wpm-speeder-card {
+  background: #131b2e !important;
+  border: 1px solid #243048 !important;
+}
+
+[data-theme="dark"] .wpm-chip {
+  background: #1a243d !important;
+  border-color: #243048 !important;
+  color: #cbd5e1 !important;
+}
+
+[data-theme="dark"] .wpm-chip.active {
+  background: #1d4ed8 !important;
+  border-color: #3b82f6 !important;
+  color: #ffffff !important;
+}
+
+[data-theme="dark"] .modal-card {
+  background: #131b2e !important;
+  color: #f8fafc !important;
+  border: 1px solid #243048 !important;
+}
+
+[data-theme="dark"] .modal-title {
+  color: #f8fafc !important;
+}
+
+[data-theme="dark"] .site-footer,
+[data-theme="dark"] .footer-legal-bar {
+  background: #0b0f19 !important;
+  border-color: #243048 !important;
+  color: #94a3b8 !important;
+}
+
+[data-theme="dark"] .bottom-nav-mobile {
+  background: rgba(19, 27, 46, 0.96) !important;
+  border-top: 1px solid #243048 !important;
+}
+
+[data-theme="dark"] .bnav-label {
+  color: #94a3b8 !important;
+}
+
+[data-theme="dark"] .bnav-item.active .bnav-label {
+  color: #60a5fa !important;
+}
 
 /* ==========================================================================
    Stenoshala-Style Slim & Compact Hero Poster Carousel
@@ -15750,4 +16004,260 @@ eft: 12px;
   .page-view {
     padding-bottom: 72px !important;
   }
+}
+
+
+/* ==========================================================================
+   SSC & STENOSHALA STYLE MULTI-ROW MODERN DICTATION BOXES & VOLUME GRID
+   ========================================================================== */
+.cat-passages-grid {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fill, minmax(235px, 1fr)) !important;
+  gap: 16px !important;
+  margin-top: 14px;
+}
+
+@media (max-width: 640px) {
+  .cat-passages-grid {
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)) !important;
+    gap: 10px !important;
+  }
+}
+
+.modern-dict-box {
+  background: var(--bg-card);
+  border: 1.5px solid var(--border);
+  border-radius: 14px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.modern-dict-box:hover {
+  border-color: var(--primary);
+  transform: translateY(-3px);
+  box-shadow: 0 10px 22px -4px rgba(37,99,235,0.15);
+}
+
+.modern-dict-box.free-demo-card {
+  border-color: rgba(16, 185, 129, 0.4);
+}
+
+.modern-dict-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 10px;
+}
+
+.modern-dict-title {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: var(--text-main);
+  line-height: 1.35;
+}
+
+.modern-dict-sub {
+  font-size: 0.74rem;
+  color: var(--text-muted);
+  font-weight: 600;
+  margin-top: 2px;
+}
+
+.modern-dict-actions {
+  display: flex;
+  gap: 5px;
+}
+
+.modern-action-icon {
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--bg-subtle);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  cursor: pointer;
+  color: var(--text-muted);
+  transition: all 0.15s ease;
+}
+
+.modern-action-icon:hover {
+  color: var(--primary);
+  border-color: var(--primary);
+}
+
+.modern-dict-diff {
+  background: rgba(234, 179, 8, 0.08);
+  border: 1px solid rgba(234, 179, 8, 0.25);
+  border-radius: 8px;
+  padding: 7px 9px;
+  margin-bottom: 10px;
+}
+
+.modern-diff-label {
+  font-size: 0.65rem;
+  font-weight: 800;
+  color: #854d0e;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  margin-bottom: 3px;
+}
+.dark-mode .modern-diff-label,
+body.dark .modern-diff-label,
+[data-theme="dark"] .modern-diff-label {
+  color: #fde047;
+}
+
+.modern-diff-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.modern-diff-score {
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: #854d0e;
+}
+.dark-mode .modern-diff-score,
+body.dark .modern-diff-score,
+[data-theme="dark"] .modern-diff-score {
+  color: #fde047;
+}
+
+.modern-diff-bar {
+  flex: 1;
+  height: 5px;
+  background: rgba(0,0,0,0.08);
+  border-radius: 10px;
+  margin-left: 10px;
+  overflow: hidden;
+}
+
+.modern-diff-fill {
+  height: 100%;
+  border-radius: 10px;
+  background: #eab308;
+}
+
+.modern-meta-list {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-bottom: 12px;
+  font-size: 0.78rem;
+}
+
+.modern-meta-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.modern-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.modern-dot.dot-topic { background: #3b82f6; }
+.modern-dot.dot-words { background: #10b981; }
+.modern-dot.dot-speed { background: #f59e0b; }
+
+.modern-topic-name {
+  color: var(--text-main);
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 175px;
+}
+
+.modern-dict-footer {
+  border-top: 1px solid var(--border);
+  padding-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.modern-tag-free {
+  background: rgba(16, 185, 129, 0.12);
+  color: #059669;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  width: fit-content;
+}
+.dark-mode .modern-tag-free,
+body.dark .modern-tag-free,
+[data-theme="dark"] .modern-tag-free {
+  color: #34d399;
+}
+
+.modern-tag-paid {
+  background: rgba(245, 158, 11, 0.12);
+  color: #d97706;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  width: fit-content;
+}
+.dark-mode .modern-tag-paid,
+body.dark .modern-tag-paid,
+[data-theme="dark"] .modern-tag-paid {
+  color: #fbbf24;
+}
+
+.modern-btn-take-test {
+  width: 100%;
+  background: #0f172a;
+  color: #ffffff !important;
+  border: none;
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.15);
+}
+
+.modern-btn-take-test:hover {
+  background: #1e3a8a;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(30, 58, 138, 0.3);
+}
+
+.modern-dict-box.free-demo-card .modern-btn-take-test {
+  background: linear-gradient(135deg, #059669, #10b981);
+}
+.modern-dict-box.free-demo-card .modern-btn-take-test:hover {
+  background: linear-gradient(135deg, #047857, #059669);
+}
+
+/* 24 Volume Selector Chips Responsive Wrap */
+.volume-selector-chips {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 8px !important;
+  padding-bottom: 8px;
 }
